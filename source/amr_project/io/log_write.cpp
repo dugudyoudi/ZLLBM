@@ -11,7 +11,6 @@
 #include "io/io_manager.h"
 namespace rootproject {
 namespace amrproject {
-namespace io {
 // static member
 std::string IoManager::logfile_name;
 
@@ -138,6 +137,5 @@ void LogError(const std::string& msg) {
 #endif
     exit(0);
 }
-}  // end namespace io
 }  // end amrproject
 }  // end namespace rootproject

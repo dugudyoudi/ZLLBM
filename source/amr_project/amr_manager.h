@@ -34,9 +34,9 @@ class AmrManager {
 #ifdef ENABLE_MPI
     std::shared_ptr<mpi::MpiManager> ptr_mpi_manager;
 #endif
-    std::shared_ptr<grid::GridManagerInterface> ptr_grid_manager_;
-    std::shared_ptr<io::IoManager> ptr_io_manager_;
-    std::shared_ptr<criterion::CriterionManager> ptr_criterion_manager_;
+    std::shared_ptr<GridManagerInterface> ptr_grid_manager_;
+    std::shared_ptr<IoManager> ptr_io_manager_;
+    std::shared_ptr<CriterionManager> ptr_criterion_manager_;
 
     void LoadModules();
 

@@ -16,7 +16,6 @@
 #include "grid/sfbitset_aux.h"
 namespace rootproject {
 namespace amrproject {
-namespace criterion {
 /**
 * @brief function to setup geometry type related parameters.
 * @param[in]  cell_type    type of geomemtry cell.
@@ -32,7 +31,7 @@ void GeometryConnectionInterface::SetupConnectionParameters(
         bool_periodic_connection_ = true;
         break;
     default:
-        io::LogWarning("Undefined cell type.");
+        LogWarning("Undefined cell type.");
         break;
     }
 }
@@ -161,7 +160,7 @@ void GeometryConnectionInterface::BisectEdgeOnce(
                 + std::to_string(iter_edge.second.first) + ", "
                 + std::to_string(iter_edge.second.second) + ") at level "
                 + std::to_string(i_input_level) + " for bisecting.";
-            io::LogWarning(msg);
+            LogWarning(msg);
             continue;
         }
         dis = ComputeDistanceFromCoordinates(iter_edge.first,
@@ -447,7 +446,7 @@ void GeometryConnectionInterface::MergeEdgeOnce(
                 + std::to_string(iter_edge.second.first) + ", "
                 + std::to_string(iter_edge.second.second) + ") at level "
                 + std::to_string(i_input_level) + " for merging.";
-            io::LogWarning(msg);
+            LogWarning(msg);
             continue;
         }
         level_vertex0 = iter_edge.first.first;
@@ -584,7 +583,7 @@ void GeometryConnectionInterface::MergeEdgeOnce(
         }
     }
     if (iter_count == iter_max) {
-        io::LogWarning("iteration exceeds the maximum in MergeOnceLine");
+        LogWarning("iteration exceeds the maximum in MergeOnceLine");
     }
 
     // find surface of which vertices need to be removed
@@ -1206,6 +1205,5 @@ void GeometryConnectionInterface::ReconstructSurfaceBasedOnExistingVertex(
         }
     }
 }
-}  // end namespace criterion
 }  // end namespace amrproject
 }  // end namespace rootproject

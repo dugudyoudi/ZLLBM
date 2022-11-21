@@ -12,7 +12,6 @@
 #include "io/vtk_writer.h"
 namespace rootproject {
 namespace amrproject {
-namespace io {
 /**
 * @class IoManager
 * @brief class used to manage io processes.
@@ -30,11 +29,10 @@ class IoManager {
     OutputDataFormat k0OutputDataFormat_;
 
     void OutputFlowfield(
-        std::shared_ptr<grid::GridManagerInterface> ptr_grid_manager,
-        std::shared_ptr<criterion::CriterionManager> ptr_criterion_manager);
+        std::shared_ptr<GridManagerInterface> ptr_grid_manager,
+        std::shared_ptr<CriterionManager> ptr_criterion_manager);
     //VtkWriterManager vtk_instance_;
 };
-}  // end namespace io
 }  // end amrproject
 }  // end namespace rootproject
 #endif  // ROOTPROJECT_SOURCE_AMR_PROJECT_IO_IO_MANAGER_H_

@@ -17,7 +17,6 @@
 #endif  // DEBUG_CHECK_GRID
 namespace rootproject {
 namespace amrproject {
-namespace grid {
 #ifndef  DEBUG_DISABLE_2D_FUNCTIONS
 /**
 * @brief initialize morton code related varialbes.
@@ -44,7 +43,7 @@ void SFBitsetAux2D::SFBitsetInitial() {
 * @return  morton code.
 */
 DefSFBitset SFBitsetAux2D::SFBitsetEncoding(
-    const std::array<DefLUint, 2>& coordi_index) {
+    const std::array<DefLUint, 2>& coordi_index) const {
     DefSFBitset sfbitset_code = 0;
     for (DefSizet i = 0; i < (kSFBitsetBit / 2); ++i) {
         sfbitset_code |= ((coordi_index.at(kXIndex) &
@@ -53,6 +52,15 @@ DefSFBitset SFBitsetAux2D::SFBitsetEncoding(
                 ((static_cast<DefLUint>(1)) << i)) << (i + 1));
     }
     return sfbitset_code;
+}
+DefSFBitset SFBitsetAux2D::SFBitsetEncodingReal(
+    const std::vector<DefReal>& grid_space, const std::vector<DefReal>& coordi,
+    std::shared_ptr<SFBitsetAuxInterface> ptr_bitset_aux) const {
+    std::array<DefLUint, 2> coorid_index =
+    { static_cast<DefLUint>(coordi.at(kXIndex) / grid_space[kXIndex] + kEps),
+      static_cast<DefLUint>(coordi.at(kYIndex) / grid_space[kYIndex] + kEps)};
+    return std::static_pointer_cast<SFBitsetAux2D>(ptr_bitset_aux)
+        ->SFBitsetEncoding(coorid_index);
 }
 /**
 * @brief function to compute the 2D coordinates from morton code.
@@ -63,7 +71,7 @@ DefSFBitset SFBitsetAux2D::SFBitsetEncoding(
 */
 void SFBitsetAux2D::SFBitsetComputeCoordinate(const DefSFBitset& bitset_in,
     const std::array<DefReal, 2>& grid_space,
-    std::array<DefReal, 2>* const ptr_coordi) {
+    std::array<DefReal, 2>* const ptr_coordi)  const {
     *ptr_coordi = { 0., 0. };
     for (DefSizet i = 0; i < kSFBitsetBit / 2; ++i) {
         if (bitset_in.test(i * 2)) {
@@ -83,7 +91,7 @@ void SFBitsetAux2D::SFBitsetComputeCoordinate(const DefSFBitset& bitset_in,
 */
 void SFBitsetAux2D::SFBitsetComputeIndices(
     const DefSFBitset& bitset_in,
-    std::array<DefLUint, 2>* const ptr_indices) {
+    std::array<DefLUint, 2>* const ptr_indices) const {
     *ptr_indices = { 0, 0 };
     for (DefSizet i = 0; i < kSFBitsetBit / 2; ++i) {
         if (bitset_in.test(i * 2)) {
@@ -123,7 +131,7 @@ void SFBitsetAux3D::SFBitsetInitial() {
 * @return  morton code.
 */
 DefSFBitset SFBitsetAux3D::SFBitsetEncoding(
-    const std::array<DefLUint, 3>& coordi_index) {
+    const std::array<DefLUint, 3>& coordi_index)  const {
     DefSFBitset sfbitset_code = 0;
     for (DefSizet i = 0; i < (kSFBitsetBit / 3); ++i) {
         sfbitset_code |= ((coordi_index.at(kXIndex) &
@@ -135,6 +143,16 @@ DefSFBitset SFBitsetAux3D::SFBitsetEncoding(
     }
     return sfbitset_code;
 }
+DefSFBitset SFBitsetAux3D::SFBitsetEncodingReal(
+    const std::vector<DefReal>& grid_space, const std::vector<DefReal>& coordi,
+    std::shared_ptr<SFBitsetAuxInterface> ptr_bitset_aux) const {
+    std::array<DefLUint, 3> coorid_index =
+    { static_cast<DefLUint>(coordi.at(kXIndex) / grid_space[kXIndex] + kEps),
+      static_cast<DefLUint>(coordi.at(kYIndex) / grid_space[kYIndex] + kEps),
+      static_cast<DefLUint>(coordi.at(kZIndex) / grid_space[kZIndex] + kEps) };
+    return std::static_pointer_cast<SFBitsetAux3D>(ptr_bitset_aux)
+        ->SFBitsetEncoding(coorid_index);
+}
 /**
 * @brief function to compute the 3D coordinates from morton code.
 * @param[in]  bitset_in          morton code of current node.
@@ -144,7 +162,7 @@ DefSFBitset SFBitsetAux3D::SFBitsetEncoding(
 */
 void SFBitsetAux3D::SFBitsetComputeCoordinate(const DefSFBitset& bitset_in,
      const std::array<DefReal, 3>& grid_space,
-    std::array<DefReal, 3>* const ptr_coordi) {
+    std::array<DefReal, 3>* const ptr_coordi)  const {
     *ptr_coordi = { 0., 0., 0.};
     for (DefSizet i = 0; i < kSFBitsetBit / 3; ++i) {
         if (bitset_in.test(i * 3)) {
@@ -168,7 +186,7 @@ void SFBitsetAux3D::SFBitsetComputeCoordinate(const DefSFBitset& bitset_in,
 */
 void SFBitsetAux3D::SFBitsetComputeIndices(
     const DefSFBitset& bitset_in,
-    std::array<DefLUint, 3>* const ptr_indices) {
+    std::array<DefLUint, 3>* const ptr_indices) const {
     *ptr_indices = { 0, 0, 0 };
     for (DefSizet i = 0; i < kSFBitsetBit / 3; ++i) {
         if (bitset_in.test(i * 3)) {
@@ -186,6 +204,5 @@ void SFBitsetAux3D::SFBitsetComputeIndices(
     }
 }
 #endif  // DEBUG_DISABLE_3D_FUNCTIONS
-}  // end namsapce grid
 }  // end namespace amrproject
 }  // end namespace rootproject

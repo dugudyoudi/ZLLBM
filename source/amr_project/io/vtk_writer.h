@@ -18,7 +18,6 @@
 #include "grid/grid_manager.h"
 namespace rootproject {
 namespace amrproject {
-namespace io {
 class Base64Utility {
  public:
     template <typename DataType>
@@ -52,25 +51,25 @@ public:
     void OptionInitial(const bool bool_binary);
     void WriteVtu(const bool bool_binary,
         OutputDataFormat& output_data_format,
-        std::shared_ptr<grid::GridManagerInterface> ptr_grid_manager,
-        std::shared_ptr<criterion::CriterionManager> ptr_criterion_manager);
+        std::shared_ptr<GridManagerInterface> ptr_grid_manager,
+        std::shared_ptr<CriterionManager> ptr_criterion_manager);
 
 private:
     Base64Utility base64_instance_;
 
     void WriteGrid(FILE* fp, const bool bool_binary,
         OutputDataFormat& output_data_format,
-        std::shared_ptr<grid::GridManagerInterface> ptr_grid_manager);
+        std::shared_ptr<GridManagerInterface> ptr_grid_manager);
     std::array<DefLUint, 2> CalculateNumOfGridCells(
-        const DefUint dims, const DefMap<grid::GridNode>& map_grid_node,
+        const DefUint dims, const DefMap<GridNode>& map_grid_node,
         DefMap<DefLUint>* ptr_map_node_index);
     void WirteGridCoordinates(FILE* fp, const bool bool_binary,
         OutputDataFormat& output_data_format,
-        std::shared_ptr<grid::GridManagerInterface> ptr_grid_manager,
-        const grid::GridInfoInterface& grid_info);
+        std::shared_ptr<GridManagerInterface> ptr_grid_manager,
+        const GridInfoInterface& grid_info);
     void WirteGridCellConnectivity(FILE* fp, const bool bool_binary,
         const DefUint dims, OutputDataFormat& output_data_format,
-        const DefMap<grid::GridNode>& map_grid_node,
+        const DefMap<GridNode>& map_grid_node,
         const DefMap<DefLUint>& map_node_index);
     void WirteGridCellOffsets(FILE* fp, const bool bool_binary,
         const DefUint dims, const DefLUint num_cell,
@@ -81,23 +80,22 @@ private:
 
     void WriteGeometry(FILE* fp, const bool bool_binary,
         OutputDataFormat& output_data_format,
-        std::shared_ptr<criterion::CriterionManager> ptr_criterion_manager);
+        std::shared_ptr<CriterionManager> ptr_criterion_manager);
     DefSizet CalculateNumOfGeometryCells(
-        const criterion::GeometryInfoInterface& geo_info);
+        const GeometryInfoInterface& geo_info);
     void WirteGeometryCoordinates(FILE* fp, const bool bool_binary,
         const DefUint dims, OutputDataFormat& output_data_format,
-        const criterion::GeometryInfoInterface& geo_info);
+        const GeometryInfoInterface& geo_info);
     void WirteGeometryCellConnectivity(FILE* fp, const bool bool_binary,
         OutputDataFormat& output_data_format,
-        const criterion::GeometryInfoInterface& geo_info);
+        const GeometryInfoInterface& geo_info);
     void WirteGeometryCellOffsets(FILE* fp, const bool bool_binary,
         OutputDataFormat& output_data_format,
-        const criterion::GeometryInfoInterface& geo_info);
+        const GeometryInfoInterface& geo_info);
     void WirteGeometryCellTypes(FILE* fp, const bool bool_binary,
-        const criterion::GeometryInfoInterface& geo_info);
+        const GeometryInfoInterface& geo_info);
 
 };
-}  // end namespace io
 }  // end amrproject
 }  // end namespace rootproject
 #endif  // ROOTPROJECT_SOURCE_IO_VTK_WRITER_MANAGER_H_

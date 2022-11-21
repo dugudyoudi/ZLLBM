@@ -18,14 +18,11 @@
 #include "criterion/criterion_numerates.h"
 namespace rootproject {
 namespace amrproject {
-namespace grid {
 class TrackingGridInfoCreatorInterface;
 class GhostGridInfoCreatorInterface;
 class  SFBitsetAux2D;
 class  SFBitsetAux3D;
 class  GridInfoInterface;
-}  // end namespace grid
-namespace criterion {
 /**
 * @struct GeometryvertexInfo
 * @brief struct used to store information of a geometry vertex
@@ -57,9 +54,9 @@ class GeometryInfoInterface {
     DefSizet k0NumRealForEachvertex_ = 0;
     std::vector<GeometryvertexInfo> vec_vertexs_info_{};
 
-    std::shared_ptr<grid::TrackingGridInfoCreatorInterface>
+    std::shared_ptr<TrackingGridInfoCreatorInterface>
         ptr_tracking_grid_info_creator_ = nullptr;
-    std::shared_ptr<grid::GhostGridInfoCreatorInterface>
+    std::shared_ptr<GhostGridInfoCreatorInterface>
         ptr_ghost_grid_info_creator_ = nullptr;
 
     // type of default geometry shape
@@ -128,8 +125,8 @@ public:
         const std::unordered_map<DefSizet, bool>& map_indices_base,
         std::unordered_map<DefSizet, bool>* const ptr_map_indices_remain) = 0;
     virtual void FindTrackingNodeNearGeo(
-        const grid::SFBitsetAux2D& sfbitset_aux_2d,
-        std::shared_ptr<grid::GridInfoInterface> ptr_grid_info) = 0;
+        const SFBitsetAux2D& sfbitset_aux_2d,
+        std::shared_ptr<GridInfoInterface> ptr_grid_info) const = 0;
 };
 #endif  // DEBUG_DISABLE_2D_FUNCTIONS
 #ifndef  DEBUG_DISABLE_3D_FUNCTIONS
@@ -162,8 +159,8 @@ public:
         const std::unordered_map<DefSizet, bool>& map_indices_base,
         std::unordered_map<DefSizet, bool>* const ptr_map_indices_remain) = 0;
     virtual void FindTrackingNodeNearGeo(
-        const grid::SFBitsetAux3D& sfbitset_aux_3d,
-        std::shared_ptr<grid::GridInfoInterface> ptr_grid_info) = 0;
+        const SFBitsetAux3D& sfbitset_aux_3d,
+        std::shared_ptr<GridInfoInterface> ptr_grid_info) const = 0;
 };
 #endif  // DEBUG_DISABLE_3D_FUNCTIONS
 
@@ -192,7 +189,6 @@ private:
     DefaultGeoShapeManager& operator =
         (const DefaultGeoShapeManager&) = delete;
 };
-}  // end namespace criterion
 }  // end namespace amrproject
 }  // end namespace rootproject
 #endif  // ROOTPROJECT_AMR_PROJECT_CRITERION_GEOMETRY_INFO_INTERFACE_H_

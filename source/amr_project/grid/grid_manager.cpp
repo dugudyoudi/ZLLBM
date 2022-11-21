@@ -16,7 +16,6 @@
 #include "mpi/mpi_manager.h"
 namespace rootproject {
 namespace amrproject {
-namespace grid {
 /**
 * @brief   function to initialize grid noes.
 * @param[in] sfbitset_in   space filling code of the grid node.
@@ -27,7 +26,7 @@ void GridInfoInterface::InitialGridNode(const DefSFBitset& sfbitset_in) {
 #ifdef ENABLE_MPI
     rank_id = mpi::MpiManager::GetInstance()->rank_id_;
 #endif  // ENABLE_MPI
-    io::LogWarning("Function for initializing grid node "
+    LogWarning("Function for initializing grid node "
         "(GridInfoInterface::InitialGridNode) does not given");
 }
 /**
@@ -314,6 +313,5 @@ void GridManagerInterface::AddNodesInstanceBasedOnLowerLevel(
 //    }
 //}
 //#endif  // DEBUG_DISABLE_3D_FUNCTIONS
-}  // end namsapce grid
 }  // end namespace amrproject
 }  // end namespace rootproject

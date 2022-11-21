@@ -15,12 +15,10 @@
 #include <cstdint>
 namespace rootproject {
 namespace amrproject {
-namespace io {
 void LogInfo(const std::string& msg);
 void LogWarning(const std::string& msg);
 void LogError(const std::string& msg);
 void LogStartTime();
-}  // end namespace io
 }  // end amrproject
 }  // end namespace rootproject
 #endif  // ROOTPROJECT_SOURCE_AMR_PROJECT_IO_LOG_WRITE_H_

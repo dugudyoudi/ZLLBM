@@ -20,7 +20,6 @@
 #include "./solver_info_interface.h"
 namespace rootproject {
 namespace amrproject{
-namespace grid {
 /**
 * @struct TrackingNode
 * @brief structure to nodes information for traking movement
@@ -130,7 +129,7 @@ public:
     std::vector<DefReal> grid_space_;
     std::shared_ptr<SolverInterface> ptr_solver_ = nullptr;
 
-    std::map<std::pair<criterion::ECriteriolType, DefSizet>,
+    std::map<std::pair<ECriteriolType, DefSizet>,
         std::shared_ptr<TrackingGridInfoInterface>>
         map_ptr_tracking_grid_info_;
     std::shared_ptr<GhostGridInfoInterface>
@@ -163,7 +162,6 @@ public:
     virtual std::shared_ptr<GridInfoInterface>
         CreateGridInfo() = 0;
 };
-}  // end namsapce grid
 }  // end namespace amrproject
 }  // end namespace rootproject
 #endif  // ROOTPROJECT_AMR_PROJECT_SOURCE_GRID_GRID_INFO_H_

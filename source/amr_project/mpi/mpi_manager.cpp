@@ -13,7 +13,7 @@
 #include "grid/grid_manager.h"
 #include "io/io_manager.h"
 namespace rootproject {
-namespace mpi {
+namespace amrproject {
 void MpiManager::StartupMpi(int argc, char* argv[]) {
     MPI_Init(&argc, &argv);
     MPI_Comm_rank(MPI_COMM_WORLD, &rank_id_);
@@ -26,6 +26,6 @@ void MpiManager::PartiteBackground() {
 }
 void MpiManager::SetMpiParameters() {
 }
-}  // end namespace mpi
+}  // end namespace amrproject
 }  // end namespace rootproject
 #endif

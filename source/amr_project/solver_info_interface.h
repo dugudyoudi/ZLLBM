@@ -13,9 +13,7 @@
 #include <memory>
 namespace rootproject {
 namespace amrproject {
-namespace grid {
 class GridInfoCreatorInterface;
-}  // end namespace grid
 /**
 * @class SolverInterface
 * @brief abstract class used to manager solver.
@@ -24,7 +22,7 @@ class SolverInterface {
 public:
     DefUint k0SolverDims_ = 0;  ///< dimension
     std::string node_type_;
-    std::shared_ptr<grid::GridInfoCreatorInterface>
+    std::shared_ptr<GridInfoCreatorInterface>
         ptr_grid_info_creator_ = nullptr;
     virtual std::string GetSolverMethod() = 0;
     virtual void SolverInitial() = 0;

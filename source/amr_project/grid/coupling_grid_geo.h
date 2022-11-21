@@ -12,16 +12,15 @@
 #include "grid/grid_info_interface.h"
 namespace rootproject {
 namespace amrproject{
-namespace grid {
-class TrackingGridInfoGeo :public TrackingGridInfoInterface {
-};
-class TrackingGridInfoGeoCreator :public TrackingGridInfoCreatorInterface {
-public:
-   std::shared_ptr<TrackingGridInfoInterface>
-        CreateTrackingGridInfo() override {
-       return std::make_shared<TrackingGridInfoGeo>();
-   };
-};
+//class TrackingGridInfoGeo :public TrackingGridInfoInterface {
+//};
+//class TrackingGridInfoGeoCreator :public TrackingGridInfoCreatorInterface {
+//public:
+//   std::shared_ptr<TrackingGridInfoInterface>
+//        CreateTrackingGridInfo() override {
+//       return std::make_shared<TrackingGridInfoGeo>();
+//   };
+//};
 class GhostGridInfoGeo : public GhostGridInfoInterface {
     void InitialGhostNode(const DefSFBitset& bitset_in) override {};
 };
@@ -36,7 +35,6 @@ public:
         return std::make_shared<GhostGridInfoGeo>();
     };
 };
-}  // end namsapce grid
 }  // end namespace amrproject
 }  // end namespace rootproject
 #endif  // ROOTPROJECT_SOURCE_AMR_PROJECT_GRID_COUPLING_GRID_GEO_H_

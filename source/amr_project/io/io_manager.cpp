@@ -14,7 +14,6 @@
 #include "mpi/mpi_manager.h"
 namespace rootproject {
 namespace amrproject{
-namespace io {
 /**
 * @brief function to setup default io related parameters.
 */
@@ -87,11 +86,10 @@ void IoManager::SetIoParameters() {
 * @brief function to write flowfield.
 */
 void IoManager::OutputFlowfield(
-    std::shared_ptr<grid::GridManagerInterface> ptr_grid_manager,
-    std::shared_ptr<criterion::CriterionManager> ptr_criterion_manager){
+    std::shared_ptr<GridManagerInterface> ptr_grid_manager,
+    std::shared_ptr<CriterionManager> ptr_criterion_manager){
     //vtk_instance_.WriteVtu(bool_binary_, k0OutputDataFormat_,
     //    ptr_grid_manager, ptr_criterion_manager);
 }
-}  // end namespace io
 }  // end amrproject
 }  // end namespace rootproject

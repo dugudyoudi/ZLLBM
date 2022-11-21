@@ -16,7 +16,6 @@
 //#include "mpi/mpi_manager.h"
 //namespace rootproject {
 //namespace amrproject {
-//namespace io {
 ///**
 //* @brief  funciton to convert data to base64
 //* @param[in]  char in   vertexer vertex to output file
@@ -734,6 +733,5 @@
 //        break;
 //    }
 //}
-//}  // end namespace io
 //}  // end amrproject
 //}  // end namespace rootproject

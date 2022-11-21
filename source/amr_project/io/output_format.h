@@ -12,7 +12,6 @@
 #include "io/vtk_writer.h"
 namespace rootproject {
 namespace amrproject {
-namespace io {
 /**
 * @class OutputDataFormatReal
 * @brief class used to sepcify real format for output data.
@@ -63,7 +62,6 @@ public:
     OutputDataFormatUint output_uint_;
     OutputDataFormatInt output_int_;
 };
-}  // end namespace io
 }  // end amrproject
 }  // end namespace rootproject
 #endif  // ROOTPROJECT_SOURCE_AMR_PROJECT_IO_OUTPUT_FORMAT_H_

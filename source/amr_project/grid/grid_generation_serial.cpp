@@ -17,7 +17,6 @@
 //#endif  // ENABLE_MPI
 //namespace rootproject {
 //namespace amrproject {
-//namespace grid {
 ///**
 //* @brief   function to generate grid for all levels of refinement.
 //* @param[in]  vec_geo_info vetor containing vertexers
@@ -1272,6 +1271,5 @@
 //    return bool_node_not_added_in_any_diretion;
 //}
 //#endif  // DEBUG_DISABLE_3D_FUNCTIONS
-//}  // end namespace grid
 //}  // end namespace amrproject
 //}  // end namespace rootproject

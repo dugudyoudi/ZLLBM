@@ -13,7 +13,6 @@
 #include "criterion/geometry_info_connection.h"
 namespace rootproject {
 namespace amrproject {
-namespace criterion {
 /**
 * @class CriterionManager
 * @brief class used to manage refinement criterion.
@@ -31,7 +30,6 @@ class CriterionManager {
          const DefUint geo_data_type);
     void InitialGeometrySerial(std::vector<DefReal> vec_real_offset);
 };
-}  // end namespace criterion
 }  // end namespace amrproject
 }  // end namespace rootproject
 #endif  // ROOTPROJECT_AMR_PROJECT_CRITERION_CRITERION_MANAGER_H_

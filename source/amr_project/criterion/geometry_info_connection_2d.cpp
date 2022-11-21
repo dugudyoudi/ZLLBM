@@ -17,9 +17,9 @@
 #include "criterion/criterion_manager.h"
 #include "criterion/geometry_info_connection.h"
 #include "grid/grid_info_interface.h"
+#include "grid/sfbitset_aux.h"
 namespace rootproject {
 namespace amrproject {
-namespace criterion {
 /**
 * @brief   function to set indices and size of vectors in GeometryCoordinate to
 *          store real and int variable
@@ -126,8 +126,8 @@ void GeometryInfoConnection2D::DecomposeNHigerLevel(const DefSizet i_level_grid,
 
 }
 void GeometryInfoConnection2D::FindTrackingNodeNearGeo(
-    const grid::SFBitsetAux2D& sfbitset_aux_2d,
-    std::shared_ptr<grid::GridInfoInterface> ptr_grid_info) {
+    const SFBitsetAux2D& sfbitset_aux_2d,
+    std::shared_ptr<GridInfoInterface> ptr_grid_info) const {
     if (ptr_grid_info->map_ptr_tracking_grid_info_
         .find({ ECriteriolType::kGeometry, i_geo_ })
         == ptr_grid_info->map_ptr_tracking_grid_info_.end()) {
@@ -135,13 +135,18 @@ void GeometryInfoConnection2D::FindTrackingNodeNearGeo(
             {{ ECriteriolType::kGeometry, i_geo_ },
             ptr_tracking_grid_info_creator_->CreateTrackingGridInfo()});
     }
-    grid::TrackingGridInfoInterface* ptr_tracking_grid = ptr_grid_info->
+    TrackingGridInfoInterface* ptr_tracking_grid = ptr_grid_info->
         map_ptr_tracking_grid_info_.at(
             { ECriteriolType::kGeometry, i_geo_ }).get();
-    //for (const auto )
-
+    DefSizet level_diff = ptr_grid_info->i_level_ - i_level_;
+    std::array<DefReal, 2> coordinates;
+    for (const auto& iter : connection_vertex_given_level_.at(level_diff)) {
+        coordinates[kXIndex] = vertex_given_level_.at(iter.first)
+            .vec_vertex_cooridinate.at(iter.second).coordinates[kXIndex];
+        //sfbitset_aux_2d.SFBitsetEncoding(coordinates);
+           
+    }
 }
-}  // end namespace criterion
 }  // end namespace amrproject
 }  // end namespace rootproject
 #endif  // DEBUG_DISABLE_2D_FUNCTIONS

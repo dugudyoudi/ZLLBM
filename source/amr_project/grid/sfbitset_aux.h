@@ -15,7 +15,6 @@
 #include "../defs_libs.h"
 namespace rootproject {
 namespace amrproject {
-namespace grid {
 class  SFBitsetAuxInterface{
  public:
     // .at(kRefCurrent) takes the given direction while
@@ -32,6 +31,9 @@ class  SFBitsetAuxInterface{
     /**< refernece bitset used to take digitals at the center of
     a cell of one level lower.*/
     virtual void SFBitsetInitial() = 0;
+    virtual DefSFBitset SFBitsetEncodingReal(const std::vector<DefReal>& grid_space,
+        const std::vector<DefReal>& coordi,
+        std::shared_ptr<SFBitsetAuxInterface> ptr_bitset_aux) const = 0;
 };
 #ifndef  DEBUG_DISABLE_2D_FUNCTION
 class  SFBitsetAux2D : public SFBitsetAuxInterface {
@@ -48,24 +50,24 @@ class  SFBitsetAux2D : public SFBitsetAuxInterface {
     avoid extra expends. Functions will be called frequently are declared
     as inline cuntions.*/
     inline DefSFBitset SFBitsetToNLowerLevel(
-        const DefSizet n_level, const DefSFBitset& morton_in);
+        const DefSizet n_level, const DefSFBitset& morton_in) const;
     inline DefSFBitset SFBitsetToNHigherLevel(
-        const DefSizet n_level, const DefSFBitset& morton_in);
-    DefSFBitset SFBitsetEncoding(
-        const std::array<DefLUint, 2>& coordi_index);
+        const DefSizet n_level, const DefSFBitset& morton_in) const;
+    inline DefSFBitset FindXNeg(const DefSFBitset& bitset_in) const;
+    inline DefSFBitset FindXPos(const DefSFBitset& bitset_in) const;
+    inline DefSFBitset FindYNeg(const DefSFBitset& bitset_in) const;
+    inline DefSFBitset FindYPos(const DefSFBitset& bitset_in) const;
+
     void SFBitsetComputeIndices(const DefSFBitset& bitset_in,
-        std::array<DefLUint, 2>* const ptr_indiex);
+        std::array<DefLUint, 2>* const ptr_indiex) const;
     void SFBitsetComputeCoordinate(
         const DefSFBitset& bitset_in,
         const std::array<DefReal, 2>& grid_space,
-        std::array<DefReal, 2>* const ptr_coordi);
-    inline DefSFBitset FindXNeg(const DefSFBitset& bitset_in);
-    inline DefSFBitset FindXPos(const DefSFBitset& bitset_in);
-    inline DefSFBitset FindYNeg(const DefSFBitset& bitset_in);
-    inline DefSFBitset FindYPos(const DefSFBitset& bitset_in);
+        std::array<DefReal, 2>* const ptr_coordi) const;
+    DefSFBitset SFBitsetEncoding(
+        const std::array<DefLUint, 2>& coordi_index) const;
 
     std::array<DefSFBitset, 2> k0SFBitsetMin, k0SFBitsetMax;
-    void SFBitsetInitial() override;
     void SFBitsetMinAndMaxCoordinates(const DefSizet max_level,
         const std::array<DefLUint, 2>& indices_min,
         const std::array<DefLUint, 2>& indices_max);
@@ -73,21 +75,27 @@ class  SFBitsetAux2D : public SFBitsetAuxInterface {
         const std::array<DefSFBitset, 2>& sfbitset_min,
         const std::array<DefSFBitset, 2>& sfbitset_max,
         std::array<bool, 2>* const ptr_bool_not_at_boundary_neg,
-        std::array<bool, 2>* const ptr_bool_not_at_boundary_pos);
+        std::array<bool, 2>* const ptr_bool_not_at_boundary_pos) const;
     void SFBitsetFindAllNeighbours(
             const DefSFBitset& sfbitset_center,
-            std::array<DefSFBitset, 9>* const ptr_bitset_neighbour);
+            std::array<DefSFBitset, 9>* const ptr_bitset_neighbour) const;
     void SFBitsetFindCellNeighbours(
         const DefSFBitset& sfbitset_corner,
-        std::array<DefSFBitset, 4>* const ptr_bitset_neighbour);
+        std::array<DefSFBitset, 4>* const ptr_bitset_neighbour) const;
     void SFBitsetHigherLevelInACell(
         const DefSizet level_diff,
         const DefSFBitset& sfbitset_corner,
-        std::vector<DefSFBitset>* const ptr_vec_bitset_neighbour);
+        std::vector<DefSFBitset>* const ptr_vec_bitset_neighbour) const;
     template<typename DataType>
     bool SFBitsetBelongToOneCell(const DefSFBitset& sfbitset_in,
         const DefMap<DataType>& map_node_exist,
-        std::array<DefSFBitset, 4>* const ptr_sfbitsets);
+        std::array<DefSFBitset, 4>* const ptr_sfbitsets) const;
+
+    // virtual functions
+    void SFBitsetInitial() override;
+    DefSFBitset SFBitsetEncodingReal(const std::vector<DefReal>& grid_space,
+        const std::vector<DefReal>& coordi,
+        std::shared_ptr<SFBitsetAuxInterface> ptr_bitset_aux) const override;
 };
 #endif  // DEBUG_DISABLE_2D_FUNCTIONS
 #ifndef  DEBUG_DISABLE_3D_FUNCTION
@@ -106,25 +114,25 @@ class  SFBitsetAux3D : public SFBitsetAuxInterface {
         kNodeIndexXnYnZn_ = 26;  ///< indices of node and  its 26 neighbours
 
     inline DefSFBitset SFBitsetToNLowerLevel(
-        const DefSizet n_level, const DefSFBitset& morton_in);
+        const DefSizet n_level, const DefSFBitset& morton_in) const;
     inline DefSFBitset SFBitsetToNHigherLevel(
-        const DefSizet n_level, const DefSFBitset& morton_in);
+        const DefSizet n_level, const DefSFBitset& morton_in) const;
+    inline DefSFBitset FindXNeg(const DefSFBitset& bitset_in) const;
+    inline DefSFBitset FindXPos(const DefSFBitset& bitset_in) const;
+    inline DefSFBitset FindYNeg(const DefSFBitset& bitset_in) const;
+    inline DefSFBitset FindYPos(const DefSFBitset& bitset_in) const;
+    inline DefSFBitset FindZNeg(const DefSFBitset& bitset_in) const;
+    inline DefSFBitset FindZPos(const DefSFBitset& bitset_in) const;
+
     DefSFBitset SFBitsetEncoding(
-        const std::array<DefLUint, 3>& coordi_index);
+        const std::array<DefLUint, 3>& coordi_index) const;
     void SFBitsetComputeIndices(const DefSFBitset& bitset_in,
-        std::array<DefLUint, 3>* const ptr_indices);
+        std::array<DefLUint, 3>* const ptr_indices) const;
     void SFBitsetComputeCoordinate(const DefSFBitset& bitset_in,
         const std::array<DefReal, 3>& grid_space,
-        std::array<DefReal, 3>* const ptr_coordi);
-    inline DefSFBitset FindXNeg(const DefSFBitset& bitset_in);
-    inline DefSFBitset FindXPos(const DefSFBitset& bitset_in);
-    inline DefSFBitset FindYNeg(const DefSFBitset& bitset_in);
-    inline DefSFBitset FindYPos(const DefSFBitset& bitset_in);
-    inline DefSFBitset FindZNeg(const DefSFBitset& bitset_in);
-    inline DefSFBitset FindZPos(const DefSFBitset& bitset_in);
+        std::array<DefReal, 3>* const ptr_coordi) const;
 
     std::array<DefSFBitset, 3> k0SFBitsetMin, k0SFBitsetMax;
-    void SFBitsetInitial() override;
     void SFBitsetMinAndMaxCoordinates(const DefSizet max_level,
         const std::array<DefLUint, 3>& indices_min,
         const std::array<DefLUint, 3>& indices_max);
@@ -132,24 +140,29 @@ class  SFBitsetAux3D : public SFBitsetAuxInterface {
         const std::array<DefSFBitset, 3>& sfbitset_min,
         const std::array<DefSFBitset, 3>& sfbitset_max,
         std::array<bool, 3>* const ptr_bool_not_at_boundary_neg,
-        std::array<bool, 3>* const ptr_bool_not_at_boundary_pos);
+        std::array<bool, 3>* const ptr_bool_not_at_boundary_pos) const;
     void SFBitsetFindAllNeighbours(
         const DefSFBitset& sfbitset_center,
-        std::array<DefSFBitset, 27>* const ptr_bitset_neighbour);
+        std::array<DefSFBitset, 27>* const ptr_bitset_neighbour) const;
     void SFBitsetFindCellNeighbours(
         const DefSFBitset& sfbitset_corner,
-        std::array<DefSFBitset, 8>* const ptr_vec_bitset_neighbour);
+        std::array<DefSFBitset, 8>* const ptr_vec_bitset_neighbour) const;
     void SFBitsetHigherLevelInACell(
         const DefSizet level_diff,
         const DefSFBitset& sfbitset_corner,
-        std::vector<DefSFBitset>* const ptr_ptr_sfbitsets_higher_level);
+        std::vector<DefSFBitset>* const ptr_ptr_sfbitsets_higher_level) const;
     template<typename DataType>
     bool SFBitsetBelongToOneCell(const DefSFBitset& sfbitset_in,
         const DefMap<DataType>& map_node_exist,
-        std::array<DefSFBitset, 8>* const ptr_sfbitsets);
+        std::array<DefSFBitset, 8>* const ptr_sfbitsets) const;
+
+    // virtual functions
+    void SFBitsetInitial() override;
+    DefSFBitset SFBitsetEncodingReal(const std::vector<DefReal>& grid_space,
+        const std::vector<DefReal>& coordi,
+        std::shared_ptr<SFBitsetAuxInterface> ptr_bitset_aux) const override;
 };
 #endif  // DEBUG_DISABLE_3D_FUNCTION
-}  // end namsapce grid
 }  // end namespace amrproject
 }  // end namespace rootproject
 
@@ -159,7 +172,6 @@ class  SFBitsetAux3D : public SFBitsetAuxInterface {
 // functions using space filling code manipulations
 namespace rootproject {
 namespace amrproject {
-namespace grid {
 #ifndef  DEBUG_DISABLE_2D_FUNCTIONS
 /**
 * @brief   function to find space filling code of nodes on a cell (2D)
@@ -174,7 +186,7 @@ namespace grid {
 template<typename DataType>
 bool SFBitsetAux2D::SFBitsetBelongToOneCell(
     const DefSFBitset& sfbitset_in, const DefMap<DataType>& map_node_exist,
-    std::array<DefSFBitset, 4>* const ptr_sfbitsets) {
+    std::array<DefSFBitset, 4>* const ptr_sfbitsets)  const {
 
     bool bool_nodes_can_construct_a_cell = true;
 
@@ -216,7 +228,7 @@ bool SFBitsetAux2D::SFBitsetBelongToOneCell(
 template<typename DataType>
 bool SFBitsetAux3D::SFBitsetBelongToOneCell(
     const DefSFBitset& sfbitset_in, const DefMap<DataType>& map_node_exist,
-    std::array<DefSFBitset, 8>* const ptr_sfbitsets) {
+    std::array<DefSFBitset, 8>* const ptr_sfbitsets) const {
 
     ptr_sfbitsets->at(0) = sfbitset_in;
     // (+x, 0, 0)
@@ -264,7 +276,6 @@ bool SFBitsetAux3D::SFBitsetBelongToOneCell(
     return true;
 }
 #endif  // DEBUG_DISABLE_3D_FUNCTIONS
-}  // end namsapce grid
 }  // end namespace amrproject
 }  // end namespace rootproject
 #endif  // ROOTPROJECT_SOURCE_AMR_PROJECT_GRID_SFBITSET_AUX_H_

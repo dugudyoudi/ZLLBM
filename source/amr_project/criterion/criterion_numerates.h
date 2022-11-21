@@ -12,7 +12,6 @@
 #define ROOTPROJECT_AMR_PROJECT_CRITERION_CRITERION_NUMERATES_H_
 namespace rootproject {
 namespace amrproject {
-namespace criterion {
 enum class ECriteriolType {
     kUndefined = 0,
     kGeometry = 1
@@ -46,7 +45,6 @@ enum class DefaultGeoShapeType {
     kReadFromFile = 1,
     kCircle = 2,
 };
-}  // end namespace criterion
 }  // end namespace amrproject
 }  // end namespace rootproject
 #endif  // ROOTPROJECT_AMR_PROJECT_CRITERION_CRITERION_NUMERATES_H_

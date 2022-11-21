@@ -19,7 +19,6 @@
 //#include "grid/grid_info_preset.h"
 namespace rootproject {
 namespace amrproject {
-namespace criterion {
 /**
 * @struct GeometryConnectionSurface
 * @brief structure to store surface connection information
@@ -169,8 +168,8 @@ class GeometryInfoConnection2D:public GeometryInfo2DInterface,
         std::unordered_map<DefSizet, bool>* const ptr_map_indices_remain)
         override;
     void FindTrackingNodeNearGeo(
-        const grid::SFBitsetAux2D& sfbitset_aux_2d,
-        std::shared_ptr<grid::GridInfoInterface> ptr_grid_info) override;
+        const SFBitsetAux2D& sfbitset_aux_2d,
+        std::shared_ptr<GridInfoInterface> ptr_grid_info) const override;
 
     // virtual functions for GeometryInfoConnectionInterface
     void InitialCoordinateGivenLevel() override;
@@ -212,8 +211,8 @@ class GeometryInfoConnection3D :public GeometryInfo3DInterface,
         std::unordered_map<DefSizet, bool>* const ptr_map_indices_remain)
         override;
     void FindTrackingNodeNearGeo(
-        const grid::SFBitsetAux3D& sfbitset_aux_3d,
-        std::shared_ptr<grid::GridInfoInterface> ptr_grid_info) override;
+        const SFBitsetAux3D& sfbitset_aux_3d,
+        std::shared_ptr<GridInfoInterface> ptr_grid_info) const override;
 
     // virtual functions for GeometryInfoConnectionInterface
     void InitialCoordinateGivenLevel() override;
@@ -237,7 +236,6 @@ public:
     };
 };
 #endif  // DEBUG_DISABLE_3D_FUNCTIONS
-}  // end namespace criterion
 }  // end namespace amrproject
 }  // end namespace rootproject
 #endif  // ROOTPROJECT_AMR_PROJECT_GEOMETRY_GEOMETRY_INFO_CONNECTION_H_

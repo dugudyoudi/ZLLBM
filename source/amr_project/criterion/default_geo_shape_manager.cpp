@@ -10,7 +10,6 @@
 #include "criterion/criterion_manager.h"
 namespace rootproject {
 namespace amrproject {
-namespace criterion {
 /**
 * @brief   function to generate a 2D circle
 */
@@ -39,6 +38,5 @@ void DefaultGeoShapeManager::geo_circle_initial(const DefUint dims,
 void DefaultGeoShapeManager::geo_circle_update(const DefUint dims,
     std::shared_ptr<GeometryInfo2DInterface> geo_ptr) {
 }
-}  // end namespace criterion
 }  // end namespace amrproject
 }  // end namespace rootproject

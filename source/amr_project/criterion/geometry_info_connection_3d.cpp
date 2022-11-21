@@ -16,7 +16,6 @@
 #include "grid/sfbitset_aux.h"
 namespace rootproject {
 namespace amrproject {
-namespace criterion {
 /**
 * @brief   function to set indices and size of vectors in GeometryCoordinate to
 *          store real and int variable
@@ -124,11 +123,10 @@ void GeometryInfoConnection3D::DecomposeNHigerLevel(const DefSizet i_level_grid,
 
 };
 void GeometryInfoConnection3D::FindTrackingNodeNearGeo(
-    const grid::SFBitsetAux3D& sfbitset_aux_3d,
-    std::shared_ptr<grid::GridInfoInterface> ptr_grid_info) {
+    const SFBitsetAux3D& sfbitset_aux_3d,
+    std::shared_ptr<GridInfoInterface> ptr_grid_info) const {
 
 }
-}  // end namespace criterion
 }  // end namespace amrproject
 }  // end namespace rootproject
 #endif  // DEBUG_DISABLE_3D_FUNCTIONS

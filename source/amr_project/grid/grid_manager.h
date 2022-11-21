@@ -26,7 +26,6 @@
 #endif  // DEBUG_UNIT_TEST
 namespace rootproject {
 namespace amrproject {
-namespace grid {
 template<typename InterfaceInfo>
 concept InterfaceInfoHasType =requires (
     InterfaceInfo type_inferface){
@@ -92,7 +91,7 @@ class GridManagerInterface {
 
     // generate grid
     void GenerateGridSerial(const std::vector<std::shared_ptr
-         <criterion::GeometryInfoInterface>>& vec_geo_info);
+         <GeometryInfoInterface>>& vec_geo_info);
 
     template<InterfaceInfoHasType InterfaceInfo>
     //template<typename Type, typename InterfaceInfo>
@@ -285,7 +284,6 @@ DefSizet GridManagerInterface::CheckExistanceOfTypeAtGivenLevel(
     }
     return 0;
 }
-}  // end namsapce grid
 }  // end namespace amrproject
 }  // end namespace rootproject
 #endif  // ROOTPROJECT_SOURCE_AMR_PROJECT_GRID_GRID_MANAGER_H_

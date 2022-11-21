@@ -18,8 +18,8 @@ void AmrManager::LoadModules() {
     ptr_mpi_manager = std::make_shared<mpi::MpiManager> ptr_mpi_manager();
 #endif
     //ptr_grid_manager_ = std::make_shared<grid::GridManagerInterface>();
-    ptr_io_manager_ = std::make_shared<io::IoManager>();
-    ptr_criterion_manager_ = std::make_shared<criterion::CriterionManager>();
+    ptr_io_manager_ = std::make_shared<IoManager>();
+    ptr_criterion_manager_ = std::make_shared<CriterionManager>();
 }
 /**
 * @brief      function to set default parameters for all modules.
@@ -90,7 +90,7 @@ void AmrManager::SetTheSameLevelDependentInfoForAllLevels(
         ++i_level) {
         ptr_grid_manager_->vec_ptr_grid_info_.emplace_back(
             ptr_sovler->ptr_grid_info_creator_->CreateGridInfo());
-        grid::GridInfoInterface& grid_ref =
+        GridInfoInterface& grid_ref =
             *(ptr_grid_manager_->vec_ptr_grid_info_).back();
         grid_ref.i_level_ = i_level;
         // link sovler to grid at i_level of refinement 

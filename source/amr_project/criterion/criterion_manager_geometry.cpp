@@ -13,7 +13,6 @@
 #include "criterion/criterion_manager.h"
 namespace rootproject {
 namespace amrproject {
-namespace criterion {
 /**
 * @brief   function to create instance based on the type of geometry vertex
 * @param[in]  geo_data_type date type of the geometry
@@ -73,6 +72,5 @@ void CriterionManager::InitialGeometrySerial(
     //    }
     //}
 }
-}  // end namespace criterion
 }  // end namespace amrproject
 }  // end namespace rootproject

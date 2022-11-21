@@ -14,7 +14,6 @@
 #include "grid/grid_manager.h"
 namespace rootproject {
 namespace amrproject {
-namespace grid {
 // static members
 #ifndef  DEBUG_DISABLE_2D_FUNCTION
 std::array<DefSFBitset, 2> SFBitsetAuxInterface::k0SFBitsetTakeXRef_,
@@ -91,7 +90,7 @@ void SFBitsetAux2D::SFBitsetNotOnDomainBoundary(
     const std::array<DefSFBitset, 2>& sfbitset_min,
     const std::array<DefSFBitset, 2>& sfbitset_max,
     std::array<bool, 2>* const ptr_bool_not_at_boundary_neg,
-    std::array<bool, 2>* const ptr_bool_not_at_boundary_pos) {
+    std::array<bool, 2>* const ptr_bool_not_at_boundary_pos) const {
     // use refernece sfbitset to take digits for x negative direction
     if ((sfbitset_in & k0SFBitsetTakeXRef_[kRefCurrent_])
         == sfbitset_min[kXIndex]) {
@@ -128,7 +127,7 @@ void SFBitsetAux2D::SFBitsetNotOnDomainBoundary(
 */
 void SFBitsetAux2D::SFBitsetFindCellNeighbours(
     const DefSFBitset& sfbitset_in,
-    std::array<DefSFBitset, 4>* const ptr_sfbitsets) {
+    std::array<DefSFBitset, 4>* const ptr_sfbitsets)  const {
     ptr_sfbitsets->at(0) = sfbitset_in;
     // (+x, 0)
     ptr_sfbitsets->at(1) = FindXPos(sfbitset_in);
@@ -147,7 +146,7 @@ void SFBitsetAux2D::SFBitsetFindCellNeighbours(
 void SFBitsetAux2D::SFBitsetHigherLevelInACell(
     const DefSizet level_diff,
     const DefSFBitset& sfbitset_corner,
-    std::vector<DefSFBitset>* const ptr_vec_sfbitsets_higher_level) {
+    std::vector<DefSFBitset>* const ptr_vec_sfbitsets_higher_level) const {
     SFBitsetToNHigherLevel(level_diff, sfbitset_corner);
     DefSizet num = TwoPowerN(level_diff - 1);
     DefSFBitset sfbitset_x, sfbitset_y = sfbitset_corner;
@@ -171,7 +170,7 @@ void SFBitsetAux2D::SFBitsetHigherLevelInACell(
 */
 void SFBitsetAux2D::SFBitsetFindAllNeighbours(
     const DefSFBitset& sfbitset_center,
-    std::array<DefSFBitset, 9>* const  ptr_bitset_neighbours) {
+    std::array<DefSFBitset, 9>* const  ptr_bitset_neighbours) const {
 
     DefSFBitset sfbitset_temp0, sfbitset_temp1;
 
@@ -230,7 +229,7 @@ void SFBitsetAux3D::SFBitsetNotOnDomainBoundary(
     const std::array<DefSFBitset, 3>& sfbitset_min,
     const std::array<DefSFBitset, 3>& sfbitset_max,
     std::array<bool, 3>* const ptr_bool_not_at_boundary_neg,
-    std::array<bool, 3>* const ptr_bool_not_at_boundary_pos) {
+    std::array<bool, 3>* const ptr_bool_not_at_boundary_pos) const {
     // use refernece sfbitset to take digits for x negative direction
     if ((sfbitset_in & k0SFBitsetTakeXRef_[kRefCurrent_])
         == sfbitset_min[kXIndex]) {
@@ -279,7 +278,7 @@ void SFBitsetAux3D::SFBitsetNotOnDomainBoundary(
 void SFBitsetAux3D::SFBitsetHigherLevelInACell(
     const DefSizet level_diff,
     const DefSFBitset& sfbitset_corner,
-    std::vector<DefSFBitset>* const ptr_vec_sfbitsets_higher_level) {
+    std::vector<DefSFBitset>* const ptr_vec_sfbitsets_higher_level) const {
     SFBitsetToNHigherLevel(level_diff, sfbitset_corner);
     DefSizet num = TwoPowerN(level_diff - 1);
     DefSFBitset sfbitset_x, sfbitset_y, sfbitset_z = sfbitset_corner;
@@ -311,7 +310,7 @@ void SFBitsetAux3D::SFBitsetHigherLevelInACell(
 */
 void SFBitsetAux3D::SFBitsetFindCellNeighbours(
     const DefSFBitset& sfbitset_in,
-    std::array<DefSFBitset, 8>* const ptr_sfbitsets) {
+    std::array<DefSFBitset, 8>* const ptr_sfbitsets)  const {
     ptr_sfbitsets->at(0) = sfbitset_in;
     // (+x, 0, 0)
     ptr_sfbitsets->at(1) = FindXPos(sfbitset_in);
@@ -336,7 +335,7 @@ void SFBitsetAux3D::SFBitsetFindCellNeighbours(
 */
 void SFBitsetAux3D::SFBitsetFindAllNeighbours(
     const DefSFBitset& sfbitset_center,
-    std::array<DefSFBitset,27>* const  ptr_bitset_neighbours) {
+    std::array<DefSFBitset,27>* const  ptr_bitset_neighbours) const {
 
     DefSFBitset sfbitset_temp0, sfbitset_temp1, sfbitset_temp2;
 
@@ -449,6 +448,5 @@ void SFBitsetAux3D::SFBitsetFindAllNeighbours(
         = sfbitset_temp1;
 }
 #endif  // DEBUG_DISABLE_3D_FUNCTIONS
-}  // end namsapce grid
 }  // end namespace amrproject
 }  // end namespace rootproject
