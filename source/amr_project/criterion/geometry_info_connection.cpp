@@ -10,6 +10,7 @@
 #include <algorithm>
 #include <queue>
 #include <vector>
+#include <string>
 #include "auxiliary_inline_func.h"
 #include "io/log_write.h"
 #include "criterion/geometry_info_connection.h"
@@ -37,8 +38,12 @@ void GeometryConnectionInterface::SetupConnectionParameters(
 }
 /**
 * @brief function to initialize geometry connections.
+* @param[out]  ptr_coordi_min   minimum cooridinates of the geometry.
+* @param[out]  ptr_coordi_max   maximum cooridinates of the geometry.
 */
-void GeometryConnectionInterface::InitialConnection() {
+void GeometryConnectionInterface::InitialConnection(
+    std::vector<DefReal>* const ptr_coordi_min,
+    std::vector<DefReal>* const ptr_coordi_max) {
     // set instance
     if (bool_vertex_info_stored_for_connection_) {
         vertex_instance_.vertex_info.vec_int
@@ -47,8 +52,8 @@ void GeometryConnectionInterface::InitialConnection() {
             .resize(k0NumRealForEachVertex_);
     }
 
-    // step 1: add all geometry vertexs to vertex_given_level_
-    InitialCoordinateGivenLevel();
+    // step 1: add all geometry points to vertex_given_level_
+    InitialCoordinateGivenLevel(ptr_coordi_min, ptr_coordi_max);
     // add connection relations for edges and surfaces
     GeometryConnectionEdge edge_temp;
     GeometryConnectionSurface surface_temp;
@@ -133,15 +138,20 @@ void GeometryConnectionInterface::InitialConnection() {
 * @brief function to bisect edges once if they are beyong the threshold.
 * @param[in]  i_input_level    level of current connection relations.
 * @param[in]  ds_max    upper threshold of the edge length.
+* @param[in]  ptr_sfbitset_aux pointer to class manage space filling curves.
 * @param[in]  edge_for_bisect    edges need to be bisected.
 * @param[out]  ptr_surface_remain_for_bisect    edge remain to be bisected.
+* @param[out] ptr_sfbitset_ref_added space filling code corresponding
+*               to addded verices.
 */
 void GeometryConnectionInterface::BisectEdgeOnce(
     const DefSizet i_input_level, const DefReal ds_max,
+    const std::shared_ptr<SFBitsetAuxInterface> ptr_sfbitset_aux,
     const std::set<std::pair<std::pair<DefSizet, DefSizet>,
     std::pair<DefSizet, DefSizet>>>& edge_for_bisect,
     std::set<std::pair<std::pair<DefSizet, DefSizet>,
-    std::pair<DefSizet, DefSizet>>>* const ptr_surface_remain_for_bisect) {
+    std::pair<DefSizet, DefSizet>>>* const ptr_surface_remain_for_bisect,
+    DefMap<DefUint>* const ptr_sfbitset_ref_added) {
     DefSizet num_surface, num_surface_p1, max_vertex, i_vertex;
     DefReal dis;
     GeometryConnectionEdge edge_temp;
@@ -149,6 +159,15 @@ void GeometryConnectionInterface::BisectEdgeOnce(
     std::pair<DefSizet, DefSizet> vertex_index_temp, vertex_index_origin;
     std::pair<std::pair<DefSizet, DefSizet>,
         std::pair<DefSizet, DefSizet>> edge_index_temp0, edge_index_temp1;
+    // grid space
+    std::vector<DefReal> grid_space;
+    DefSizet i_grid_level = i_level_ + i_input_level;
+    DefReal grid_scale = DefReal(TwoPowerN(i_grid_level));
+    DefSFBitset bitset_temp;
+    for (const auto iter : ptr_sfbitset_aux->k0SpaceBackgroud_) {
+        grid_space.push_back(iter / grid_scale);
+    }
+    vertex_instance_.higest_grid_level = i_grid_level;
     for (const auto& iter_edge : edge_for_bisect) {
         if (connection_edge_given_level_.at(i_input_level)
             .map_edge_connection.find(iter_edge) ==
@@ -184,6 +203,19 @@ void GeometryConnectionInterface::BisectEdgeOnce(
                 vertex_given_level_.at(vertex_index_temp.first)
                     .vec_vertex_cooridinate = { vertex_instance_ };
             }
+            // sfbitset of at vertex at i_grid_level
+            bitset_temp = ptr_sfbitset_aux->SFBitsetEncodingCoordi(
+                grid_space, vertex_instance_.coordinates);
+            vertex_given_level_.at(vertex_index_temp.first)
+                .vec_vertex_cooridinate.back().map_bitset_ref
+                .insert({ i_grid_level, bitset_temp });
+            if (ptr_sfbitset_ref_added->find(bitset_temp)
+                == ptr_sfbitset_ref_added->end()) {
+                ptr_sfbitset_ref_added->insert({ bitset_temp, 1 });
+            } else {
+                ++ptr_sfbitset_ref_added->at(bitset_temp);
+            }
+            // child relation
             vertex_index_temp.second = vertex_given_level_
                 .at(vertex_index_temp.first).vec_vertex_cooridinate.size() - 1;
             vertex_given_level_.at(iter_edge.first.first)
@@ -413,15 +445,20 @@ void GeometryConnectionInterface::BisectEdgeOnce(
 * @brief function to bisect edges once if they are lower than the threshold.
 * @param[in]  i_input_level    level of current connection relations.
 * @param[in]  ds_min    lower threshold of the edge length.
+* @param[in]  ptr_sfbitset_aux pointer to class manage space filling curves.
 * @param[in]  edge_for_merge    edges need to be merged.
 * @param[out]  ptr_surface_remain_for_merge    edge remain to be merged.
+* @param[out] ptr_sfbitset_ref_removed space filling code corresponding
+*               to removed verices.
 */
 void GeometryConnectionInterface::MergeEdgeOnce(
     const DefSizet i_input_level, const DefReal ds_min,
+    const std::shared_ptr<SFBitsetAuxInterface> ptr_sfbitset_aux,
     const std::set<std::pair<std::pair<DefSizet, DefSizet>,
     std::pair<DefSizet, DefSizet>>>& edge_for_merge,
     std::set<std::pair<std::pair<DefSizet, DefSizet>,
-    std::pair<DefSizet, DefSizet>>>* const ptr_edge_remain_for_merge) {
+    std::pair<DefSizet, DefSizet>>>* const ptr_edge_remain_for_merge,
+    DefMap<DefUint>* const ptr_sfbitset_ref_removed) {
     DefSizet i_vertex, i_vertex0, i_vertex1;
     DefReal dis;
     DefSizet base_level = 0;
@@ -429,7 +466,7 @@ void GeometryConnectionInterface::MergeEdgeOnce(
     std::set<DefSizet> surface_process;
     std::pair<DefSizet, DefSizet> vertex_index_temp;
     std::pair<DefSizet, DefSizet> vertex_temp0, vertex_temp1, vertex_temp2;
-    // (vertex_porcessed) include (set_vertex_remove) and vertexs linked
+    // (vertex_porcessed) include (set_vertex_remove) and vertices linked
     // to edges at levels other than i_input_level
     std::set<std::pair<DefSizet, DefSizet>> set_vertex_processed,
         set_vertex_remain;
@@ -532,7 +569,7 @@ void GeometryConnectionInterface::MergeEdgeOnce(
             if (set_vertex_processed.find(iter_vertex)
                 == set_vertex_processed.end()) {
                 set_vertex_processed.insert(iter_vertex);
-                // add its child vertexs to set_vertex_remain
+                // add its child vertices to set_vertex_remain
                 for (const auto& iter_child : vertex_given_level_
                     .at(iter_vertex.first).vec_vertex_cooridinate
                     .at(iter_vertex.second).child_vertices) {
@@ -625,7 +662,7 @@ void GeometryConnectionInterface::MergeEdgeOnce(
                 if (iter_c == vec_last) {
                     iter_c = *iter_surface;
                     break;
-                };
+                }
             }
             // update index of surface in edges
             max_vertex = connection_surface_given_level_.at(i_input_level)
@@ -679,8 +716,17 @@ void GeometryConnectionInterface::MergeEdgeOnce(
         connection_surface_given_level_.at(i_input_level)
             .vec_surface_connection.pop_back();
     }
+    // grid space
+    std::vector<DefReal> grid_space;
+    DefSizet i_grid_level = i_level_ + i_input_level;
+    DefReal grid_scale = DefReal(TwoPowerN(i_grid_level));
+    DefSFBitset bitset_temp;
+    for (const auto iter : ptr_sfbitset_aux->k0SpaceBackgroud_) {
+        grid_space.push_back(iter / grid_scale);
+    }
     // remove coordinates from (vertex_given_level_)
-    RemoveVertex(i_input_level, set_vertex_remove);
+    RemoveVertex(i_input_level, grid_space,
+        ptr_sfbitset_aux, set_vertex_remove, ptr_sfbitset_ref_removed);
 }
 /**
 * @brief function to update the likage relation of vertex.
@@ -712,16 +758,34 @@ void GeometryConnectionInterface::AddNewLinkage(const DefSizet i_input_level,
 /**
 * @brief function to remove vertices and thier connection relations.
 * @param[in]  i_input_level    level of current connection relations.
+* @param[in] grid_space   grid spacing
+* @param[in]  ptr_sfbitset_aux pointer to class manage space filling curves.
 * @param[in]  set_vertex_remove    vertices need to be removed.
+* @param[out] ptr_sfbitset_ref_removed space filling code corresponding
+*             to removed verices.
 */
 void GeometryConnectionInterface::RemoveVertex(const DefSizet i_input_level,
-    const std::set<std::pair<DefSizet, DefSizet>>& set_vertex_remove) {
+    const std::vector<DefReal>& grid_space,
+    const std::shared_ptr<SFBitsetAuxInterface> ptr_sfbitset_aux,
+    const std::set<std::pair<DefSizet, DefSizet>>& set_vertex_remove,
+    DefMap<DefUint>* const ptr_sfbitset_ref_removed) {
     DefSizet vec_last;
     std::pair<DefSizet, DefSizet> vertex_temp0, vertex_temp1;
     std::pair<std::pair<DefSizet, DefSizet>,
         std::pair<DefSizet, DefSizet>> edge_index0, edge_index1;
+    DefSFBitset bitset_temp;
     for (auto iter_vertex = set_vertex_remove.rbegin();
         iter_vertex != set_vertex_remove.rend(); ++iter_vertex) {
+        // sfbitset of at vertex at i_grid_level
+        bitset_temp = ptr_sfbitset_aux->SFBitsetEncodingCoordi(
+            grid_space, vertex_given_level_.at(iter_vertex->first)
+            .vec_vertex_cooridinate.at(iter_vertex->second).coordinates);
+        if (ptr_sfbitset_ref_removed->find(bitset_temp)
+            == ptr_sfbitset_ref_removed->end()) {
+            ptr_sfbitset_ref_removed->insert({ bitset_temp, 1 });
+        } else {
+            ++ptr_sfbitset_ref_removed->at(bitset_temp);
+        }
         // delete child relation for the vertex to be removed
         vertex_temp0 = vertex_given_level_.at(iter_vertex->first)
             .vec_vertex_cooridinate.at(iter_vertex->second)
@@ -765,7 +829,7 @@ void GeometryConnectionInterface::RemoveVertex(const DefSizet i_input_level,
                 vertex_given_level_.at(iter_vertex->first)
                 .vec_vertex_cooridinate.at(vec_last));
             if (connection_vertex_given_level_.at(i_input_level)
-                .find({iter_vertex->first, vec_last}) 
+                .find({iter_vertex->first, vec_last})
                 != connection_vertex_given_level_.at(i_input_level).end()) {
                 connection_vertex_given_level_.at(i_input_level)
                     .erase({ iter_vertex->first, vec_last });
@@ -795,7 +859,7 @@ void GeometryConnectionInterface::RemoveVertex(const DefSizet i_input_level,
                 .at(iter_vertex->first).vec_vertex_cooridinate
                 .at(iter_vertex->second).map_linked_vertices_level) {
                 // at all the levels connected to the vertex
-                level_diff = iter_link_level.first;            
+                level_diff = iter_link_level.first;
                 for (const auto& iter_link : iter_link_level.second) {
                     vertex_temp0 = { iter_vertex->first, vec_last };
                     // update linkage
@@ -806,9 +870,8 @@ void GeometryConnectionInterface::RemoveVertex(const DefSizet i_input_level,
                     vertex_given_level_.at(iter_link.first)
                         .vec_vertex_cooridinate.at(iter_link.second)
                         .map_linked_vertices_level.at(level_diff)
-                        .insert(*iter_vertex);
-                    
-                    // update edge and surface for the swaped node  
+                        .insert(*iter_vertex);                    
+                    // update edge and surface for the swaped node
                     if (vertex_temp0 > iter_link) {
                         edge_index0 = { vertex_temp0,  iter_link };
                     } else {
@@ -970,7 +1033,7 @@ void GeometryConnectionInterface::ReconstructSurfaceBasedOnExistingVertex(
                             .erase(i_surface);
                     }
                 }
-            } else {            
+            } else {
                 // push child surfaces
                 while (!connection_surface_given_level_
                     .at(i_input_level).vec_surface_connection.at(i_surface)
@@ -981,7 +1044,6 @@ void GeometryConnectionInterface::ReconstructSurfaceBasedOnExistingVertex(
                     connection_surface_given_level_
                         .at(i_input_level).vec_surface_connection.at(i_surface)
                         .child_surface.pop_back();
-
                 }
             }
             // find child vertices do not need to be removed
@@ -1022,7 +1084,7 @@ void GeometryConnectionInterface::ReconstructSurfaceBasedOnExistingVertex(
                 }
             }
         }
-        // bisect one edge of surfaces for all exist vertexs
+        // bisect one edge of surfaces for all exist vertices
         surface_temp.push(*iter_surface);
         bool bool_child;
         DefSizet count_vertex0, count_vertex1;
@@ -1177,9 +1239,11 @@ void GeometryConnectionInterface::ReconstructSurfaceBasedOnExistingVertex(
                     }
                     // update edge
                     if (vertex_temp0 > vertex_temp1) {
-                        edge_key_temp = std::make_pair(vertex_temp0, vertex_temp1);
+                        edge_key_temp = std::make_pair(
+                            vertex_temp0, vertex_temp1);
                     } else {
-                        edge_key_temp = std::make_pair(vertex_temp1, vertex_temp0);
+                        edge_key_temp = std::make_pair(
+                            vertex_temp1, vertex_temp0);
                     }
                     if (connection_edge_given_level_.at(i_input_level)
                         .map_edge_connection.find(edge_key_temp)

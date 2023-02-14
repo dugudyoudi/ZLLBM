@@ -21,14 +21,19 @@ namespace amrproject {
 class CriterionManager {
  public:
     // geometry related
-    DefUint  k0GeoDims_ = 0;  ///< dimension
     DefSizet numb_of_geometry_ = 0;
     std::vector<std::shared_ptr<GeometryInfoInterface>> vec_ptr_geometries_;
+
+    std::unique_ptr<DefaultGeoManager> ptr_default_geo_manager_;
 
     // factory design pattern to generate GeometryInfo instance
     void CreateGeometryInfo(const DefUint i_level,
          const DefUint geo_data_type);
     void InitialGeometrySerial(std::vector<DefReal> vec_real_offset);
+
+    CriterionManager() {
+        ptr_default_geo_manager_ = std::make_unique<DefaultGeoManager>();
+    }
 };
 }  // end namespace amrproject
 }  // end namespace rootproject

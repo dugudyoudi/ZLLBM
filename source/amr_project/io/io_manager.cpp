@@ -22,21 +22,12 @@ void IoManager::DefaultInitialization() {
     logfile_name = "log_of_node";
     LogStartTime();
 
-#ifdef ENABLE_MPI
-    int rank_id = 0;
-    rank_id = mpi::MpiManager::rank_id_;
-    if (rank_id == 0) io::LogInfo(
-        "number of processes is: "
-        + std::to_string(mpi::MpiManager::GetInstance()->numb_of_ranks_));
-#endif  // ENABLE_MPI
-    bool_binary_ = true;
-
     // set format for writing output data
-    if (typeid(k0OutputDataFormat_.output_real_.cast_type(1.))
+    if (typeid(k0OutputDataFormat_.output_real_.CastType(1.))
         == typeid(float)) {
         k0OutputDataFormat_.output_real_.printf_format_ = "%f";
         k0OutputDataFormat_.output_real_.format_name_ = "Float32";
-    } else if (typeid(k0OutputDataFormat_.output_real_.cast_type(1.))
+    } else if (typeid(k0OutputDataFormat_.output_real_.CastType(1.))
         == typeid(double)) {
         k0OutputDataFormat_.output_real_.printf_format_ = "%lf";
         k0OutputDataFormat_.output_real_.format_name_ = "Float64";
@@ -44,15 +35,15 @@ void IoManager::DefaultInitialization() {
         LogWarning("Output format for real type was not found.");
     }
 
-    if (typeid(k0OutputDataFormat_.output_uint_.cast_type(1))
+    if (typeid(k0OutputDataFormat_.output_uint_.CastType(1))
         == typeid(uint16_t)) {
         k0OutputDataFormat_.output_uint_.printf_format_ = "%hu";
         k0OutputDataFormat_.output_uint_.format_name_ = "UInt16";
-    } else if (typeid(k0OutputDataFormat_.output_uint_.cast_type(1))
+    } else if (typeid(k0OutputDataFormat_.output_uint_.CastType(1))
         == typeid(uint32_t)) {
         k0OutputDataFormat_.output_uint_.printf_format_ = "%u";
         k0OutputDataFormat_.output_uint_.format_name_ = "UInt32";
-    } else if (typeid(k0OutputDataFormat_.output_uint_.cast_type(1))
+    } else if (typeid(k0OutputDataFormat_.output_uint_.CastType(1))
         == typeid(uint64_t)) {
         k0OutputDataFormat_.output_uint_.printf_format_ = "%llu";
         k0OutputDataFormat_.output_uint_.format_name_ = "UInt64";
@@ -60,15 +51,15 @@ void IoManager::DefaultInitialization() {
         LogWarning("Output format for uint type was not found.");
     }
 
-    if (typeid(k0OutputDataFormat_.output_int_.cast_type(1))
+    if (typeid(k0OutputDataFormat_.output_int_.CastType(1))
         == typeid(int16_t)) {
         k0OutputDataFormat_.output_int_.printf_format_ = "%hd";
         k0OutputDataFormat_.output_int_.format_name_ = "UInt16";
-    } else if (typeid(k0OutputDataFormat_.output_uint_.cast_type(1))
+    } else if (typeid(k0OutputDataFormat_.output_uint_.CastType(1))
         == typeid(int32_t)) {
         k0OutputDataFormat_.output_int_.printf_format_ = "%d";
         k0OutputDataFormat_.output_int_.format_name_ = "UInt32";
-    } else if (typeid(k0OutputDataFormat_.output_uint_.cast_type(1))
+    } else if (typeid(k0OutputDataFormat_.output_uint_.CastType(1))
         == typeid(int64_t)) {
         k0OutputDataFormat_.output_int_.printf_format_ = "%lld";
         k0OutputDataFormat_.output_int_.format_name_ = "UInt64";
@@ -80,16 +71,17 @@ void IoManager::DefaultInitialization() {
 * @brief function to set io related parameters.
 */
 void IoManager::SetIoParameters() {
-    //vtk_instance_.OptionInitial(bool_binary_);
+    vtk_instance_.OptionInitial(bool_binary_);
 }
 /**
 * @brief function to write flowfield.
 */
 void IoManager::OutputFlowfield(
-    std::shared_ptr<GridManagerInterface> ptr_grid_manager,
-    std::shared_ptr<CriterionManager> ptr_criterion_manager){
-    //vtk_instance_.WriteVtu(bool_binary_, k0OutputDataFormat_,
-    //    ptr_grid_manager, ptr_criterion_manager);
+    const std::string& prog_name,
+    GridManagerInterface* const ptr_grid_manager,
+    CriterionManager* const ptr_criterion_manager){
+    vtk_instance_.WriteVtuAll(prog_name, bool_binary_, k0OutputDataFormat_,
+        *ptr_grid_manager, *ptr_criterion_manager);
 }
 }  // end amrproject
 }  // end namespace rootproject

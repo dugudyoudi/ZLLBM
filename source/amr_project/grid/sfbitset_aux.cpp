@@ -16,11 +16,12 @@ namespace rootproject {
 namespace amrproject {
 // static members
 #ifndef  DEBUG_DISABLE_2D_FUNCTION
-std::array<DefSFBitset, 2> SFBitsetAuxInterface::k0SFBitsetTakeXRef_,
-SFBitsetAuxInterface::k0SFBitsetTakeYRef_;
+std::array<DefSFBitset, 2> SFBitsetAux2D::k0SFBitsetTakeXRef_,
+SFBitsetAux2D::k0SFBitsetTakeYRef_;
 #endif  // DEBUG_DISABLE_2D_FUNCTIONS
 #ifndef  DEBUG_DISABLE_3D_FUNCTION
-std::array<DefSFBitset, 2> SFBitsetAuxInterface::k0SFBitsetTakeZRef_;
+std::array<DefSFBitset, 2> SFBitsetAux3D::k0SFBitsetTakeXRef_,
+SFBitsetAux3D::k0SFBitsetTakeYRef_, SFBitsetAux3D::k0SFBitsetTakeZRef_;
 #endif  // DEBUG_DISABLE_3D_FUNCTIONS
 
 #ifndef  DEBUG_DISABLE_2D_FUNCTIONS
@@ -36,13 +37,32 @@ void SFBitsetAux2D::SFBitsetMinAndMaxCoordinates(
     const std::array<DefLUint, 2>& indices_min,
     const std::array<DefLUint, 2>& indices_max) {
     std::array<DefLUint, 2> indices_temp = { indices_min[kXIndex], 0 };
-    k0SFBitsetMin.at(kXIndex) = SFBitsetEncoding(indices_temp);
+    SFBitsetMin_.at(kXIndex) = SFBitsetEncoding(indices_temp);
     indices_temp = { indices_max.at(kXIndex), 0 };
-    k0SFBitsetMax.at(kXIndex) = SFBitsetEncoding(indices_temp);
+    SFBitsetMax_.at(kXIndex) = SFBitsetEncoding(indices_temp);
     indices_temp = { 0, indices_min[kYIndex] };
-    k0SFBitsetMin.at(kYIndex) = SFBitsetEncoding(indices_temp);
+    SFBitsetMin_.at(kYIndex) = SFBitsetEncoding(indices_temp);
     indices_temp = { 0, indices_max.at(kYIndex) };
-    k0SFBitsetMax.at(kYIndex) = SFBitsetEncoding(indices_temp);
+    SFBitsetMax_.at(kYIndex) = SFBitsetEncoding(indices_temp);
+}
+/**
+* @brief function to set globle domain boundary of 3D
+         coordinates in bitset format.
+* @param[in]  indices_min      minimum indices.
+* @param[in]  indices_max      maximum indices.
+* @return  morton code.
+*/
+void SFBitsetAux2D::SFBitsetMinAndMaxGloble(
+    const std::array<DefLUint, 2>& indices_min,
+    const std::array<DefLUint, 2>& indices_max) {
+    k0SFBitsetGlobleMin_.at(kXIndex) =
+        SFBitsetEncoding({ indices_min[kXIndex], 0 });
+    k0SFBitsetGlobleMax_.at(kXIndex) =
+        SFBitsetEncoding({ indices_max[kXIndex], 0 });
+    k0SFBitsetGlobleMin_.at(kYIndex) =
+        SFBitsetEncoding({ 0, indices_min[kYIndex] });
+    k0SFBitsetGlobleMax_.at(kYIndex) =
+        SFBitsetEncoding({ 0, indices_max[kYIndex] });
 }
 #endif  // DEBUG_DISABLE_2D_FUNCTIONS  
 #ifndef  DEBUG_DISABLE_3D_FUNCTIONS
@@ -57,23 +77,46 @@ void SFBitsetAux3D::SFBitsetMinAndMaxCoordinates(
     const DefSizet max_level,
     const std::array<DefLUint, 3>& indices_min,
     const std::array<DefLUint, 3>& indices_max) {
-        k0SFBitsetMin.at(kXIndex) =
+        SFBitsetMin_.at(kXIndex) =
             SFBitsetEncoding({ indices_min[kXIndex], 0, 0 });
-        k0SFBitsetMax.at(kXIndex) =
+        SFBitsetMax_.at(kXIndex) =
             SFBitsetEncoding({ indices_max[kXIndex], 0, 0 });
-        k0SFBitsetMin.at(kYIndex) =
+        SFBitsetMin_.at(kYIndex) =
             SFBitsetEncoding({ 0, indices_min[kYIndex], 0 });
-        k0SFBitsetMax.at(kYIndex) =
+        SFBitsetMax_.at(kYIndex) =
             SFBitsetEncoding({ 0, indices_max[kYIndex], 0 });
-        k0SFBitsetMin.at(kZIndex) =
+        SFBitsetMin_.at(kZIndex) =
             SFBitsetEncoding({ 0, 0, indices_min[kZIndex] });
-        k0SFBitsetMax.at(kZIndex) =
+        SFBitsetMax_.at(kZIndex) =
             SFBitsetEncoding({ 0, 0, indices_max[kZIndex] });
+}
+/**
+* @brief function to set globle domain boundary of 3D
+         coordinates in bitset format.
+* @param[in]  indices_min      minimum indices.
+* @param[in]  indices_max      maximum indices.
+* @return  morton code.
+*/
+void SFBitsetAux3D::SFBitsetMinAndMaxGloble(
+    const std::array<DefLUint, 3>& indices_min,
+    const std::array<DefLUint, 3>& indices_max) {
+    k0SFBitsetGlobleMin_.at(kXIndex) =
+        SFBitsetEncoding({ indices_min[kXIndex], 0, 0 });
+    k0SFBitsetGlobleMax_.at(kXIndex) =
+        SFBitsetEncoding({ indices_max[kXIndex], 0, 0 });
+    k0SFBitsetGlobleMin_.at(kYIndex) =
+        SFBitsetEncoding({ 0, indices_min[kYIndex], 0 });
+    k0SFBitsetGlobleMax_.at(kYIndex) =
+        SFBitsetEncoding({ 0, indices_max[kYIndex], 0 });
+    k0SFBitsetGlobleMin_.at(kZIndex) =
+        SFBitsetEncoding({ 0, 0, indices_min[kZIndex] });
+    k0SFBitsetGlobleMax_.at(kZIndex) =
+        SFBitsetEncoding({ 0, 0, indices_max[kZIndex] });
 }
 #endif  // DEBUG_DISABLE_3D_FUNCTIONS
 #ifndef  DEBUG_DISABLE_2D_FUNCTIONS
 /**
-* @brief function to indentify if a node is not on the given
+* @brief function to Identify if a node is not on the given
 *        rectangle boundary (2D).
 * @param[in]  sfbitset_in  bitset of node need to be checked.
 * @param[in]  sfbitset_min  bitset corresponding to the minimum coordinate
@@ -212,7 +255,7 @@ void SFBitsetAux2D::SFBitsetFindAllNeighbours(
 #endif  // DEBUG_DISABLE_2D_FUNCTIONS
 #ifndef  DEBUG_DISABLE_3D_FUNCTIONS
 /**
-* @brief function to indentify if a node is not on the given
+* @brief function to Identify if a node is not on the given
 *        cube boundary (3D).
 * @param[in]  sfbitset_in  bitset of node need to be checked.
 * @param[in]  sfbitset_min  bitset corresponding to the minimum coordinate

@@ -11,8 +11,9 @@
 #define ROOTPROJECT_SOURCE_MPI_MPI_MANAGER_H_
 #include "../defs_libs.h"
 #ifdef ENABLE_MPI
+#include <mpi.h>
 namespace rootproject {
-namespace mpi {
+namespace amrproject {
 /**
 * @class MpiManager
 * @brief class used to manage the mpi processess.
@@ -20,7 +21,7 @@ namespace mpi {
 class MpiManager{
  public:
     int numb_of_ranks_ = 1;  ///< total number of mpi ranks
-    static int rank_id_;  ///< current rank
+    int rank_id_;  ///< current rank
     DefSizet level_for_mpiblock_ = 0;  /* if 0, the i_level is
               the same as background mesh, otherwise 
               num_of_nodes_per_mpiblock_ is 2^level_for_mpiblock_*/
@@ -37,7 +38,7 @@ class MpiManager{
  private:
     void PartiteBackground();
 };
-} //  end namespace mpi
+} //  end namespace amrproject
 }  //  end namespace rootproject
 #endif  //  ENABLE_MPI
 #endif  //  ROOTPROJECT_SOURCE_MPI_MPI_MANAGER_H_

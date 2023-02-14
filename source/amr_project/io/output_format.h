@@ -15,14 +15,14 @@ namespace amrproject {
 /**
 * @class OutputDataFormatReal
 * @brief class used to sepcify real format for output data.
-* @note  change return data type of cast_type for desired output format.
+* @note  change return data type of CastType for desired output format.
 */
 class OutputDataFormatReal {
 public:
     std::string printf_format_{};
     std::string format_name_{};
     template<typename DataType>
-    float cast_type(const DataType& data) {
+    float CastType(const DataType& data) {
         return static_cast<float>(data);
     }
 };
@@ -35,7 +35,7 @@ public:
     std::string printf_format_{};
     std::string format_name_{};
     template<typename DataType>
-    std::int16_t cast_type(const DataType& data) {
+    std::int16_t CastType(const DataType& data) {
         return static_cast<int16_t>(data);
     }
 };
@@ -48,7 +48,7 @@ public:
     std::string printf_format_{};
     std::string format_name_{};
     template<typename DataType>
-    std::uint16_t cast_type(const DataType& data) {
+    std::uint16_t CastType(const DataType& data) {
         return static_cast<uint16_t>(data);
     }
 };

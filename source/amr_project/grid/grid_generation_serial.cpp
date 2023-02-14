@@ -1,1275 +1,721 @@
-////  Copyright (c) 2022, Zhengliang Liu
-////  All rights reserved
-//
-///**
-//* @file grid_generation_serial.cpp
-//* @author Zhengliang Liu
-//* @brief functions used to generate grid serially.
-//* @date  2022-7-24
-//* @note  functions from geometry_manager will be called.
-//*/
-//#include <fstream>
-//#include "auxiliary_inline_func.h"
-//#include "grid/grid_manager.h"
-//#include "io/log_write.h"
-//#ifdef ENABLE_MPI
-//#include "mpi/mpi_manager.h"
-//#endif  // ENABLE_MPI
-//namespace rootproject {
-//namespace amrproject {
-///**
-//* @brief   function to generate grid for all levels of refinement.
-//* @param[in]  vec_geo_info vetor containing vertexers
-//*             to instance storing geometry information.
-//* @note
-//*/
-//void GridManagerInterface::GenerateGridSerial(
-//    const std::vector<std::shared_ptr
-//    <criterion::GeometryInfoInterface>>& vec_geo_info) {
-//    // maps to store nodes at each refiement level
-//    std::vector<DefMap<DefUint>> vec_map_sfbitset_at_lower_level(
-//        k0MaxLevel_ + 1, DefMap<DefUint>{});
-//    std::vector<DefMap<DefUint>> vec_map_tracking_node(
-//        k0MaxLevel_, DefMap<DefUint>{});
-//    DefMap<DefUint> map_nodes_pre_iter;
-//
-//    // generate tracking and ghost nodes based on geometries
-//    DefSizet i_geo = 0;
-//    for (auto& iter : vec_geo_info) {
-//        SearchingForNodesBasedOnGeometry(k0MaxLevel_, i_geo, iter,
-//            &vec_map_sfbitset_at_lower_level.at(k0MaxLevel_),
-//            &vec_map_tracking_node);
-//        ++i_geo;
-//    }
-//    // find tracking node at the highest refinement level
-//    for (DefSizet i_level = k0MaxLevel_; i_level > 0; --i_level) {
-//        DefSizet i_level_lower = i_level - 1;
-//
-//        // generate grid by searhing for nodes at the lower level. The missing
-//        // nodes will be added during instantiation
-//        std::vector<DefUint> vec_number_of_extend_layer_at_lower_level_neg =
-//        { (k0IntExtend_.at(i_level) + k0XIntExtendNegative_.at(i_level)) / 2,
-//          (k0IntExtend_.at(i_level) + k0YIntExtendNegative_.at(i_level)) / 2 };
-//        std::vector<DefUint> vec_number_of_extend_layer_at_lower_level_pos =
-//        { (k0IntExtend_.at(i_level) + k0XIntExtendPositive_.at(i_level)) / 2,
-//          (k0IntExtend_.at(i_level) + k0YIntExtendPositive_.at(i_level)) / 2 };
-//        if (k0GridDims_ == 3) {
-//            vec_number_of_extend_layer_at_lower_level_neg.push_back(
-//                (k0IntExtend_.at(i_level)
-//                    + k0ZIntExtendNegative_.at(i_level)) / 2);
-//            vec_number_of_extend_layer_at_lower_level_pos.push_back(
-//                (k0IntExtend_.at(i_level)
-//                    + k0ZIntExtendPositive_.at(i_level)) / 2);
-//        }
-//        GenerateNodeLayerByLayer(i_level - 1,
-//            vec_number_of_extend_layer_at_lower_level_neg,
-//            vec_number_of_extend_layer_at_lower_level_pos, map_nodes_pre_iter,
-//            &vec_map_sfbitset_at_lower_level.at(i_level),
-//            &vec_map_sfbitset_at_lower_level.at(i_level_lower));
-//        map_nodes_pre_iter.clear();
-//        map_nodes_pre_iter = vec_map_sfbitset_at_lower_level.at(i_level_lower);
-//    }
-//
-//    for (DefSizet i_level = 1; i_level < k0MaxLevel_; ++i_level) {
-//        for (auto iter = vec_map_sfbitset_at_lower_level.at(i_level).begin();
-//          iter != vec_map_sfbitset_at_lower_level.at(i_level).end(); ++iter) {
-//            AddNodesInstanceBasedOnLowerLevel(iter->first,
-//                vec_map_sfbitset_at_lower_level.at(i_level),
-//                vec_ptr_grid_info_.at(i_level));
-//        }
-//    }
-//}
-//
-///**
-//* @brief   function to find nodes according to the given geometry.
-//* @param[in]  i_level current refinement level.
-//* @param[in]  i_geo index of the geometry (only for write log).
-//* @param[in]  ptr_geo_info vertexer to instance storing geometry information.
-//* @param[out]  map_sfbitset_at_lower_level
-//*                  nodes with bitsets at the lower level.
-//* @param[out]  ptr_vec_map_tracking_nodes
-//*                  the highest level bitset of tacking nodes
-//                   geometry of different levels.
-//* @note
-//*/
-//void GridManagerInterface::SearchingForNodesBasedOnGeometry(
-//    const DefSizet i_level, const DefSizet i_geo,
-//    const std::shared_ptr<criterion::GeometryInfoInterface> ptr_geo_info,
-//    DefMap<DefUint>* const ptr_map_sfbitset_at_lower_level,
-//    std::vector<DefMap<DefUint>>* const ptr_vec_map_tracking_nodes) {
-//
-//    // find tracking nodes
-//    if (ptr_geo_info->node_type_.empty()) {
-//        io::LogError("Can't find corresponding tracking node"
-//            " type for geometry: "+ std::to_string(i_geo)
-//            + " in SearchingForNodesBasedOnGeometry.");
-//    } else if (ptr_geo_info->geometry_enclosed_type_
-//        == criterion::EGeometryEnclosedType::kOpen) {
-//        FindTrackingNodesBaseOnGeovertexs(i_geo,
-//            i_level, ptr_geo_info->i_level_,
-//            ptr_geo_info->vec_coordinate_origin_,
-//            ptr_map_sfbitset_at_lower_level,
-//            &(ptr_vec_map_tracking_nodes->at(ptr_geo_info->i_level_)));
-//    } else {  // a temperal map is used to classify node types
-//        DefMap<DefUint> map_sfbiset_for_each_gemetry;
-//        FindTrackingNodesBaseOnGeovertexs(i_geo,
-//            i_level, ptr_geo_info->i_level_,
-//            ptr_geo_info->vec_coordinate_origin_,
-//            &map_sfbiset_for_each_gemetry,
-//            &(ptr_vec_map_tracking_nodes->at(ptr_geo_info->i_level_)));
-//        // create layers near the geometry to classify
-//        // regions of different types
-//        DefMap<DefUint> map_nodes_uncolored, map_nodes_colored;
-//        IdentifyTypeOfLayerByFloodFill(i_level, i_geo,
-//            ptr_geo_info, map_sfbiset_for_each_gemetry,
-//            &map_nodes_uncolored, &map_nodes_colored);
-//        // add temperal map to map_sfbitset_at_lower_level
-//        for (auto iter = map_sfbiset_for_each_gemetry.begin();
-//            iter != map_sfbiset_for_each_gemetry.begin(); ++iter) {
-//            if (ptr_map_sfbitset_at_lower_level->find(iter->first) ==
-//                ptr_map_sfbitset_at_lower_level->end()) {
-//                ptr_map_sfbitset_at_lower_level->insert(
-//                    { iter->first, iter->second });
-//            } else {
-//                ptr_map_sfbitset_at_lower_level->at(iter->first)
-//                    |= iter->second;
-//            }
-//        }
-//    }
-//}
-//
-///**
-//* @brief   function to find tracking nodes based on geometry vertexs.
-//* @param[in]  i_geo index of the geometry (only for write log).
-//* @param[in]  i_level current refinement level.
-//* @param[in]  i_geo_level level of geometry.
-//* @param[in]  vec_geo_coordi geometry coordinates.
-//* @param[out]  map_sfbitset_at_lower_level  
-//*                  nodes withbit_sets at the lower level.
-//* @param[out]  map_tracking_node
-//*                 tracking nodes at a given level.
-//*/
-//void GridManagerInterface::FindTrackingNodesBaseOnGeoVertics(const DefSizet i_geo,
-//    const DefSizet i_level, const DefSizet i_geo_level,
-//    const std::vector<criterion::GeometryCoordinate>& vec_geo_coordi,
-//    DefMap<DefUint>* const ptr_map_sfbitset_at_lower_level,
-//    DefMap<DefUint>* const ptr_map_tracking_node) {
-//
-//    DefReal coordi_for_compare;
-//    std::vector<DefReal> coordinate_min(vec_geo_coordi.begin()->coordinate);
-//    std::vector<DefReal> coordinate_max(vec_geo_coordi.begin()->coordinate);
-//    // set size of vector according to dimension
-//    std::vector<DefSFBitset> vec_node_tracking, vec_node_tracking_lower_level;
-//    if (k0GridDims_ == 2) {
-//        vec_node_tracking = std::vector<DefSFBitset>(4, 0);
-//    } else {
-//        vec_node_tracking = std::vector<DefSFBitset>(8, 0);
-//    }
-//    vec_node_tracking_lower_level = vec_node_tracking;
-//
-//    // select dimension specified function
-//    void(GridManagerInterface:: * ptrfunc_find_tracking_nodes_containing_geo_vertex)(
-//        const std::vector<DefReal>&, const std::vector<DefReal>&,
-//        std::vector<DefSFBitset>*) = nullptr;
-//    if (k0GridDims_ == 2) {
-//#ifndef  DEBUG_DISABLE_2D_FUNCTIONS
-//        ptrfunc_find_tracking_nodes_containing_geo_vertex =
-//            &GridManagerInterface::FindTrackingNodesContainingAGeometryCoordinate2D;
-//#endif  // DEBUG_DISABLE_2D_FUNCTIONS
-//    } else if (k0GridDims_ == 3) {
-//#ifndef  DEBUG_DISABLE_3D_FUNCTIONS
-//        ptrfunc_find_tracking_nodes_containing_geo_vertex =
-//            &GridManagerInterface::FindTrackingNodesContainingAGeometryCoordinate3D;
-//#endif  // DEBUG_DISABLE_3D_FUNCTIONS
-//    }
-//
-//    // find tracking nodes based on gometry vertexs
-//    DefUint node_flag = kFlag0_;
-//    if (i_level > i_geo_level) {
-//        node_flag = kFlagBitLowerLevel_;
-//    }
-//
-//    for (auto iter = vec_geo_coordi.begin();
-//        iter != vec_geo_coordi.end(); ++iter) {
-//        // find minimum and maximum coodirnates of the geometry
-//        for (DefUint i_dim = 0; i_dim < k0GridDims_; ++i_dim) {
-//            coordi_for_compare = iter->coordinate.at(i_dim);
-//            if (coordinate_min.at(i_dim) > coordi_for_compare) {
-//                coordinate_min.at(i_dim) = coordi_for_compare;
-//            } else if (coordinate_max.at(i_dim) < coordi_for_compare) {
-//                coordinate_max.at(i_dim) = coordi_for_compare;
-//            }
-//        }
-//
-//        // find tracking nodes when grid and geometry are at the same level
-//        if (i_level == i_geo_level) {
-//            (this->*ptrfunc_find_tracking_nodes_containing_geo_vertex)(
-//                vec_ptr_grid_info_.at(i_level)->grid_space_, (*iter).coordinate,
-//                &vec_node_tracking);
-//            for (DefSFBitset& iter_sfbitset : vec_node_tracking) {
-//                if (ptr_map_tracking_node->find(iter_sfbitset)
-//                    == ptr_map_tracking_node->end()) {
-//                    ptr_map_tracking_node->insert(
-//                        { iter_sfbitset, 1 });
-//                }
-//            }
-//        }
-//
-//        // find tracking nodes at lower level
-//        (this->*ptrfunc_find_tracking_nodes_containing_geo_vertex)(
-//            vec_ptr_grid_info_.at(i_level - 1)->grid_space_,
-//            (*iter).coordinate, &vec_node_tracking_lower_level);
-//        for (const auto& iter_sfbitset : vec_node_tracking_lower_level) {
-//            if (ptr_map_sfbitset_at_lower_level->find(iter_sfbitset)
-//                == ptr_map_sfbitset_at_lower_level->end()) {
-//                ptr_map_sfbitset_at_lower_level->insert(
-//                    { iter_sfbitset, node_flag });
-//            } else {
-//                ptr_map_sfbitset_at_lower_level->at(iter_sfbitset)
-//                    |= node_flag;
-//            }
-//        }
-//    }
-//
-//    int status = CheckIfvertexOutsideDomain(coordinate_min, coordinate_max,
-//        k0RealOffest_, k0DomainSize_);
-//
-//    if (status == 1) {
-//        io::LogError("The minimum coordinates of Geometry "
-//            + std::to_string(i_geo) + " is less than the domain");
-//    } else if (status == 2) {
-//        io::LogError("The maximum coordinates of Geometry "
-//            + std::to_string(i_geo) + " is less than the domain");
-//    }
-//}
-//
-///**
-//* @brief   function to add layers near geometry vertexs.
-//* @param[in] i_level refinement level
-//* @param[in]  i_geo index of the geometry (only for write log).
-//* @param[in]  ptr_geo_info vertexer to instance storing geometry information.
-//* @param[in]  map_sfbitset   existing nodes.
-//* @param[out] ptr_map_nodes_uncolored   nodes haven't been colored.
-//* @param[out] ptr_map_nodes_colored   nodes havebeen colored.
-//*/
-//void GridManagerInterface::IdentifyTypeOfLayerByFloodFill(
-//    const DefSizet i_level, const DefSizet i_geo,
-//    const std::shared_ptr<criterion::GeometryInfoInterface> ptr_geo_info,
-//    const DefMap<DefUint>&  map_sfbitset,
-//    DefMap<DefUint>* const ptr_map_nodes_uncolored,
-//    DefMap<DefUint>* const ptr_map_nodes_colored) {
-//
-//    DefSizet i_geo_level = ptr_geo_info->i_level_;
-//
-//    // identify nodes layer type through flood fill,
-//    // which is conducted on ptr_map_sfbitset_at_lower_level
-//    // where the refinement level is i_level - 1.
-//    std::vector<DefReal> flood_fill_origin;
-//    // set cooridate for finding flood fill starting vertex the same
-//    // as geometry centor if flood_fill_origin_ is not given.
-//    if (flood_fill_origin.empty()) {
-//        flood_fill_origin = ptr_geo_info->geometry_center_;
-//    } else {
-//        flood_fill_origin = ptr_geo_info->flood_fill_origin_;
-//    }
-//
-//    // idengtify nodes type using flood fill method.
-//    DefSFBitset sfbitset_start;
-//    if (k0GridDims_ == 2) {
-//        sfbitset_start = FindStartingvertexForFloodFill2D(
-//            i_level, i_geo, flood_fill_origin, map_sfbitset);
-//    } else if (k0GridDims_ == 3) {
-//        sfbitset_start = FindStartingvertexForFloodFill3D(
-//            i_level, i_geo, flood_fill_origin, map_sfbitset);
-//    }
-//    FloodFillOneLayer(sfbitset_start, map_sfbitset,
-//         ptr_map_nodes_uncolored, ptr_map_nodes_colored);
-//}
-///**
-//* @brief   function to add k0IntGhostExtend_ layers.
-//* @param[in]  i_level   level of refinement.
-//* @param[in]  map_tracking_node_temp
-//*                  tracking nodes classified to find ghost nodes.
-//* @param[out]  map_sfbitset_at_lower_level
-//*                  nodes withbit_sets at the lower level.
-//* @note  add the number of layer around the geometry in all the directions.
-//*        Used to set number of layers inside the geometry different from that
-//*        outsite the geometry.
-//*/
-//void GridManagerInterface::ExtendSameNumberOfLayer(const DefSizet i_level,
-//    const DefMap<DefUint>& map_tracking_node_temp,
-//    DefMap<DefUint>* const ptr_map_sfbitset_at_lower_level) {
-//
-//    DefSizet i_level_lower = i_level - 1;
-//    DefSFBitset sfbitset_at_lower_level;
-//    // set extended layer the same in all directions
-//    std::vector<DefLUint> vec_extend_neg
-//    (k0GridDims_, k0IntInnerExtend_.at(i_level));
-//    std::vector<DefLUint> vec_extend_pos
-//    (k0GridDims_, k0IntInnerExtend_.at(i_level));
-//
-//    if (k0GridDims_ == 2) {
-//#ifndef  DEBUG_DISABLE_2D_FUNCTIONS
-//        DefSFBitset sfbitset_temp_x, sfbitset_temp_y;
-//        for (auto iter = map_tracking_node_temp.begin();
-//            iter != map_tracking_node_temp.end(); ++iter) {
-//            // sfbitset at the lower finement level
-//            sfbitset_at_lower_level =
-//                SFBitsetToNLowerLevel2D(1, iter->first);
-//            ResetExtendLayerBasedOnDomainSize2D(
-//                i_level_lower, sfbitset_at_lower_level,
-//                &vec_extend_neg, &vec_extend_pos);
-//
-//            // find sfbitset in a region
-//            std::array<DefLUint,2> indices(k0GridDims_, 0);
-//            SFBitsetComputeIndices2D(sfbitset_at_lower_level, &indices);
-//            std::array<DefLUint, 2> indices_reset;
-//            indices_reset = { indices[kXIndex] - vec_extend_neg[kXIndex],
-//            indices[kYIndex] - vec_extend_neg[kYIndex] };
-//            DefSFBitset sfbitset_y = SFBitsetEncoding2D(indices_reset);
-//            DefSFBitset sfbitset_x;
-//            for (DefLUint iy = 0; iy <= vec_extend_neg[kYIndex]
-//                + vec_extend_pos[kYIndex]; ++iy) {
-//                sfbitset_x = sfbitset_y;
-//                for (DefLUint ix = 0; ix <= vec_extend_neg[kXIndex]
-//                    + vec_extend_pos[kXIndex]; ++ix) {
-//                    if (ptr_map_sfbitset_at_lower_level->find(sfbitset_x)
-//                        == ptr_map_sfbitset_at_lower_level->end()) {
-//                        ptr_map_sfbitset_at_lower_level->insert(
-//                            { sfbitset_x, kFlag0_ });
-//                    }
-//                    sfbitset_x = FindXPos2D(sfbitset_x);
-//                }
-//                sfbitset_y = FindYPos2D(sfbitset_y);
-//            }
-//        }
-//#endif  // DEBUG_DISABLE_2D_FUNCTIONS
-//    }  else if (k0GridDims_ == 3) {
-//#ifndef  DEBUG_DISABLE_3D_FUNCTIONS
-//        DefSFBitset sfbitset_temp_x, sfbitset_temp_y, sfbitset_temp_z;
-//        for (auto iter = map_tracking_node_temp.begin();
-//            iter != map_tracking_node_temp.end(); ++iter) {
-//            // sfbitset at the lower finement level
-//            sfbitset_at_lower_level =
-//                SFBitsetToNLowerLevel3D(1, iter->first);
-//            ResetExtendLayerBasedOnDomainSize3D(
-//                i_level_lower, sfbitset_at_lower_level,
-//                &vec_extend_neg, &vec_extend_pos);
-//
-//            // find sfbitset in a region
-//            std::array<DefLUint, 3> indices(k0GridDims_, 0);
-//            SFBitsetComputeIndices3D(sfbitset_at_lower_level, &indices);
-//            DefSFBitset sfbitset_z = SFBitsetEncoding3D(
-//                { indices[kXIndex] - vec_extend_neg[kXIndex],
-//                indices[kYIndex] - vec_extend_neg[kYIndex],
-//                indices[kZIndex] - vec_extend_neg[kZIndex] });
-//            DefSFBitset sfbitset_x, sfbitset_y;
-//            for (DefLUint iz = 0; iz <= vec_extend_neg[kZIndex]
-//                + vec_extend_pos[kZIndex]; ++iz) {
-//                sfbitset_y = sfbitset_z;
-//                for (DefLUint iy = 0; iy <= vec_extend_neg[kYIndex]
-//                    + vec_extend_pos[kYIndex]; ++iy) {
-//                    sfbitset_x = sfbitset_y;
-//                    for (DefLUint ix = 0; ix <= vec_extend_neg[kXIndex]
-//                        + vec_extend_pos[kXIndex]; ++ix) {
-//                        if (ptr_map_sfbitset_at_lower_level->find(sfbitset_x)
-//                            == ptr_map_sfbitset_at_lower_level->end()) {
-//                            ptr_map_sfbitset_at_lower_level->insert(
-//                                { sfbitset_x, kFlag0_ });
-//                        }
-//                        sfbitset_x = FindXPos3D(sfbitset_x);
-//                    }
-//                    sfbitset_y = FindYPos3D(sfbitset_y);
-//                }
-//                sfbitset_z = FindZPos3D(sfbitset_z);
-//            }
-//        }
-//#endif  // DEBUG_DISABLE_3D_FUNCTIONS
-//    }
-//}
-///**
-//* @brief   function to do flood fill on existing nodes around geometry vertexs
-//*          (only two layers)
-//* @param[in]  sfbitset_start   sfbitset corresponding to the starting vertex.
-//* @param[in]  map_nodes_exist nodes exist for flood fill.
-//* @param[out]  ptr_map_nodes_uncolored
-//*                  nodes not colored by the flood fill method.
-//* @param[out]  ptr_map_nodes_colored
-//*                  nodes colored by the flood fill method.
-//* @node ptr_map_nodes_colored contains nodes on the inner layer, while
-//*       ptr_map_nodes_uncolored contains nodes on the outer layer.
-//*       The diagonal nodes are considered on the outer layer0 
-//*/
-////  x   x           //  o is geometry vertexs
-////    o             //  x are nodes of containing the geometry vertexs
-////  x  (x)  x       //  (x) is the diagonal node
-////        o
-////      x   x
-//void GridManagerInterface::FloodFillOneLayer(const DefSFBitset& sfbitset_start,
-//    const DefMap<DefUint>&  map_nodes_exist,
-//    DefMap<DefUint>* const ptr_map_nodes_uncolored,
-//    DefMap<DefUint>* const ptr_map_nodes_colored) {
-//
-//    // select dimesion specified function
-//    void(GridManagerInterface:: * ptrfunc_push_back_sfbitset)(
-//        const DefSFBitset & sfbitset_in,
-//        std::vector<DefSFBitset>*ptr_vec_code_stk) = nullptr;
-//    if (k0GridDims_ == 2) {
-//#ifndef  DEBUG_DISABLE_2D_FUNCTIONS
-//        ptrfunc_push_back_sfbitset =
-//            &GridManagerInterface::PushBackSFBitsetInFloodFill2D;
-//#endif  // DEBUG_DISABLE_2D_FUNCTIONS
-//        } else if (k0GridDims_ == 3) {
-//#ifndef  DEBUG_DISABLE_3D_FUNCTIONS
-//        ptrfunc_push_back_sfbitset =
-//            &GridManagerInterface::PushBackSFBitsetInFloodFill3D;
-//#endif  // DEBUG_DISABLE_3D_FUNCTIONS
-//    }
-//
-//    // create a copy of map_nodes_exist and add one layer for flood fill
-//    DefUint flag_bit_ghost = 1;
-//    DefUint flag_bit_colored = 1 << 3;
-//    DefUint flag_bit_exist = flag_bit_colored | (1 << 4);
-//    DefMap<DefUint> map_nodes_temp(map_nodes_exist);
-//    std::vector<DefSFBitset> vec_bitset;
-//
-//    // choose dimesion specified functions
-//    void (*bitset_find_all_neighbours_ptr)(const DefSFBitset&,
-//        std::vector<DefSFBitset>*) = nullptr;
-//    if (k0GridDims_ == 2) {
-//        vec_bitset = std::vector<DefSFBitset>(9, 0);
-//    } else {
-//        vec_bitset = std::vector<DefSFBitset>(27, 0);
-//    }
-//    // generate one more layer around the tracking nodes
-//    for (auto iter = map_nodes_exist.begin();
-//        iter != map_nodes_exist.end(); ++iter) {
-//        map_nodes_temp.at(iter->first) = flag_bit_exist;
-//        (*bitset_find_all_neighbours_ptr)(iter->first, &vec_bitset);
-//        for (const auto& iter_neigbour : vec_bitset) {
-//            if (map_nodes_temp.find(iter_neigbour)
-//                == map_nodes_temp.end()) {
-//                map_nodes_temp.insert({ iter_neigbour, flag_bit_ghost });
-//            }
-//        }
-//    }
-//
-//    // flood fill
-//    std::vector<DefSFBitset> vec_sfbitset_stk;
-//    DefUint i = 0;
-//    DefSFBitset sfbitset_seed;
-//
-//    vec_sfbitset_stk.push_back(sfbitset_start);
-//    while (!vec_sfbitset_stk.empty() && i < imax_flood_fill) {
-//        sfbitset_seed = vec_sfbitset_stk.back();
-//        vec_sfbitset_stk.pop_back();
-//        ++i;
-//        if (map_nodes_temp.find(sfbitset_seed) == map_nodes_temp.end()) {
-//        } else if ((map_nodes_temp.at(sfbitset_seed) & flag_bit_exist)
-//            == flag_bit_exist) {
-//            ptr_map_nodes_colored->insert({ sfbitset_seed, kFlag0_ });
-//        } else if ((map_nodes_temp.at(sfbitset_seed) & flag_bit_colored)
-//            != flag_bit_colored) {
-//            // color the node
-//            map_nodes_temp.at(sfbitset_seed) |= flag_bit_colored;
-//            // add neighbouring nodes to seed
-//            (this->*ptrfunc_push_back_sfbitset)(
-//                sfbitset_seed, &vec_sfbitset_stk);
-//        }
-//    }
-//
-//    if (i == imax_flood_fill) {
-//        io::LogInfo("Iteration of flood fill exceed preset limits.");
-//    }
-//
-//    // map_nodes_uncolored = map_nodes_exist - map_nodes_colored
-//    for (auto iter = map_nodes_exist.begin();
-//        iter != map_nodes_exist.end(); ++iter) {
-//        if (ptr_map_nodes_colored->find(iter->first)
-//            == ptr_map_nodes_colored->end()) {
-//            ptr_map_nodes_uncolored->insert({ iter->first, kFlag0_ });
-//        }
-//    }
-//}
-///**
-//* @brief   function to generate nodes extened from the given layer
-//* @param[in]  i_level   level of refinement.
-//* @param[in]  vec_number_of_extend_layer_neg   number of layer need 
-//                           to be extened in negative direction.
-//* @param[in]  vec_number_of_extend_layer_pos   number of layer need
-//                           to be extened in positive direction.
-//* @param[out]  ptr_map_nodes_uncolored
-//*                  nodes not colored by the flood fill method.
-//* @param[out]  ptr_map_nodes_colored
-//*                  nodes colored by the flood fill method.
-//*/
-//void GridManagerInterface::GenerateNodeLayerByLayer(const DefSizet i_level,
-//    const std::vector<DefUint>& vec_number_of_extend_layer_neg,
-//    const std::vector<DefUint>& vec_number_of_extend_layer_pos,
-//    const DefMap<DefUint>& map_nodes_starting_layer,
-//    DefMap<DefUint>* const ptr_map_nodes_exist,
-//    DefMap<DefUint>* const map_two_outmost_layer_at_lower_level) {
-//
-////    // identify in which direction the grid is expanded the most
-////    DefUint extend_max = vec_number_of_extend_layer_neg[kXIndex];
-////    DefUint extend_min = vec_number_of_extend_layer_neg[kXIndex];
-////    if (vec_number_of_extend_layer_pos[kXIndex] > extend_max) {
-////        extend_max = vec_number_of_extend_layer_pos[kXIndex];
-////    } else if (vec_number_of_extend_layer_pos[kXIndex] < extend_min) {
-////        extend_min = vec_number_of_extend_layer_pos[kXIndex];
-////    }
-////    if (vec_number_of_extend_layer_neg[kYIndex] > extend_max) {
-////        extend_max = vec_number_of_extend_layer_neg[kYIndex];
-////    } else if (vec_number_of_extend_layer_neg[kYIndex] < extend_min) {
-////        extend_min = vec_number_of_extend_layer_neg[kYIndex];
-////    }
-////    if (vec_number_of_extend_layer_pos[kYIndex] > extend_max) {
-////        extend_max = vec_number_of_extend_layer_pos[kYIndex];
-////    } else if (vec_number_of_extend_layer_pos[kYIndex] < extend_min) {
-////        extend_min = vec_number_of_extend_layer_pos[kYIndex];
-////    }
-////    if (k0GridDims_ == 3) {
-////        if (vec_number_of_extend_layer_neg[kZIndex] > extend_max) {
-////            extend_max = vec_number_of_extend_layer_neg[kZIndex];
-////        } else if (vec_number_of_extend_layer_neg[kZIndex] < extend_min) {
-////            extend_min = vec_number_of_extend_layer_neg[kZIndex];
-////        }
-////        if (vec_number_of_extend_layer_pos[kZIndex] > extend_max) {
-////            extend_max = vec_number_of_extend_layer_pos[kZIndex];
-////        } else if (vec_number_of_extend_layer_pos[kZIndex] < extend_min) {
-////            extend_min = vec_number_of_extend_layer_pos[kZIndex];
-////        }
-////    }
-////
-////    // select dimension specified functions
-////    void(SFBitsetAux:: *ptrfunc_check_if_node_not_on_domain_boundary)(
-////        const DefSFBitset & sfbitset_in,
-////        const std::vector<DefSFBitset>&vec_sfbitset_min,
-////        const std::vector<DefSFBitset>&vec_sfbitset_max,
-////        std::vector<bool>*ptr_vec_bool_not_at_boundary_neg,
-////        std::vector<bool>*ptr_vec_bool_not_at_boundary_pos) = nullptr;
-////    bool(GridManagerInterface:: * ptrfunc_add_nodes_around_a_given_node)(
-////        const DefSFBitset & sfbitset_in,
-////        const std::vector<bool>&vec_bool_need_add_neg,
-////        const std::vector<bool>&vec_bool_need_add_pos,
-////        DefMap<DefLUint>*ptr_map_nodes_exist,
-////        DefMap<DefLUint>*ptr_map_nodes_aded) = nullptr;
-////    std::vector<DefSFBitset> vec_sfbitset_min, vec_sfbitset_max;
-////    SFBitsetToNHigherLevel(i_level,
-////        sfbitset_aux_.k0SFBitsetMin,  &vec_sfbitset_min);
-////    SFBitsetToNHigherLevel(i_level,
-////        sfbitset_aux_.k0SFBitsetMin, &vec_sfbitset_min);
-////
-////    if (k0GridDims_ == 2) {
-////#ifndef  DEBUG_DISABLE_2D_FUNCTIONS
-////        ptrfunc_check_if_node_not_on_domain_boundary =
-////            &SFBitsetAux::SFBitsetNotOnDomainBoundary2D;
-////        ptrfunc_add_nodes_around_a_given_node =
-////            &GridManagerInterface::AddNodesAroundAGivenNode2D;
-////#endif  // DEBUG_DISABLE_2D_FUNCTIONS
-////    } else if (k0GridDims_ == 3) {
-////#ifndef  DEBUG_DISABLE_3D_FUNCTIONS
-////        ptrfunc_check_if_node_not_on_domain_boundary =
-////            &SFBitsetAux::SFBitsetNotOnDomainBoundary3D;
-////        ptrfunc_add_nodes_around_a_given_node =
-////            &GridManagerInterface::AddNodesAroundAGivenNode3D;
-////#endif  // DEBUG_DISABLE_3D_FUNCTIONS
-////    }
-////
-////    // extend mesh layer based on previous layer
-////    std::vector<bool> vec_bool_extend_neg(k0GridDims_, true),
-////        vec_bool_extend_pos(k0GridDims_, true);
-////    DefMap<DefUint> map_outmost_layer(map_nodes_starting_layer);
-////    DefMap<DefUint> map_nodes_on_any_boundaries{};
-////    for (unsigned int i_extend = 1; i_extend < extend_max + 1; ++i_extend) {
-////        if (i_extend > extend_min) {
-////            if (i_extend > vec_number_of_extend_layer_neg[kXIndex]) {
-////                vec_bool_extend_neg.at(kXIndex) = false;
-////            }
-////            if (i_extend > vec_number_of_extend_layer_pos[kXIndex]) {
-////                vec_bool_extend_pos.at(kXIndex) = false;
-////            }
-////            if (i_extend > vec_number_of_extend_layer_neg[kYIndex]) {
-////                vec_bool_extend_neg.at(kYIndex) = false;
-////            }
-////            if (i_extend > vec_number_of_extend_layer_pos[kYIndex]) {
-////                vec_bool_extend_pos.at(kYIndex) = false;
-////            }
-////            if (k0GridDims_ == 3) {
-////                if (i_extend > vec_number_of_extend_layer_neg[kZIndex]) {
-////                    vec_bool_extend_neg.at(kZIndex) = false;
-////                }
-////                if (i_extend > vec_number_of_extend_layer_pos[kZIndex]) {
-////                    vec_bool_extend_pos.at(kZIndex) = false;
-////                }
-////            }
-////        }
-////        DefMap<DefUint> map_current_layer(map_outmost_layer);
-////        map_outmost_layer.clear();
-////        for (auto iter = map_current_layer.begin();
-////            iter != map_current_layer.end(); ++iter) {
-////            // check if node is not on the domain boundary
-////            (sfbitset_aux_.*ptrfunc_check_if_node_not_on_domain_boundary)(
-////                iter->first, vec_sfbitset_min, vec_sfbitset_max,
-////                &vec_bool_extend_neg, &vec_bool_extend_pos);
-////            // add nodes in directions specified by vec_bool_extend_neg
-////            // and vec_bool_extend_pos. Return true if there exist directions
-////            // in which nodes do not need to be added
-////            if ((this->*ptrfunc_add_nodes_around_a_given_node)(iter->first,
-////                vec_bool_extend_neg, vec_bool_extend_pos,
-////                ptr_map_nodes_exist, &map_outmost_layer)) {
-////                map_nodes_on_any_boundaries.insert({ iter->first, kFlag0_ });
-////            }
-////        }
-////    }
-//}
-//#ifndef  DEBUG_DISABLE_2D_FUNCTIONS
-///**
-//* @brief   function to find starting vertex for flood fill (2D)
-//* @param[in]  i_level   level of refinement.
-//* @param[in]  i_geo     index of the geometry (log write only).
-//* @param[in]  vec_origin origin coorfinates to search node for flood fill.
-//* @param[in]  map_nodes_exist nodes exist for flood fill.
-//* @return     sfbitset corresponding to the starting vertex.
-//*/
-//DefSFBitset GridManagerInterface::FindStartingvertexForFloodFill2D(
-//    const DefSizet i_level, const DefSizet i_geo,
-//    const std::vector<DefReal>& vec_origin,
-//    const DefMap<DefUint>& map_nodes_exist) {
-//#ifdef DEBUG_CHECK_GRID
-//    if (vec_origin.size() != 2) {
-//        io::LogError("The dimension of vec_origin should be 2 rather than "
-//            + std::to_string(vec_origin.size()) + " for geometry: "
-//            + std::to_string(i_geo) + " in FindStartingvertexForFloodFill2D.");
-//    }
-//#endif  // DEBUG_CHECK_GRID
-//    // calculate bounds of searching step based on domain boundary
-//    DefLUint scale_i_level = TwoPowerN(static_cast<DefLUint>(i_level));
-//    DefLUint x_index = static_cast<DefLUint>(vec_origin.at(kXIndex)
-//        / (k0DomainDx_[kXIndex] / scale_i_level) + kEps);
-//    DefLUint y_index = static_cast<DefLUint>(vec_origin.at(kYIndex)
-//        / (k0DomainDx_[kYIndex] / scale_i_level) + kEps);
-//    DefUint x_index_max =
-//        k0MaxIndexOfBackgroundNode_[kXIndex] * scale_i_level - x_index;
-//    DefUint y_index_max =
-//        k0MaxIndexOfBackgroundNode_[kYIndex] * scale_i_level - y_index;
-//
-//    bool bool_find_node_for_flood_fill = false;
-//    DefUint i_count = 0, count_sum = 0;;
-//    DefSFBitset sfbitset_origin_vertex =
-//        SFBitsetEncoding2D(std::array<DefLUint, 2>({ x_index , y_index }));
-//    // search in -x direction from the vec_origin untill meet the first vertex
-//    // in map_nodes_exist
-//    DefSFBitset sfbitset_temp = sfbitset_origin_vertex, sfbitset_start_vertex;
-//    while (i_count < x_index) {
-//       sfbitset_temp = FindXNeg2D(sfbitset_temp);
-//        if (map_nodes_exist.find(sfbitset_temp) != map_nodes_exist.end()) {
-//            sfbitset_start_vertex = FindXPos2D(sfbitset_temp);
-//            bool_find_node_for_flood_fill = true;
-//            break;
-//        }
-//        ++i_count;
-//    }
-//    count_sum += i_count;
-//    // search in -y direction from the vec_origin untill meet the first vertex
-//    // in map_nodes_exist
-//    if (!bool_find_node_for_flood_fill) {
-//        sfbitset_temp = sfbitset_origin_vertex;
-//        i_count = 0;
-//        while (i_count < y_index) {
-//           sfbitset_temp = FindYNeg2D(sfbitset_temp);
-//            if (map_nodes_exist.find(sfbitset_temp) != map_nodes_exist.end()) {
-//               sfbitset_start_vertex = FindYPos2D(sfbitset_temp);
-//                bool_find_node_for_flood_fill = true;
-//                break;
-//            }
-//            ++i_count;
-//        }
-//    }
-//    count_sum += i_count;
-//    // search in +x direction from the vec_origin untill meet the first vertex
-//    // in map_nodes_exist
-//    if (!bool_find_node_for_flood_fill) {
-//       sfbitset_temp = sfbitset_origin_vertex;
-//        i_count = 0;
-//        while (i_count < x_index_max) {
-//           sfbitset_temp = FindXPos2D(sfbitset_temp);
-//            if (map_nodes_exist.find(sfbitset_temp) != map_nodes_exist.end()) {
-//               sfbitset_start_vertex = FindXNeg2D(sfbitset_temp);
-//                bool_find_node_for_flood_fill = true;
-//                break;
-//            }
-//            ++i_count;
-//        }
-//    }
-//    count_sum += i_count;
-//    // search in +y direction from the vec_origin untill meet the first vertex
-//    // in map_nodes_exist
-//    if (!bool_find_node_for_flood_fill) {
-//       sfbitset_temp = sfbitset_origin_vertex;
-//        i_count = 0;
-//        while (i_count < y_index_max) {
-//           sfbitset_temp = FindYPos2D(sfbitset_temp);
-//            if (map_nodes_exist.find(sfbitset_temp) != map_nodes_exist.end()) {
-//               sfbitset_start_vertex = FindYNeg2D(sfbitset_temp);
-//                bool_find_node_for_flood_fill = true;
-//                break;
-//            }
-//            ++i_count;
-//        }
-//    }
-//    count_sum += i_count;
-//
-//    if (bool_find_node_for_flood_fill) {
-//        return sfbitset_start_vertex;
-//    } else {
-//        io::LogError("Can't find starting node for food fill in geometry: "
-//            + std::to_string(i_geo) + " in FindStartingvertexForFloodFill2D"
-//            + " after " + std::to_string(count_sum) + " iterations.");
-//        return 1;
-//    }
-//}
-///**
-//* @brief   function to pushbit_sets into stack (2D)
-//* @param[in] sfbitset_in   bitset of spacing filling code
-//*                          corresponding to node has been colored.
-//* @param[out]  ptr_vec_stk     stack to store seeds.
-//*/
-//void GridManagerInterface::PushBackSFBitsetInFloodFill2D(const DefSFBitset& sfbitset_in,
-//    std::vector<DefSFBitset>* const ptr_vec_stk) {
-//    // add neighbouring nodes to seed
-//    ptr_vec_stk->push_back(FindXNeg2D(sfbitset_in));
-//    ptr_vec_stk->push_back(FindXPos2D(sfbitset_in));
-//    ptr_vec_stk->push_back(FindYNeg2D(sfbitset_in));
-//    ptr_vec_stk->push_back(FindYPos2D(sfbitset_in));
-//}
-///**
-//* @brief function to add nodes abourd a node with specified directions (2D)
-//* @param[in]  sfbitset_in  bitset of a given node.
-//* @param[in]  vec_bool_need_add_neg   identifier indicate
-//*                whether nodes need to be added in negative directions.
-//* @param[in]  vec_bool_need_adde_pos   identifier indicate
-//*                whether nodes need to be added in positive directions.
-//* @param[out] ptr_map_nodes_exist nodes already exist or added in this function
-//* @param[out] ptr_map_nodes_added nodes are added in this function
-//* @return     if exists directions in which node does not need to be added 
-//*/
-//bool GridManagerInterface::AddNodesAroundAGivenNode2D(
-//    const DefSFBitset& sfbitset_in,
-//    const std::vector<bool>& vec_bool_need_add_neg,
-//    const std::vector<bool>& vec_bool_need_add_pos,
-//    DefMap<DefLUint>* const ptr_map_nodes_exist,
-//    DefMap<DefLUint>* const ptr_map_nodes_added) {
-//    bool bool_node_not_added_in_any_diretion = false;
-//    DefSFBitset sfbitset_temp0, sfbitset_temp1, sfbitset_temp2;
-//    // node at (-x, 0)
-//    if (vec_bool_need_add_neg[kXIndex]) {
-//        sfbitset_temp0 = FindXNeg3D(sfbitset_in);
-//        if (ptr_map_nodes_exist->find(sfbitset_temp0)
-//            == ptr_map_nodes_exist->end()) {
-//            ptr_map_nodes_exist->insert({ sfbitset_temp0, kFlag0_ });
-//            ptr_map_nodes_added->insert({ sfbitset_temp0, kFlag0_ });
-//        }
-//        // node at (-x, -y)
-//        if (vec_bool_need_add_neg[kYIndex]) {
-//            sfbitset_temp1 = FindYNeg3D(sfbitset_temp0);
-//            if (ptr_map_nodes_exist->find(sfbitset_temp1)
-//                == ptr_map_nodes_exist->end()) {
-//                ptr_map_nodes_exist->insert({ sfbitset_temp1, kFlag0_ });
-//                ptr_map_nodes_added->insert({ sfbitset_temp1, kFlag0_ });
-//            }
-//        }
-//        // node at (-x, +y)
-//        if (vec_bool_need_add_pos[kYIndex]) {
-//            sfbitset_temp1 = FindYPos3D(sfbitset_temp0);
-//            if (ptr_map_nodes_exist->find(sfbitset_temp1)
-//                == ptr_map_nodes_exist->end()) {
-//                ptr_map_nodes_exist->insert({ sfbitset_temp1, kFlag0_ });
-//                ptr_map_nodes_added->insert({ sfbitset_temp1, kFlag0_ });
-//            }
-//        }
-//    } else {
-//        bool_node_not_added_in_any_diretion = true;
-//    }
-//    // node at (+x, 0)
-//    if (vec_bool_need_add_pos[kXIndex]) {
-//        sfbitset_temp0 = FindXPos3D(sfbitset_in);
-//        if (ptr_map_nodes_exist->find(sfbitset_temp0)
-//            == ptr_map_nodes_exist->end()) {
-//            ptr_map_nodes_exist->insert({ sfbitset_temp0, kFlag0_ });
-//            ptr_map_nodes_added->insert({ sfbitset_temp0, kFlag0_ });
-//        }
-//        // node at (+x, -y)
-//        if (vec_bool_need_add_neg[kYIndex]) {
-//            sfbitset_temp1 = FindYNeg3D(sfbitset_temp0);
-//            if (ptr_map_nodes_exist->find(sfbitset_temp1)
-//                == ptr_map_nodes_exist->end()) {
-//                ptr_map_nodes_exist->insert({ sfbitset_temp1, kFlag0_ });
-//                ptr_map_nodes_added->insert({ sfbitset_temp1, kFlag0_ });
-//            }
-//        }
-//        // node at (+x, +y)
-//        if (vec_bool_need_add_pos[kYIndex]) {
-//            sfbitset_temp1 = FindYPos3D(sfbitset_temp0);
-//            if (ptr_map_nodes_exist->find(sfbitset_temp1)
-//                == ptr_map_nodes_exist->end()) {
-//                ptr_map_nodes_exist->insert({ sfbitset_temp1, kFlag0_ });
-//                ptr_map_nodes_added->insert({ sfbitset_temp1, kFlag0_ });
-//            }
-//        }
-//    } else {
-//        bool_node_not_added_in_any_diretion = true;
-//    }
-//    // node at (0, -y)
-//    if (vec_bool_need_add_neg[kYIndex]) {
-//        sfbitset_temp0 = FindXPos3D(sfbitset_in);
-//        if (ptr_map_nodes_exist->find(sfbitset_temp0)
-//            == ptr_map_nodes_exist->end()) {
-//            ptr_map_nodes_exist->insert({ sfbitset_temp0, kFlag0_ });
-//            ptr_map_nodes_added->insert({ sfbitset_temp0, kFlag0_ });
-//        }
-//    } else {
-//        bool_node_not_added_in_any_diretion = true;
-//    }
-//    // node at (0, +y)
-//    if (vec_bool_need_add_pos[kYIndex]) {
-//        sfbitset_temp0 = FindXPos3D(sfbitset_in);
-//        if (ptr_map_nodes_exist->find(sfbitset_temp0)
-//            == ptr_map_nodes_exist->end()) {
-//            ptr_map_nodes_exist->insert({ sfbitset_temp0, kFlag0_ });
-//            ptr_map_nodes_added->insert({ sfbitset_temp0, kFlag0_ });
-//        }
-//    } else {
-//        bool_node_not_added_in_any_diretion = true;
-//    }
-//    return bool_node_not_added_in_any_diretion;
-//}
-//#endif  // DEBUG_DISABLE_2D_FUNCTIONS
-//#ifndef  DEBUG_DISABLE_3D_FUNCTIONS
-///**
-//* @brief   function to do flood fill on existing nodes (3D)
-//* @param[in]  i_level   level of refinement.
-//* @param[in]  i_geo     index of the geometry.
-//* @param[in]  vec_origin origin coorfinates to search node for flood fill.
-//* @param[in]  map_nodes_exist nodes exist for flood fill.
-//* @return     bit_set corresponding to the starting vertex.
-//*/
-//DefSFBitset GridManagerInterface::FindStartingvertexForFloodFill3D(
-//    const DefSizet i_level, const DefSizet i_geo,
-//    const std::vector<DefReal>& vec_origin,
-//    const DefMap<DefUint>& map_nodes_exist) {
-//#ifdef DEBUG_CHECK_GRID
-//    if (vec_origin.size() != 3) {
-//        io::LogError("The dimension of vec_origin should be 3 rather than "
-//            + std::to_string(vec_origin.size()) + "for geometry: "
-//            + std::to_string(i_geo) + " in FindStartingvertexForFloodFill3D.");
-//    }
-//#endif  // DEBUG_CHECK_GRID
-//    // calculate bounds of searching step based on domain boundary
-//    DefLUint scale_i_level = TwoPowerN(static_cast<DefLUint>(i_level));
-//    DefLUint x_index = static_cast<DefLUint>(vec_origin.at(kXIndex)
-//        / (k0DomainDx_[kXIndex] / scale_i_level) + kEps);
-//    DefLUint y_index = static_cast<DefLUint>(vec_origin.at(kYIndex)
-//        / (k0DomainDx_[kYIndex] / scale_i_level) + kEps);
-//    DefLUint z_index = static_cast<DefLUint>(vec_origin.at(kZIndex)
-//        / (k0DomainDx_[kZIndex] / scale_i_level) + kEps);
-//    DefUint x_index_max =
-//        k0MaxIndexOfBackgroundNode_[kXIndex] * scale_i_level - x_index;
-//    DefUint y_index_max =
-//        k0MaxIndexOfBackgroundNode_[kYIndex] * scale_i_level - y_index;
-//    DefUint z_index_max =
-//        k0MaxIndexOfBackgroundNode_[kZIndex] * scale_i_level - z_index;
-//
-//    bool bool_find_node_for_flood_fill = false;
-//    DefUint i_count = 0, count_sum = 0;;
-//    DefSFBitset sfbitset_origin_vertex = SFBitsetEncoding3D(
-//        { x_index , y_index, z_index });
-//    // search in -x direction from the vec_origin untill meet the first vertex
-//    // in map_nodes_exist
-//    DefSFBitset sfbitset_temp = sfbitset_origin_vertex, sfbitset_start_vertex;
-//    while (i_count < x_index) {
-//       sfbitset_temp = FindXNeg3D(sfbitset_temp);
-//       if (map_nodes_exist.find(sfbitset_temp) != map_nodes_exist.end()) {
-//           sfbitset_start_vertex = FindXPos3D(sfbitset_temp);
-//           bool_find_node_for_flood_fill = true;
-//           break;
-//       }
-//        ++i_count;
-//    }
-//    count_sum += i_count;
-//    // search in -y direction from the vec_origin untill meet the first vertex
-//    // in map_nodes_exist
-//    if (!bool_find_node_for_flood_fill) {
-//       sfbitset_temp = sfbitset_origin_vertex;
-//        i_count = 0;
-//        while (i_count < y_index) {
-//           sfbitset_temp = FindYNeg3D(sfbitset_temp);
-//            if (map_nodes_exist.find(sfbitset_temp) != map_nodes_exist.end()) {
-//               sfbitset_start_vertex = FindYPos3D(sfbitset_temp);
-//                bool_find_node_for_flood_fill = true;
-//                break;
-//            }
-//            ++i_count;
-//        }
-//    }
-//    count_sum += i_count;
-//    // search in -z direction from the vec_origin untill meet the first vertex
-//    // in map_nodes_exist
-//    if (!bool_find_node_for_flood_fill) {
-//       sfbitset_temp = sfbitset_origin_vertex;
-//        i_count = 0;
-//        while (i_count < z_index) {
-//           sfbitset_temp = FindZNeg3D(sfbitset_temp);
-//            if (map_nodes_exist.find(sfbitset_temp) != map_nodes_exist.end()) {
-//               sfbitset_start_vertex = FindZPos3D(sfbitset_temp);
-//                bool_find_node_for_flood_fill = true;
-//                break;
-//            }
-//            ++i_count;
-//        }
-//    }
-//    count_sum += i_count;
-//    // search in +x direction from the vec_origin untill meet the first vertex
-//    // in map_nodes_exist
-//    if (!bool_find_node_for_flood_fill) {
-//       sfbitset_temp = sfbitset_origin_vertex;
-//        i_count = 0;
-//        while (i_count < x_index_max) {
-//           sfbitset_temp = FindXPos3D(sfbitset_temp);
-//            if (map_nodes_exist.find(sfbitset_temp) != map_nodes_exist.end()) {
-//               sfbitset_start_vertex = FindXNeg3D(sfbitset_temp);
-//                bool_find_node_for_flood_fill = true;
-//                break;
-//            }
-//            ++i_count;
-//        }
-//    }
-//    count_sum += i_count;
-//    // search in +y direction from the vec_origin untill meet the first vertex
-//    // in map_nodes_exist
-//    if (!bool_find_node_for_flood_fill) {
-//       sfbitset_temp = sfbitset_origin_vertex;
-//        i_count = 0;
-//        while (i_count < y_index_max) {
-//           sfbitset_temp = FindYPos3D(sfbitset_temp);
-//            if (map_nodes_exist.find(sfbitset_temp) != map_nodes_exist.end()) {
-//               sfbitset_start_vertex = FindYNeg3D(sfbitset_temp);
-//                bool_find_node_for_flood_fill = true;
-//                break;
-//            }
-//            ++i_count;
-//        }
-//    }
-//    count_sum += i_count;
-//    // search in +z direction from the vec_origin untill meet the first vertex
-//    // in map_nodes_exist
-//    if (!bool_find_node_for_flood_fill) {
-//       sfbitset_temp = sfbitset_origin_vertex;
-//        i_count = 0;
-//        while (i_count < z_index_max) {
-//           sfbitset_temp = FindZPos3D(sfbitset_temp);
-//            if (map_nodes_exist.find(sfbitset_temp) != map_nodes_exist.end()) {
-//               sfbitset_start_vertex = FindZNeg3D(sfbitset_temp);
-//                bool_find_node_for_flood_fill = true;
-//                break;
-//            }
-//            ++i_count;
-//        }
-//    }
-//    count_sum += i_count;
-//
-//    if (bool_find_node_for_flood_fill) {
-//        return sfbitset_start_vertex;
-//    } else {
-//        io::LogError("Can't find starting node for food fill in geometry: "
-//            + std::to_string(i_geo) + " in FindStartingvertexForFloodFill3D"
-//            + " after " + std::to_string(count_sum) + " iterations.");
-//        return 1;
-//    }
-//}
-///**
-//* @brief   function to pushbit_sets into stack (3D)
-//* @param[in]   sfbitset_in   bitset of spacing filling code
-//*                          corresponding to node has been colored.
-//* @param[out]  ptr_vec_stk     stack to store seeds.
-//*/
-//void GridManagerInterface::PushBackSFBitsetInFloodFill3D(const DefSFBitset& sfbitset_in,
-//    std::vector<DefSFBitset>* const ptr_vec_stk) {
-//    // add neighbouring nodes to seed
-//    ptr_vec_stk->push_back(FindXNeg3D(sfbitset_in));
-//    ptr_vec_stk->push_back(FindXPos3D(sfbitset_in));
-//    ptr_vec_stk->push_back(FindYNeg3D(sfbitset_in));
-//    ptr_vec_stk->push_back(FindYPos3D(sfbitset_in));
-//    ptr_vec_stk->push_back(FindZNeg3D(sfbitset_in));
-//    ptr_vec_stk->push_back(FindZPos3D(sfbitset_in));
-//}
-///**
-//* @brief function to add nodes abourd a node with specified directions (3D)
-//* @param[in]  sfbitset_in  bitset of a given node.
-//* @param[in]  vec_bool_need_add_neg   identifier indicate 
-//*                whether nodes need to be added in negative directions.
-//* @param[in]  vec_bool_need_adde_pos   identifier indicate 
-//*                whether nodes need to be added in positive directions.
-//* @param[out] ptr_map_nodes_exist nodes already exist or added in this function
-//* @param[out] ptr_map_nodes_added nodes are added in this function
-//* @return     if exists directions in which node does not need to be added 
-//*/
-//bool GridManagerInterface::AddNodesAroundAGivenNode3D(
-//    const DefSFBitset& sfbitset_in,
-//    const std::vector<bool>& vec_bool_need_add_neg,
-//    const std::vector<bool>& vec_bool_need_add_pos,
-//    DefMap<DefLUint>* const ptr_map_nodes_exist,
-//    DefMap<DefLUint>* const ptr_map_nodes_added) {
-//    bool bool_node_not_added_in_any_diretion = false;
-//    DefSFBitset sfbitset_temp0, sfbitset_temp1, sfbitset_temp2;
-//    // node at (-x, 0, 0)
-//    if (vec_bool_need_add_neg[kXIndex]) {
-//        sfbitset_temp0 = FindXNeg3D(sfbitset_in);
-//        if (ptr_map_nodes_exist->find(sfbitset_temp0)
-//            == ptr_map_nodes_exist->end()) {
-//            ptr_map_nodes_exist->insert({ sfbitset_temp0, kFlag0_ });
-//            ptr_map_nodes_added->insert({ sfbitset_temp0, kFlag0_ });
-//        }
-//        // node at (-x, -y, 0)
-//        if (vec_bool_need_add_neg[kYIndex]) {
-//            sfbitset_temp1 = FindYNeg3D(sfbitset_temp0);
-//            if (ptr_map_nodes_exist->find(sfbitset_temp1)
-//                == ptr_map_nodes_exist->end()) {
-//                ptr_map_nodes_exist->insert({ sfbitset_temp1, kFlag0_ });
-//                ptr_map_nodes_added->insert({ sfbitset_temp1, kFlag0_ });
-//            }
-//        }
-//        // node at (-x, +y, 0)
-//        if (vec_bool_need_add_pos[kYIndex]) {
-//            sfbitset_temp1 = FindYPos3D(sfbitset_temp0);
-//            if (ptr_map_nodes_exist->find(sfbitset_temp1)
-//                == ptr_map_nodes_exist->end()) {
-//                ptr_map_nodes_exist->insert({ sfbitset_temp1, kFlag0_ });
-//                ptr_map_nodes_added->insert({ sfbitset_temp1, kFlag0_ });
-//            }
-//        }
-//    } else {
-//        bool_node_not_added_in_any_diretion = true;
-//    }
-//    // node at (+x, 0, 0)
-//    if (vec_bool_need_add_pos[kXIndex]) {
-//        sfbitset_temp0 = FindXPos3D(sfbitset_in);
-//        if (ptr_map_nodes_exist->find(sfbitset_temp0)
-//            == ptr_map_nodes_exist->end()) {
-//            ptr_map_nodes_exist->insert({ sfbitset_temp0, kFlag0_ });
-//            ptr_map_nodes_added->insert({ sfbitset_temp0, kFlag0_ });
-//        }
-//        // node at (+x, -y, 0)
-//        if (vec_bool_need_add_neg[kYIndex]) {
-//            sfbitset_temp1 = FindYNeg3D(sfbitset_temp0);
-//            if (ptr_map_nodes_exist->find(sfbitset_temp1)
-//                == ptr_map_nodes_exist->end()) {
-//                ptr_map_nodes_exist->insert({ sfbitset_temp1, kFlag0_ });
-//                ptr_map_nodes_added->insert({ sfbitset_temp1, kFlag0_ });
-//            }
-//        }
-//        // node at (+x, +y, 0)
-//        if (vec_bool_need_add_pos[kYIndex]) {
-//            sfbitset_temp1 = FindYPos3D(sfbitset_temp0);
-//            if (ptr_map_nodes_exist->find(sfbitset_temp1)
-//                == ptr_map_nodes_exist->end()) {
-//                ptr_map_nodes_exist->insert({ sfbitset_temp1, kFlag0_ });
-//                ptr_map_nodes_added->insert({ sfbitset_temp1, kFlag0_ });
-//            }
-//        }
-//    } else {
-//        bool_node_not_added_in_any_diretion = true;
-//    }
-//    // node at (0, -y, 0)
-//    if (vec_bool_need_add_neg[kYIndex]) {
-//        sfbitset_temp0 = FindXPos3D(sfbitset_in);
-//        if (ptr_map_nodes_exist->find(sfbitset_temp0)
-//            == ptr_map_nodes_exist->end()) {
-//            ptr_map_nodes_exist->insert({ sfbitset_temp0, kFlag0_ });
-//            ptr_map_nodes_added->insert({ sfbitset_temp0, kFlag0_ });
-//        }
-//    } else {
-//        bool_node_not_added_in_any_diretion = true;
-//    }
-//    // node at (0, +y, 0)
-//    if (vec_bool_need_add_pos[kYIndex]) {
-//        sfbitset_temp0 = FindXPos3D(sfbitset_in);
-//        if (ptr_map_nodes_exist->find(sfbitset_temp0)
-//            == ptr_map_nodes_exist->end()) {
-//            ptr_map_nodes_exist->insert({ sfbitset_temp0, kFlag0_ });
-//            ptr_map_nodes_added->insert({ sfbitset_temp0, kFlag0_ });
-//        }
-//    } else {
-//        bool_node_not_added_in_any_diretion = true;
-//    }
-//    // node at (0, 0, -z)
-//    if (vec_bool_need_add_neg[kZIndex]) {
-//        sfbitset_temp0 = FindZNeg3D(sfbitset_in);
-//        if (ptr_map_nodes_exist->find(sfbitset_temp0)
-//            == ptr_map_nodes_exist->end()) {
-//            ptr_map_nodes_exist->insert({ sfbitset_temp0, kFlag0_ });
-//            ptr_map_nodes_added->insert({ sfbitset_temp0, kFlag0_ });
-//        }
-//        // node at (-x, 0, -z)
-//        if (vec_bool_need_add_neg[kXIndex]) {
-//            sfbitset_temp1 = FindXNeg3D(sfbitset_temp0);
-//            if (ptr_map_nodes_exist->find(sfbitset_temp1)
-//                == ptr_map_nodes_exist->end()) {
-//                ptr_map_nodes_exist->insert({ sfbitset_temp1, kFlag0_ });
-//                ptr_map_nodes_added->insert({ sfbitset_temp1, kFlag0_ });
-//            }
-//        }
-//        // node at (-x, -y, -z)
-//        if (vec_bool_need_add_neg[kYIndex]) {
-//            sfbitset_temp2 = FindYNeg3D(sfbitset_temp1);
-//            if (ptr_map_nodes_exist->find(sfbitset_temp2)
-//                == ptr_map_nodes_exist->end()) {
-//                ptr_map_nodes_exist->insert({ sfbitset_temp2, kFlag0_ });
-//                ptr_map_nodes_added->insert({ sfbitset_temp2, kFlag0_ });
-//            }
-//        }
-//        // node at (-x, +y, -z)
-//        if (vec_bool_need_add_pos[kYIndex]) {
-//            sfbitset_temp2 = FindYPos3D(sfbitset_temp1);
-//            if (ptr_map_nodes_exist->find(sfbitset_temp2)
-//                == ptr_map_nodes_exist->end()) {
-//                ptr_map_nodes_exist->insert({ sfbitset_temp2, kFlag0_ });
-//                ptr_map_nodes_added->insert({ sfbitset_temp2, kFlag0_ });
-//            }
-//        }
-//        // node at (+x, 0, -z)
-//        if (vec_bool_need_add_pos[kXIndex]) {
-//            sfbitset_temp1 = FindXPos3D(sfbitset_temp0);
-//            if (ptr_map_nodes_exist->find(sfbitset_temp1)
-//                == ptr_map_nodes_exist->end()) {
-//                ptr_map_nodes_exist->insert({ sfbitset_temp1, kFlag0_ });
-//                ptr_map_nodes_added->insert({ sfbitset_temp1, kFlag0_ });
-//            }
-//        }
-//        // node at (+x, -y, -z)
-//        if (vec_bool_need_add_neg[kYIndex]) {
-//            sfbitset_temp2 = FindYNeg3D(sfbitset_temp1);
-//            if (ptr_map_nodes_exist->find(sfbitset_temp2)
-//                == ptr_map_nodes_exist->end()) {
-//                ptr_map_nodes_exist->insert({ sfbitset_temp2, kFlag0_ });
-//                ptr_map_nodes_added->insert({ sfbitset_temp2, kFlag0_ });
-//            }
-//        }
-//        // node at (+x, +y, -z)
-//        if (vec_bool_need_add_pos[kYIndex]) {
-//            sfbitset_temp2 = FindYPos3D(sfbitset_temp1);
-//            if (ptr_map_nodes_exist->find(sfbitset_temp2)
-//                == ptr_map_nodes_exist->end()) {
-//                ptr_map_nodes_exist->insert({ sfbitset_temp2, kFlag0_ });
-//                ptr_map_nodes_added->insert({ sfbitset_temp2, kFlag0_ });
-//            }
-//        }
-//        // node at (0, -y, -z)
-//        if (vec_bool_need_add_neg[kYIndex]) {
-//            sfbitset_temp1 = FindYNeg3D(sfbitset_temp0);
-//            if (ptr_map_nodes_exist->find(sfbitset_temp1)
-//                == ptr_map_nodes_exist->end()) {
-//                ptr_map_nodes_exist->insert({ sfbitset_temp1, kFlag0_ });
-//                ptr_map_nodes_added->insert({ sfbitset_temp1, kFlag0_ });
-//            }
-//        }
-//        //  node at (0, +y, -z)
-//        if (vec_bool_need_add_pos[kYIndex]) {
-//            sfbitset_temp1 = FindYPos3D(sfbitset_temp0);
-//            if (ptr_map_nodes_exist->find(sfbitset_temp1)
-//                == ptr_map_nodes_exist->end()) {
-//                ptr_map_nodes_exist->insert({ sfbitset_temp1, kFlag0_ });
-//                ptr_map_nodes_added->insert({ sfbitset_temp1, kFlag0_ });
-//            }
-//        }
-//    } else {
-//        bool_node_not_added_in_any_diretion = true;
-//    }
-//    // node at (0, 0, +z)
-//    if (vec_bool_need_add_pos[kZIndex]) {
-//        sfbitset_temp0 = FindZPos3D(sfbitset_in);
-//        if (ptr_map_nodes_exist->find(sfbitset_temp0)
-//            == ptr_map_nodes_exist->end()) {
-//            ptr_map_nodes_exist->insert({ sfbitset_temp0, kFlag0_ });
-//            ptr_map_nodes_added->insert({ sfbitset_temp0, kFlag0_ });
-//        }
-//        // node at (-x, 0, -z)
-//        if (vec_bool_need_add_neg[kXIndex]) {
-//            sfbitset_temp1 = FindXNeg3D(sfbitset_temp0);
-//            if (ptr_map_nodes_exist->find(sfbitset_temp1)
-//                == ptr_map_nodes_exist->end()) {
-//                ptr_map_nodes_exist->insert({ sfbitset_temp1, kFlag0_ });
-//                ptr_map_nodes_added->insert({ sfbitset_temp1, kFlag0_ });
-//            }
-//        }
-//        // node at (-x, -y, -z)
-//        if (vec_bool_need_add_neg[kYIndex]) {
-//            sfbitset_temp2 = FindYNeg3D(sfbitset_temp1);
-//            if (ptr_map_nodes_exist->find(sfbitset_temp2)
-//                == ptr_map_nodes_exist->end()) {
-//                ptr_map_nodes_exist->insert({ sfbitset_temp2, kFlag0_ });
-//                ptr_map_nodes_added->insert({ sfbitset_temp2, kFlag0_ });
-//            }
-//        }
-//        // node at (-x, +y, -z)
-//        if (vec_bool_need_add_pos[kYIndex]) {
-//            sfbitset_temp2 = FindYPos3D(sfbitset_temp1);
-//            if (ptr_map_nodes_exist->find(sfbitset_temp2)
-//                == ptr_map_nodes_exist->end()) {
-//                ptr_map_nodes_exist->insert({ sfbitset_temp2, kFlag0_ });
-//                ptr_map_nodes_added->insert({ sfbitset_temp2, kFlag0_ });
-//            }
-//        }
-//        // node at (+x, 0, -z)
-//        if (vec_bool_need_add_pos[kXIndex]) {
-//            sfbitset_temp1 = FindXPos3D(sfbitset_temp0);
-//            if (ptr_map_nodes_exist->find(sfbitset_temp1)
-//                == ptr_map_nodes_exist->end()) {
-//                ptr_map_nodes_exist->insert({ sfbitset_temp1, kFlag0_ });
-//                ptr_map_nodes_added->insert({ sfbitset_temp1, kFlag0_ });
-//            }
-//        }
-//        // node at (+x, -y, -z)
-//        if (vec_bool_need_add_neg[kYIndex]) {
-//            sfbitset_temp2 = FindYNeg3D(sfbitset_temp1);
-//            if (ptr_map_nodes_exist->find(sfbitset_temp2)
-//                == ptr_map_nodes_exist->end()) {
-//                ptr_map_nodes_exist->insert({ sfbitset_temp2, kFlag0_ });
-//                ptr_map_nodes_added->insert({ sfbitset_temp2, kFlag0_ });
-//            }
-//        }
-//        // node at (+x, +y, -z)
-//        if (vec_bool_need_add_pos[kYIndex]) {
-//            sfbitset_temp2 = FindYPos3D(sfbitset_temp1);
-//            if (ptr_map_nodes_exist->find(sfbitset_temp2)
-//                == ptr_map_nodes_exist->end()) {
-//                ptr_map_nodes_exist->insert({ sfbitset_temp2, kFlag0_ });
-//                ptr_map_nodes_added->insert({ sfbitset_temp2, kFlag0_ });
-//            }
-//        }
-//        // node at (0, -y, -z)
-//        if (vec_bool_need_add_neg[kYIndex]) {
-//            sfbitset_temp1 = FindYNeg3D(sfbitset_temp0);
-//            if (ptr_map_nodes_exist->find(sfbitset_temp1)
-//                == ptr_map_nodes_exist->end()) {
-//                ptr_map_nodes_exist->insert({ sfbitset_temp1, kFlag0_ });
-//                ptr_map_nodes_added->insert({ sfbitset_temp1, kFlag0_ });
-//            }
-//        }
-//        //  node at (0, +y, -z)
-//        if (vec_bool_need_add_pos[kYIndex]) {
-//            sfbitset_temp1 = FindYPos3D(sfbitset_temp0);
-//            if (ptr_map_nodes_exist->find(sfbitset_temp1)
-//                == ptr_map_nodes_exist->end()) {
-//                ptr_map_nodes_exist->insert({ sfbitset_temp1, kFlag0_ });
-//                ptr_map_nodes_added->insert({ sfbitset_temp1, kFlag0_ });
-//            }
-//        }
-//    } else {
-//        bool_node_not_added_in_any_diretion = true;
-//    }
-//    return bool_node_not_added_in_any_diretion;
-//}
-//#endif  // DEBUG_DISABLE_3D_FUNCTIONS
-//}  // end namespace amrproject
-//}  // end namespace rootproject
+//  Copyright (c) 2022, Zhengliang Liu
+//  All rights reserved
+/**
+* @file grid_generation_serial.cpp
+* @author Zhengliang Liu
+* @brief functions used to generate grid serially.
+* @date  2022-11-24
+* @note  functions from geometry_manager will be called.
+*/
+#include "auxiliary_inline_func.h"
+#include "grid/grid_manager.h"
+#include "io/log_write.h"
+#ifdef ENABLE_MPI
+#include "mpi/mpi_manager.h"
+#endif  // ENABLE_MPI
+namespace rootproject {
+namespace amrproject {
+void GridManagerInterface::GenerateInitialMeshBasedOnGeoSerial(
+    const std::vector<std::shared_ptr<GeometryInfoInterface>> &vec_geo_info) {
+    std::vector<DefMap<DefUint>> sfbitset_one_lower_level;
+    GenerateGridFromHighToLowLevelSerial(
+        vec_geo_info, &sfbitset_one_lower_level);
+    CreateCellAndBackgroundGridSerial(sfbitset_one_lower_level);
+}
+/**
+* @brief   function to generate grid for all levels of refinement.
+* @param[in]  vec_geo_info vetor containing vertexers
+*             to instance storing geometry information.
+* @param[out]  ptr_sfbitset_one_lower_level   maps to store 
+*            nodes at each refiement level
+*/
+void GridManagerInterface::GenerateGridFromHighToLowLevelSerial(
+    const std::vector<std::shared_ptr<GeometryInfoInterface>>&vec_geo_info,
+    std::vector<DefMap<DefUint>>* const ptr_sfbitset_one_lower_level) {
+    ptr_sfbitset_one_lower_level->resize(k0MaxLevel_ + 1);
+    SFBitsetAuxInterface* sfbitset_aux_ptr = this->GetSFBitsetAuxPtr();
+
+    if (vec_ptr_grid_info_.size() != k0MaxLevel_ + 1) {
+        LogError("Nnumber of grid refinement level " + std::to_string(
+            vec_ptr_grid_info_.size() - 1) + " is different from k0MaxLevel_ "
+            + std::to_string(k0MaxLevel_) + ", need to create grid instance "
+            + "before calling the function: GenerateGridFromHighToLowLevelSerial.");
+    }
+
+    // generate tracking and ghost nodes based on geometries
+    DefSizet i_geo = 0;
+    for (auto& iter : vec_geo_info) {
+        iter->i_geo_ = i_geo;
+        iter->FindTrackingNodeBasedOnGeo(sfbitset_aux_ptr,
+            vec_ptr_grid_info_.at(iter->i_level_).get());
+        ++i_geo;
+    }
+
+    std::vector<DefReal> flood_fill_origin(k0GridDims_);
+    std::map<std::pair<ECriterionType, DefSizet>,DefMap<DefUint>>
+        innermost_layer, outermost_layer;
+    GeometryInfoInterface* ptr_geo_info = nullptr;
+    struct NumExtendLayer {
+        std::vector<DefLUint> neg;
+        std::vector<DefLUint> pos;
+    } num_extend_layer;
+    num_extend_layer.neg = std::vector<DefLUint>(k0GridDims_, 0);
+    num_extend_layer.pos = std::vector<DefLUint>(k0GridDims_, 0);
+    /** @todo extended outer layers based on each outmost layer could be 
+    stored in individual map, which will avoid interfering between different
+    layers but is more time consuming since additional nodes for every 
+    outmost layers are need to identify inside and outside region. Here
+    nodes are inserted in one map (ptr_sfbitset_one_lower_level) rather
+    than several ones, thus processes of extending inner and outer
+    are the same*/
+    for (DefSizet i_level = k0MaxLevel_; i_level > 0; --i_level) {
+        std::map<std::pair<ECriterionType, DefSizet>, NumExtendLayer>
+            map_num_extend_inner_layer, map_num_extend_outer_layer;
+        std::map<std::pair<ECriterionType, DefSizet>, DefMap<DefUint>>
+            innermost_layer_current, outermost_layer_current;
+        // add nodes based on tracking nodes
+        for (auto& iter_tracking_grid_info : vec_ptr_grid_info_.at(i_level)
+            ->map_ptr_tracking_grid_info_) {
+            DefMap<DefUint> node_near_tracking;
+            // set number of extended layers
+            SetNumberOfExtendLayerForGrid(i_level,
+                *(vec_geo_info.at(iter_tracking_grid_info.first.second)),
+                &iter_tracking_grid_info.second->k0ExtendInnerNeg,
+                &iter_tracking_grid_info.second->k0ExtendInnerPos,
+                &iter_tracking_grid_info.second->k0ExtendOuterNeg,
+                &iter_tracking_grid_info.second->k0ExtendOuterPos);
+
+            for (DefUint idims = 0; idims < k0GridDims_; ++idims) {
+                num_extend_layer.neg[idims] = iter_tracking_grid_info.second->
+                    k0ExtendOuterNeg[idims] - 1;
+                num_extend_layer.pos[idims] = iter_tracking_grid_info.second->
+                    k0ExtendOuterPos[idims] - 1;
+            }
+            map_num_extend_outer_layer.insert(
+                { iter_tracking_grid_info.first, num_extend_layer });
+            // tracking nodes need to identify inside and outside
+            if (iter_tracking_grid_info.second->grid_extend_type_
+                == EGridExtendType::kInAndOut) {
+                GenerateGridNodeNearTrackingNode(
+                    i_level, iter_tracking_grid_info.first, &node_near_tracking);
+                for (DefUint idims = 0; idims < k0GridDims_; ++idims) {
+                    num_extend_layer.neg[idims] = iter_tracking_grid_info.second->
+                        k0ExtendInnerNeg[idims] - 1;
+                    num_extend_layer.pos[idims] = iter_tracking_grid_info.second->
+                        k0ExtendInnerPos[idims] - 1;
+                }
+                map_num_extend_inner_layer.insert(
+                    { iter_tracking_grid_info.first, num_extend_layer });
+                DefMap<DefUint> node_inside, node_outside;
+                IdentifyTypeOfLayerByFloodFill(i_level - 1,
+                    iter_tracking_grid_info.first.second,
+                    vec_geo_info[iter_tracking_grid_info.first.second]
+                    ->GetFloodFillOriginArrAsVec(),
+                    node_near_tracking, &node_outside, &node_inside);
+                innermost_layer.insert(
+                    { iter_tracking_grid_info.first, node_inside });
+                outermost_layer.insert(
+                    { iter_tracking_grid_info.first, node_outside });
+            } else {
+                outermost_layer.insert(
+                    { iter_tracking_grid_info.first, node_near_tracking });
+            }
+            ptr_sfbitset_one_lower_level->at(i_level).insert(
+                node_near_tracking.begin(), node_near_tracking.end());
+        }
+        // extend the inner layer (number of extended layer
+        // can be identified for each tracking grid)
+        InterfaceLayerInfo* ptr_interface_info = nullptr;
+        for (auto& iter_inner : innermost_layer) {
+            if (map_num_extend_inner_layer.find(iter_inner.first)
+                == map_num_extend_inner_layer.end()) {
+                vec_ptr_grid_info_.at(i_level)->map_ptr_interface_layer_info_
+                    .insert({ iter_inner.first,
+                        std::make_shared<InterfaceLayerInfo>() });
+                ptr_interface_info = vec_ptr_grid_info_.at(i_level)
+                    ->map_ptr_interface_layer_info_.at(iter_inner.first).get();   
+                SetNumberOfExtendLayerForGrid(i_level,
+                    *(vec_geo_info.at(iter_inner.first.second)),
+                    &ptr_interface_info->k0ExtendInnerNeg,
+                    &ptr_interface_info->k0ExtendInnerPos,
+                    &ptr_interface_info->k0ExtendOuterNeg,
+                    &ptr_interface_info->k0ExtendOuterPos);
+                num_extend_layer.neg =
+                    ptr_interface_info->k0ExtendInnerNeg;
+                num_extend_layer.pos =
+                    ptr_interface_info->k0ExtendInnerPos;
+                map_num_extend_inner_layer.insert(
+                    { iter_inner.first, num_extend_layer });
+                num_extend_layer.neg =
+                    ptr_interface_info->k0ExtendOuterNeg;
+                num_extend_layer.pos =
+                    ptr_interface_info->k0ExtendOuterPos;
+                map_num_extend_outer_layer.insert(
+                    { iter_inner.first, num_extend_layer });
+            }
+            if (innermost_layer_current.find(iter_inner.first)
+                == innermost_layer_current.end()) {
+                innermost_layer_current.insert({ iter_inner.first, {} });
+            } else {
+                innermost_layer_current.clear();
+            }
+            ExtendGivenNumbOfLayer(i_level,
+                map_num_extend_inner_layer.at(iter_inner.first).neg,
+                map_num_extend_inner_layer.at(iter_inner.first).pos,
+                iter_inner.second,
+                &ptr_sfbitset_one_lower_level->at(i_level),
+                &innermost_layer_current.at(iter_inner.first));
+        }
+
+        // extend the outer layer (number of extended layer
+        // can be identified for each tracking grid)
+        for (auto& iter_outer : outermost_layer) {
+            if (map_num_extend_outer_layer.find(iter_outer.first)
+                == map_num_extend_outer_layer.end()) {
+                vec_ptr_grid_info_.at(i_level)->map_ptr_interface_layer_info_
+                    .insert({ iter_outer.first,
+                        std::make_shared<InterfaceLayerInfo>() });
+                ptr_interface_info = vec_ptr_grid_info_.at(i_level)
+                    ->map_ptr_interface_layer_info_.at(iter_outer.first).get();
+                SetNumberOfExtendLayerForGrid(i_level,
+                    *(vec_geo_info.at(iter_outer.first.second)),
+                    &ptr_interface_info->k0ExtendInnerNeg,
+                    &ptr_interface_info->k0ExtendInnerPos,
+                    &ptr_interface_info->k0ExtendOuterNeg,
+                    &ptr_interface_info->k0ExtendOuterPos);
+                num_extend_layer.neg =
+                    ptr_interface_info->k0ExtendInnerNeg;
+                num_extend_layer.pos =
+                    ptr_interface_info->k0ExtendInnerPos;
+                map_num_extend_inner_layer.insert(
+                    { iter_outer.first, num_extend_layer });
+                num_extend_layer.neg =
+                    ptr_interface_info->k0ExtendOuterNeg;
+                num_extend_layer.pos =
+                    ptr_interface_info->k0ExtendOuterPos;
+                map_num_extend_outer_layer.insert(
+                    { iter_outer.first, num_extend_layer });
+            }
+            if (outermost_layer_current.find(iter_outer.first)
+                == outermost_layer_current.end()) {
+                outermost_layer_current.insert({ iter_outer.first, {} });
+            } else {
+                outermost_layer_current.clear();
+            }
+            ExtendGivenNumbOfLayer(i_level,
+                map_num_extend_outer_layer.at(iter_outer.first).neg,
+                map_num_extend_outer_layer.at(iter_outer.first).pos,
+                iter_outer.second,
+                &ptr_sfbitset_one_lower_level->at(i_level),
+                &outermost_layer_current.at(iter_outer.first));
+        }
+        // find interface between different grid
+        DefSizet level_low = i_level - 1;
+        for (auto& iter_inner : innermost_layer_current) {
+            innermost_layer.at(iter_inner.first).clear();
+            if (vec_ptr_grid_info_.at(level_low)->map_ptr_interface_layer_info_
+                .find(iter_inner.first) == vec_ptr_grid_info_.at(level_low)
+                ->map_ptr_interface_layer_info_.end()) {
+                vec_ptr_grid_info_.at(level_low)->map_ptr_interface_layer_info_
+                    .insert({ iter_inner.first,
+                        std::make_shared<InterfaceLayerInfo>() });
+            }
+            ptr_interface_info = vec_ptr_grid_info_.at(level_low)
+                ->map_ptr_interface_layer_info_.at(iter_inner.first).get();
+            ptr_interface_info->vec_inner_coarse2fine_.resize(
+                vec_ptr_grid_info_.at(level_low)->k0NumCoarse2FineLayer_);
+            FindInterfaceBetweenGrid(i_level, iter_inner.second,
+                &ptr_sfbitset_one_lower_level->at(i_level),
+                &ptr_interface_info->vec_inner_coarse2fine_.back(),
+                &ptr_sfbitset_one_lower_level->at(level_low),
+                &innermost_layer.at(iter_inner.first));
+        }
+        for (auto& iter_outer : outermost_layer_current) {
+            outermost_layer.at(iter_outer.first).clear();
+            if (vec_ptr_grid_info_.at(level_low)->map_ptr_interface_layer_info_
+                .find(iter_outer.first) == vec_ptr_grid_info_.at(level_low)
+                ->map_ptr_interface_layer_info_.end()) {
+                vec_ptr_grid_info_.at(level_low)->map_ptr_interface_layer_info_
+                    .insert({ iter_outer.first,
+                        std::make_shared<InterfaceLayerInfo>() });
+            }
+            ptr_interface_info = vec_ptr_grid_info_.at(level_low)
+                ->map_ptr_interface_layer_info_.at(iter_outer.first).get();
+            ptr_interface_info->vec_outer_coarse2fine_.resize(
+                vec_ptr_grid_info_.at(level_low)->k0NumCoarse2FineLayer_);
+            FindInterfaceBetweenGrid(i_level, iter_outer.second,
+                &ptr_sfbitset_one_lower_level->at(i_level),
+                &ptr_interface_info->vec_outer_coarse2fine_.back(),
+                &ptr_sfbitset_one_lower_level->at(level_low),
+                &outermost_layer.at(iter_outer.first));
+        }
+    }
+}
+void GridManagerInterface::CreateCellAndBackgroundGridSerial(
+    const std::vector<DefMap<DefUint>>& sfbitset_one_lower_level) {
+    InterfaceLayerInfo* ptr_interface_info = nullptr;
+    InterfaceLayerInfo* ptr_interface_info_lower = nullptr;
+    DefSizet layer_coarse0, layer_coarse_m1, layer0, layer_m1, layer_m2;
+
+#ifdef ENABLE_MPI
+    //DefSFBitset bitset_lower_bound, bitset_upper_bound;
+    //unsigned long long lower_bound = bitset_lower_bound.to_ullong(),
+    //    upper_bound = bitset_upper_bound.to_ullong();
+    //unsigned long long bitset_ullong;
+    //bitset_ullong = iter_node.first.to_ullong();
+    //if (bitset_ullong < bitset_lower_bound
+    //    || bitset_ullong > bitset_lower_bound) {
+    //    continue;
+    //}
+#endif  // ENABLE_MPI
+
+    DefMap<DefUint> background_occupied;
+    DefUint flag_temp, flag_refined = kFlagExist_;
+    for (DefSizet i_level = k0MaxLevel_; i_level > 0; --i_level) {
+        GridInfoInterface& grid_info = *(vec_ptr_grid_info_.at(i_level));
+        GridInfoInterface& grid_info_lower =
+            *(vec_ptr_grid_info_.at(i_level - 1));
+        DefMap<GridNode>& map_grid = grid_info.map_grid_node_;
+        DefMap<GridNode>& map_grid_lower = grid_info_lower.map_grid_node_;
+#ifdef DEBUG_CHECK_GRID
+        if (grid_info_lower.k0NumCoarse2FineLayer_ < 2) {
+            LogError("number of coarse to fine layers at level "
+                + std::to_string(i_level - 1) + " is at least 1");
+        }
+        if (grid_info.k0NumFine2CoarseLayer_ < 3) {
+            LogError("number of fine to coarse layers at level "
+                + std::to_string(i_level) + " is at least 3");
+        }
+#endif // DEBUG_CHECK_GRID
+        // find interface node at current level
+        layer_coarse0 = grid_info_lower.k0NumCoarse2FineLayer_ - 1;
+        layer_coarse_m1 = layer_coarse0 - 1;
+        layer0 = grid_info.k0NumFine2CoarseLayer_ - 1;
+        layer_m1 = layer0 - 1;
+        layer_m2 = layer_m1 - 1;
+        for (auto& iter_interface :
+            grid_info_lower.map_ptr_interface_layer_info_) {
+            ptr_interface_info_lower = iter_interface.second.get();
+            if (grid_info.map_ptr_interface_layer_info_
+                .find(iter_interface.first)
+                == grid_info.map_ptr_interface_layer_info_.end()) {
+                grid_info.map_ptr_interface_layer_info_.insert(
+                    { iter_interface.first,
+                    std::make_shared<InterfaceLayerInfo>() });
+            }
+            ptr_interface_info = grid_info.map_ptr_interface_layer_info_
+                .at(iter_interface.first).get();
+            // interface inside the geomtery
+            if (ptr_interface_info_lower->vec_inner_coarse2fine_.size() > 0) {
+                ptr_interface_info->vec_inner_fine2coarse_.resize(
+                    grid_info.k0NumFine2CoarseLayer_);
+                FindOverlappingLayersBasedOnOutermostCoarse(
+                    ptr_interface_info_lower
+                    ->vec_inner_coarse2fine_.at(layer_coarse0),
+                    sfbitset_one_lower_level.at(i_level),
+                    &ptr_interface_info_lower
+                    ->vec_inner_coarse2fine_.at(layer_coarse_m1),
+                    &ptr_interface_info->vec_inner_fine2coarse_.at(layer0),
+                    &ptr_interface_info->vec_inner_fine2coarse_.at(layer_m1),
+                    &ptr_interface_info->vec_inner_fine2coarse_.at(layer_m2));
+                // insert node instance
+                DefSizet maxlayer = ptr_interface_info
+                    ->vec_inner_fine2coarse_.size();
+                for (DefSizet ilayer = 0; ilayer < maxlayer; ++ilayer) {
+                    if (ilayer == maxlayer - 1) {
+                        flag_temp = flag_refined | kFlagFine2Coarse0_;
+                    } else if (ilayer == maxlayer - 2) {
+                        flag_temp = flag_refined | kFlagFine2CoarseM1_;
+                    } else {
+                        flag_temp = flag_refined;
+                    }
+                    for (const auto& iter_layer_node : ptr_interface_info
+                        ->vec_inner_fine2coarse_.at(ilayer)) {
+                        if (map_grid.find(iter_layer_node.first)
+                            == map_grid.end()) {
+                            map_grid.insert({ iter_layer_node.first,
+                                grid_info.k0GridNodeInstance_ });
+                            map_grid.at(iter_layer_node.first).flag_status_ =
+                                flag_temp;
+                        }
+                        else {
+                            map_grid.at(iter_layer_node.first).flag_status_ |=
+                                flag_temp;
+                        }
+                    }
+                }
+                maxlayer = ptr_interface_info_lower
+                    ->vec_inner_coarse2fine_.size();
+                for (DefSizet ilayer = 0; ilayer < maxlayer; ++ilayer) {
+                    if (ilayer == maxlayer - 1) {
+                        flag_temp = flag_refined | kFlagCoarse2Fine0_;
+                    } else if (ilayer == maxlayer - 2) {
+                        flag_temp = flag_refined | kFlagCoarse2FineM1_;
+                    } else {
+                        flag_temp = flag_refined;
+                    }
+                    for (const auto& iter_layer_node : ptr_interface_info_lower
+                        ->vec_inner_coarse2fine_.at(ilayer)) {
+                        if (map_grid_lower.find(iter_layer_node.first)
+                            == map_grid_lower.end()) {
+                            map_grid_lower.insert({ iter_layer_node.first,
+                                grid_info.k0GridNodeInstance_ });
+                            map_grid_lower.at(iter_layer_node.first).flag_status_ =
+                                flag_temp;
+                        } else {
+                            map_grid_lower.at(iter_layer_node.first).flag_status_ |=
+                                flag_temp;
+                        }
+                    }
+                }
+            }
+            // interface outside the geomtery
+            if (ptr_interface_info_lower->vec_outer_coarse2fine_.size() > 0) {
+                ptr_interface_info->vec_outer_fine2coarse_.resize(
+                    grid_info.k0NumFine2CoarseLayer_);
+                FindOverlappingLayersBasedOnOutermostCoarse(
+                    ptr_interface_info_lower
+                    ->vec_outer_coarse2fine_.at(layer_coarse0),
+                    sfbitset_one_lower_level.at(i_level),
+                    &ptr_interface_info_lower
+                    ->vec_outer_coarse2fine_.at(layer_coarse_m1),
+                    &ptr_interface_info->vec_outer_fine2coarse_.at(layer0),
+                    &ptr_interface_info->vec_outer_fine2coarse_.at(layer_m1),
+                    &ptr_interface_info->vec_outer_fine2coarse_.at(layer_m2));
+                // insert node instance
+                DefSizet maxlayer = ptr_interface_info
+                    ->vec_outer_fine2coarse_.size();
+                for (DefSizet ilayer = 0; ilayer < maxlayer; ++ilayer) {
+                    if (ilayer == maxlayer - 1) {
+                        flag_temp = flag_refined | kFlagFine2Coarse0_;
+                    } else if (ilayer == maxlayer - 2) {
+                        flag_temp = flag_refined | kFlagFine2CoarseM1_;
+                    } else {
+                        flag_temp = flag_refined;
+                    }
+                    for (const auto& iter_layer_node : ptr_interface_info
+                        ->vec_outer_fine2coarse_.at(ilayer)) {
+                        if (map_grid.find(iter_layer_node.first)
+                            == map_grid.end()) {
+                            map_grid.insert({ iter_layer_node.first,
+                                grid_info.k0GridNodeInstance_ });
+                            map_grid.at(iter_layer_node.first).flag_status_ =
+                                flag_temp;
+                        } else {
+                            map_grid.at(iter_layer_node.first).flag_status_ |=
+                                flag_temp;
+                        }
+                    }
+                }
+                maxlayer = ptr_interface_info_lower
+                    ->vec_outer_coarse2fine_.size();
+                for (DefSizet ilayer = 0; ilayer < maxlayer; ++ilayer) {
+                    if (ilayer == maxlayer - 1) {
+                        flag_temp = flag_refined | kFlagCoarse2Fine0_;
+                    } else if (ilayer == maxlayer - 2) {
+                        flag_temp = flag_refined | kFlagCoarse2FineM1_;
+                    }
+                    else {
+                        flag_temp = flag_refined;
+                    }
+                    for (const auto& iter_layer_node : ptr_interface_info_lower
+                        ->vec_outer_coarse2fine_.at(ilayer)) {
+                        if (map_grid_lower.find(iter_layer_node.first)
+                            == map_grid_lower.end()) {
+                            map_grid_lower.insert({ iter_layer_node.first,
+                                grid_info.k0GridNodeInstance_ });
+                            map_grid_lower.at(iter_layer_node.first).flag_status_ =
+                                flag_temp;
+                        } else {
+                            map_grid_lower.at(iter_layer_node.first).flag_status_ |=
+                                flag_temp;
+                        }
+                    }
+                }
+            }
+        }
+        std::vector<DefSFBitset> bitset_cell_lower, bitset_all;
+
+        DefSFBitset bitset_background;
+        for (const auto& iter_low : sfbitset_one_lower_level.at(i_level)) {
+            if (CheckCoincideBackground(i_level - 1,
+                iter_low.first, &bitset_background)) {
+                if (background_occupied.find(bitset_background) ==
+                    background_occupied.end()) {
+                    background_occupied.insert({ bitset_background, kFlag0_ });
+                }
+            }
+            if (NodesBelongToOneCell(iter_low.first,
+                sfbitset_one_lower_level.at(i_level), &bitset_cell_lower)) {
+                FindAllNodesInACellAtLowerLevel(
+                    bitset_cell_lower, &bitset_all);
+                for (const auto& iter_node : bitset_all) {
+                    if (map_grid.find(iter_node) == map_grid.end()) {
+                        map_grid.insert({ iter_node,
+                                grid_info.k0GridNodeInstance_ });
+                    }
+                }
+            }
+        }
+    }
+
+    // instantiate background nodes
+    GenerateBackgroundGrid(background_occupied);
+
+    //// instantiate background nodes on the interface between level 0 and 1
+    //GridInfoInterface& grid_info = *(vec_ptr_grid_info_.at(0));
+    //for (const auto& iter_interface :
+    //    grid_info.map_ptr_interface_layer_info_) {
+    //    ptr_interface_info = iter_interface.second.get();
+    //    // interface inside the geomtery
+    //    for (const auto& iter_layer :ptr_interface_info
+    //        ->vec_inner_coarse2fine_) {
+    //        for (const auto& iter_node : iter_layer) {
+    //            grid_info.map_grid_node_.insert({ iter_node.first,
+    //                            grid_info.k0GridNodeInstance_ });
+    //        }
+    //    }
+    //    // interface outside the geomtery
+    //    for (const auto& iter_layer : ptr_interface_info
+    //        ->vec_outer_coarse2fine_) {
+    //        for (const auto& iter_node : iter_layer) {
+    //            grid_info.map_grid_node_.insert({ iter_node.first,
+    //                            grid_info.k0GridNodeInstance_ });
+    //        }
+    //    }
+    //}
+
+
+    //DefUint overlap_flag = kFlagCoarse2FineM1_ | kFlagFine2Coarse0_;
+
+    //std::cout << overlap_flag << std::endl;
+    //std::ofstream file1("test_t.txt");
+    //for (auto& iter : vec_ptr_grid_info_.at(0)->map_grid_node_) {
+    //    SFBitsetAux2D* ptr_2d = dynamic_cast<SFBitsetAux2D*> (this);
+    //    std::array<DefLUint, 2> coor;
+    //    ptr_2d->SFBitsetComputeIndices(iter.first, &coor);
+    //    if ((iter.second.flag_status_& overlap_flag) == 0) {
+    //        file1 << coor.at(0) * 2 << " " << coor.at(1) * 2 << " " << iter.second.flag_status_ << std::endl;
+    //    }
+    //}
+    //file1.close();
+
+ 
+    //std::ofstream file2("test.txt");
+    //for (auto& iter : vec_ptr_grid_info_.at(1)->map_grid_node_) {
+    //    SFBitsetAux2D* ptr_2d = dynamic_cast<SFBitsetAux2D*> (this);
+    //    std::array<DefLUint, 2> coor;
+    //    ptr_2d->SFBitsetComputeIndices(iter.first, &coor);
+    //    file2 << coor.at(0) << " " << coor.at(1) << " " << iter.second.flag_status_ << std::endl;
+    //}
+    //file2.close();
+  
+}
+void GridManagerInterface::FindOverlappingLayersBasedOnOutermostCoarse(
+    const DefMap<DefUint>& layer_coarse_0,
+    const DefMap<DefUint>& sfbitset_exist,
+    DefMap<DefUint>* const ptr_layer_coarse_m1,
+    DefMap<DefUint>* const ptr_layer_fine_0,
+    DefMap<DefUint>* const ptr_layer_fine_m1,
+    DefMap<DefUint>* const ptr_layer_fine_m2) {
+#ifdef DEBUG_CHECK_GRID
+    if (&layer_coarse_0 == ptr_layer_coarse_m1) {
+        LogError("input (layer_coarse_0)"
+            " should not be the same as output (ptr_layer_coarse_m1)");
+    }
+#endif // DEBUG_CHECK_GRID
+
+    std::vector<DefSFBitset> corner_bitsets;
+    for (const auto& iter_node : layer_coarse_0) {
+        FindCornersForNeighbourCells(
+            iter_node.first, &corner_bitsets);
+        for (auto& iter_conner : corner_bitsets) {
+            IdentifyInterfaceForACell(kFlagGridInterfaceOutermost_,
+                iter_conner, sfbitset_exist,
+                ptr_layer_fine_m2, ptr_layer_fine_m1, ptr_layer_fine_0);
+        }
+    }
+    // coarse node on the layer_coarse_m1 layer, which overlap with
+    // layer0 layer at one level higher
+#ifdef DEBUG_CHECK_GRID
+    if (ptr_layer_fine_0 == ptr_layer_coarse_m1) {
+        LogError("input (ptr_layer_fine_0)"
+            " should not be the same as output (ptr_layer_coarse_m1)");
+    }
+#endif // DEBUG_CHECK_GRID
+    OverlapLayerFromHighToLow(*ptr_layer_fine_m2, ptr_layer_coarse_m1);
+}
+/**
+* @brief   function to add a given number of layers.
+* @param[in]  i_level   level of refinement.
+* @param[in]  flag_extend type of extending grid which determines
+*                  the number of layers need to be extended in all directions.
+* @param[in]  the based layer for extesion.
+* @param[out]  ptr_map_exist exsting nodes.
+* @param[out]  ptr_map_outmost nodes on the outmost layer.
+* @note  add the number of layer around the geometry in all the directions.
+*        Used to set number of layers inside the geometry different from that
+*        outsite the geometry.
+*/
+void GridManagerInterface::ExtendGivenNumbOfLayer(
+    const DefSizet i_level, const std::vector<DefLUint> num_extend_neg,
+    const std::vector<DefLUint> num_extend_pos,
+    const DefMap<DefUint>& map_start_layer,
+    DefMap<DefUint>* const ptr_map_exist,
+    DefMap<DefUint>* const ptr_map_outmost) const {
+    std::vector<DefSFBitset> vec_bitset_min(k0GridDims_, 0),
+        vec_bitset_max(k0GridDims_, 0);
+    // space filling code is at one level lower (ilevel -1)
+    ComputeSFBitsetOnboundaryAtGivenLevel(
+        i_level - 1, &vec_bitset_min, &vec_bitset_max);
+    // calculate layers need to be extended in each direction
+    if (num_extend_neg.size() != k0GridDims_) {
+        LogError("Dimension of num_extend_neg at" + std::to_string(i_level)
+            + " should be " + std::to_string(k0GridDims_)
+            + " rather than " + std::to_string(num_extend_neg.size())
+            + "in GridManagerInterface::ExtendGivenNumbOfLayer.");
+    }
+    if (num_extend_pos.size() != k0GridDims_) {
+        LogError("Dimension of num_extend_pos at" + std::to_string(i_level)
+            + " should be " + std::to_string(k0GridDims_)
+            + " rather than " + std::to_string(num_extend_pos.size())
+            + "in GridManagerInterface::ExtendGivenNumbOfLayer.");
+    }
+    // find the maximum layers need to be extended
+    DefLUint extend_layer_max = 0;
+    for (DefUint i = 0; i < k0GridDims_; ++i) {
+        if (num_extend_neg[i] > extend_layer_max) {
+            extend_layer_max = num_extend_neg[i];
+        }
+        if (num_extend_pos[i] > extend_layer_max) {
+            extend_layer_max = num_extend_pos[i];
+        }
+    }
+    std::vector<bool> bool_extend_neg(k0GridDims_, true),
+        bool_extend_pos(k0GridDims_, true);
+    DefMap<DefUint> map_input_layer(map_start_layer);
+    std::vector<DefMap<DefUint>> vec_boundary_min, vec_boundary_max;
+    std::vector<DefLUint> num_extend_neg_temp(num_extend_neg),
+        num_extend_pos_temp(num_extend_pos);
+    // extend grid layer by layer
+    for (DefLUint i_layer = 0; i_layer < extend_layer_max; ++i_layer) {
+        DefMap<DefUint> map_output_layer;
+        ExtendOneLayerGrid(map_input_layer, vec_bitset_min, vec_bitset_max,
+            bool_extend_neg, bool_extend_pos, &map_output_layer, ptr_map_exist,
+            ptr_map_outmost, &vec_boundary_min, &vec_boundary_max);
+        map_input_layer = std::move(map_output_layer);
+        for (DefUint i = 0; i < k0GridDims_; ++i) {
+            if (bool_extend_neg[i]) {
+                num_extend_neg_temp[i] -= 1;
+                if (num_extend_neg_temp[i] == 0) {
+                    bool_extend_neg[i] = false;
+                }
+            }
+            if (bool_extend_pos[i]) {
+                num_extend_pos_temp[i] -= 1;
+                if (num_extend_pos_temp[i] == 0) {
+                    bool_extend_pos[i] = false;
+                }
+            }
+        }
+    }
+    // added the last extended layer to the outmost one
+    for (const auto& iter : map_input_layer) {
+        ptr_map_outmost->insert(iter);
+    }
+}
+/**
+* @brief   function to do flood fill on existing nodes around geometry points
+*          (only two layers)
+* @param[in]  sfbitset_inside  space filling code of a node inside geometry
+* @param[in]  map_nodes_exist nodes exist for flood fill.
+* @param[out]  ptr_map_nodes_outside
+*                  nodes outside the geometry.
+* @param[out]  ptr_map_nodes_inside
+*                  nodes inside the geometry (colored by flood fill method).
+*/
+int GridManagerInterface::FloodFillForInAndOut(
+    const DefSFBitset& sfbitset_inside,
+    const DefMap<DefUint>&  map_nodes_exist,
+    DefMap<DefUint>* const ptr_map_nodes_outside,
+    DefMap<DefUint>* const ptr_map_nodes_inside) const {
+
+    std::vector<DefSFBitset> bitset_neigh;
+    if (map_nodes_exist.find(sfbitset_inside) != map_nodes_exist.end()) {
+        // node inside the geometry is in map_nodes_exist, then
+        // the colored nodes are indentified as the outside nodes
+        std::vector<DefSFBitset> bitset_neigh;
+        for (auto iter = map_nodes_exist.begin();
+            iter != map_nodes_exist.end(); ++iter) {
+            FindAllNeighersSFBitset(iter->first, &bitset_neigh);
+            for (const auto& iter_neigh : bitset_neigh) {
+                if (map_nodes_exist.find(iter_neigh)
+                    == map_nodes_exist.end()) {
+                    ptr_map_nodes_outside->insert({ iter->first, kFlag0_ });
+                    break;
+                }
+            }
+        }
+        return 1;
+    } else {
+        // create a copy of map_nodes_exist and add one layer for flood fill
+        DefUint flag_bit_colored = 1 << (sizeof(DefUint) * 8 - 1);
+        DefUint flag_bit_exist = flag_bit_colored | (sizeof(DefUint) * 8 - 2);
+        DefMap<DefUint> map_nodes_temp(map_nodes_exist);
+        // generate one more layer around the input grid
+        for (auto iter = map_nodes_exist.begin();
+            iter != map_nodes_exist.end(); ++iter) {
+            map_nodes_temp.at(iter->first) = flag_bit_exist;
+            FindAllNeighersSFBitset(iter->first, &bitset_neigh);
+            for (const auto& iter_neigbour : bitset_neigh) {
+                if (map_nodes_temp.find(iter_neigbour)
+                    == map_nodes_temp.end()) {
+                    map_nodes_temp.insert({ iter_neigbour, kFlag0_ });
+                }
+            }
+        }
+        // flood fill
+        std::vector<DefSFBitset> vec_sfbitset_stk, vec_bitset(k0NumNeighbours_);
+        DefUint i = 0;
+        DefSFBitset sfbitset_seed;
+        vec_sfbitset_stk.push_back(sfbitset_inside);
+        while (!vec_sfbitset_stk.empty() && i < imax_flood_fill) {
+            sfbitset_seed = vec_sfbitset_stk.back();
+            vec_sfbitset_stk.pop_back();
+            ++i;
+            if (map_nodes_temp.find(sfbitset_seed) == map_nodes_temp.end()) {
+            } else if ((map_nodes_temp.at(sfbitset_seed) & flag_bit_exist)
+                == flag_bit_exist) {
+                ptr_map_nodes_inside->insert({ sfbitset_seed, kFlag0_ });
+            } else if ((map_nodes_temp.at(sfbitset_seed) & flag_bit_colored)
+                != flag_bit_colored) {
+                // color the node
+                map_nodes_temp.at(sfbitset_seed) |= flag_bit_colored;
+                // add neighbouring nodes to seed
+                PushBackSFBitsetInFloodFill(sfbitset_seed, &vec_sfbitset_stk);
+            }
+        }
+        if (i == imax_flood_fill) {
+            return 2;
+        }
+        std::vector<DefSFBitset> bitset_neigh;
+        for (auto iter = map_nodes_exist.begin();
+            iter != map_nodes_exist.end(); ++iter) {
+            if (ptr_map_nodes_inside->find(iter->first)
+                == ptr_map_nodes_inside->end()) {
+                FindAllNeighersSFBitset(iter->first, &bitset_neigh);
+                for (const auto& iter_neigh : bitset_neigh) {
+                    if (map_nodes_exist.find(iter_neigh)
+                        == map_nodes_exist.end()) {
+                        ptr_map_nodes_outside->insert(
+                            { iter->first, kFlag0_ });
+                        break;
+                    }
+                }
+            }
+        }
+        return 0;
+    }
+}
+}  // end namespace amrproject
+}  // end namespace rootproject

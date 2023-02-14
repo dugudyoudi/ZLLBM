@@ -1,0 +1,48 @@
+//  Copyright (c) 2022, Zhengliang Liu
+//  All rights reserved
+
+/**
+* @file geometry_info_Interface.cpp
+* @author Zhengliang Liu
+* @brief functions to initialize and update geometry information
+* @date  2022-8-5
+*/
+#include "criterion/geometry_info_Interface.h"
+namespace rootproject {
+namespace amrproject {
+#ifndef  DEBUG_DISABLE_2D_FUNCTIONS
+int Geometry2DInterface::InitialGeometry(const DefReal dx,
+    const DefaultGeoShapeType shape_type,
+    const DefaultGeoManager& default_geo_manager) {
+    switch (shape_type) {
+    case DefaultGeoShapeType::kCircle:
+        default_geo_manager.circle_initial(this);
+        return 0;
+    default:
+        return 1;
+    }
+}
+int Geometry2DInterface::UpdateGeometry(
+    const DefaultGeoManager& default_geo_manager) {
+    return 0;
+}
+#endif  // DEBUG_DISABLE_2D_FUNCTIONS
+#ifndef  DEBUG_DISABLE_3D_FUNCTIONS
+int Geometry3DInterface::InitialGeometry(const DefReal dx,
+    const DefaultGeoShapeType shape_type,
+    const DefaultGeoManager& default_geo_manager) {
+    switch (shape_type) {
+    case DefaultGeoShapeType::kCube:
+        default_geo_manager.cube_initial(dx, this);
+        return 0;
+    default:
+        return 1;
+    }
+}
+int Geometry3DInterface::UpdateGeometry(
+    const DefaultGeoManager& default_geo_manager) {
+    return 0;
+}
+#endif  // DEBUG_DISABLE_3D_FUNCTIONS
+}  // end namespace amrproject
+}  // end namespace rootproject

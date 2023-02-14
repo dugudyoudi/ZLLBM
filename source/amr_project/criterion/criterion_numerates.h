@@ -12,9 +12,17 @@
 #define ROOTPROJECT_AMR_PROJECT_CRITERION_CRITERION_NUMERATES_H_
 namespace rootproject {
 namespace amrproject {
-enum class ECriteriolType {
+enum class ECriterionType {
     kUndefined = 0,
     kGeometry = 1
+};
+/**
+* @struct EGridExtendType
+* @brief enum class to store grid extending type
+*/
+enum class EGridExtendType {
+    kSameInAllDirections = 1,
+    kInAndOut = 2
 };
 ///////////// geometry related //////////////
 /**
@@ -28,15 +36,6 @@ enum class EGeometryCellType {
     kTriangle = 5
 };
 /**
-* @class EGeometryEnclosedType
-* @brief enum class to store data type for shape enclose type
-*/
-enum class EGeometryEnclosedType {
-    kOpen = 0,
-    kEnclosedRemove = 1,
-    kEnclosedExtend = 2
-};
-/**
 * @class DefaultGeometryShapeType
 * @brief enum class to store default geometry shape type
 */
@@ -44,6 +43,7 @@ enum class DefaultGeoShapeType {
     kUndefined = 0,
     kReadFromFile = 1,
     kCircle = 2,
+    kCube = 3
 };
 }  // end namespace amrproject
 }  // end namespace rootproject

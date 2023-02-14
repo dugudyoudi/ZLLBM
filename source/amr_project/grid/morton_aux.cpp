@@ -12,9 +12,6 @@
 #include <array>
 #include "auxiliary_inline_func.h"
 #include "grid/sfbitset_aux.h"
-#ifdef DEBUG_CHECK_GRID
-#include "io/log_write.h"
-#endif  // DEBUG_CHECK_GRID
 namespace rootproject {
 namespace amrproject {
 #ifndef  DEBUG_DISABLE_2D_FUNCTIONS
@@ -31,11 +28,24 @@ void SFBitsetAux2D::SFBitsetInitial() {
         k0SFBitsetTakeXRef_.at(kRefCurrent_).set(pos, true);
         k0SFBitsetTakeYRef_.at(kRefCurrent_).set(pos + 1, true);
     }
-    k0SfBItsetTakeCenter_ = DefSFBitset(std::string("0011"));
+    k0SfBitsetCurrentLevelBits_ = DefSFBitset(std::string("0011"));
     k0SFBitsetTakeXRef_.at(kRefOthers_) =
         ~k0SFBitsetTakeXRef_.at(kRefCurrent_);
     k0SFBitsetTakeYRef_.at(kRefOthers_) =
         ~k0SFBitsetTakeYRef_.at(kRefCurrent_);
+}
+/**
+* @brief take bits representing coordinates at refinement levels 
+*        higher level 0(the background level).
+* @param[in] i_level level of refinement
+*/
+DefSFBitset SFBitsetAux2D::SFBitsetBitsForRefinement(
+    const DefSizet i_level) const {
+    DefSFBitset bitset = 0;
+    for (DefSizet i = 0; i < 2 * i_level; ++i) {
+        bitset.set(i, true);
+    }
+    return bitset;
 }
 /**
 * @brief function to generate morton code based 2D indices.
@@ -53,14 +63,20 @@ DefSFBitset SFBitsetAux2D::SFBitsetEncoding(
     }
     return sfbitset_code;
 }
-DefSFBitset SFBitsetAux2D::SFBitsetEncodingReal(
-    const std::vector<DefReal>& grid_space, const std::vector<DefReal>& coordi,
-    std::shared_ptr<SFBitsetAuxInterface> ptr_bitset_aux) const {
+/**
+* @brief function to generate morton code based 2D coordinates.
+* @param[in]  grid_space      grid space of the current grid level.
+* @param[in]  coordi      cooridinates of a point.
+* @param[in]  ptr_bitset_aux     pointer to 2D space filling curve class.
+* @return  morton code.
+*/
+DefSFBitset SFBitsetAux2D::SFBitsetEncodingCoordi(
+    const std::vector<DefReal>& grid_space,
+    const std::vector<DefReal>& coordi) const {
     std::array<DefLUint, 2> coorid_index =
     { static_cast<DefLUint>(coordi.at(kXIndex) / grid_space[kXIndex] + kEps),
       static_cast<DefLUint>(coordi.at(kYIndex) / grid_space[kYIndex] + kEps)};
-    return std::static_pointer_cast<SFBitsetAux2D>(ptr_bitset_aux)
-        ->SFBitsetEncoding(coorid_index);
+    return this->SFBitsetEncoding(coorid_index);
 }
 /**
 * @brief function to compute the 2D coordinates from morton code.
@@ -116,7 +132,7 @@ void SFBitsetAux3D::SFBitsetInitial() {
         k0SFBitsetTakeYRef_.at(kRefCurrent_).set(pos + 1, true);
         k0SFBitsetTakeZRef_.at(kRefCurrent_).set(pos + 2, true);
     }
-    k0SfBItsetTakeCenter_ = DefSFBitset(std::string("0111"));
+    k0SfBitsetCurrentLevelBits_ = DefSFBitset(std::string("0111"));
 
     k0SFBitsetTakeXRef_.at(kRefOthers_) =
         ~k0SFBitsetTakeXRef_.at(kRefCurrent_);
@@ -124,6 +140,19 @@ void SFBitsetAux3D::SFBitsetInitial() {
         ~k0SFBitsetTakeYRef_.at(kRefCurrent_);
     k0SFBitsetTakeZRef_.at(kRefOthers_) =
         ~k0SFBitsetTakeZRef_.at(kRefCurrent_);
+}
+/**
+* @brief take bits representing coordinates at refinement levels
+*        higher level 0(the background level).
+* @param[in] i_level level of refinement
+*/
+DefSFBitset SFBitsetAux3D::SFBitsetBitsForRefinement(
+    const DefSizet max_level) const{
+    DefSFBitset bitset = 0;
+    for (DefSizet i = 0; i < 3 * max_level; ++i) {
+        bitset.set(i, true);
+    }
+    return bitset;
 }
 /**
 * @brief function to generate morton code based 3D indices.
@@ -143,15 +172,21 @@ DefSFBitset SFBitsetAux3D::SFBitsetEncoding(
     }
     return sfbitset_code;
 }
-DefSFBitset SFBitsetAux3D::SFBitsetEncodingReal(
-    const std::vector<DefReal>& grid_space, const std::vector<DefReal>& coordi,
-    std::shared_ptr<SFBitsetAuxInterface> ptr_bitset_aux) const {
+/**
+* @brief function to generate morton code based 3D coordinates.
+* @param[in]  grid_space      grid space of the current grid level.
+* @param[in]  coordi      cooridinates of a point.
+* @param[in]  ptr_bitset_aux     pointer to 3D space filling curve class.
+* @return  morton code.
+*/
+DefSFBitset SFBitsetAux3D::SFBitsetEncodingCoordi(
+    const std::vector<DefReal>& grid_space,
+    const std::vector<DefReal>& coordi) const {
     std::array<DefLUint, 3> coorid_index =
     { static_cast<DefLUint>(coordi.at(kXIndex) / grid_space[kXIndex] + kEps),
       static_cast<DefLUint>(coordi.at(kYIndex) / grid_space[kYIndex] + kEps),
       static_cast<DefLUint>(coordi.at(kZIndex) / grid_space[kZIndex] + kEps) };
-    return std::static_pointer_cast<SFBitsetAux3D>(ptr_bitset_aux)
-        ->SFBitsetEncoding(coorid_index);
+    return this->SFBitsetEncoding(coorid_index);
 }
 /**
 * @brief function to compute the 3D coordinates from morton code.

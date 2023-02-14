@@ -11,6 +11,7 @@
 #ifndef ROOTPROJECT_AMR_PROJECT_AUXILIARY_INLINE_FUNC_H_
 #define ROOTPROJECT_AMR_PROJECT_AUXILIARY_INLINE_FUNC_H_
 #include <array>
+#include <fstream>
 #include "../defs_libs.h"
 namespace rootproject {
 namespace amrproject {

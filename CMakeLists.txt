@@ -54,6 +54,7 @@ if(NOT CMAKE_BUILD_TYPE)
     set(CMAKE_BUILD_TYPE "Release")
 endif()
 message("Build Type: ${CMAKE_BUILD_TYPE}")
+set(BUILD_LINK_LIBRARY)
 
 # System
 if (CMAKE_SYSTEM_NAME MATCHES "Linux")
@@ -101,19 +102,24 @@ else()
     message(FATAL_ERROR "CXX compiler not recognized. CMake will quit.")
 endif()
 
-# MSMPI is chosen priorly 
+# MSMPI is chosen priorly
 if(BUILD_WITH_MPI)
     find_package(MPI REQUIRED)
     if(MPI_CXX_FOUND)
-        if(EXISTS "$ENV{MSMPI_INC}") # visual studio default mpi is impi, can't initialize correctly.
-           include_directories("$ENV{MSMPI_INC}"  "$ENV{MSMPI_INC}/${CURRENT_PLATFORM}")
-           message("MSMPI directories: $ENV{MSMPI_INC}")
+        if(EXISTS "$ENV{MSMPI_INC}")
+           include_directories(SYSTEM "$ENV{MSMPI_INC}"  "$ENV{MSMPI_INC}/${CURRENT_PLATFORM}")
+           message("MSMPI directory: $ENV{MSMPI_INC}")
         else(DEFINED $ENV{MSMPI_INC})
            include_directories(${MPI_CXX_INCLUDE_PATH})
-           message("${MPI_CXX_COMPILER} directories: ${MPI_CXX_INCLUDE_DIRS}")  
+           message("${MPI_CXX_COMPILER} directory: ${MPI_CXX_INCLUDE_DIRS}")  
         endif(EXISTS "$ENV{MSMPI_INC}")
 
-        set(CMAKE_CXX_FLAGS"${CMAKE_CXX_FLAGS} ${MPI_CXX_FLAGS}")
+        foreach( LIB ${MPI_C_LIBRARIES} ${MPI_CXX_LIBRARIES} )
+           if ( LIB )
+              list ( APPEND BUILD_LINK_LIBRARY ${LIB} )
+           endif ( )
+        endforeach ( )
+        AppendFlag(CMAKE_CXX_FLAGS "${MPI_CXX_FLAGS}")
     endif(MPI_CXX_FOUND)
 endif(BUILD_WITH_MPI)
 
@@ -121,7 +127,8 @@ add_subdirectory("./source/amr_project")
 
 # test cases
 if(BUILD_TEST_CASES)
-    add_subdirectory("test_cases/test_grid")
+    add_subdirectory("test_cases/test_grid2d")
+    add_subdirectory("test_cases/test_grid3d")
 endif(BUILD_TEST_CASES)
 
 # unit test

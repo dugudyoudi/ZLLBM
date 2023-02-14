@@ -14,6 +14,24 @@ namespace rootproject {
 namespace amrproject {
 #ifndef  DEBUG_DISABLE_2D_FUNCTIONS
 /**
+* @brief function to convert morton code to 1 level lower
+* @param[in]  morton_in   input morton code.
+* @return   morton code at lower levels.
+*/
+inline DefSFBitset SFBitsetAux2D::SFBitsetToOneLowerLevel(
+    const DefSFBitset& morton_in) const {
+    return morton_in >> 2;
+}
+/**
+* @brief function to convert morton code to 1 level lower
+* @param[in]  morton_in   input morton code.
+* @return   morton code has been shrinked.
+*/
+inline DefSFBitset SFBitsetAux2D::SFBitsetToOneHigherLevel(
+    const DefSFBitset& morton_in) const {
+    return morton_in << 2;
+}
+/**
 * @brief function to convert morton code to n level lower
 * @param[in]  n_level  number of levels need to be shrinked.
 * @param[in]  morton_in   input morton code.
@@ -43,13 +61,18 @@ inline DefSFBitset SFBitsetAux2D::SFBitsetToNHigherLevel(
 */
 inline DefSFBitset SFBitsetAux2D::FindXNeg(
     const DefSFBitset& bitset_in) const {
-    DefSFBitset temp = static_cast<DefSFBitset>
-        ((bitset_in & SFBitsetAux2D::k0SFBitsetTakeXRef_.
-            at(SFBitsetAux2D::kRefCurrent_)).to_ullong() - 1);
-    return ((temp & SFBitsetAux2D::k0SFBitsetTakeXRef_.
-        at(SFBitsetAux2D::kRefCurrent_))
-        | (bitset_in & SFBitsetAux2D::k0SFBitsetTakeYRef_.
-            at(SFBitsetAux2D::kRefCurrent_)));
+    unsigned long long x_ull = (bitset_in & SFBitsetAux2D::k0SFBitsetTakeXRef_
+        .at(SFBitsetAux2D::kRefCurrent_)).to_ullong();
+    if (x_ull == 0) {
+        return bitset_in;
+    } else {
+        DefSFBitset temp = static_cast<DefSFBitset>
+            (x_ull - 1);
+        return ((temp & SFBitsetAux2D::k0SFBitsetTakeXRef_
+            .at(SFBitsetAux2D::kRefCurrent_))
+            | (bitset_in & SFBitsetAux2D::k0SFBitsetTakeYRef_
+                .at(SFBitsetAux2D::kRefCurrent_)));
+    }
 }
 /**
 * @brief function to find morton code (2D) of
@@ -75,13 +98,18 @@ inline DefSFBitset SFBitsetAux2D::FindXPos(
 */
 inline DefSFBitset SFBitsetAux2D::FindYNeg(
     const DefSFBitset& bitset_in)  const {
-    DefSFBitset temp = static_cast<DefSFBitset>
-        ((bitset_in & SFBitsetAux2D::k0SFBitsetTakeYRef_.
-            at(SFBitsetAux2D::kRefCurrent_)).to_ullong() - 1);
-    return ((temp & SFBitsetAux2D::k0SFBitsetTakeYRef_.
-        at(SFBitsetAux2D::kRefCurrent_))
-        | (bitset_in & SFBitsetAux2D::k0SFBitsetTakeXRef_.
-            at(SFBitsetAux2D::kRefCurrent_)));
+    unsigned long long y_ull = (bitset_in & SFBitsetAux2D::k0SFBitsetTakeYRef_
+        .at(SFBitsetAux2D::kRefCurrent_)).to_ullong();
+    if (y_ull == 0) {
+        return bitset_in;
+    } else {
+        DefSFBitset temp = static_cast<DefSFBitset>
+            (y_ull - 1);
+        return ((temp & SFBitsetAux2D::k0SFBitsetTakeYRef_
+            .at(SFBitsetAux2D::kRefCurrent_))
+            | (bitset_in & SFBitsetAux2D::k0SFBitsetTakeXRef_
+                .at(SFBitsetAux2D::kRefCurrent_)));
+    }
 }
 /**
 * @brief function to find morton code (2D) of
@@ -101,6 +129,24 @@ inline DefSFBitset SFBitsetAux2D::FindYPos(
 }
 #endif  // DEBUG_DISABLE_2D_FUNCTIONS
 #ifndef  DEBUG_DISABLE_3D_FUNCTIONS
+/**
+* @brief function to convert morton code to 1 level lower
+* @param[in]  morton_in   input morton code.
+* @return   morton code at lower levels.
+*/
+inline DefSFBitset SFBitsetAux3D::SFBitsetToOneLowerLevel(
+    const DefSFBitset& morton_in) const {
+    return morton_in >> 3;
+}
+/**
+* @brief function to convert morton code to 1 level lower
+* @param[in]  morton_in   input morton code.
+* @return   morton code has been shrinked.
+*/
+inline DefSFBitset SFBitsetAux3D::SFBitsetToOneHigherLevel(
+    const DefSFBitset& morton_in) const {
+    return morton_in << 3;
+}
 /**
 * @brief function to convert morton code to n level lower
 * @param[in]  n_level  number of levels need to be shrinked.
@@ -131,15 +177,20 @@ inline DefSFBitset SFBitsetAux3D::SFBitsetToNHigherLevel(
 */
 inline DefSFBitset SFBitsetAux3D::FindXNeg(
     const DefSFBitset& bitset_in)  const {
-    DefSFBitset temp = static_cast<DefSFBitset>
-        ((bitset_in & SFBitsetAux3D::k0SFBitsetTakeXRef_.
-            at(SFBitsetAux3D::kRefCurrent_)).to_ullong() - 1);
-    return ((temp & SFBitsetAux3D::k0SFBitsetTakeXRef_.
-        at(SFBitsetAux3D::kRefCurrent_))
-        | (bitset_in & SFBitsetAux3D::k0SFBitsetTakeYRef_.
-            at(SFBitsetAux3D::kRefCurrent_))
-        | (bitset_in & SFBitsetAux3D::k0SFBitsetTakeZRef_.
-            at(SFBitsetAux3D::kRefCurrent_)));
+    unsigned long long x_ull = (bitset_in & SFBitsetAux3D::k0SFBitsetTakeXRef_
+        .at(SFBitsetAux3D::kRefCurrent_)).to_ullong();
+    if (x_ull == 0) {
+        return bitset_in;
+    } else {
+        DefSFBitset temp = static_cast<DefSFBitset>
+            (x_ull - 1);
+        return ((temp & SFBitsetAux3D::k0SFBitsetTakeXRef_
+            .at(SFBitsetAux3D::kRefCurrent_))
+            | (bitset_in & SFBitsetAux3D::k0SFBitsetTakeYRef_
+                .at(SFBitsetAux3D::kRefCurrent_))
+            | (bitset_in & SFBitsetAux3D::k0SFBitsetTakeZRef_
+                .at(SFBitsetAux3D::kRefCurrent_)));
+    }
 }
 /**
 * @brief function to find morton code (3D) of
@@ -167,15 +218,20 @@ inline DefSFBitset SFBitsetAux3D::FindXPos(
 */
 inline DefSFBitset SFBitsetAux3D::FindYNeg(
     const DefSFBitset& bitset_in)  const {
-    DefSFBitset temp = static_cast<DefSFBitset>
-        ((bitset_in & SFBitsetAux3D::k0SFBitsetTakeYRef_.
-            at(SFBitsetAux3D::kRefCurrent_)).to_ullong() - 1);
-    return ((temp & SFBitsetAux3D::k0SFBitsetTakeYRef_.
-        at(SFBitsetAux3D::kRefCurrent_))
-        | (bitset_in & SFBitsetAux3D::k0SFBitsetTakeXRef_.
-            at(SFBitsetAux3D::kRefCurrent_))
-        | (bitset_in & SFBitsetAux3D::k0SFBitsetTakeZRef_.
-            at(SFBitsetAux3D::kRefCurrent_)));
+    unsigned long long y_ull = (bitset_in & SFBitsetAux3D::k0SFBitsetTakeYRef_
+        .at(SFBitsetAux3D::kRefCurrent_)).to_ullong();
+    if (y_ull == 0) {
+        return bitset_in;
+    } else {
+        DefSFBitset temp = static_cast<DefSFBitset>
+            (y_ull - 1);
+        return ((temp & SFBitsetAux3D::k0SFBitsetTakeYRef_
+            .at(SFBitsetAux3D::kRefCurrent_))
+            | (bitset_in & SFBitsetAux3D::k0SFBitsetTakeXRef_
+                .at(SFBitsetAux3D::kRefCurrent_))
+            | (bitset_in & SFBitsetAux3D::k0SFBitsetTakeZRef_
+                .at(SFBitsetAux3D::kRefCurrent_)));
+    }
 }
 /**
 * @brief function to find morton code (3D) of
@@ -203,15 +259,20 @@ inline DefSFBitset SFBitsetAux3D::FindYPos(
 */
 inline DefSFBitset SFBitsetAux3D::FindZNeg(
     const DefSFBitset& bitset_in)  const {
-    DefSFBitset temp = static_cast<DefSFBitset>
-        ((bitset_in & SFBitsetAux3D::k0SFBitsetTakeZRef_.
-            at(SFBitsetAux3D::kRefCurrent_)).to_ullong() - 1);
-    return ((temp & SFBitsetAux3D::k0SFBitsetTakeZRef_.
-        at(SFBitsetAux3D::kRefCurrent_))
-        | (bitset_in & SFBitsetAux3D::k0SFBitsetTakeXRef_.
-            at(SFBitsetAux3D::kRefCurrent_))
-        | (bitset_in & SFBitsetAux3D::k0SFBitsetTakeYRef_.
-            at(SFBitsetAux3D::kRefCurrent_)));
+    unsigned long long z_ull = (bitset_in & SFBitsetAux3D::k0SFBitsetTakeZRef_
+        .at(SFBitsetAux3D::kRefCurrent_)).to_ullong();
+    if (z_ull == 0) {
+        return bitset_in;
+    } else {
+        DefSFBitset temp = static_cast<DefSFBitset>
+            (z_ull - 1);
+        return ((temp & SFBitsetAux3D::k0SFBitsetTakeZRef_
+            .at(SFBitsetAux3D::kRefCurrent_))
+            | (bitset_in & SFBitsetAux3D::k0SFBitsetTakeXRef_
+                .at(SFBitsetAux3D::kRefCurrent_))
+            | (bitset_in & SFBitsetAux3D::k0SFBitsetTakeYRef_
+                .at(SFBitsetAux3D::kRefCurrent_)));
+    }
 }
 /**
 * @brief function to find morton code (3D) of

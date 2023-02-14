@@ -4,7 +4,7 @@
 /**
 * @file geometry_info_stl.cpp
 * @author Zhengliang Liu
-* @brief functions for geometries reprensented by STL vertexs
+* @brief functions for 3D geometries with connection information
 * @date  2022-5-25
 * @note .
 */
@@ -40,27 +40,82 @@ void GeometryInfoConnection3D::SetIndex() {
 * @return  0 successful, 1 geometry is undefined
 */
 int GeometryInfoConnection3D::InitialGeometry(
-    std::shared_ptr<GeometryInfo3DInterface> ptr_geo) {
-    DefUint dims = 3;
-    SetIndex();
-
+    const DefReal dx,
+    const DefaultGeoShapeType shape_type,
+    const DefaultGeoManager& default_geo_manager){
+    this->SetIndex();
+    this->SetupConnectionParameters(this->geometry_cell_type_);
+    this->k0DefaultGeoShapeType_ = shape_type;
+    this->Geometry3DInterface::InitialGeometry(
+        dx, shape_type, default_geo_manager);
+    switch (shape_type) {
+    case DefaultGeoShapeType::kCube:
+        return 0;
+    default:
+        return 1;
+    }
     return 0;
 }
 int GeometryInfoConnection3D::UpdateGeometry(
-    std::shared_ptr<GeometryInfo3DInterface> ptr_geo) {
+    const DefaultGeoManager& default_geo_manager) {
     return 0;
 }
 /**
 * @brief   function to copy coordinates from vector of original coordinates
 *           to that used for identifying connection relations.
+* @param[out]  ptr_coordi_min   minimum cooridinates of the geometry.
+* @param[out]  ptr_coordi_max   maximum cooridinates of the geometry.
 */
-void GeometryInfoConnection3D::InitialCoordinateGivenLevel() {
+void GeometryInfoConnection3D::InitialCoordinateGivenLevel(
+    std::vector<DefReal>* const ptr_coordi_min,
+    std::vector<DefReal>* const ptr_coordi_max) {
     vertex_given_level_.push_back({});
     connection_vertex_given_level_.push_back({});
     DefSizet i_vertex = 0;
     GeometryConnectionCoordinate vertex_temp;
     vertex_temp.coordinates = { 0., 0., 0. };
+    ptr_coordi_min->resize(3);
+    ptr_coordi_max->resize(3);
+    ptr_coordi_min->at(kXIndex) =
+        coordinate_origin_.at(0).coordinate.at(kXIndex);
+    ptr_coordi_min->at(kYIndex) =
+        coordinate_origin_.at(0).coordinate.at(kYIndex);
+    ptr_coordi_min->at(kZIndex) =
+        coordinate_origin_.at(0).coordinate.at(kZIndex);
+    ptr_coordi_max->at(kXIndex) =
+        coordinate_origin_.at(0).coordinate.at(kXIndex);
+    ptr_coordi_max->at(kYIndex) =
+        coordinate_origin_.at(0).coordinate.at(kYIndex);
+    ptr_coordi_max->at(kZIndex) =
+        coordinate_origin_.at(0).coordinate.at(kZIndex);
     for (const auto& iter_vertex : coordinate_origin_) {
+        if (ptr_coordi_min->at(kXIndex) >
+            iter_vertex.coordinate.at(kXIndex)) {
+            ptr_coordi_min->at(kXIndex) =
+                iter_vertex.coordinate.at(kXIndex);
+        } else if (ptr_coordi_max->at(kXIndex) <
+            iter_vertex.coordinate.at(kXIndex)) {
+            ptr_coordi_max->at(kXIndex) =
+                iter_vertex.coordinate.at(kXIndex);
+        }
+        if (ptr_coordi_min->at(kYIndex) >
+            iter_vertex.coordinate.at(kYIndex)) {
+            ptr_coordi_min->at(kYIndex) =
+                iter_vertex.coordinate.at(kYIndex);
+        } else if (ptr_coordi_max->at(kYIndex) <
+            iter_vertex.coordinate.at(kYIndex)) {
+            ptr_coordi_max->at(kYIndex) =
+                iter_vertex.coordinate.at(kYIndex);
+        }
+        if (ptr_coordi_min->at(kZIndex) >
+            iter_vertex.coordinate.at(kZIndex)) {
+            ptr_coordi_min->at(kZIndex) =
+                iter_vertex.coordinate.at(kZIndex);
+        } else if (ptr_coordi_max->at(kZIndex) <
+            iter_vertex.coordinate.at(kZIndex)) {
+            ptr_coordi_max->at(kZIndex) =
+                iter_vertex.coordinate.at(kZIndex);
+        }
         vertex_temp.coordinates.at(0) = iter_vertex.coordinate.at(0);
         vertex_temp.coordinates.at(1) = iter_vertex.coordinate.at(1);
         vertex_temp.coordinates.at(2) = iter_vertex.coordinate.at(2);
@@ -120,11 +175,6 @@ void GeometryInfoConnection3D::DecomposeNHigerLevel(const DefSizet i_level_grid,
     const DefReal decompose_length,
     const std::unordered_map<DefSizet, bool>& map_indices_base,
     std::unordered_map<DefSizet, bool>* const ptr_map_indices_remain){
-
-};
-void GeometryInfoConnection3D::FindTrackingNodeNearGeo(
-    const SFBitsetAux3D& sfbitset_aux_3d,
-    std::shared_ptr<GridInfoInterface> ptr_grid_info) const {
 
 }
 }  // end namespace amrproject

@@ -28,10 +28,10 @@ class IoManager {
     bool bool_binary_ = true;
     OutputDataFormat k0OutputDataFormat_;
 
-    void OutputFlowfield(
-        std::shared_ptr<GridManagerInterface> ptr_grid_manager,
-        std::shared_ptr<CriterionManager> ptr_criterion_manager);
-    //VtkWriterManager vtk_instance_;
+    void OutputFlowfield(const std::string& prog_name,
+        GridManagerInterface* const ptr_grid_manager,
+        CriterionManager* const ptr_criterion_manager);
+    VtkWriterManager vtk_instance_;
 };
 }  // end amrproject
 }  // end namespace rootproject

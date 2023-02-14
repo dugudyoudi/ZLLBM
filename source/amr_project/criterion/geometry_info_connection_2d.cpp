@@ -2,9 +2,9 @@
 //  All rights reserved
 
 /**
-* @file geometry_info_stl.cpp
+* @file geometry_info_connection_2d.cpp
 * @author Zhengliang Liu
-* @brief functions for geometries reprensented by STL vertexs
+* @brief functions for 2D geometries with connection information
 * @date  2022-5-25
 * @note .
 */
@@ -42,36 +42,72 @@ void GeometryInfoConnection2D::SetIndex() {
 * @note
 */
 int GeometryInfoConnection2D::InitialGeometry(
-    std::shared_ptr<GeometryInfo2DInterface> ptr_geo) {
-    DefUint dims = 2;
-    SetIndex();
-    SetupConnectionParameters(geometry_cell_type_);
-    switch (k0DefaultGeoShapeType_) {
+    const DefReal dx,
+    const DefaultGeoShapeType shape_type,
+    const DefaultGeoManager& default_geo_manager) {
+    this->SetIndex();
+    this->SetupConnectionParameters(this->geometry_cell_type_);
+    this->k0DefaultGeoShapeType_ = shape_type;
+    this->Geometry2DInterface::InitialGeometry(
+        dx, shape_type, default_geo_manager);
+    switch (shape_type) {
     case DefaultGeoShapeType::kCircle:
-        DefaultGeoShapeManager::GetInstance()
-            ->geo_circle_initial(dims, ptr_geo);
         return 0;
     default:
         return 1;
     }
 }
 int GeometryInfoConnection2D::UpdateGeometry(
-    std::shared_ptr<GeometryInfo2DInterface> ptr_geo) {
+    const DefaultGeoManager& default_geo_manager) {
     return 0;
 }
 /**
 * @brief   function to copy coordinates from vector of original coordinates
 *           to that used for identifying connection relations.
+* @param[out]  ptr_coordi_min   minimum cooridinates of the geometry.
+* @param[out]  ptr_coordi_max   maximum cooridinates of the geometry.
 */
-void GeometryInfoConnection2D::InitialCoordinateGivenLevel() {
+void GeometryInfoConnection2D::InitialCoordinateGivenLevel(
+    std::vector<DefReal>* const ptr_coordi_min,
+    std::vector<DefReal>* const ptr_coordi_max) {
     vertex_given_level_.push_back({});
     connection_vertex_given_level_.push_back({});
     DefSizet i_vertex = 0;
     GeometryConnectionCoordinate vertex_temp;
     vertex_temp.coordinates = { 0., 0.};
+    ptr_coordi_min->resize(2);
+    ptr_coordi_max->resize(2);
+    ptr_coordi_min->at(kXIndex) =
+        coordinate_origin_.at(0).coordinate.at(kXIndex);
+    ptr_coordi_min->at(kYIndex) =
+        coordinate_origin_.at(0).coordinate.at(kYIndex);
+    ptr_coordi_max->at(kXIndex) =
+        coordinate_origin_.at(0).coordinate.at(kXIndex);
+    ptr_coordi_max->at(kYIndex) =
+        coordinate_origin_.at(0).coordinate.at(kYIndex);
     for (const auto& iter_vertex : coordinate_origin_) {
-        vertex_temp.coordinates.at(0) = iter_vertex.coordinate.at(0);
-        vertex_temp.coordinates.at(1) = iter_vertex.coordinate.at(1);
+        if (ptr_coordi_min->at(kXIndex) >
+            iter_vertex.coordinate.at(kXIndex)) {
+            ptr_coordi_min->at(kXIndex) =
+                iter_vertex.coordinate.at(kXIndex);
+        } else if (ptr_coordi_max->at(kXIndex) <
+            iter_vertex.coordinate.at(kXIndex)) {
+            ptr_coordi_max->at(kXIndex) =
+                iter_vertex.coordinate.at(kXIndex);
+        }
+        if (ptr_coordi_min->at(kYIndex) >
+            iter_vertex.coordinate.at(kYIndex)) {
+            ptr_coordi_min->at(kYIndex) =
+                iter_vertex.coordinate.at(kYIndex);
+        } else if (ptr_coordi_max->at(kYIndex) <
+            iter_vertex.coordinate.at(kYIndex)) {
+            ptr_coordi_max->at(kYIndex) =
+                iter_vertex.coordinate.at(kYIndex);
+        }
+        vertex_temp.coordinates.at(kXIndex) =
+            iter_vertex.coordinate.at(kXIndex);
+        vertex_temp.coordinates.at(kYIndex) =
+            iter_vertex.coordinate.at(kYIndex);
         vertex_given_level_.at(0).vec_vertex_cooridinate
             .push_back(vertex_temp);
         connection_vertex_given_level_.at(0).insert({ 0, i_vertex });
@@ -124,28 +160,6 @@ void GeometryInfoConnection2D::DecomposeNHigerLevel(const DefSizet i_level_grid,
     const std::unordered_map<DefSizet, bool>& map_indices_base,
     std::unordered_map<DefSizet, bool>* const ptr_map_indices_remain) {
 
-}
-void GeometryInfoConnection2D::FindTrackingNodeNearGeo(
-    const SFBitsetAux2D& sfbitset_aux_2d,
-    std::shared_ptr<GridInfoInterface> ptr_grid_info) const {
-    if (ptr_grid_info->map_ptr_tracking_grid_info_
-        .find({ ECriteriolType::kGeometry, i_geo_ })
-        == ptr_grid_info->map_ptr_tracking_grid_info_.end()) {
-        ptr_grid_info->map_ptr_tracking_grid_info_.insert(
-            {{ ECriteriolType::kGeometry, i_geo_ },
-            ptr_tracking_grid_info_creator_->CreateTrackingGridInfo()});
-    }
-    TrackingGridInfoInterface* ptr_tracking_grid = ptr_grid_info->
-        map_ptr_tracking_grid_info_.at(
-            { ECriteriolType::kGeometry, i_geo_ }).get();
-    DefSizet level_diff = ptr_grid_info->i_level_ - i_level_;
-    std::array<DefReal, 2> coordinates;
-    for (const auto& iter : connection_vertex_given_level_.at(level_diff)) {
-        coordinates[kXIndex] = vertex_given_level_.at(iter.first)
-            .vec_vertex_cooridinate.at(iter.second).coordinates[kXIndex];
-        //sfbitset_aux_2d.SFBitsetEncoding(coordinates);
-           
-    }
 }
 }  // end namespace amrproject
 }  // end namespace rootproject

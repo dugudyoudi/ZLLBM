@@ -13,6 +13,7 @@
 #include <vector>
 #include <array>
 #include <map>
+#include <set>
 #include <memory>
 #include <string>
 #include "../defs_libs.h"
@@ -23,21 +24,16 @@ namespace amrproject{
 /**
 * @struct TrackingNode
 * @brief structure to nodes information for traking movement
-* @note
 */
 struct TrackingNode {
-private:
-    DefUint count_exist = 1;
-    DefUint status = 0;
-    std::vector<std::array<DefSizet, 2>> geo_ref;
 public:
+    std::set<std::pair<DefSizet, DefSizet>> set_point_index;
     std::vector<DefInt> vec_int{};
     std::vector<DefReal> vec_real{};
 };
 /**
 * @struct GhostNode
 * @brief structure to store ghost node information
-* @note
 */
 struct GhostNode {
 public:
@@ -51,26 +47,50 @@ public:
 */
 struct GridNode {
 public:
+    DefUint flag_status_;
     std::vector<DefInt> vec_int{};
     std::vector<DefReal> vec_real{};
 };
 /**
+* @class InterfaceLayerInfo
+* @brief class used to store information of
+* @date  2023-1-5
+*/
+class InterfaceLayerInfo {
+public:
+    // number of extended based on the interface grid
+    std::vector<DefLUint> k0ExtendOuterNeg, k0ExtendOuterPos;
+    ///< number of extened layers outside the geometry
+    std::vector<DefLUint> k0ExtendInnerNeg, k0ExtendInnerPos;
+    ///< number of extened layers inside the geometry
+
+    std::vector<DefMap<DefUint>> vec_outer_coarse2fine_,
+        vec_outer_fine2coarse_;
+    std::vector<DefMap<DefUint>> vec_inner_coarse2fine_,
+        vec_inner_fine2coarse_;
+};
+/**
 * @class TrackingGridInfoInterface
 * @brief class used to store tracking grid information at i_level_ of refinement
-* @note
 * @date  2022-6-4
 */
 class TrackingGridInfoInterface {
 public:
     DefReal computational_cost_ = 1.;
     std::string node_type_;
+    EGridExtendType grid_extend_type_ = EGridExtendType::kSameInAllDirections;
+
+    // number of extended based on the trakcing grid
+    std::vector<DefLUint> k0ExtendOuterNeg, k0ExtendOuterPos;
+    ///< number of extened layers outside the geometry
+    std::vector<DefLUint> k0ExtendInnerNeg, k0ExtendInnerPos;
+    ///< number of extened layers inside the geometry
 
     // information of TrackingNode
     DefMap<TrackingNode> map_tracking_node_{};
     DefSizet k0NumIntForEachNode_ = 1;
     DefSizet k0NumRealForEachNode_ = 0;
-protected:
-    virtual void FindTrackingNodeNearGeo(const DefSFBitset& bitset_in) = 0;
+    TrackingNode k0TrackNodeInstance_;
 };
 /**
 * @class TrackingGridInfoCreatorInterface
@@ -80,6 +100,7 @@ class TrackingGridInfoCreatorInterface {
 public:
     virtual std::shared_ptr<TrackingGridInfoInterface>
         CreateTrackingGridInfo() = 0;
+    virtual ~TrackingGridInfoCreatorInterface() {}
 };
 /**
 * @class GhostGridInfoInterface
@@ -99,9 +120,10 @@ public:
     DefMap<GhostNode> map_ghost_node_{};
     DefSizet k0NumIntForEachNode_ = 1;
     DefSizet k0NumRealForEachNode_ = 0;
+    GridNode k0GhostNodeInstance_;
+    ///< instance for a ghost node with preset vector sizes
+    virtual ~GhostGridInfoInterface() {}
 protected:
-    GhostNode ghost_node_instance_;
-    ///< an instance for a ghost node with preset vector sizes
     virtual void InitialGhostNode(const DefSFBitset& bitset_in) = 0;
 };
 /**
@@ -112,6 +134,7 @@ class GhostGridInfoCreatorInterface {
 public:
     virtual std::shared_ptr<GhostGridInfoInterface>
         CreateGhostGridInfo() = 0;
+    virtual ~GhostGridInfoCreatorInterface() {}
 };
 /**
 * @class GridInfoInterface
@@ -129,29 +152,31 @@ public:
     std::vector<DefReal> grid_space_;
     std::shared_ptr<SolverInterface> ptr_solver_ = nullptr;
 
-    std::map<std::pair<ECriteriolType, DefSizet>,
+    std::map<std::pair<ECriterionType, DefSizet>,
         std::shared_ptr<TrackingGridInfoInterface>>
         map_ptr_tracking_grid_info_;
     std::shared_ptr<GhostGridInfoInterface>
         ptr_ghost_grid_info_;
 
+    // interface between grid of differet refinement levels
+    DefSizet k0NumFine2CoarseLayer_ = 3;
+    DefSizet k0NumCoarse2FineLayer_ = 2;
+    std::map<std::pair<ECriterionType, DefSizet>,
+        std::shared_ptr<InterfaceLayerInfo>>
+        map_ptr_interface_layer_info_;
+
     // information of GridNode
     DefMap<GridNode> map_grid_node_{};
+    DefMap<DefUint> map_grid_count_exist_{};
     DefSizet k0NumIntForEachNode_ = 0;
     DefSizet k0NumRealForEachNode_ = 0;
     virtual void set_number_of_vec_elements() = 0;
 
-    // overlapping region between differen refinement level
-    const DefUint kOverlappingOutmostM1_ = 1;
-    ///< index of the outmost layer of the overlapping region 
-    const DefUint kOverlappingOutmostM2_ = 2;
-    ///< index of the second outmost layer of the overlapping region 
-    std::vector<DefMap<DefUint>> vec_map_coarse2fine_;
-    std::vector<DefMap<DefUint>> vec_map_fine2coarse_;
-
-    GridNode grid_node_instance_;
-    ///< an instance for insert node with preset vector sizes
+    GridNode k0GridNodeInstance_;
+    ///< instance for insert node with preset vector sizes
     virtual void InitialGridNode(const DefSFBitset& bitset_in) = 0;
+
+    virtual ~GridInfoInterface() {}
 };
 /**
 * @class GridInfoCreatorInterface
@@ -161,6 +186,7 @@ class GridInfoCreatorInterface {
 public:
     virtual std::shared_ptr<GridInfoInterface>
         CreateGridInfo() = 0;
+    virtual ~GridInfoCreatorInterface() {}
 };
 }  // end namespace amrproject
 }  // end namespace rootproject

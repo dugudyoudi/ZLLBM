@@ -8,18 +8,24 @@
 * @date  2022-5-16
 * @note .
 */
+#include <filesystem>
 #include "io/log_write.h"
 #include "auxiliary_inline_func.h"
 #include "amr_manager.h"
+#include "mpi/mpi_manager.h"
 namespace rootproject {
 namespace amrproject {
-void AmrManager::LoadModules() {
+void AmrManager::LoadModules(DefUint dims) {
 #ifdef ENABLE_MPI
-    ptr_mpi_manager = std::make_shared<mpi::MpiManager> ptr_mpi_manager();
+    ptr_mpi_manager_ = std::make_unique<MpiManager>();
 #endif
-    //ptr_grid_manager_ = std::make_shared<grid::GridManagerInterface>();
-    ptr_io_manager_ = std::make_shared<IoManager>();
-    ptr_criterion_manager_ = std::make_shared<CriterionManager>();
+    if (dims == 2) {
+        ptr_grid_manager_ = std::make_unique<GridManager2D>();
+    } else {
+        ptr_grid_manager_ = std::make_unique<GridManager3D>();
+    }
+    ptr_io_manager_ = std::make_unique<IoManager>();
+    ptr_criterion_manager_ = std::make_unique<CriterionManager>();
 }
 /**
 * @brief      function to set default parameters for all modules.
@@ -29,8 +35,13 @@ void AmrManager::LoadModules() {
 */
 void AmrManager::DefaultInitialization(DefUint dims, DefSizet max_level,
     int argc, char* argv[]) {
+    //name of the current executable
+    std::filesystem::path file_name =
+        std::filesystem::path(argv[0]).filename();
+    file_name.replace_extension();
+    program_name_ = file_name.generic_string();
 
-    LoadModules();
+    LoadModules(dims);
 
     // mpi settings
 #ifdef ENABLE_MPI
@@ -39,7 +50,6 @@ void AmrManager::DefaultInitialization(DefUint dims, DefSizet max_level,
 
     ptr_io_manager_->DefaultInitialization();
     ptr_grid_manager_->DefaultInitialization(max_level);
-    ptr_criterion_manager_->k0GeoDims_ = dims;
 }
 /**
 * @brief   function to set parameters according to inputs for all modules
@@ -58,18 +68,17 @@ void AmrManager::SetupParameters() {
 /**
 * @brief   function to initialize simulation
 */
-void AmrManager::InitialSimulation() {
-    SetupParameters();
+void AmrManager::InitializeSimulation() {
     int rank_id = 0;
 #ifdef ENABLE_MPI
-    rank_id = mpi::MpiManagerrank_id_;
+    MPI_Comm_rank(MPI_COMM_WORLD, &rank_id);
 #endif  // ENABLE_MPI
 
     if (rank_id == 0) {
         /*ptr_criterion_manager_->InitialGeometrySerial(
             ptr_grid_manager_->k0RealOffest_);*/
-        //ptr_grid_manager_->GenerateGridSerial(
-        //    ptr_criterion_manager_->vec_ptr_geometries_);
+        ptr_grid_manager_->GenerateInitialMeshBasedOnGeoSerial(
+            ptr_criterion_manager_->vec_ptr_geometries_);
     }
 }
 /**
@@ -79,42 +88,19 @@ void AmrManager::InitialSimulation() {
 * @note  just for convience. Grid instance can be specified for each level.
 */
 void AmrManager::SetTheSameLevelDependentInfoForAllLevels(
-    std::shared_ptr<SolverCreatorInterface> ptr_solver_creator) {
-    int rank_id = 0;
-#ifdef ENABLE_MPI
-    rank_id = mpi::MpiManager::GetInstance()->rank_id_;
-#endif  // ENABLE_MPI
+    SolverCreatorInterface* const ptr_solver_creator) {
     std::shared_ptr<SolverInterface> ptr_sovler =
         ptr_solver_creator->CreateSolver();
-    for (DefSizet i_level = 0; i_level < ptr_grid_manager_->k0MaxLevel_ + 1;
-        ++i_level) {
-        ptr_grid_manager_->vec_ptr_grid_info_.emplace_back(
-            ptr_sovler->ptr_grid_info_creator_->CreateGridInfo());
-        GridInfoInterface& grid_ref =
-            *(ptr_grid_manager_->vec_ptr_grid_info_).back();
-        grid_ref.i_level_ = i_level;
-        // link sovler to grid at i_level of refinement 
-        grid_ref.ptr_solver_ = ptr_sovler;
-        // set grid space in all directions
-        grid_ref.grid_space_ = std::vector<DefReal>(
-            ptr_grid_manager_->k0GridDims_, 0.);
-        //for (DefUint idim = 0; idim < ptr_grid_manager_->k0GridDims_; ++idim) {
-        //    grid_ref.grid_space_.at(idim) =
-        //        ptr_grid_manager_->k0DomainDx_.at(idim) /
-        //        static_cast<DefReal>(TwoPowerN(i_level));
-        //}
-        // set computational cost for each node 2^i_level
-        grid_ref.computational_cost_ =
-            static_cast<DefReal>(TwoPowerN(i_level));
-        grid_ref.set_number_of_vec_elements();
-    }
+    ptr_grid_manager_->CreateSameGridInstanceForAllLevel(
+        ptr_sovler->ptr_grid_info_creator_.get());
 }
 /**
 * @brief   function to finalize simulation
 */
 void AmrManager::FinalizeSimulation() {
-    ptr_io_manager_->OutputFlowfield(ptr_grid_manager_,
-        ptr_criterion_manager_);
+    ptr_io_manager_->OutputFlowfield(
+        program_name_, ptr_grid_manager_.get(),
+        ptr_criterion_manager_.get());
 }
 }  // end amrproject
 }  // end namespace rootproject

@@ -32,25 +32,26 @@ class AmrManager {
 
     // modules
 #ifdef ENABLE_MPI
-    std::shared_ptr<mpi::MpiManager> ptr_mpi_manager;
+    std::unique_ptr<MpiManager> ptr_mpi_manager_;
 #endif
-    std::shared_ptr<GridManagerInterface> ptr_grid_manager_;
-    std::shared_ptr<IoManager> ptr_io_manager_;
-    std::shared_ptr<CriterionManager> ptr_criterion_manager_;
+    std::unique_ptr<GridManagerInterface> ptr_grid_manager_;
+    std::unique_ptr<IoManager> ptr_io_manager_;
+    std::unique_ptr<CriterionManager> ptr_criterion_manager_;
 
-    void LoadModules();
+    void LoadModules(DefUint dims);
 
     void DefaultInitialization(DefUint dim, DefSizet level,
         int argc, char* argv[]);
     void SetupParameters();
-    void InitialSimulation();
+    void InitializeSimulation();
     void FinalizeSimulation();
 
     void SetTheSameLevelDependentInfoForAllLevels(
-        std::shared_ptr<SolverCreatorInterface> ptr_solver_creator);
+        SolverCreatorInterface* const ptr_solver_creator);
 
  private:
     static AmrManager* amr_instance_;
+    std::string program_name_;
     AmrManager(void) {}
     ~AmrManager(void) {}
 };

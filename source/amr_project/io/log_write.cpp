@@ -7,6 +7,10 @@
 * @date  2022-8-14
 */
 #include <chrono>
+#include "../defs_libs.h"
+#ifdef ENABLE_MPI
+#include <mpi.h>
+#endif ENABLE_MPI
 #include "io/log_write.h"
 #include "io/io_manager.h"
 namespace rootproject {
@@ -23,7 +27,7 @@ void LogStartTime() {
 
     int rank_id = 0;
 #ifdef ENABLE_MPI
-    rank_id = mpi::MpiManager::rank_id_;
+    MPI_Comm_rank(MPI_COMM_WORLD, &rank_id);
 #endif  // ENABLE_MPI
 
     FILE* fp = nullptr;
@@ -44,11 +48,11 @@ void LogStartTime() {
 void LogInfo(const std::string& msg) {
     int rank_id = 0;
 #ifdef ENABLE_MPI
-    rank_id = mpi::MpiManager::rank_id_;
+    MPI_Comm_rank(MPI_COMM_WORLD, &rank_id);
 #endif  // ENABLE_MPI
     FILE* fp = nullptr;
     errno_t err = fopen_s(&fp,
-        (IoManager::logfile_name + std::to_string(0)).c_str(), "a");
+        (IoManager::logfile_name + std::to_string(rank_id)).c_str(), "a");
     if (!fp) {
         printf_s("The log file was not opened\n");
     } else {
@@ -83,7 +87,7 @@ void LogInfo(const int mpi_id, const std::string& msg) {
 void LogWarning(const std::string& msg) {
     int rank_id = 0;
 #ifdef ENABLE_MPI
-    rank_id = mpi::MpiManager::rank_id_;
+    MPI_Comm_rank(MPI_COMM_WORLD, &rank_id);
 #endif  // ENABLE_MPI
     FILE* fp = nullptr;
     errno_t err = fopen_s(&fp,
@@ -114,7 +118,7 @@ void LogWarning(const std::string& msg) {
 void LogError(const std::string& msg) {
     int rank_id = 0;
 #ifdef ENABLE_MPI
-    rank_id = mpi::MpiManager::rank_id_;
+    MPI_Comm_rank(MPI_COMM_WORLD, &rank_id);
 #endif  // ENABLE_MPI
     FILE* fp = nullptr;
     errno_t err = fopen_s(&fp,

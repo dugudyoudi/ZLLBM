@@ -22,8 +22,8 @@ class SolverInterface {
 public:
     DefUint k0SolverDims_ = 0;  ///< dimension
     std::string node_type_;
-    std::shared_ptr<GridInfoCreatorInterface>
-        ptr_grid_info_creator_ = nullptr;
+    std::unique_ptr<GridInfoCreatorInterface>
+        ptr_grid_info_creator_;
     virtual std::string GetSolverMethod() = 0;
     virtual void SolverInitial() = 0;
     virtual void RunSolver() = 0;

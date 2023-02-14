@@ -19,6 +19,7 @@
 namespace rootproject {
 using DefReal = double;
 using DefInt = int;
+using DefLInt = int;
 using DefUint = unsigned int;
 using DefSizet = size_t;
 using DefLUint = unsigned int;
