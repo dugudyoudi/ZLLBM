@@ -62,7 +62,7 @@ void GridManager2D::IdentifyTypeOfLayerByFloodFill(
     DefMap<DefUint>* const ptr_map_nodes_inside) const {
     // step 1: find start poitn for flood fill
     if (flood_fill_start_point.size() != k0GridDims_) {
-        LogWarning("Dimesion of flood_fill_start_point is different"
+        LogWarning("Dimension of flood_fill_start_point is different"
             "from k0GridDims_.");
     }
     std::array<DefReal, 2> flood_fill_origin =
@@ -306,7 +306,7 @@ void GridManager2D::ExtendOneLayerGrid(
 * @param[out] ptr_vec_bitset_min space filling code of minimum coordinates.
 * @param[out] ptr_vec_bitset_min space filling code of maximum coordinates.
 */
-void GridManager2D::ComputeSFBitsetOnboundaryAtGivenLevel(
+void GridManager2D::ComputeSFBitsetOnBoundaryAtGivenLevel(
     const DefSizet i_level,
     std::vector<DefSFBitset>* const ptr_vec_bitset_min,
     std::vector<DefSFBitset>* const ptr_vec_bitset_max) const {
@@ -325,53 +325,53 @@ void GridManager2D::ComputeSFBitsetOnboundaryAtGivenLevel(
 * @param[in] bitset_in space filling code of the cetner node.
 * @param[in] bool_neg indicators of extending in negative directions.
 * @param[in] bool_pos indicators of extending in positive directions.
-* @param[out] ptr_vec_neigbours space filling codes of neighbours.
+* @param[out] ptr_vec_neighbours space filling codes of neighbours.
 * @return indicators of current node on boundaries.
 */
 DefUint GridManager2D::FindAllNeighboursWithSpecifiedDirection(
     const DefSFBitset bitset_in,
     std::array<bool, 2>& bool_neg, std::array<bool, 2>& bool_pos,
-    std::vector <DefSFBitset>* const ptr_vec_neigbours) const {
-    ptr_vec_neigbours->clear();
+    std::vector <DefSFBitset>* const ptr_vec_neighbours) const {
+    ptr_vec_neighbours->clear();
     DefUint flag_current_node = 0;
     DefSFBitset bitset_temp, bitset_temp1;
     if (bool_neg[kXIndex]) {  // (-x, 0)
         bitset_temp = FindXNeg(bitset_in);
-        ptr_vec_neigbours->push_back(bitset_temp);
+        ptr_vec_neighbours->push_back(bitset_temp);
         if (bool_neg[kYIndex]) {  // (-x, -y)
             bitset_temp1 = FindYNeg(bitset_temp);
-            ptr_vec_neigbours->push_back(bitset_temp1);
+            ptr_vec_neighbours->push_back(bitset_temp1);
         }
         if (bool_pos[kYIndex]) {  // (-x, +y)
             bitset_temp1 = FindYPos(bitset_temp);
-            ptr_vec_neigbours->push_back(bitset_temp1);
+            ptr_vec_neighbours->push_back(bitset_temp1);
         }
     } else {
         flag_current_node |= kFlagCurrentNodeXNeg_;
     }
     if (bool_pos[kXIndex]) {  // (+x, 0)
         bitset_temp = FindXPos(bitset_in);
-        ptr_vec_neigbours->push_back(bitset_temp);
+        ptr_vec_neighbours->push_back(bitset_temp);
         if (bool_neg[kYIndex]) {  // (+x, -y)
             bitset_temp1 = FindYNeg(bitset_temp);
-            ptr_vec_neigbours->push_back(bitset_temp1);
+            ptr_vec_neighbours->push_back(bitset_temp1);
         }
         if (bool_pos[kYIndex]) {  // (+x, +y)
             bitset_temp1 = FindYPos(bitset_temp);
-            ptr_vec_neigbours->push_back(bitset_temp1);
+            ptr_vec_neighbours->push_back(bitset_temp1);
         }
     } else {
         flag_current_node |= kFlagCurrentNodeXPos_;
     }
     if (bool_neg[kYIndex]) {  // (0, -y)
         bitset_temp = FindYNeg(bitset_in);
-        ptr_vec_neigbours->push_back(bitset_temp);
+        ptr_vec_neighbours->push_back(bitset_temp);
     } else {
         flag_current_node |= kFlagCurrentNodeYNeg_;
     }
     if (bool_pos[kYIndex]) {  // (0, +y)
         bitset_temp = FindYPos(bitset_in);
-        ptr_vec_neigbours->push_back(bitset_temp);
+        ptr_vec_neighbours->push_back(bitset_temp);
     } else {
         flag_current_node |= kFlagCurrentNodeYPos_;
     }
@@ -412,7 +412,7 @@ void  GridManager2D::FindInterfaceBetweenGrid(
 
     std::vector<DefSFBitset> vec_bitset_min(k0GridDims_, 0),
         vec_bitset_max(k0GridDims_, 0);
-    ComputeSFBitsetOnboundaryAtGivenLevel(
+    ComputeSFBitsetOnBoundaryAtGivenLevel(
         i_level - 1, &vec_bitset_min, &vec_bitset_max);
 
     std::vector<DefSFBitset> vec_bitset_min_lower(k0GridDims_, 0),
@@ -442,8 +442,8 @@ void  GridManager2D::FindInterfaceBetweenGrid(
         flag_node_boundary = FindAllNeighboursWithSpecifiedDirection(
             iter.first, bool_neg_not_boundary,
             bool_pos_not_boundary, &vec_neighbours);
-        for (const auto& iter_neighour : vec_neighbours) {
-            if (map_exist->find(iter_neighour) == map_exist->end()) {
+        for (const auto& iter_neighbour : vec_neighbours) {
+            if (map_exist->find(iter_neighbour) == map_exist->end()) {
                 map_exist->at(iter.first) |= kFlagGridInterfaceOutermost_;
                 ptr_interface_outmost->insert({ iter.first, kFlag0_ });
                 // find interface at lower level
@@ -604,7 +604,7 @@ void GridManager2D::TraverseBackgroundForPartition(
 #ifdef DEBUG_CHECK_GRID
         if (iter_count > iter_max) {
             LogError("iterations exceed the maximum when space filling code "
-                "exceed x doamin boundary in"
+                "exceed x domain boundary in"
                 " GridManager2D::TraverseBackgroundForPartition");
         }
 #endif
@@ -622,96 +622,6 @@ void GridManager2D::TraverseBackgroundForPartition(
         }
     }
 }
-// void GridManager2D::TraverseBackgroundForPartition(
-//    const std::vector<DefLUint>& rank_load,
-//    const DefMap<DefUint>& background_occupied,
-//    std::vector<DefSFBitset>* const ptr_bitset_min,
-//    std::vector<DefSFBitset>* const ptr_bitset_max) const {
-//    DefLUint load_count = 0;
-//    DefLUint bk_cost = vec_ptr_grid_info_.at(0)->computational_cost_;
-//    int i_rank = 0;
-//    ptr_bitset_min->at(i_rank) = 0;
-//    ptr_bitset_max->back() = SFBitsetEncoding({
-//        k0MaxIndexOfBackgroundNode_[kXIndex],
-//        k0MaxIndexOfBackgroundNode_[kYIndex] });
-//    DefLUint num_node = CalNumOfBackgroundNode();
-//    std::array<DefLUint, 2> indices = {
-//        k0IntOffset_[kXIndex], k0IntOffset_[kYIndex] };
-//    DefSFCodeToUint i_code = SFBitsetEncoding(indices).to_ullong();
-//    DefSFBitset bitset_temp = static_cast<DefSFBitset>(i_code);
-//    DefUint sfcode_block;  // block size of space filling code
-//    DefUint iter_max = 1000, iter_count;
-//    for (DefLUint i_node = 0; i_node < num_node; ++i_node) {
-//        if (load_count >= rank_load.at(i_rank)) {
-//            load_count = 0;
-//            ++i_rank;
-//            ptr_bitset_min->at(i_rank) = bitset_temp;
-//        }
-//        if (background_occupied.find(bitset_temp)
-//            == background_occupied.end()) {
-//            load_count += bk_cost;
-//        } else {
-//            load_count += background_occupied.at(bitset_temp);
-//        }
-//        if (load_count >= rank_load.at(i_rank)) {
-//            ptr_bitset_max->at(i_rank) = bitset_temp;
-//        }
-//        //  reset i_code if indices exceed domain
-//        ++i_code;
-//        bitset_temp = static_cast<DefSFBitset>(i_code);
-//        SFBitsetComputeIndices(bitset_temp, &indices);
-//        iter_count = 0;
-//        while (indices[kXIndex] > k0MaxIndexOfBackgroundNode_[kXIndex]
-//            && iter_count < iter_max) {
-//            sfcode_block = 4;
-//            while ((i_code % sfcode_block) == 0 ) {
-//                sfcode_block *= 4;
-//            }
-//            i_code += sfcode_block / 4;
-//            bitset_temp = static_cast<DefSFBitset>(i_code);
-//            SFBitsetComputeIndices(bitset_temp, &indices);
-//            ++iter_count;
-//        }
-// #ifdef DEBUG_CHECK_GRID
-//        if (iter_count > iter_max) {
-//            LogError("iterations exceed the maximum when space filling code "
-//                "exceed x doamin boundary in"
-//                " GridManager2D::TraverseBackgroundForPartition");
-//        }
-// #endif
-//        iter_count = 0;
-//        while (indices[kYIndex] > k0MaxIndexOfBackgroundNode_[kYIndex]
-//            && iter_count < iter_max) {
-//            sfcode_block = 4;
-//            while ((i_code % sfcode_block) == 0) {
-//                sfcode_block *= 4;
-//            }
-//            i_code += sfcode_block / 4 * 2;
-//            bitset_temp = static_cast<DefSFBitset>(i_code);
-//            SFBitsetComputeIndices(bitset_temp, &indices);
-//            ++iter_count;
-//        }
-// #ifdef DEBUG_CHECK_GRID
-//        if (iter_count > iter_max) {
-//            LogError("iterations exceed the maximum when space filling code "
-//                "exceed y doamin boundary in"
-//                " GridManager2D::TraverseBackgroundForPartition");
-//        }
-// #endif
-//        if (indices[kXIndex] < k0IntOffset_[kXIndex]) {
-//            bitset_temp = SFBitsetEncoding(
-//                { k0IntOffset_[kXIndex], indices[kYIndex]});
-//            i_code = bitset_temp.to_ullong();
-//            SFBitsetComputeIndices(bitset_temp, &indices);
-//        }
-//        if (indices[kYIndex] < k0IntOffset_[kYIndex]) {
-//            bitset_temp = SFBitsetEncoding(
-//                { indices[kXIndex] , k0IntOffset_[kYIndex]});
-//            i_code = bitset_temp.to_ullong();
-//            SFBitsetComputeIndices(bitset_temp, &indices);
-//        }
-//    }
-//}
 }  // end namespace amrproject
 }  // end namespace rootproject
 #endif  // DEBUG_DISABLE_2D_FUNCTIONSs

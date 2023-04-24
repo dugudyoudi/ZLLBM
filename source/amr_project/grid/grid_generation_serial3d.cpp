@@ -370,7 +370,7 @@ void GridManager3D::ExtendOneLayerGrid(
         }
     }
 }
-void GridManager3D::ComputeSFBitsetOnboundaryAtGivenLevel(
+void GridManager3D::ComputeSFBitsetOnBoundaryAtGivenLevel(
     const DefSizet i_level,
     std::vector<DefSFBitset>* const ptr_vec_bitset_min,
     std::vector<DefSFBitset>* const ptr_vec_bitset_max)  const {
@@ -555,7 +555,7 @@ void  GridManager3D::FindInterfaceBetweenGrid(
 #endif  // DEBUG_CHECK_GRID
     std::vector<DefSFBitset> vec_bitset_min(k0GridDims_, 0),
         vec_bitset_max(k0GridDims_, 0);
-    ComputeSFBitsetOnboundaryAtGivenLevel(
+    ComputeSFBitsetOnBoundaryAtGivenLevel(
         i_level - 1, &vec_bitset_min, &vec_bitset_max);
     std::vector<DefSFBitset> vec_bitset_min_lower(k0GridDims_, 0),
         vec_bitset_max_lower(k0GridDims_, 0);
@@ -731,7 +731,7 @@ void GridManager3D::TraverseBackgroundForPartition(
             indices[kXIndex] > k0MaxIndexOfBackgroundNode_[kXIndex];
         bool_exceed_y =
             indices[kYIndex] > k0MaxIndexOfBackgroundNode_[kYIndex];
-        bool_exceed_z = 
+        bool_exceed_z =
             indices[kZIndex] > k0MaxIndexOfBackgroundNode_[kZIndex];
         iter_count = 0;
         while ((bool_exceed_x || bool_exceed_y || bool_exceed_z)
@@ -786,7 +786,7 @@ void GridManager3D::TraverseBackgroundForPartition(
 #ifdef DEBUG_CHECK_GRID
         if (iter_count > iter_max) {
             LogError("iterations exceed the maximum when space filling code "
-                "exceed x doamin boundary in"
+                "exceed x domain boundary in"
                 " GridManager3D::TraverseBackgroundForPartition");
         }
 #endif

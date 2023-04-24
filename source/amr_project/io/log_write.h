@@ -10,6 +10,7 @@
 #define ROOTPROJECT_SOURCE_AMR_PROJECT_IO_LOG_WRITE_H_
 #include <string>
 #ifdef _WIN32
+#include <winsock2.h>
 #include <Windows.h>
 #endif
 #include <cstdint>

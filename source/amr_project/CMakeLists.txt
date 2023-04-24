@@ -35,6 +35,9 @@ if(BUILD_WITH_MPI)
     target_link_libraries(${AMR_PROJECT_NAME}
     ${BUILD_LINK_LIBRARY})
 endif(BUILD_WITH_MPI)
+if(WIN32)
+    target_link_libraries(${AMR_PROJECT_NAME} ws2_32)
+endif(WIN32)
 
 # setup solution filter
 source_group("HeadFiles" FILES ${SOURCE_AMR_HEAD})

@@ -23,10 +23,10 @@ class GhostGridInfoCreatorInterface;
 class SFBitsetAuxInterface;
 class GridInfoInterface;
 /**
-* @struct GeometryvertexInfo
+* @struct GeometryVertexInfo
 * @brief struct used to store information of a geometry vertex
 */
-struct GeometryvertexInfo {
+struct GeometryVertexInfo {
     std::vector<DefInt> vec_int{};
     std::vector<DefReal> vec_real{};
 };
@@ -48,9 +48,9 @@ class GeometryInfoInterface {
     std::string node_type_;
 
     // information stored on each vertex
-    DefSizet k0NumIntForEachvertex_ = 0;
-    DefSizet k0NumRealForEachvertex_ = 0;
-    std::vector<GeometryvertexInfo> vec_vertices_info_{};
+    DefSizet k0NumIntForEachVertex_ = 0;
+    DefSizet k0NumRealForEachVertex_ = 0;
+    std::vector<GeometryVertexInfo> vec_vertices_info_{};
 
     std::shared_ptr<TrackingGridInfoCreatorInterface>
         ptr_tracking_grid_info_creator_ = nullptr;
@@ -67,7 +67,7 @@ class GeometryInfoInterface {
         k0YIntExtendPositive_, k0YIntExtendNegative_,
         k0ZIntExtendPositive_, k0ZIntExtendNegative_;
         ///< number of extened layers
-   
+
     /* number of layer extended inside the geometry
      at (i_level - 1) refienemnt level*/
     std::vector<DefLUint>  k0IntInnerExtend_;
@@ -79,8 +79,8 @@ class GeometryInfoInterface {
     virtual std::vector<DefReal> GetFloodFillOriginArrAsVec() const = 0;
     virtual DefSizet GetNumOfGeometryPoints() const = 0;
     virtual ~GeometryInfoInterface() {}
- protected:
-    GeometryvertexInfo geo_vertex_info_instance_;
+  protected:
+    GeometryVertexInfo geo_vertex_info_instance_;
     ///< instance for a geometry vertex with preset vector sizes
 };
 /**

@@ -27,14 +27,14 @@ namespace amrproject {
 void GeometryInfoConnection2D::SetIndex() {
     if (bool_vec_velocities_) {
         k0UxIndex_ = 0; k0UyIndex_ = k0UxIndex_ + 1;
-        k0NumRealForEachvertex_ = k0UyIndex_;
+        k0NumRealForEachVertex_ = k0UyIndex_;
     }
     if (bool_vec_forces_) {
         k0FxIndex_ = k0UyIndex_ + 1; k0FyIndex_ = k0FxIndex_ + 1;
-        k0NumRealForEachvertex_ = k0FyIndex_;
+        k0NumRealForEachVertex_ = k0FyIndex_;
     }
     vertex_instance_.coordinates = { 0., 0. };
-    geo_vertex_info_instance_.vec_real.resize(k0NumRealForEachvertex_);
+    geo_vertex_info_instance_.vec_real.resize(k0NumRealForEachVertex_);
 }
 /**
 * @brief   function to initialize status of geometries
@@ -64,8 +64,8 @@ int GeometryInfoConnection2D::UpdateGeometry(
 /**
 * @brief   function to copy coordinates from vector of original coordinates
 *           to that used for identifying connection relations.
-* @param[out]  ptr_coordi_min   minimum cooridinates of the geometry.
-* @param[out]  ptr_coordi_max   maximum cooridinates of the geometry.
+* @param[out]  ptr_coordi_min   minimum coordinates of the geometry.
+* @param[out]  ptr_coordi_max   maximum coordinates of the geometry.
 */
 void GeometryInfoConnection2D::InitialCoordinateGivenLevel(
     std::vector<DefReal>* const ptr_coordi_min,
@@ -108,10 +108,10 @@ void GeometryInfoConnection2D::InitialCoordinateGivenLevel(
             iter_vertex.coordinate.at(kXIndex);
         vertex_temp.coordinates.at(kYIndex) =
             iter_vertex.coordinate.at(kYIndex);
-        vertex_given_level_.at(0).vec_vertex_cooridinate
+        vertex_given_level_.at(0).vec_vertex_coordinate
             .push_back(vertex_temp);
         connection_vertex_given_level_.at(0).insert({ 0, i_vertex });
-        vertex_given_level_.at(0).vec_vertex_cooridinate.at(i_vertex)
+        vertex_given_level_.at(0).vec_vertex_coordinate.at(i_vertex)
             .map_linked_vertices_level.insert({});
         ++i_vertex;
     }
@@ -126,13 +126,13 @@ DefReal GeometryInfoConnection2D::ComputeDistanceFromCoordinates(
     const std::pair<DefSizet, DefSizet>& vertex0,
     const std::pair<DefSizet, DefSizet>& vertex1) {
     DefReal x_dis = std::fabs(vertex_given_level_.at(vertex0.first)
-        .vec_vertex_cooridinate.at(vertex0.second).coordinates.at(kXIndex)
+        .vec_vertex_coordinate.at(vertex0.second).coordinates.at(kXIndex)
         - vertex_given_level_.at(vertex1.first)
-        .vec_vertex_cooridinate.at(vertex1.second).coordinates.at(kXIndex));
+        .vec_vertex_coordinate.at(vertex1.second).coordinates.at(kXIndex));
     DefReal y_dis = std::fabs(vertex_given_level_.at(vertex0.first)
-        .vec_vertex_cooridinate.at(vertex0.second).coordinates.at(kYIndex)
+        .vec_vertex_coordinate.at(vertex0.second).coordinates.at(kYIndex)
         - vertex_given_level_.at(vertex1.first)
-        .vec_vertex_cooridinate.at(vertex1.second).coordinates.at(kYIndex));
+        .vec_vertex_coordinate.at(vertex1.second).coordinates.at(kYIndex));
     return sqrt(x_dis * x_dis + y_dis * y_dis);
 }
 /**
@@ -146,12 +146,12 @@ void GeometryInfoConnection2D::ComputeMidCoordinates(
     const std::pair<DefSizet, DefSizet>& vertex1,
     std::vector<DefReal>* const ptr_coordinates) {
     ptr_coordinates->at(kXIndex) = (vertex_given_level_.at(vertex0.first)
-        .vec_vertex_cooridinate.at(vertex0.second).coordinates.at(kXIndex)
-        + vertex_given_level_.at(vertex1.first).vec_vertex_cooridinate
+        .vec_vertex_coordinate.at(vertex0.second).coordinates.at(kXIndex)
+        + vertex_given_level_.at(vertex1.first).vec_vertex_coordinate
         .at(vertex1.second).coordinates.at(kXIndex)) / 2.;
     ptr_coordinates->at(kYIndex) = (vertex_given_level_.at(vertex0.first)
-        .vec_vertex_cooridinate.at(vertex0.second).coordinates.at(kYIndex)
-        + vertex_given_level_.at(vertex1.first).vec_vertex_cooridinate
+        .vec_vertex_coordinate.at(vertex0.second).coordinates.at(kYIndex)
+        + vertex_given_level_.at(vertex1.first).vec_vertex_coordinate
         .at(vertex1.second).coordinates.at(kYIndex)) / 2.;
 }
 

@@ -106,8 +106,8 @@ class GridManagerInterface{
         const DefMap<DefUint>& node_exist,
         std::vector<DefSFBitset>* const ptr_bitsets) = 0;
 
-    // node related funcitons
-    virtual void FindAllNeighersSFBitset(const DefSFBitset& bitset_in,
+    // node related functions
+    virtual void FindAllNeighboursSFBitset(const DefSFBitset& bitset_in,
         std::vector<DefSFBitset>* const ptr_vec_neighbours) const = 0;
     virtual void FindAllNodesInACellAtLowerLevel(
         const std::vector<DefSFBitset> bitset_cell,
@@ -191,7 +191,7 @@ class GridManagerInterface{
         const DefSizet i_level, const DefSFBitset& sfbitset_in,
         std::vector<DefLUint>* const ptr_vec_extend_neg,
         std::vector<DefLUint>* const ptr_vec_extend_pos) const = 0;
-    virtual void ComputeSFBitsetOnboundaryAtGivenLevel(const DefSizet i_level,
+    virtual void ComputeSFBitsetOnBoundaryAtGivenLevel(const DefSizet i_level,
         std::vector<DefSFBitset>* const ptr_vec_bitset_min,
         std::vector<DefSFBitset>* const ptr_vec_bitset_max) const = 0;
     virtual void FindCornersForNeighbourCells(const DefSFBitset bitset_in,
@@ -274,7 +274,7 @@ class GridManager2D :public  GridManagerInterface, public SFBitsetAux2D {
     };
 
     // node related function
-    void FindAllNeighersSFBitset(const DefSFBitset& bitset_in,
+    void FindAllNeighboursSFBitset(const DefSFBitset& bitset_in,
         std::vector<DefSFBitset>* const ptr_vec_neighbours) const override;
     void FindAllNodesInACellAtLowerLevel(
         const std::vector<DefSFBitset> bitset_cell,
@@ -307,7 +307,7 @@ protected:
     bool CheckCoincideBackground(const DefSizet i_level,
         const DefSFBitset& bitset_higher,
         DefSFBitset* const ptr_bitset) const override;
-    void ComputeSFBitsetOnboundaryAtGivenLevel(const DefSizet i_level,
+    void ComputeSFBitsetOnBoundaryAtGivenLevel(const DefSizet i_level,
         std::vector<DefSFBitset>* const ptr_vec_bitset_min,
         std::vector<DefSFBitset>* const ptr_vec_bitset_max) const override;
     void ResetExtendLayerBasedOnDomainSize(
@@ -404,7 +404,7 @@ class GridManager3D :public  GridManagerInterface, public SFBitsetAux3D
     };
 
     // node related function
-    void FindAllNeighersSFBitset(const DefSFBitset& bitset_in,
+    void FindAllNeighboursSFBitset(const DefSFBitset& bitset_in,
         std::vector<DefSFBitset>* const ptr_vec_neighbours) const override;
     void FindAllNodesInACellAtLowerLevel(
         const std::vector<DefSFBitset> bitset_cell,
@@ -439,7 +439,7 @@ class GridManager3D :public  GridManagerInterface, public SFBitsetAux3D
     bool CheckCoincideBackground(const DefSizet i_level,
          const DefSFBitset& bitset_higher,
          DefSFBitset* const ptr_bitset) const override;
-    void ComputeSFBitsetOnboundaryAtGivenLevel(const DefSizet i_level,
+    void ComputeSFBitsetOnBoundaryAtGivenLevel(const DefSizet i_level,
         std::vector<DefSFBitset>* const ptr_vec_bitset_min,
         std::vector<DefSFBitset>* const ptr_vec_bitset_max) const override;
     void ResetExtendLayerBasedOnDomainSize(
@@ -521,7 +521,7 @@ class GridManager3D :public  GridManagerInterface, public SFBitsetAux3D
 * @param[in]  type the given type.
 * @param[in]  vec_ptr_interface pointer to vector of information
 *             with a sepecified node type.
-* @return  if return 0, then the node type does not exsit in the vector 
+* @return  if return 0, then the node type does not exist in the vector 
 *          elements; else return the (indice + 1) of the element with
 *          the given type.
 */

@@ -49,7 +49,7 @@ DefSFBitset SFBitsetAux2D::SFBitsetBitsForRefinement(
 }
 /**
 * @brief function to generate morton code based 2D indices.
-* @param[in]  coordi_index      indices related to cooridinates.
+* @param[in]  coordi_index      indices related to coordinates.
 * @return  morton code.
 */
 DefSFBitset SFBitsetAux2D::SFBitsetEncoding(
@@ -66,7 +66,7 @@ DefSFBitset SFBitsetAux2D::SFBitsetEncoding(
 /**
 * @brief function to generate morton code based 2D coordinates.
 * @param[in]  grid_space      grid space of the current grid level.
-* @param[in]  coordi      cooridinates of a point.
+* @param[in]  coordi      coordinates of a point.
 * @param[in]  ptr_bitset_aux     pointer to 2D space filling curve class.
 * @return  morton code.
 */
@@ -156,7 +156,7 @@ DefSFBitset SFBitsetAux3D::SFBitsetBitsForRefinement(
 }
 /**
 * @brief function to generate morton code based 3D indices.
-* @param[in]  coordi_index      indices related to cooridinates.
+* @param[in]  coordi_index      indices related to coordinates.
 * @return  morton code.
 */
 DefSFBitset SFBitsetAux3D::SFBitsetEncoding(
@@ -175,7 +175,7 @@ DefSFBitset SFBitsetAux3D::SFBitsetEncoding(
 /**
 * @brief function to generate morton code based 3D coordinates.
 * @param[in]  grid_space      grid space of the current grid level.
-* @param[in]  coordi      cooridinates of a point.
+* @param[in]  coordi      coordinates of a point.
 * @param[in]  ptr_bitset_aux     pointer to 3D space filling curve class.
 * @return  morton code.
 */

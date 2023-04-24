@@ -7,7 +7,7 @@ set(PROJECT_VERSION 0.1.0)
 include(${CMAKE_SOURCE_DIR}/cmake/build_functions.cmake)
 
 # settings
-option(BUILD_WITH_MPI                          "Enable MPI"                                                OFF)
+option(BUILD_WITH_MPI                          "Enable MPI"                                                ON)
 option(BUILD_TEST_CASES                        "Build cases for test"                                      ON)
 
 option(DEBUG_UNIT_TEST                         "Buil unit tests"                                           ON)
@@ -65,11 +65,15 @@ else()
     set(CURRENT_SYSTEM "Other system")
 endif()
 
-if(CMAKE_CL_64)
-    set(CURRENT_PLATFORM "x64")
-else(CMAKE_CL_64)
-    set(CURRENT_PLATFORM "x86")
-endif(CMAKE_CL_64)
+if( CMAKE_SIZEOF_VOID_P EQUAL 8 )
+  # 64-bit project
+  set(CURRENT_PLATFORM "x64")
+  set(CMAKE_GENERATOR_PLATFORM "x64" CACHE INTERNAL "" FORCE)
+else()
+  # 32-bit project
+  set(CURRENT_PLATFORM "x86")
+  set(CMAKE_GENERATOR_PLATFORM "Win32" CACHE INTERNAL "" FORCE)
+endif()
 message(STATUS "Current Platform is ${CURRENT_SYSTEM} ${CURRENT_PLATFORM}")
 
 # Compiler

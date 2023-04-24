@@ -63,17 +63,17 @@ struct GeometryConnectionCoordinate {
         std::set<std::pair<DefSizet, DefSizet>>> map_linked_vertices_level;
     std::array<std::pair<DefSizet, DefSizet>, 2> parent_vertices;
     std::set<std::pair<DefSizet, DefSizet>> child_vertices;
-    GeometryvertexInfo vertex_info;
+    GeometryVertexInfo vertex_info;
     std::vector<DefReal> coordinates;
     std::map<DefSizet, DefSFBitset> map_bitset_ref;
-    DefSizet higest_grid_level = 0;
+    DefSizet highest_grid_level = 0;
 };
 /**
 * @struct GeometryConnectionCoordinateLevel
 * @brief structure to store all vertex formation for a level
 */
 struct GeometryConnectionCoordinateLevel {
-    std::vector<GeometryConnectionCoordinate> vec_vertex_cooridinate;
+    std::vector<GeometryConnectionCoordinate> vec_vertex_coordinate;
 };
 /**
 * @class GeometryConnectionInterface

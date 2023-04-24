@@ -27,13 +27,13 @@ using DefLUint = unsigned int;
 using DefTypeUint = unsigned int;
 using DefSFCodeToUint = uint64_t;
 
-// bitset to store code for space filling curves 
+// bitset to store code for space filling curves
 static constexpr DefUint kSFBitsetBit = 64;
 using DefSFBitset = std::bitset<kSFBitsetBit>;
 class HashFunc {
  public:
-    size_t operator()(const DefSFBitset&bit_set_in) const noexcept {
-        size_t hashVal =bit_set_in.to_ullong();
+    DefSFCodeToUint operator()(const DefSFBitset&bit_set_in) const noexcept {
+        DefSFCodeToUint hashVal =bit_set_in.to_ullong();
         return hashVal;
     }
 };

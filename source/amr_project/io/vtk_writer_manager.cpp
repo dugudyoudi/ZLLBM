@@ -188,7 +188,7 @@ void VtkWriterManager::WriteVtuAll(const std::string& folder_name,
     std::string geo_file_name = proj_and_rank + "mergedgeo_"
         + std::to_string(1);
     WriteVtuGeo(geo_file_name, bool_binary, bool_overlap, overlap_flag,
-        grid_manager.k0GridDims_,output_geos, grid_offset,
+        grid_manager.k0GridDims_, output_geos, grid_offset,
         output_data_format, criterion_manager);
 }
 /**
@@ -205,7 +205,7 @@ void VtkWriterManager::WriteVtuAll(const std::string& folder_name,
 */
 void VtkWriterManager::WriteVtuGeo(const std::string& datafile_name,
     const bool bool_binary, const bool bool_overlap,
-    const DefUint overlap_flag,const DefUint dims,
+    const DefUint overlap_flag, const DefUint dims,
     const std::vector<DefSizet>& vec_geo_in_one_vtu,
     const std::array<DefReal, 3>& grid_offset,
     OutputDataFormat& output_data_format,
@@ -214,8 +214,8 @@ void VtkWriterManager::WriteVtuGeo(const std::string& datafile_name,
     std::string str_temp;
     errno_t err = fopen_s(&fp, (datafile_name + ".vtu").c_str(), "w");
     if (!fp) {
-#ifdef ENABLE_MPI
         int rank_id = 0;
+#ifdef ENABLE_MPI
         MPI_Comm_rank(MPI_COMM_WORLD, &rank_id);
 #endif  // ENABLE_MPI
         LogError("File on node " + std::to_string(rank_id)
@@ -258,8 +258,8 @@ void VtkWriterManager::WriteVtuGrid(const std::string& datafile_name,
     std::string str_temp;
     errno_t err = fopen_s(&fp, (datafile_name + ".vtu").c_str(), "w");
     if (!fp) {
-#ifdef ENABLE_MPI
         int rank_id = 0;
+#ifdef ENABLE_MPI
         MPI_Comm_rank(MPI_COMM_WORLD, &rank_id);
 #endif  // ENABLE_MPI
         LogError("File on node " + std::to_string(rank_id)
@@ -473,7 +473,6 @@ void VtkWriterManager::WriteGridPieces(FILE* const fp, const bool bool_binary,
     fprintf_s(fp, "   </Cells>\n");
 
     fprintf_s(fp, "  </Piece>\n");
-
 }
 /**
 * @brief   function to write offset for each cell
@@ -638,7 +637,6 @@ void VtkWriterManager::WirteGridNodeVtkVisualization(
         }
     }
     fprintf_s(fp, "      </DataArray>\n");
-
 }
 /**
 * @brief   function to write pieces of geometries in vtu.
@@ -731,7 +729,6 @@ void VtkWriterManager::WriteGeometryPieces(
     fprintf_s(fp, "    </DataArray>\n");
     fprintf_s(fp, "   </Cells>\n");
     fprintf_s(fp, "  </Piece>\n");
-
 }
 /**
 * @brief   function to calculate number of cells.
@@ -831,7 +828,6 @@ void VtkWriterManager::WirteGeometryCellOffset(FILE* const fp,
             fprintf_s(fp, str_format.c_str(), i_vertex * num_offset);
         }
     }
-
 }
 /**
 * @brief   function to write cell type.
@@ -884,7 +880,7 @@ std::array<DefSizet, 2> VtkWriterManager::CalculateNumOfGridCells(
     bool no_overlap;
     for (auto iter = map_grid_node.begin();
         iter != map_grid_node.end(); ++iter) {
-        if (bool_overlap || // points not in overlapping regions
+        if (bool_overlap ||  // points not in overlapping regions
             (iter->second.flag_status_ & overlap_flag) == 0) {
             // record the node indices in map_grid_node_
             ptr_map_node_index->insert({ iter->first, 0 });
@@ -892,7 +888,7 @@ std::array<DefSizet, 2> VtkWriterManager::CalculateNumOfGridCells(
             if (sfbitset_aux2d.SFBitsetBelongToOneCell(
                 iter->first, map_grid_node, &bitset_cell)) {
                 no_overlap = true;
-                for (const auto& iter_cell : bitset_cell) {       
+                for (const auto& iter_cell : bitset_cell) {
                     if (!bool_overlap
                         && (map_grid_node.at(iter_cell).flag_status_
                         & overlap_flag) != 0) {
@@ -903,7 +899,7 @@ std::array<DefSizet, 2> VtkWriterManager::CalculateNumOfGridCells(
                 if (no_overlap) {
                     ++num_cell;
                 }
-            } 
+            }
         }
     }
     DefSizet num_nodes = ptr_map_node_index->size();
@@ -1108,7 +1104,7 @@ std::array<DefSizet, 2> VtkWriterManager::CalculateNumOfGridCells(
     bool no_overlap;
     for (auto iter = map_grid_node.begin();
         iter != map_grid_node.end(); ++iter) {
-        if (bool_overlap || // points not in overlapping regions
+        if (bool_overlap ||  // points not in overlapping regions
             (iter->second.flag_status_ & overlap_flag) == 0) {
             // record the node indices in map_grid_node_
             ptr_map_node_index->insert({ iter->first, 0 });
@@ -1312,5 +1308,5 @@ DefSizet VtkWriterManager::WirteGeometryCoordinates(FILE* const fp,
     return geo_info.coordinate_origin_.size();
 }
 #endif  // DEBUG_DISABLE_3D_FUNCTIONS
-}  // end amrproject
+}  // end namespace amrproject
 }  // end namespace rootproject

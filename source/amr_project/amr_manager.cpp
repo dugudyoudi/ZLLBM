@@ -31,7 +31,6 @@ void AmrManager::LoadModules(DefUint dims) {
 * @brief      function to set default parameters for all modules.
 * @param[in]  argc    number of inputs from command line.
 * @param[in]  argv    inputs from command line.
-* @note
 */
 void AmrManager::DefaultInitialization(DefUint dims, DefSizet max_level,
     int argc, char* argv[]) {

@@ -45,13 +45,13 @@ class  SFBitsetAux2D : public SFBitsetAuxInterface {
     std::array<DefSFBitset, 2> SFBitsetMin_, SFBitsetMax_;
     std::array<DefSFBitset, 2> k0SFBitsetGlobleMin_, k0SFBitsetGlobleMax_;
     /**< bitset corresponding to the minimum and maximum
-     coordinate in each diretion*/
+     coordinate in each direction*/
 
     /* space filling code related functions: when use code other than morton
-    code, need to rewrite the follwoing functions togather with those in
+    code, need to rewrite the following functions and those in
     (morton_aux.cpp). Virtual functions are not used here in oder to
     avoid extra expends. Functions will be called frequently are declared
-    as inline cuntions.*/
+    as inline functions.*/
     inline DefSFBitset SFBitsetToOneLowerLevel(
         const DefSFBitset& morton_in) const;
     inline DefSFBitset SFBitsetToOneHigherLevel(

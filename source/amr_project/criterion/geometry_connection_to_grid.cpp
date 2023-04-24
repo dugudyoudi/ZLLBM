@@ -27,11 +27,11 @@ void GeometryConnectionInterface::FindTrackingNodeBasedOnGeo(
     const SFBitsetAuxInterface* ptr_sfbitset_aux,
     GridInfoInterface* const ptr_grid_info) {
     if (ptr_grid_info->grid_space_.size() != vertex_given_level_.at(0)
-        .vec_vertex_cooridinate.at(0).coordinates.size()) {
+        .vec_vertex_coordinate.at(0).coordinates.size()) {
         LogError("Size of grid_space ("
             + std::to_string(ptr_grid_info->grid_space_.size()) + 
             ") is not equal to size of coordinates("
-        + std::to_string(vertex_given_level_.at(0).vec_vertex_cooridinate
+        + std::to_string(vertex_given_level_.at(0).vec_vertex_coordinate
             .at(0).coordinates.size()) + ") in vertex_given_level_.");
     }
     DefSizet level_diff = ptr_grid_info->i_level_ - i_level_;
@@ -55,8 +55,8 @@ void GeometryConnectionInterface::FindTrackingNodeBasedOnGeo(
     for (auto& iter : connection_vertex_given_level_.at(level_diff)) {
         bitset_temp = ptr_sfbitset_aux->SFBitsetEncodingCoordi(
             ptr_grid_info->grid_space_, vertex_given_level_.at(iter.first)
-            .vec_vertex_cooridinate.at(iter.second).coordinates);
-        vertex_given_level_.at(iter.first).vec_vertex_cooridinate
+            .vec_vertex_coordinate.at(iter.second).coordinates);
+        vertex_given_level_.at(iter.first).vec_vertex_coordinate
             .at(iter.second).map_bitset_ref
             .insert({ ptr_grid_info->i_level_, bitset_temp });
         if (ptr_tracking_node->find(bitset_temp) == ptr_tracking_node->end()) {

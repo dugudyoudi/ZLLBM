@@ -159,7 +159,7 @@ void GridManager3D::PrintGridInfo(void) const {
 * @param[out] ptr_vec_neighbours space filling codes of neighbours
 *            of the center node.
 */
-void GridManager3D::FindAllNeighersSFBitset(const DefSFBitset& bitset_in,
+void GridManager3D::FindAllNeighboursSFBitset(const DefSFBitset& bitset_in,
     std::vector<DefSFBitset>* const ptr_vec_neighbours) const {
     std::array<DefSFBitset, 27> array_neighbours;
     SFBitsetFindAllNeighbours(bitset_in, &array_neighbours);

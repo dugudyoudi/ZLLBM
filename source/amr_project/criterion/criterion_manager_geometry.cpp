@@ -31,7 +31,7 @@ void CriterionManager::InitialGeometrySerial(
     std::vector<DefReal> vec_real_offset) {
     numb_of_geometry_ = vec_ptr_geometries_.size();
     //for (auto i_geo = 0; i_geo < numb_of_geometry_; ++i_geo) {
-    //    // check if dimesion of the given geometry center is correct
+    //    // check if dimension of the given geometry center is correct
     //    if (k0GeoDims_ != vec_ptr_geometries_.at(i_geo)->geometry_center_.size()) {
     //        std::string msg = "Dimension of center coordinate for geometry "
     //            + std::to_string(i_geo)

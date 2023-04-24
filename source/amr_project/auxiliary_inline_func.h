@@ -22,13 +22,18 @@ inline DefReal Square(DefReal x) {
 * @brief function to calculate 2 power N.
 * @param[in]  n        power exponent.
 */
-inline DefSizet TwoPowerN(DefSizet n) {
-    DefSizet two = 1;
+inline uint64_t TwoPowerN(uint64_t n) {
+    uint64_t two = 1;
     two <<= n;
     return two;
 }
-inline DefLUint TwoPowerN(DefLUint n) {
-    DefLUint two = 1;
+inline uint32_t TwoPowerN(uint32_t n) {
+    uint32_t two = 1;
+    two <<= n;
+    return two;
+}
+inline uint16_t TwoPowerN(uint16_t n) {
+    uint16_t two = 1;
     two <<= n;
     return two;
 }

@@ -38,8 +38,8 @@ void GeometryConnectionInterface::SetupConnectionParameters(
 }
 /**
 * @brief function to initialize geometry connections.
-* @param[out]  ptr_coordi_min   minimum cooridinates of the geometry.
-* @param[out]  ptr_coordi_max   maximum cooridinates of the geometry.
+* @param[out]  ptr_coordi_min   minimum coordinates of the geometry.
+* @param[out]  ptr_coordi_max   maximum coordinates of the geometry.
 */
 void GeometryConnectionInterface::InitialConnection(
     std::vector<DefReal>* const ptr_coordi_min,
@@ -85,24 +85,24 @@ void GeometryConnectionInterface::InitialConnection(
             } else {
                 i_vertex = i + 1;
             }
-            if (vertex_given_level_.at(0).vec_vertex_cooridinate
+            if (vertex_given_level_.at(0).vec_vertex_coordinate
                 .at(iter_connection.at(i))
                 .map_linked_vertices_level.empty()) {
-                vertex_given_level_.at(0).vec_vertex_cooridinate
+                vertex_given_level_.at(0).vec_vertex_coordinate
                     .at(iter_connection.at(i))
                     .map_linked_vertices_level.insert({ DefSizet(0), {} });
             }
-            vertex_given_level_.at(0).vec_vertex_cooridinate
+            vertex_given_level_.at(0).vec_vertex_coordinate
                 .at(iter_connection.at(i)).map_linked_vertices_level
                .at(0).insert({ 0, iter_connection.at(i_vertex) });
-            if (vertex_given_level_.at(0).vec_vertex_cooridinate
+            if (vertex_given_level_.at(0).vec_vertex_coordinate
                 .at(iter_connection.at(i_vertex))
                 .map_linked_vertices_level.empty()) {
-                vertex_given_level_.at(0).vec_vertex_cooridinate
+                vertex_given_level_.at(0).vec_vertex_coordinate
                     .at(iter_connection.at(i_vertex))
                     .map_linked_vertices_level.insert({ DefSizet(0), {} });
             }
-            vertex_given_level_.at(0).vec_vertex_cooridinate
+            vertex_given_level_.at(0).vec_vertex_coordinate
                 .at(iter_connection.at(i_vertex))
                 .map_linked_vertices_level.at(0).insert(
                     { 0, iter_connection.at(i) });
@@ -135,7 +135,7 @@ void GeometryConnectionInterface::InitialConnection(
     }
 }
 /**
-* @brief function to bisect edges once if they are beyong the threshold.
+* @brief function to bisect edges once if they are beyond the threshold.
 * @param[in]  i_input_level    level of current connection relations.
 * @param[in]  ds_max    upper threshold of the edge length.
 * @param[in]  ptr_sfbitset_aux pointer to class manage space filling curves.
@@ -167,7 +167,7 @@ void GeometryConnectionInterface::BisectEdgeOnce(
     for (const auto iter : ptr_sfbitset_aux->k0SpaceBackgroud_) {
         grid_space.push_back(iter / grid_scale);
     }
-    vertex_instance_.higest_grid_level = i_grid_level;
+    vertex_instance_.highest_grid_level = i_grid_level;
     for (const auto& iter_edge : edge_for_bisect) {
         if (connection_edge_given_level_.at(i_input_level)
             .map_edge_connection.find(iter_edge) ==
@@ -197,17 +197,17 @@ void GeometryConnectionInterface::BisectEdgeOnce(
             }
             if (vertex_given_level_.size() > vertex_index_temp.first) {
                 vertex_given_level_.at(vertex_index_temp.first)
-                    .vec_vertex_cooridinate.push_back(vertex_instance_);
+                    .vec_vertex_coordinate.push_back(vertex_instance_);
             } else {
                 vertex_given_level_.push_back({});
                 vertex_given_level_.at(vertex_index_temp.first)
-                    .vec_vertex_cooridinate = { vertex_instance_ };
+                    .vec_vertex_coordinate = { vertex_instance_ };
             }
             // sfbitset of at vertex at i_grid_level
             bitset_temp = ptr_sfbitset_aux->SFBitsetEncodingCoordi(
                 grid_space, vertex_instance_.coordinates);
             vertex_given_level_.at(vertex_index_temp.first)
-                .vec_vertex_cooridinate.back().map_bitset_ref
+                .vec_vertex_coordinate.back().map_bitset_ref
                 .insert({ i_grid_level, bitset_temp });
             if (ptr_sfbitset_ref_added->find(bitset_temp)
                 == ptr_sfbitset_ref_added->end()) {
@@ -217,12 +217,12 @@ void GeometryConnectionInterface::BisectEdgeOnce(
             }
             // child relation
             vertex_index_temp.second = vertex_given_level_
-                .at(vertex_index_temp.first).vec_vertex_cooridinate.size() - 1;
+                .at(vertex_index_temp.first).vec_vertex_coordinate.size() - 1;
             vertex_given_level_.at(iter_edge.first.first)
-                .vec_vertex_cooridinate.at(iter_edge.first.second)
+                .vec_vertex_coordinate.at(iter_edge.first.second)
                 .child_vertices.insert(vertex_index_temp);
             vertex_given_level_.at(iter_edge.second.first)
-                .vec_vertex_cooridinate.at(iter_edge.second.second)
+                .vec_vertex_coordinate.at(iter_edge.second.second)
                 .child_vertices.insert(vertex_index_temp);
             if (connection_vertex_given_level_.size() <= i_input_level) {
                 connection_vertex_given_level_.push_back({});
@@ -231,19 +231,19 @@ void GeometryConnectionInterface::BisectEdgeOnce(
                 .insert(vertex_index_temp);
             // update connection of linked vertices
             vertex_given_level_.at(iter_edge.first.first)
-                .vec_vertex_cooridinate.at(iter_edge.first.second)
+                .vec_vertex_coordinate.at(iter_edge.first.second)
                 .map_linked_vertices_level.at(i_input_level)
                 .erase(iter_edge.second);
             vertex_given_level_.at(iter_edge.first.first)
-                .vec_vertex_cooridinate.at(iter_edge.first.second)
+                .vec_vertex_coordinate.at(iter_edge.first.second)
                 .map_linked_vertices_level.at(i_input_level)
                 .insert(vertex_index_temp);
             vertex_given_level_.at(iter_edge.second.first)
-                .vec_vertex_cooridinate.at(iter_edge.second.second)
+                .vec_vertex_coordinate.at(iter_edge.second.second)
                 .map_linked_vertices_level.at(i_input_level)
                 .erase(iter_edge.first);
             vertex_given_level_.at(iter_edge.second.first)
-                .vec_vertex_cooridinate.at(iter_edge.second.second)
+                .vec_vertex_coordinate.at(iter_edge.second.second)
                 .map_linked_vertices_level.at(i_input_level)
                 .insert(vertex_index_temp);
             // create new surfaces and update connection information
@@ -470,7 +470,7 @@ void GeometryConnectionInterface::MergeEdgeOnce(
     // to edges at levels other than i_input_level
     std::set<std::pair<DefSizet, DefSizet>> set_vertex_processed,
         set_vertex_remain;
-    // find cooridinates and edges may need to be removed according
+    // find coordinates and edges may need to be removed according
     // to the input
     for (const auto& iter_edge : edge_for_merge) {
         if (connection_edge_given_level_.at(i_input_level)
@@ -519,7 +519,7 @@ void GeometryConnectionInterface::MergeEdgeOnce(
                 for (const auto& iter_surface : connection_edge_given_level_
                     .at(i_input_level).map_edge_connection.at(std::make_pair(
                         vertex_temp0, vertex_given_level_
-                        .at(level_remove).vec_vertex_cooridinate
+                        .at(level_remove).vec_vertex_coordinate
                         .at(vertex_remove).parent_vertices.at(0)))
                     .set_index_surfaces) {
                     surface_process.insert(connection_surface_given_level_
@@ -527,10 +527,10 @@ void GeometryConnectionInterface::MergeEdgeOnce(
                         .at(iter_surface).parent_surface);
                 }
                 vertex_temp1 = vertex_given_level_.at(level_remove)
-                    .vec_vertex_cooridinate.at(vertex_remove)
+                    .vec_vertex_coordinate.at(vertex_remove)
                     .parent_vertices.at(0);
                 vertex_temp2 = vertex_given_level_.at(level_remove)
-                    .vec_vertex_cooridinate.at(vertex_remove)
+                    .vec_vertex_coordinate.at(vertex_remove)
                     .parent_vertices.at(1);
 
                 // insert merged edge
@@ -571,24 +571,24 @@ void GeometryConnectionInterface::MergeEdgeOnce(
                 set_vertex_processed.insert(iter_vertex);
                 // add its child vertices to set_vertex_remain
                 for (const auto& iter_child : vertex_given_level_
-                    .at(iter_vertex.first).vec_vertex_cooridinate
+                    .at(iter_vertex.first).vec_vertex_coordinate
                     .at(iter_vertex.second).child_vertices) {
                     set_vertex_remain.insert(std::make_pair(
                         iter_child.first, iter_child.second));
                 }
                 if (vertex_given_level_.at(iter_vertex.first)
-                    .vec_vertex_cooridinate.at(iter_vertex.second)
+                    .vec_vertex_coordinate.at(iter_vertex.second)
                     .map_linked_vertices_level.find(i_input_level)
                     != vertex_given_level_.at(iter_vertex.first)
-                    .vec_vertex_cooridinate.at(iter_vertex.second)
+                    .vec_vertex_coordinate.at(iter_vertex.second)
                     .map_linked_vertices_level.end()) {
                     // delete linkage of the current vertex from others
                     for (const auto& iter_linked_vertex :
                         vertex_given_level_.at(iter_vertex.first)
-                        .vec_vertex_cooridinate.at(iter_vertex.second)
+                        .vec_vertex_coordinate.at(iter_vertex.second)
                         .map_linked_vertices_level.at(i_input_level)) {
                         vertex_given_level_.at(iter_linked_vertex.first)
-                            .vec_vertex_cooridinate
+                            .vec_vertex_coordinate
                             .at(iter_linked_vertex.second)
                             .map_linked_vertices_level.at(i_input_level)
                             .erase(std::make_pair(
@@ -606,10 +606,10 @@ void GeometryConnectionInterface::MergeEdgeOnce(
                     }
                     // remove linkage of the current vertex at (i_input_level)
                     vertex_given_level_.at(iter_vertex.first)
-                        .vec_vertex_cooridinate.at(iter_vertex.second)
+                        .vec_vertex_coordinate.at(iter_vertex.second)
                         .map_linked_vertices_level.erase(i_input_level);
                     if (vertex_given_level_.at(iter_vertex.first)
-                        .vec_vertex_cooridinate.at(iter_vertex.second)
+                        .vec_vertex_coordinate.at(iter_vertex.second)
                         .map_linked_vertices_level.empty()) {
                         set_vertex_remove.insert(iter_vertex);
                     }
@@ -738,20 +738,20 @@ void GeometryConnectionInterface::AddNewLinkage(const DefSizet i_input_level,
     const std::pair<DefSizet, DefSizet>& vertex_new,
     const std::pair<DefSizet, DefSizet>& vertex_origin) {
     if (vertex_given_level_.at(vertex_new.first)
-        .vec_vertex_cooridinate.at(vertex_new.second)
+        .vec_vertex_coordinate.at(vertex_new.second)
         .map_linked_vertices_level.find(i_input_level)
         == vertex_given_level_.at(vertex_new.first)
-        .vec_vertex_cooridinate.at(vertex_new.second)
+        .vec_vertex_coordinate.at(vertex_new.second)
         .map_linked_vertices_level.end()) {
-        vertex_given_level_.at(vertex_new.first).vec_vertex_cooridinate
+        vertex_given_level_.at(vertex_new.first).vec_vertex_coordinate
             .at(vertex_new.second).map_linked_vertices_level.insert({
                i_input_level, {vertex_origin} });
     } else {
-        vertex_given_level_.at(vertex_new.first).vec_vertex_cooridinate
+        vertex_given_level_.at(vertex_new.first).vec_vertex_coordinate
             .at(vertex_new.second).map_linked_vertices_level.at(i_input_level)
             .insert(vertex_origin);
     }
-    vertex_given_level_.at(vertex_origin.first).vec_vertex_cooridinate
+    vertex_given_level_.at(vertex_origin.first).vec_vertex_coordinate
         .at(vertex_origin.second).map_linked_vertices_level
         .at(i_input_level).insert(vertex_new);
 }
@@ -779,7 +779,7 @@ void GeometryConnectionInterface::RemoveVertex(const DefSizet i_input_level,
         // sfbitset of at vertex at i_grid_level
         bitset_temp = ptr_sfbitset_aux->SFBitsetEncodingCoordi(
             grid_space, vertex_given_level_.at(iter_vertex->first)
-            .vec_vertex_cooridinate.at(iter_vertex->second).coordinates);
+            .vec_vertex_coordinate.at(iter_vertex->second).coordinates);
         if (ptr_sfbitset_ref_removed->find(bitset_temp)
             == ptr_sfbitset_ref_removed->end()) {
             ptr_sfbitset_ref_removed->insert({ bitset_temp, 1 });
@@ -788,46 +788,46 @@ void GeometryConnectionInterface::RemoveVertex(const DefSizet i_input_level,
         }
         // delete child relation for the vertex to be removed
         vertex_temp0 = vertex_given_level_.at(iter_vertex->first)
-            .vec_vertex_cooridinate.at(iter_vertex->second)
+            .vec_vertex_coordinate.at(iter_vertex->second)
             .parent_vertices.at(0);
         vertex_given_level_.at(vertex_temp0.first)
-            .vec_vertex_cooridinate.at(vertex_temp0.second)
+            .vec_vertex_coordinate.at(vertex_temp0.second)
             .child_vertices.erase(*iter_vertex);
         vertex_temp0 = vertex_given_level_.at(iter_vertex->first)
-            .vec_vertex_cooridinate.at(iter_vertex->second)
+            .vec_vertex_coordinate.at(iter_vertex->second)
             .parent_vertices.at(1);
         vertex_given_level_.at(vertex_temp0.first)
-            .vec_vertex_cooridinate.at(vertex_temp0.second)
+            .vec_vertex_coordinate.at(vertex_temp0.second)
             .child_vertices.erase(*iter_vertex);
 
         vec_last = vertex_given_level_.at(iter_vertex->first)
-            .vec_vertex_cooridinate.size() - 1;
+            .vec_vertex_coordinate.size() - 1;
         if (iter_vertex->second < vec_last) {
             // update child relation for the last vertex
             vertex_temp1 = std::make_pair(iter_vertex->first, vec_last);
             vertex_temp0 = vertex_given_level_.at(vertex_temp1.first)
-                .vec_vertex_cooridinate.at(vertex_temp1.second)
+                .vec_vertex_coordinate.at(vertex_temp1.second)
                 .parent_vertices.at(0);
             vertex_given_level_.at(vertex_temp0.first)
-                .vec_vertex_cooridinate.at(vertex_temp0.second)
+                .vec_vertex_coordinate.at(vertex_temp0.second)
                 .child_vertices.erase(vertex_temp1);
             vertex_given_level_.at(vertex_temp0.first)
-                .vec_vertex_cooridinate.at(vertex_temp0.second)
+                .vec_vertex_coordinate.at(vertex_temp0.second)
                 .child_vertices.insert(*iter_vertex);
             vertex_temp0 = vertex_given_level_.at(vertex_temp1.first)
-                .vec_vertex_cooridinate.at(vertex_temp1.second)
+                .vec_vertex_coordinate.at(vertex_temp1.second)
                 .parent_vertices.at(1);
             vertex_given_level_.at(vertex_temp0.first)
-                .vec_vertex_cooridinate.at(vertex_temp0.second)
+                .vec_vertex_coordinate.at(vertex_temp0.second)
                 .child_vertices.erase(vertex_temp1);
             vertex_given_level_.at(vertex_temp0.first)
-                .vec_vertex_cooridinate.at(vertex_temp0.second)
+                .vec_vertex_coordinate.at(vertex_temp0.second)
                 .child_vertices.insert(*iter_vertex);
             // swap vertices
             std::swap(vertex_given_level_.at(iter_vertex->first)
-                .vec_vertex_cooridinate.at(iter_vertex->second),
+                .vec_vertex_coordinate.at(iter_vertex->second),
                 vertex_given_level_.at(iter_vertex->first)
-                .vec_vertex_cooridinate.at(vec_last));
+                .vec_vertex_coordinate.at(vec_last));
             if (connection_vertex_given_level_.at(i_input_level)
                 .find({iter_vertex->first, vec_last})
                 != connection_vertex_given_level_.at(i_input_level).end()) {
@@ -836,27 +836,27 @@ void GeometryConnectionInterface::RemoveVertex(const DefSizet i_input_level,
             }
             // update parent relation
             for (auto& iter_child : vertex_given_level_
-                .at(iter_vertex->first).vec_vertex_cooridinate
+                .at(iter_vertex->first).vec_vertex_coordinate
                 .at(iter_vertex->second).child_vertices) {
                 if (vertex_given_level_.at(iter_child.first)
-                    .vec_vertex_cooridinate.at(iter_child.second)
+                    .vec_vertex_coordinate.at(iter_child.second)
                     .parent_vertices.at(0).first == iter_vertex->first
                     && vertex_given_level_.at(iter_child.first)
-                    .vec_vertex_cooridinate.at(iter_child.second)
+                    .vec_vertex_coordinate.at(iter_child.second)
                     .parent_vertices.at(0).second == vec_last) {
                     vertex_given_level_.at(iter_child.first)
-                        .vec_vertex_cooridinate.at(iter_child.second)
+                        .vec_vertex_coordinate.at(iter_child.second)
                         .parent_vertices.at(0).second
                         = iter_vertex->second;
                 } else {
                     vertex_given_level_.at(iter_child.first)
-                        .vec_vertex_cooridinate.at(iter_child.second)
+                        .vec_vertex_coordinate.at(iter_child.second)
                         .parent_vertices.at(1).second = iter_vertex->second;
                 }
             }
             DefSizet level_diff;
             for (const auto& iter_link_level : vertex_given_level_
-                .at(iter_vertex->first).vec_vertex_cooridinate
+                .at(iter_vertex->first).vec_vertex_coordinate
                 .at(iter_vertex->second).map_linked_vertices_level) {
                 // at all the levels connected to the vertex
                 level_diff = iter_link_level.first;
@@ -864,11 +864,11 @@ void GeometryConnectionInterface::RemoveVertex(const DefSizet i_input_level,
                     vertex_temp0 = { iter_vertex->first, vec_last };
                     // update linkage
                     vertex_given_level_.at(iter_link.first)
-                        .vec_vertex_cooridinate.at(iter_link.second)
+                        .vec_vertex_coordinate.at(iter_link.second)
                         .map_linked_vertices_level.at(level_diff)
                         .erase(vertex_temp0);
                     vertex_given_level_.at(iter_link.first)
-                        .vec_vertex_cooridinate.at(iter_link.second)
+                        .vec_vertex_coordinate.at(iter_link.second)
                         .map_linked_vertices_level.at(level_diff)
                         .insert(*iter_vertex);                    
                     // update edge and surface for the swaped node
@@ -919,7 +919,7 @@ void GeometryConnectionInterface::RemoveVertex(const DefSizet i_input_level,
             }
         }
         vertex_given_level_.at(iter_vertex->first)
-            .vec_vertex_cooridinate.pop_back();
+            .vec_vertex_coordinate.pop_back();
     }
 }
 /**
@@ -1055,29 +1055,29 @@ void GeometryConnectionInterface::ReconstructSurfaceBasedOnExistingVertex(
                     // if parent vertices exist, i.e. parent_vertices[0]
                     // != parent_vertices[1]
                     if (vertex_given_level_
-                        .at(iter_vertex.first).vec_vertex_cooridinate
+                        .at(iter_vertex.first).vec_vertex_coordinate
                         .at(iter_vertex.second).parent_vertices.at(0) >
                         vertex_given_level_
-                        .at(iter_vertex.first).vec_vertex_cooridinate
+                        .at(iter_vertex.first).vec_vertex_coordinate
                         .at(iter_vertex.second).parent_vertices.at(1)) {
                         edge_of_midpoint.insert({ std::make_pair(
                             vertex_given_level_.at(iter_vertex.first)
-                        .vec_vertex_cooridinate.at(iter_vertex.second)
+                        .vec_vertex_coordinate.at(iter_vertex.second)
                         .parent_vertices.at(0), vertex_given_level_
-                        .at(iter_vertex.first).vec_vertex_cooridinate
+                        .at(iter_vertex.first).vec_vertex_coordinate
                         .at(iter_vertex.second).parent_vertices.at(1)),
                          iter_vertex });
                     } else if (vertex_given_level_
-                        .at(iter_vertex.first).vec_vertex_cooridinate
+                        .at(iter_vertex.first).vec_vertex_coordinate
                         .at(iter_vertex.second).parent_vertices.at(0)
                         < vertex_given_level_
-                        .at(iter_vertex.first).vec_vertex_cooridinate
+                        .at(iter_vertex.first).vec_vertex_coordinate
                         .at(iter_vertex.second).parent_vertices.at(1)) {
                         edge_of_midpoint.insert({ std::make_pair(
                             vertex_given_level_.at(iter_vertex.first)
-                        .vec_vertex_cooridinate.at(iter_vertex.second)
+                        .vec_vertex_coordinate.at(iter_vertex.second)
                         .parent_vertices.at(1), vertex_given_level_
-                        .at(iter_vertex.first).vec_vertex_cooridinate
+                        .at(iter_vertex.first).vec_vertex_coordinate
                         .at(iter_vertex.second).parent_vertices.at(0)),
                          iter_vertex });
                     }
@@ -1206,34 +1206,34 @@ void GeometryConnectionInterface::ReconstructSurfaceBasedOnExistingVertex(
 
                     // update vertex linkage connection
                     if (vertex_given_level_.at(vertex_temp0.first)
-                        .vec_vertex_cooridinate.at(vertex_temp0.second)
+                        .vec_vertex_coordinate.at(vertex_temp0.second)
                         .map_linked_vertices_level.find(i_input_level)
                         == vertex_given_level_.at(vertex_temp0.first)
-                        .vec_vertex_cooridinate.at(vertex_temp0.second)
+                        .vec_vertex_coordinate.at(vertex_temp0.second)
                         .map_linked_vertices_level.end()) {
                         vertex_given_level_.at(vertex_temp0.first)
-                            .vec_vertex_cooridinate.at(vertex_temp0.second)
+                            .vec_vertex_coordinate.at(vertex_temp0.second)
                             .map_linked_vertices_level.insert({ i_input_level,
                                 {vertex_temp1} });
                     } else {
                         vertex_given_level_.at(vertex_temp0.first)
-                            .vec_vertex_cooridinate.at(vertex_temp0.second)
+                            .vec_vertex_coordinate.at(vertex_temp0.second)
                             .map_linked_vertices_level.at(i_input_level)
                             .insert(vertex_temp1);
                     }
                     if (vertex_given_level_.at(vertex_temp1.first)
-                        .vec_vertex_cooridinate.at(vertex_temp1.second)
+                        .vec_vertex_coordinate.at(vertex_temp1.second)
                         .map_linked_vertices_level.find(i_input_level)
                         == vertex_given_level_.at(vertex_temp1.first)
-                        .vec_vertex_cooridinate.at(vertex_temp1.second)
+                        .vec_vertex_coordinate.at(vertex_temp1.second)
                         .map_linked_vertices_level.end()) {
                         vertex_given_level_.at(vertex_temp1.first)
-                            .vec_vertex_cooridinate.at(vertex_temp1.second)
+                            .vec_vertex_coordinate.at(vertex_temp1.second)
                             .map_linked_vertices_level.insert({ i_input_level,
                                 {vertex_temp0} });
                     } else {
                         vertex_given_level_.at(vertex_temp1.first)
-                            .vec_vertex_cooridinate.at(vertex_temp1.second)
+                            .vec_vertex_coordinate.at(vertex_temp1.second)
                             .map_linked_vertices_level.at(i_input_level)
                             .insert(vertex_temp0);
                     }

@@ -25,15 +25,15 @@ void GeometryInfoConnection3D::SetIndex() {
     if (bool_vec_velocities_) {
         k0UxIndex_ = 0; k0UyIndex_ = k0UxIndex_ + 1;
         k0UzIndex_ = k0UyIndex_ + 1;
-        k0NumRealForEachvertex_ = k0UzIndex_;
+        k0NumRealForEachVertex_ = k0UzIndex_;
     }
     if (bool_vec_forces_) {
         k0FxIndex_ = k0UzIndex_ + 1; k0FyIndex_ = k0FxIndex_ + 1;
         k0FzIndex_ = k0FyIndex_ + 1;
-        k0NumRealForEachvertex_ = k0FzIndex_;
+        k0NumRealForEachVertex_ = k0FzIndex_;
     }
     vertex_instance_.coordinates = { 0., 0., 0.};
-    geo_vertex_info_instance_.vec_real.resize(k0NumRealForEachvertex_);
+    geo_vertex_info_instance_.vec_real.resize(k0NumRealForEachVertex_);
 }
 /**
 * @brief   function to initialize status of geometries
@@ -63,8 +63,8 @@ int GeometryInfoConnection3D::UpdateGeometry(
 /**
 * @brief   function to copy coordinates from vector of original coordinates
 *           to that used for identifying connection relations.
-* @param[out]  ptr_coordi_min   minimum cooridinates of the geometry.
-* @param[out]  ptr_coordi_max   maximum cooridinates of the geometry.
+* @param[out]  ptr_coordi_min   minimum coordinates of the geometry.
+* @param[out]  ptr_coordi_max   maximum coordinates of the geometry.
 */
 void GeometryInfoConnection3D::InitialCoordinateGivenLevel(
     std::vector<DefReal>* const ptr_coordi_min,
@@ -119,7 +119,7 @@ void GeometryInfoConnection3D::InitialCoordinateGivenLevel(
         vertex_temp.coordinates.at(0) = iter_vertex.coordinate.at(0);
         vertex_temp.coordinates.at(1) = iter_vertex.coordinate.at(1);
         vertex_temp.coordinates.at(2) = iter_vertex.coordinate.at(2);
-        vertex_given_level_.at(0).vec_vertex_cooridinate
+        vertex_given_level_.at(0).vec_vertex_coordinate
             .push_back(vertex_temp);
         connection_vertex_given_level_.at(0).insert({ 0, i_vertex });
         ++i_vertex;
@@ -135,17 +135,17 @@ DefReal GeometryInfoConnection3D::ComputeDistanceFromCoordinates(
     const std::pair<DefSizet, DefSizet>& vertex0,
     const std::pair<DefSizet, DefSizet>& vertex1) {
     DefReal x_dis = std::fabs(vertex_given_level_.at(vertex0.first)
-        .vec_vertex_cooridinate.at(vertex0.second).coordinates.at(kXIndex)
+        .vec_vertex_coordinate.at(vertex0.second).coordinates.at(kXIndex)
         - vertex_given_level_.at(vertex1.first)
-        .vec_vertex_cooridinate.at(vertex1.second).coordinates.at(kXIndex));
+        .vec_vertex_coordinate.at(vertex1.second).coordinates.at(kXIndex));
     DefReal y_dis = std::fabs(vertex_given_level_.at(vertex0.first)
-        .vec_vertex_cooridinate.at(vertex0.second).coordinates.at(kYIndex)
+        .vec_vertex_coordinate.at(vertex0.second).coordinates.at(kYIndex)
         - vertex_given_level_.at(vertex1.first)
-        .vec_vertex_cooridinate.at(vertex1.second).coordinates.at(kYIndex));
+        .vec_vertex_coordinate.at(vertex1.second).coordinates.at(kYIndex));
     DefReal z_dis = std::fabs(vertex_given_level_.at(vertex0.first)
-        .vec_vertex_cooridinate.at(vertex0.second).coordinates.at(kZIndex)
+        .vec_vertex_coordinate.at(vertex0.second).coordinates.at(kZIndex)
         - vertex_given_level_.at(vertex1.first)
-        .vec_vertex_cooridinate.at(vertex1.second).coordinates.at(kZIndex));
+        .vec_vertex_coordinate.at(vertex1.second).coordinates.at(kZIndex));
     return sqrt(x_dis * x_dis + y_dis * y_dis + z_dis * z_dis);
 }
 /**
@@ -159,16 +159,16 @@ void GeometryInfoConnection3D::ComputeMidCoordinates(
     const std::pair<DefSizet, DefSizet>& vertex1,
     std::vector<DefReal>* const ptr_coordinates) {
     ptr_coordinates->at(kXIndex) = (vertex_given_level_.at(vertex0.first)
-        .vec_vertex_cooridinate.at(vertex0.second).coordinates.at(kXIndex)
-        + vertex_given_level_.at(vertex1.first).vec_vertex_cooridinate
+        .vec_vertex_coordinate.at(vertex0.second).coordinates.at(kXIndex)
+        + vertex_given_level_.at(vertex1.first).vec_vertex_coordinate
         .at(vertex1.second).coordinates.at(kXIndex)) / 2.;
     ptr_coordinates->at(kYIndex) = (vertex_given_level_.at(vertex0.first)
-        .vec_vertex_cooridinate.at(vertex0.second).coordinates.at(kYIndex)
-        + vertex_given_level_.at(vertex1.first).vec_vertex_cooridinate
+        .vec_vertex_coordinate.at(vertex0.second).coordinates.at(kYIndex)
+        + vertex_given_level_.at(vertex1.first).vec_vertex_coordinate
         .at(vertex1.second).coordinates.at(kYIndex)) / 2.;
     ptr_coordinates->at(kZIndex) = (vertex_given_level_.at(vertex0.first)
-        .vec_vertex_cooridinate.at(vertex0.second).coordinates.at(kZIndex)
-        + vertex_given_level_.at(vertex1.first).vec_vertex_cooridinate
+        .vec_vertex_coordinate.at(vertex0.second).coordinates.at(kZIndex)
+        + vertex_given_level_.at(vertex1.first).vec_vertex_coordinate
         .at(vertex1.second).coordinates.at(kZIndex)) / 2.;
 }
 void GeometryInfoConnection3D::DecomposeNHigerLevel(const DefSizet i_level_grid,
