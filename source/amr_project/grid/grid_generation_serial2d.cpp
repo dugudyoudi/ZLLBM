@@ -9,6 +9,7 @@
 * @note  functions from geometry_manager will be called.
 */
 #ifndef  DEBUG_DISABLE_2D_FUNCTIONS
+#include <cmath>
 #include "auxiliary_inline_func.h"
 #include "grid/grid_manager.h"
 #include "io/log_write.h"
@@ -500,13 +501,17 @@ void  GridManager2D::FindInterfaceBetweenGrid(
         }
     }
 }
+/**
+* @brief   function to instantiate background node.
+* @param[in] map_occupied node exist in grid at high refinement level.
+*/
 void GridManager2D::GenerateBackgroundGrid(
     const DefMap<DefUint>& map_occupied) {
     DefSFBitset bitset_temp;
     GridInfoInterface& grid_info = *(vec_ptr_grid_info_.at(0));
-    for (DefLUint iy = k0IntOffest_[kYIndex];
+    for (DefLUint iy = k0IntOffset_[kYIndex];
         iy <= k0MaxIndexOfBackgroundNode_[kYIndex]; ++iy) {
-        for (DefLUint ix = k0IntOffest_[kXIndex];
+        for (DefLUint ix = k0IntOffset_[kXIndex];
             ix <= k0MaxIndexOfBackgroundNode_[kXIndex]; ++ix) {
             bitset_temp = SFBitsetEncoding({ ix, iy });
             if (map_occupied.find(bitset_temp) == map_occupied.end()) {
@@ -516,6 +521,197 @@ void GridManager2D::GenerateBackgroundGrid(
         }
     }
 }
+/**
+* @brief   function to calculate space filling code for mpi partition.
+* @param[in] rank_load computational load of each rank.
+* @param[out] ptr_bitset_min minimum space filling code for each rank.
+* @param[out] ptr_bitset_max maximum space filling code for each rank.
+*/
+void GridManager2D::TraverseBackgroundForPartition(
+    const std::vector<DefLUint>& rank_load,
+    const DefMap<DefUint>& background_occupied,
+    std::vector<DefSFBitset>* const ptr_bitset_min,
+    std::vector<DefSFBitset>* const ptr_bitset_max) const {
+    DefLUint load_count = 0;
+    DefLUint bk_cost = vec_ptr_grid_info_.at(0)->computational_cost_;
+    int i_rank = 0;
+    ptr_bitset_min->at(i_rank) = 0;
+    ptr_bitset_max->back() = SFBitsetEncoding({
+        k0MaxIndexOfBackgroundNode_[kXIndex],
+        k0MaxIndexOfBackgroundNode_[kYIndex] });
+    DefLUint num_node = CalNumOfBackgroundNode();
+    std::array<DefLUint, 2> indices = {
+        k0IntOffset_[kXIndex], k0IntOffset_[kYIndex] };
+    DefSFCodeToUint i_code = SFBitsetEncoding(indices).to_ullong();
+    DefSFBitset bitset_temp = static_cast<DefSFBitset>(i_code);
+    DefUint sfcode_block;  // block size of space filling code
+    DefUint iter_max = 1000, iter_count;
+    bool bool_exceed_x, bool_exceed_y;
+    for (DefLUint i_node = 0; i_node < num_node - 1; ++i_node) {
+        if (load_count >= rank_load.at(i_rank)) {
+            load_count = 0;
+            ++i_rank;
+            ptr_bitset_min->at(i_rank) = bitset_temp;
+        }
+        if (background_occupied.find(bitset_temp)
+            == background_occupied.end()) {
+            load_count += bk_cost;
+        } else {
+            load_count += background_occupied.at(bitset_temp);
+        }
+        if (load_count >= rank_load.at(i_rank)) {
+            ptr_bitset_max->at(i_rank) = bitset_temp;
+        }
+        //  reset i_code if indices exceed domain
+        ++i_code;
+        bitset_temp = static_cast<DefSFBitset>(i_code);
+        SFBitsetComputeIndices(bitset_temp, &indices);
+        bool_exceed_x =
+            indices[kXIndex] > k0MaxIndexOfBackgroundNode_[kXIndex];
+        bool_exceed_y =
+            indices[kYIndex] > k0MaxIndexOfBackgroundNode_[kYIndex];
+        iter_count = 0;
+        while ((bool_exceed_x || bool_exceed_y)
+            && iter_count < iter_max) {
+            if (bool_exceed_x) {
+                sfcode_block = 4;
+                while ((i_code % sfcode_block) == 0) {
+                    sfcode_block *= 4;
+                }
+                i_code += sfcode_block / 4;
+                bitset_temp = static_cast<DefSFBitset>(i_code);
+                SFBitsetComputeIndices(bitset_temp, &indices);
+                bool_exceed_x =
+                    indices[kXIndex] > k0MaxIndexOfBackgroundNode_[kXIndex];
+                bool_exceed_y =
+                    indices[kYIndex] > k0MaxIndexOfBackgroundNode_[kYIndex];
+            }
+            if (bool_exceed_y) {
+                sfcode_block = 4;
+                while ((i_code % sfcode_block) == 0) {
+                    sfcode_block *= 4;
+                }
+                i_code += sfcode_block / 4 * 2;
+                bitset_temp = static_cast<DefSFBitset>(i_code);
+                SFBitsetComputeIndices(bitset_temp, &indices);
+                bool_exceed_x =
+                    indices[kXIndex] > k0MaxIndexOfBackgroundNode_[kXIndex];
+                bool_exceed_y =
+                    indices[kYIndex] > k0MaxIndexOfBackgroundNode_[kYIndex];
+            }
+            ++iter_count;
+        }
+#ifdef DEBUG_CHECK_GRID
+        if (iter_count > iter_max) {
+            LogError("iterations exceed the maximum when space filling code "
+                "exceed x doamin boundary in"
+                " GridManager2D::TraverseBackgroundForPartition");
+        }
+#endif
+        if (indices[kXIndex] < k0IntOffset_[kXIndex]) {
+            bitset_temp = SFBitsetEncoding(
+                { k0IntOffset_[kXIndex], indices[kYIndex] });
+            i_code = bitset_temp.to_ullong();
+            SFBitsetComputeIndices(bitset_temp, &indices);
+        }
+        if (indices[kYIndex] < k0IntOffset_[kYIndex]) {
+            bitset_temp = SFBitsetEncoding(
+                { indices[kXIndex] , k0IntOffset_[kYIndex] });
+            i_code = bitset_temp.to_ullong();
+            SFBitsetComputeIndices(bitset_temp, &indices);
+        }
+    }
+}
+// void GridManager2D::TraverseBackgroundForPartition(
+//    const std::vector<DefLUint>& rank_load,
+//    const DefMap<DefUint>& background_occupied,
+//    std::vector<DefSFBitset>* const ptr_bitset_min,
+//    std::vector<DefSFBitset>* const ptr_bitset_max) const {
+//    DefLUint load_count = 0;
+//    DefLUint bk_cost = vec_ptr_grid_info_.at(0)->computational_cost_;
+//    int i_rank = 0;
+//    ptr_bitset_min->at(i_rank) = 0;
+//    ptr_bitset_max->back() = SFBitsetEncoding({
+//        k0MaxIndexOfBackgroundNode_[kXIndex],
+//        k0MaxIndexOfBackgroundNode_[kYIndex] });
+//    DefLUint num_node = CalNumOfBackgroundNode();
+//    std::array<DefLUint, 2> indices = {
+//        k0IntOffset_[kXIndex], k0IntOffset_[kYIndex] };
+//    DefSFCodeToUint i_code = SFBitsetEncoding(indices).to_ullong();
+//    DefSFBitset bitset_temp = static_cast<DefSFBitset>(i_code);
+//    DefUint sfcode_block;  // block size of space filling code
+//    DefUint iter_max = 1000, iter_count;
+//    for (DefLUint i_node = 0; i_node < num_node; ++i_node) {
+//        if (load_count >= rank_load.at(i_rank)) {
+//            load_count = 0;
+//            ++i_rank;
+//            ptr_bitset_min->at(i_rank) = bitset_temp;
+//        }
+//        if (background_occupied.find(bitset_temp)
+//            == background_occupied.end()) {
+//            load_count += bk_cost;
+//        } else {
+//            load_count += background_occupied.at(bitset_temp);
+//        }
+//        if (load_count >= rank_load.at(i_rank)) {
+//            ptr_bitset_max->at(i_rank) = bitset_temp;
+//        }
+//        //  reset i_code if indices exceed domain
+//        ++i_code;
+//        bitset_temp = static_cast<DefSFBitset>(i_code);
+//        SFBitsetComputeIndices(bitset_temp, &indices);
+//        iter_count = 0;
+//        while (indices[kXIndex] > k0MaxIndexOfBackgroundNode_[kXIndex]
+//            && iter_count < iter_max) {
+//            sfcode_block = 4;
+//            while ((i_code % sfcode_block) == 0 ) {
+//                sfcode_block *= 4;
+//            }
+//            i_code += sfcode_block / 4;
+//            bitset_temp = static_cast<DefSFBitset>(i_code);
+//            SFBitsetComputeIndices(bitset_temp, &indices);
+//            ++iter_count;
+//        }
+// #ifdef DEBUG_CHECK_GRID
+//        if (iter_count > iter_max) {
+//            LogError("iterations exceed the maximum when space filling code "
+//                "exceed x doamin boundary in"
+//                " GridManager2D::TraverseBackgroundForPartition");
+//        }
+// #endif
+//        iter_count = 0;
+//        while (indices[kYIndex] > k0MaxIndexOfBackgroundNode_[kYIndex]
+//            && iter_count < iter_max) {
+//            sfcode_block = 4;
+//            while ((i_code % sfcode_block) == 0) {
+//                sfcode_block *= 4;
+//            }
+//            i_code += sfcode_block / 4 * 2;
+//            bitset_temp = static_cast<DefSFBitset>(i_code);
+//            SFBitsetComputeIndices(bitset_temp, &indices);
+//            ++iter_count;
+//        }
+// #ifdef DEBUG_CHECK_GRID
+//        if (iter_count > iter_max) {
+//            LogError("iterations exceed the maximum when space filling code "
+//                "exceed y doamin boundary in"
+//                " GridManager2D::TraverseBackgroundForPartition");
+//        }
+// #endif
+//        if (indices[kXIndex] < k0IntOffset_[kXIndex]) {
+//            bitset_temp = SFBitsetEncoding(
+//                { k0IntOffset_[kXIndex], indices[kYIndex]});
+//            i_code = bitset_temp.to_ullong();
+//            SFBitsetComputeIndices(bitset_temp, &indices);
+//        }
+//        if (indices[kYIndex] < k0IntOffset_[kYIndex]) {
+//            bitset_temp = SFBitsetEncoding(
+//                { indices[kXIndex] , k0IntOffset_[kYIndex]});
+//            i_code = bitset_temp.to_ullong();
+//            SFBitsetComputeIndices(bitset_temp, &indices);
+//        }
+//    }
+//}
 }  // end namespace amrproject
 }  // end namespace rootproject
 #endif  // DEBUG_DISABLE_2D_FUNCTIONSs

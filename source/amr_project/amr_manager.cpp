@@ -76,7 +76,7 @@ void AmrManager::InitializeSimulation() {
 
     if (rank_id == 0) {
         /*ptr_criterion_manager_->InitialGeometrySerial(
-            ptr_grid_manager_->k0RealOffest_);*/
+            ptr_grid_manager_->k0RealOffset_);*/
         ptr_grid_manager_->GenerateInitialMeshBasedOnGeoSerial(
             ptr_criterion_manager_->vec_ptr_geometries_);
     }
@@ -98,9 +98,9 @@ void AmrManager::SetTheSameLevelDependentInfoForAllLevels(
 * @brief   function to finalize simulation
 */
 void AmrManager::FinalizeSimulation() {
-    ptr_io_manager_->OutputFlowfield(
-        program_name_, ptr_grid_manager_.get(),
-        ptr_criterion_manager_.get());
+    //ptr_io_manager_->OutputFlowfield(
+    //    program_name_, ptr_grid_manager_.get(),
+    //    ptr_criterion_manager_.get());
 }
 }  // end amrproject
 }  // end namespace rootproject

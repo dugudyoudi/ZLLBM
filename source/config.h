@@ -2,7 +2,7 @@
 #define SOLVER_LBM
 
 // automatic generated from cmake option
-
+#define ENABLE_MPI
 #define DEBUG_CHECK_GRID
 
 

@@ -112,6 +112,15 @@ class GridManagerInterface{
     virtual void FindAllNodesInACellAtLowerLevel(
         const std::vector<DefSFBitset> bitset_cell,
         std::vector<DefSFBitset>* const ptr_bitset_all) const = 0;
+    virtual DefSFBitset NodeAtNLowerLevel(
+        const DefSizet n_level, const DefSFBitset& biset_in) const = 0;
+    virtual DefLUint CalNumOfBackgroundNode() const = 0;
+    virtual bool CheckBackgroundOffset(const DefSFBitset& bitset_in) const = 0;
+    virtual void TraverseBackgroundForPartition(
+        const std::vector<DefLUint>& rank_load,
+        const DefMap<DefUint>& background_occupied,
+        std::vector<DefSFBitset>* const ptr_bitset_min,
+        std::vector<DefSFBitset>* const ptr_bitset_max) const = 0;
 
     // generate grid
     void GenerateInitialMeshBasedOnGeoSerial(
@@ -120,7 +129,7 @@ class GridManagerInterface{
     void GenerateGridFromHighToLowLevelSerial(const std::vector<std::shared_ptr
         <GeometryInfoInterface>>&vec_geo_info,
         std::vector<DefMap<DefUint>>* const ptr_sfbitset_one_lower_level);
-    void CreateCellAndBackgroundGridSerial(
+    void InstantiateGridNodeAllLevelSerial(
         const std::vector<DefMap<DefUint>>& sfbitset_one_lower_level);
 
     template<InterfaceInfoHasType InterfaceInfo>
@@ -243,17 +252,17 @@ class GridManagerInterface{
 */
 class GridManager2D :public  GridManagerInterface, public SFBitsetAux2D {
  public:
-    std::array<DefLUint, 2> k0IntOffest_ = {1, 1};
+    std::array<DefLUint, 2> k0IntOffset_ = {1, 1};
     ///< number of offset background node
     std::array<DefReal, 2> k0DomainSize_{};  ///< domian size
     std::array<DefReal, 2> k0DomainDx_{};  ///< grid space
     /* offset to avoid exceeding the boundary limits when searching nodes.
-    The offset distance is (kXintOffest * kDomianDx),
+    The offset distance is (kXintOffset * kDomianDx),
     and the default value is 1. */
-    std::array<DefReal, 2> k0RealOffest_{};  ///< kXintOffest * kDomianDx
+    std::array<DefReal, 2> k0RealOffset_{};  ///< kXintOffset * kDomianDx
     std::array<DefLUint, 2> k0MaxIndexOfBackgroundNode_{};
     ///< the maximum index of background nodes in each direction*/
-    // k0IntOffest_ is included in k0MaxIndexOfBackgroundNode_
+    // k0IntOffset_ is included in k0MaxIndexOfBackgroundNode_
 
     void PrintGridInfo(void) const override;
     void SetGridParameters(void) override;
@@ -270,6 +279,18 @@ class GridManager2D :public  GridManagerInterface, public SFBitsetAux2D {
     void FindAllNodesInACellAtLowerLevel(
         const std::vector<DefSFBitset> bitset_cell,
         std::vector<DefSFBitset>* const ptr_bitset_all) const override;
+    DefSFBitset NodeAtNLowerLevel(
+        const DefSizet n_level, const DefSFBitset& biset_in) const override;
+    DefLUint CalNumOfBackgroundNode() const override {
+        return (k0MaxIndexOfBackgroundNode_[0] - k0IntOffset_[0] + 1) *
+            (k0MaxIndexOfBackgroundNode_[1] - k0IntOffset_[1] + 1);
+    }
+    bool CheckBackgroundOffset(const DefSFBitset& bitset_in) const override;
+    void TraverseBackgroundForPartition(
+        const std::vector<DefLUint>& rank_load,
+        const DefMap<DefUint>& background_occupied,
+        std::vector<DefSFBitset>* const ptr_bitset_min,
+        std::vector<DefSFBitset>* const ptr_bitset_max) const override;
 
     GridManager2D() {
         k0GridDims_ = 2;
@@ -359,17 +380,17 @@ private:
 class GridManager3D :public  GridManagerInterface, public SFBitsetAux3D
  {
  public:
-    std::array<DefLUint, 3> k0IntOffest_ = { 1, 1, 1};
+    std::array<DefLUint, 3> k0IntOffset_ = { 1, 1, 1};
     ///< number of offset background node
     std::array<DefReal, 3> k0DomainSize_{};  ///< domian size
     std::array<DefReal, 3> k0DomainDx_{};  ///< grid space
     /* offset to avoid exceeding the boundary limits when searching nodes.
-    The offset distance is (kXintOffest * kDomianDx),
+    The offset distance is (kXintOffset * kDomianDx),
     and the default value is 1. */
-    std::array<DefReal, 3>k0RealOffest_{};  ///< kXintOffest * kDomianDx
+    std::array<DefReal, 3>k0RealOffset_{};  ///< kXintOffset * kDomianDx
     std::array<DefLUint, 3> k0MaxIndexOfBackgroundNode_{};
     ///< the maximum index of background nodes in each direction*/
-    // k0IntOffest_ is included in k0MaxIndexOfBackgroundNode_
+    // k0IntOffset_ is included in k0MaxIndexOfBackgroundNode_
 
     void PrintGridInfo(void) const override;
     void SetGridParameters(void) override;
@@ -388,6 +409,19 @@ class GridManager3D :public  GridManagerInterface, public SFBitsetAux3D
     void FindAllNodesInACellAtLowerLevel(
         const std::vector<DefSFBitset> bitset_cell,
         std::vector<DefSFBitset>* const ptr_bitset_all) const override;
+    DefSFBitset NodeAtNLowerLevel(
+        const DefSizet n_level, const DefSFBitset& biset_in) const override;
+    DefLUint CalNumOfBackgroundNode() const override {
+        return (k0MaxIndexOfBackgroundNode_[0] - k0IntOffset_[0] + 1) *
+            (k0MaxIndexOfBackgroundNode_[1] - k0IntOffset_[1] + 1)*
+            (k0MaxIndexOfBackgroundNode_[2] - k0IntOffset_[2] + 1);
+    }
+    bool CheckBackgroundOffset(const DefSFBitset& bitset_in) const override;
+    void TraverseBackgroundForPartition(
+        const std::vector<DefLUint>& rank_load,
+        const DefMap<DefUint>& background_occupied,
+        std::vector<DefSFBitset>* const ptr_bitset_min,
+        std::vector<DefSFBitset>* const ptr_bitset_max) const override;
 
     GridManager3D() {
         k0GridDims_ = 3;

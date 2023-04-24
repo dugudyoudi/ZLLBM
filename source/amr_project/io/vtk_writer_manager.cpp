@@ -115,9 +115,9 @@ void VtkWriterManager::WriteVtuAll(const std::string& folder_name,
         const GridManager2D& grid_manager2d =
             dynamic_cast<GridManager2D&> (grid_manager);
         grid_offset.at(kXIndex) =
-            grid_manager2d.k0RealOffest_.at(kXIndex);
+            grid_manager2d.k0RealOffset_.at(kXIndex);
         grid_offset.at(kYIndex) =
-            grid_manager2d.k0RealOffest_.at(kYIndex);
+            grid_manager2d.k0RealOffset_.at(kYIndex);
         grid_offset.at(kZIndex) = 0.;
     }
 #endif  // DEBUG_DISABLE_2D_FUNCTIONS
@@ -126,11 +126,11 @@ void VtkWriterManager::WriteVtuAll(const std::string& folder_name,
         const GridManager3D& grid_manager3d =
             dynamic_cast<GridManager3D&> (grid_manager);
         grid_offset.at(kXIndex) =
-            grid_manager3d.k0RealOffest_.at(kXIndex);
+            grid_manager3d.k0RealOffset_.at(kXIndex);
         grid_offset.at(kYIndex) =
-            grid_manager3d.k0RealOffest_.at(kYIndex);
+            grid_manager3d.k0RealOffset_.at(kYIndex);
         grid_offset.at(kZIndex) =
-            grid_manager3d.k0RealOffest_.at(kZIndex);
+            grid_manager3d.k0RealOffset_.at(kZIndex);
     }
 #endif  // DEBUG_DISABLE_3D_FUNCTIONS
     bool bool_overlap;
@@ -932,8 +932,8 @@ void VtkWriterManager::WirteGridCoordinates(FILE* const fp,
     std::array<DefReal, 2> grid_space_2d, coordi_2d;
 
     DefSizet i_nodes = 0;
-    x_offset = grid_manager2d.k0RealOffest_.at(kXIndex);
-    y_offset = grid_manager2d.k0RealOffest_.at(kYIndex);
+    x_offset = grid_manager2d.k0RealOffset_.at(kXIndex);
+    y_offset = grid_manager2d.k0RealOffset_.at(kYIndex);
     grid_space_2d = { grid_info.grid_space_[kXIndex],
         grid_info.grid_space_[kYIndex] };
 
@@ -1154,9 +1154,9 @@ void VtkWriterManager::WirteGridCoordinates(FILE* const fp,
         + output_data_format.output_real_.printf_format_ + "\n";
     DefReal x_offset = 0., y_offset = 0., z_offset = 0.;
     std::array<DefReal, 3> grid_space_3d, coordi_3d;
-    x_offset = grid_manager3d.k0RealOffest_.at(kXIndex);
-    y_offset = grid_manager3d.k0RealOffest_.at(kYIndex);
-    z_offset = grid_manager3d.k0RealOffest_.at(kZIndex);
+    x_offset = grid_manager3d.k0RealOffset_.at(kXIndex);
+    y_offset = grid_manager3d.k0RealOffset_.at(kYIndex);
+    z_offset = grid_manager3d.k0RealOffset_.at(kZIndex);
     grid_space_3d = { grid_info.grid_space_[kXIndex],
         grid_info.grid_space_[kYIndex],  grid_info.grid_space_[kZIndex] };
     std::vector<DefReal> coordi(3, 0.);

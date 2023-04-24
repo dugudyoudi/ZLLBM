@@ -26,9 +26,9 @@ void GridManager2D::SetGridParameters() {
     MPI_Comm_rank(MPI_COMM_WORLD, &rank_id);
 #endif  // ENABLE_MPI
     SFBitsetMinAndMaxGloble(
-        k0IntOffest_, k0MaxIndexOfBackgroundNode_);
+        k0IntOffset_, k0MaxIndexOfBackgroundNode_);
     SFBitsetMinAndMaxCoordinates(k0MaxLevel_,
-        k0IntOffest_, k0MaxIndexOfBackgroundNode_);
+        k0IntOffset_, k0MaxIndexOfBackgroundNode_);
 
     if (rank_id == 0) {
         // check if length of computational domain is given
@@ -62,12 +62,12 @@ void GridManager2D::SetGridParameters() {
 
     k0MaxIndexOfBackgroundNode_ = {
         static_cast<DefLUint>(k0DomainSize_[kXIndex]
-        / k0DomainDx_[kXIndex] + kEps) + k0IntOffest_[kXIndex],
+        / k0DomainDx_[kXIndex] + kEps) + k0IntOffset_[kXIndex],
         static_cast<DefLUint>(k0DomainSize_[kYIndex]
-        / k0DomainDx_[kYIndex] + kEps) + k0IntOffest_[kYIndex] };
+        / k0DomainDx_[kYIndex] + kEps) + k0IntOffset_[kYIndex] };
     // set offsets
-    k0RealOffest_[kXIndex] = k0IntOffest_[kXIndex] * k0DomainDx_[kXIndex];
-    k0RealOffest_[kYIndex] = k0IntOffest_[kYIndex] * k0DomainDx_[kYIndex];
+    k0RealOffset_[kXIndex] = k0IntOffset_[kXIndex] * k0DomainDx_[kXIndex];
+    k0RealOffset_[kYIndex] = k0IntOffset_[kYIndex] * k0DomainDx_[kYIndex];
 
     // check if domain size may exceed range of morton code
     /* the criterion is the maximum index for
@@ -145,10 +145,10 @@ void GridManager2D::ResetExtendLayerBasedOnDomainSize(
 
     // extended layer at the background refinement level
     DefLUint two_power_i_level = TwoPowerN(static_cast<DefLUint>(i_level));
-    DefLUint index_xmin = k0IntOffest_[kXIndex] * two_power_i_level;
+    DefLUint index_xmin = k0IntOffset_[kXIndex] * two_power_i_level;
     DefLUint index_xmax = k0MaxIndexOfBackgroundNode_[kXIndex]
         * two_power_i_level;
-    DefLUint index_ymin = k0IntOffest_[kYIndex] * two_power_i_level;
+    DefLUint index_ymin = k0IntOffset_[kYIndex] * two_power_i_level;
     DefLUint index_ymax = k0MaxIndexOfBackgroundNode_[kYIndex]
         * two_power_i_level;
 
@@ -351,6 +351,16 @@ void GridManager2D::FindAllNodesInACellAtLowerLevel(
     ptr_bitset_all->at(8) = SFBitsetToOneHigherLevel(bitset_cell.at(3));
 }
 /**
+* @brief function to space filling code to n level lower
+* @param[in]  n_level  number of levels need to be shrinked.
+* @param[in]  biset_in   input space filling codee.
+* @return   space filling code at lower levels.
+*/
+DefSFBitset GridManager2D::NodeAtNLowerLevel(
+    const DefSizet n_level, const DefSFBitset& biset_in) const {
+    return SFBitsetToNLowerLevel(n_level, biset_in);
+}
+/**
 * @brief   function to find layer in the overlapping region based on the layer
 *          at one level higher
 * @param[in]  layer_high_level   layer in the overlapping region at high level
@@ -364,6 +374,21 @@ void GridManager2D::OverlapLayerFromHighToLow(
             ptr_layer_low_level->insert({
                 SFBitsetToOneLowerLevel(iter.first), kFlag0_ });
         }
+    }
+}
+/**
+* @brief   function to find background node in the offset region.
+* @param[in] bitset_in space filling code of the node
+* @return if node is in the offset region
+*/
+bool GridManager2D::CheckBackgroundOffset(const DefSFBitset& bitset_in) const {
+    std::array<DefLUint, 2> indices;
+    SFBitsetComputeIndices(bitset_in, &indices);
+    if ((indices[kXIndex] < k0IntOffset_[kXIndex])
+        || (indices[kYIndex] < k0IntOffset_[kYIndex])) {
+        return true;
+    } else {
+        return true;
     }
 }
 }  // end namespace amrproject

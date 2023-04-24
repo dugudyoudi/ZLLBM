@@ -46,8 +46,7 @@ void GridManagerInterface::CreateSameGridInstanceForAllLevel(
         grid_ref.i_level_ = i_level;
         grid_ref.grid_space_ = std::vector<DefReal>(k0GridDims_, 0.);
         // set computational cost for each node 2^i_level
-        grid_ref.computational_cost_ =
-            static_cast<DefReal>(TwoPowerN(i_level));
+        grid_ref.computational_cost_ =static_cast<DefUint>(TwoPowerN(i_level));
         std::vector<DefReal> domain_dx_ = GetDomainDxArrAsVec();
         for (DefUint idim = 0; idim < k0GridDims_; ++idim) {
             grid_ref.grid_space_.at(idim) =
@@ -325,10 +324,10 @@ void GridManagerInterface::SetNumberOfExtendLayerForGrid(const DefSizet i_level,
 //
 //    // extended layer at the background refinement level
 //    DefLUint two_power_i_level = TwoPowerN(static_cast<DefLUint>(i_level));
-//    DefLUint index_xmin = k0IntOffest_[kXIndex] * two_power_i_level;
+//    DefLUint index_xmin = k0IntOffset_[kXIndex] * two_power_i_level;
 //    DefLUint index_xmax = k0MaxIndexOfBackgroundNode_[kXIndex]
 //        * two_power_i_level;
-//    DefLUint index_ymin = k0IntOffest_[kYIndex] * two_power_i_level;
+//    DefLUint index_ymin = k0IntOffset_[kYIndex] * two_power_i_level;
 //    DefLUint index_ymax = k0MaxIndexOfBackgroundNode_[kYIndex]
 //        * two_power_i_level;
 //
@@ -395,13 +394,13 @@ void GridManagerInterface::SetNumberOfExtendLayerForGrid(const DefSizet i_level,
 //
 //    // extended layer at the background refinement level
 //    DefLUint two_power_i_level = TwoPowerN(static_cast<DefLUint>(i_level));
-//    DefLUint index_xmin = k0IntOffest_[kXIndex] * two_power_i_level;
+//    DefLUint index_xmin = k0IntOffset_[kXIndex] * two_power_i_level;
 //    DefLUint index_xmax = k0MaxIndexOfBackgroundNode_[kXIndex]
 //        * two_power_i_level;
-//    DefLUint index_ymin = k0IntOffest_[kYIndex] * two_power_i_level;
+//    DefLUint index_ymin = k0IntOffset_[kYIndex] * two_power_i_level;
 //    DefLUint index_ymax = k0MaxIndexOfBackgroundNode_[kYIndex]
 //        * two_power_i_level;
-//    DefLUint index_zmin = k0IntOffest_[kZIndex] * two_power_i_level;
+//    DefLUint index_zmin = k0IntOffset_[kZIndex] * two_power_i_level;
 //    DefLUint index_zmax = k0MaxIndexOfBackgroundNode_[kZIndex]
 //        * two_power_i_level;
 //

@@ -37,9 +37,20 @@ void LogStartTime() {
         printf_s("The file was not opened for writing log\n");
     } else {
         fprintf_s(fp, "project setup on: %s", time_char);
+        if (rank_id == 0) {
+            printf("project setup on: %s", time_char);
+        }
+#ifdef ENABLE_MPI
+        int numprocs;
+        MPI_Comm_size(MPI_COMM_WORLD, &numprocs);
+        if (rank_id == 0) {
+            printf_s("number of nodes is: %d\n", numprocs);
+        }
+        fprintf_s(fp, "number of nodes is: %d; current node is: %d \n",
+            numprocs, rank_id);
+#endif  // ENABLE_MPI
         fclose(fp);
     }
-    if (rank_id == 0) printf("project setup on: %s", time_char);
 }
 /**
 * @brief function to write normal information to the logfile.

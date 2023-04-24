@@ -37,7 +37,7 @@ struct GeometryvertexInfo {
 class GeometryInfoInterface {
  public:
     // information of geometry itself
-    DefReal computational_cost_ = 1.;
+    DefUint computational_cost_ = 1;
     DefReal decompose_factor_ = 1.;
     DefSizet i_level_ = 0;
     DefSizet i_geo_ = ~0;
@@ -129,7 +129,7 @@ public:
     // information of geometry itself
     std::array<DefReal, 2> geometry_center_{};
     std::array<DefReal, 2> flood_fill_origin_{};
-    std::array<DefReal, 2> k0RealOffest_{};
+    std::array<DefReal, 2> k0RealOffset_{};
     std::vector<GeometryCoordinate2D> coordinate_origin_{};
 
     virtual int InitialGeometry(const DefReal dx,
@@ -163,7 +163,7 @@ public:
     // information of geometry itself
     std::array<DefReal, 3> geometry_center_{};
     std::array<DefReal, 3> flood_fill_origin_{};
-    std::array<DefReal, 3> k0RealOffest_{};
+    std::array<DefReal, 3> k0RealOffset_{};
     std::vector<GeometryCoordinate3D> coordinate_origin_{};
 
     virtual void SetIndex() = 0;

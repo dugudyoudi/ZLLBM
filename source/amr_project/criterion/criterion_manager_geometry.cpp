@@ -52,12 +52,12 @@ void CriterionManager::InitialGeometrySerial(
     //    }
 
     //    // assign offset distance
-    //    vec_ptr_geometries_.at(i_geo)->k0RealOffest_[kXIndex]
+    //    vec_ptr_geometries_.at(i_geo)->k0RealOffset_[kXIndex]
     //        = vec_real_offset[kXIndex];
-    //    vec_ptr_geometries_.at(i_geo)->k0RealOffest_[kYIndex]
+    //    vec_ptr_geometries_.at(i_geo)->k0RealOffset_[kYIndex]
     //        = vec_real_offset[kYIndex];
     //    if (k0GeoDims_ == 3) {
-    //        vec_ptr_geometries_.at(i_geo)->k0RealOffest_[kZIndex]
+    //        vec_ptr_geometries_.at(i_geo)->k0RealOffset_[kZIndex]
     //            = vec_real_offset[kZIndex];
     //    }
 

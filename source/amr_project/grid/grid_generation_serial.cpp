@@ -20,7 +20,7 @@ void GridManagerInterface::GenerateInitialMeshBasedOnGeoSerial(
     std::vector<DefMap<DefUint>> sfbitset_one_lower_level;
     GenerateGridFromHighToLowLevelSerial(
         vec_geo_info, &sfbitset_one_lower_level);
-    CreateCellAndBackgroundGridSerial(sfbitset_one_lower_level);
+    InstantiateGridNodeAllLevelSerial(sfbitset_one_lower_level);
 }
 /**
 * @brief   function to generate grid for all levels of refinement.
@@ -251,7 +251,7 @@ void GridManagerInterface::GenerateGridFromHighToLowLevelSerial(
         }
     }
 }
-void GridManagerInterface::CreateCellAndBackgroundGridSerial(
+void GridManagerInterface::InstantiateGridNodeAllLevelSerial(
     const std::vector<DefMap<DefUint>>& sfbitset_one_lower_level) {
     InterfaceLayerInfo* ptr_interface_info = nullptr;
     InterfaceLayerInfo* ptr_interface_info_lower = nullptr;
@@ -259,9 +259,9 @@ void GridManagerInterface::CreateCellAndBackgroundGridSerial(
 
 #ifdef ENABLE_MPI
     //DefSFBitset bitset_lower_bound, bitset_upper_bound;
-    //unsigned long long lower_bound = bitset_lower_bound.to_ullong(),
+    //DefSFCodeToUint lower_bound = bitset_lower_bound.to_ullong(),
     //    upper_bound = bitset_upper_bound.to_ullong();
-    //unsigned long long bitset_ullong;
+    //DefSFCodeToUint bitset_ullong;
     //bitset_ullong = iter_node.first.to_ullong();
     //if (bitset_ullong < bitset_lower_bound
     //    || bitset_ullong > bitset_lower_bound) {

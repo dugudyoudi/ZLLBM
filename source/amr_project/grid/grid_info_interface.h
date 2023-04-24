@@ -76,7 +76,7 @@ public:
 */
 class TrackingGridInfoInterface {
 public:
-    DefReal computational_cost_ = 1.;
+    DefUint computational_cost_ = 1;
     std::string node_type_;
     EGridExtendType grid_extend_type_ = EGridExtendType::kSameInAllDirections;
 
@@ -113,7 +113,7 @@ public:
     // information of grid at each level of refinement
     DefSizet i_level_ = 0;
     const DefUint kCountIndex_ = 1;
-    DefReal computational_cost_ = 1.;
+    DefUint computational_cost_ = 1;
     std::string node_type_;
 
     // information of GhostNode
@@ -147,7 +147,7 @@ public:
     // information of grid at each level of refinement
     DefSizet i_level_ = 0;
 
-    DefReal computational_cost_ = 1.;
+    DefUint computational_cost_ = 1;
     std::string node_type_;
     std::vector<DefReal> grid_space_;
     std::shared_ptr<SolverInterface> ptr_solver_ = nullptr;

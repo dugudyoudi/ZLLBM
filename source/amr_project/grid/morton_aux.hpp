@@ -10,6 +10,9 @@
 
 #ifndef ROOTPROJECT_SOURCE_AMR_PROJECT_GRID_MORTON_AUX_H_
 #define ROOTPROJECT_SOURCE_AMR_PROJECT_GRID_MORTON_AUX_H_
+#ifdef DEBUG_CHECK_GRID
+#include "io/log_write.h"
+#endif  // DEBUG_CHECK_GRID
 namespace rootproject {
 namespace amrproject {
 #ifndef  DEBUG_DISABLE_2D_FUNCTIONS
@@ -61,18 +64,22 @@ inline DefSFBitset SFBitsetAux2D::SFBitsetToNHigherLevel(
 */
 inline DefSFBitset SFBitsetAux2D::FindXNeg(
     const DefSFBitset& bitset_in) const {
-    unsigned long long x_ull = (bitset_in & SFBitsetAux2D::k0SFBitsetTakeXRef_
+    DefSFCodeToUint x_ull = (bitset_in & SFBitsetAux2D::k0SFBitsetTakeXRef_
         .at(SFBitsetAux2D::kRefCurrent_)).to_ullong();
+#ifdef DEBUG_CHECK_GRID
     if (x_ull == 0) {
+        LogError("x coordinate in FindXNeg is 0.");
         return bitset_in;
     } else {
-        DefSFBitset temp = static_cast<DefSFBitset>
-            (x_ull - 1);
-        return ((temp & SFBitsetAux2D::k0SFBitsetTakeXRef_
+#endif // DEBUG_CHECK_GRID
+        return ((static_cast<DefSFBitset>
+            (x_ull - 1) & SFBitsetAux2D::k0SFBitsetTakeXRef_
             .at(SFBitsetAux2D::kRefCurrent_))
             | (bitset_in & SFBitsetAux2D::k0SFBitsetTakeYRef_
                 .at(SFBitsetAux2D::kRefCurrent_)));
+#ifdef DEBUG_CHECK_GRID
     }
+#endif // DEBUG_CHECK_GRID
 }
 /**
 * @brief function to find morton code (2D) of
@@ -98,18 +105,21 @@ inline DefSFBitset SFBitsetAux2D::FindXPos(
 */
 inline DefSFBitset SFBitsetAux2D::FindYNeg(
     const DefSFBitset& bitset_in)  const {
-    unsigned long long y_ull = (bitset_in & SFBitsetAux2D::k0SFBitsetTakeYRef_
+    DefSFCodeToUint y_ull = (bitset_in & SFBitsetAux2D::k0SFBitsetTakeYRef_
         .at(SFBitsetAux2D::kRefCurrent_)).to_ullong();
+#ifdef DEBUG_CHECK_GRID
     if (y_ull == 0) {
         return bitset_in;
     } else {
-        DefSFBitset temp = static_cast<DefSFBitset>
-            (y_ull - 1);
-        return ((temp & SFBitsetAux2D::k0SFBitsetTakeYRef_
+#endif // DEBUG_CHECK_GRID
+        return ((static_cast<DefSFBitset>
+            (y_ull - 1) & SFBitsetAux2D::k0SFBitsetTakeYRef_
             .at(SFBitsetAux2D::kRefCurrent_))
             | (bitset_in & SFBitsetAux2D::k0SFBitsetTakeXRef_
                 .at(SFBitsetAux2D::kRefCurrent_)));
+#ifdef DEBUG_CHECK_GRID
     }
+#endif // DEBUG_CHECK_GRID
 }
 /**
 * @brief function to find morton code (2D) of
@@ -177,20 +187,23 @@ inline DefSFBitset SFBitsetAux3D::SFBitsetToNHigherLevel(
 */
 inline DefSFBitset SFBitsetAux3D::FindXNeg(
     const DefSFBitset& bitset_in)  const {
-    unsigned long long x_ull = (bitset_in & SFBitsetAux3D::k0SFBitsetTakeXRef_
+    DefSFCodeToUint x_ull = (bitset_in & SFBitsetAux3D::k0SFBitsetTakeXRef_
         .at(SFBitsetAux3D::kRefCurrent_)).to_ullong();
+#ifdef DEBUG_CHECK_GRID
     if (x_ull == 0) {
         return bitset_in;
     } else {
-        DefSFBitset temp = static_cast<DefSFBitset>
-            (x_ull - 1);
-        return ((temp & SFBitsetAux3D::k0SFBitsetTakeXRef_
+#endif // DEBUG_CHECK_GRID
+        return ((static_cast<DefSFBitset>
+            (x_ull - 1) & SFBitsetAux3D::k0SFBitsetTakeXRef_
             .at(SFBitsetAux3D::kRefCurrent_))
             | (bitset_in & SFBitsetAux3D::k0SFBitsetTakeYRef_
                 .at(SFBitsetAux3D::kRefCurrent_))
             | (bitset_in & SFBitsetAux3D::k0SFBitsetTakeZRef_
                 .at(SFBitsetAux3D::kRefCurrent_)));
+#ifdef DEBUG_CHECK_GRID
     }
+#endif // DEBUG_CHECK_GRID
 }
 /**
 * @brief function to find morton code (3D) of
@@ -218,20 +231,23 @@ inline DefSFBitset SFBitsetAux3D::FindXPos(
 */
 inline DefSFBitset SFBitsetAux3D::FindYNeg(
     const DefSFBitset& bitset_in)  const {
-    unsigned long long y_ull = (bitset_in & SFBitsetAux3D::k0SFBitsetTakeYRef_
+    DefSFCodeToUint y_ull = (bitset_in & SFBitsetAux3D::k0SFBitsetTakeYRef_
         .at(SFBitsetAux3D::kRefCurrent_)).to_ullong();
+#ifdef DEBUG_CHECK_GRID
     if (y_ull == 0) {
         return bitset_in;
     } else {
-        DefSFBitset temp = static_cast<DefSFBitset>
-            (y_ull - 1);
-        return ((temp & SFBitsetAux3D::k0SFBitsetTakeYRef_
+#endif // DEBUG_CHECK_GRID
+        return ((static_cast<DefSFBitset>
+            (y_ull - 1) & SFBitsetAux3D::k0SFBitsetTakeYRef_
             .at(SFBitsetAux3D::kRefCurrent_))
             | (bitset_in & SFBitsetAux3D::k0SFBitsetTakeXRef_
                 .at(SFBitsetAux3D::kRefCurrent_))
             | (bitset_in & SFBitsetAux3D::k0SFBitsetTakeZRef_
                 .at(SFBitsetAux3D::kRefCurrent_)));
+#ifdef DEBUG_CHECK_GRID
     }
+#endif // DEBUG_CHECK_GRID
 }
 /**
 * @brief function to find morton code (3D) of
@@ -259,20 +275,23 @@ inline DefSFBitset SFBitsetAux3D::FindYPos(
 */
 inline DefSFBitset SFBitsetAux3D::FindZNeg(
     const DefSFBitset& bitset_in)  const {
-    unsigned long long z_ull = (bitset_in & SFBitsetAux3D::k0SFBitsetTakeZRef_
+    DefSFCodeToUint z_ull = (bitset_in & SFBitsetAux3D::k0SFBitsetTakeZRef_
         .at(SFBitsetAux3D::kRefCurrent_)).to_ullong();
+#ifdef DEBUG_CHECK_GRID
     if (z_ull == 0) {
         return bitset_in;
     } else {
-        DefSFBitset temp = static_cast<DefSFBitset>
-            (z_ull - 1);
-        return ((temp & SFBitsetAux3D::k0SFBitsetTakeZRef_
+#endif // DEBUG_CHECK_GRID
+        return ((static_cast<DefSFBitset>
+            (z_ull - 1) & SFBitsetAux3D::k0SFBitsetTakeZRef_
             .at(SFBitsetAux3D::kRefCurrent_))
             | (bitset_in & SFBitsetAux3D::k0SFBitsetTakeXRef_
                 .at(SFBitsetAux3D::kRefCurrent_))
             | (bitset_in & SFBitsetAux3D::k0SFBitsetTakeYRef_
                 .at(SFBitsetAux3D::kRefCurrent_)));
+#ifdef DEBUG_CHECK_GRID
     }
+#endif // DEBUG_CHECK_GRID
 }
 /**
 * @brief function to find morton code (3D) of

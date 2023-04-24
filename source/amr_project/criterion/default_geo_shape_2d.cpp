@@ -24,12 +24,12 @@ void DefaultGeoManager::circle_initial(
             * cos(2. * kPi * (static_cast<DefReal>(i)
                 / static_cast<DefReal>(num_points)))
             + ptr_geo->geometry_center_[kXIndex]
-            + ptr_geo->k0RealOffest_[kXIndex];
+            + ptr_geo->k0RealOffset_[kXIndex];
         ptr_geo->coordinate_origin_.at(i).coordinate[kYIndex] = radius
             * sin(2. * kPi * (static_cast<DefReal>(i)
                 / static_cast<DefReal>(num_points)))
             + ptr_geo->geometry_center_[kYIndex]
-            + ptr_geo->k0RealOffest_[kYIndex];
+            + ptr_geo->k0RealOffset_[kYIndex];
     }
 }
 void DefaultGeoManager::circle_update(DefReal sum_t,

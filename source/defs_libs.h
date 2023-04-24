@@ -12,6 +12,7 @@
 #define ROOTPROJECT_SOURCE_DEF_LIB_H_
 // libraries
 #include <bitset>
+#include <cstdint>
 #include <unordered_map>
 #include <iostream>
 #include "./config.h"  // configuration file generated
@@ -24,6 +25,7 @@ using DefUint = unsigned int;
 using DefSizet = size_t;
 using DefLUint = unsigned int;
 using DefTypeUint = unsigned int;
+using DefSFCodeToUint = uint64_t;
 
 // bitset to store code for space filling curves 
 static constexpr DefUint kSFBitsetBit = 64;
