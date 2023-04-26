@@ -34,8 +34,6 @@ class MpiManager{
     void StartupMpi(int argc, char* argv[]);
     void SetMpiParameters();
 
-
-
     int SerializeData(const DefMap<DefUint>& map_nodes,
         std::unique_ptr<char[]>& buffer) const;
     void DeserializeData(const std::unique_ptr<char[]>& buffer,
@@ -52,6 +50,19 @@ class MpiManager{
         const std::vector<DefMap<DefUint>>& sfbitset_all_one_lower_level,
         GridManagerInterface const& grid_manager,
         std::vector<DefMap<DefUint>>* const ptr_sfbitset_each_one_lower_level) const;
+
+#ifndef  DEBUG_DISABLE_2D_FUNCTIONS
+    void IniSendNReceivePartitionedGeoCoordi(
+        const GridManager2D& grid_manager2d,
+        const std::vector<DefSFBitset>& bitset_max,
+        Geometry2DInterface* const ptr_geo2d) const;
+#endif  // DEBUG_DISABLE_2D_FUNCTIONS
+#ifndef  DEBUG_DISABLE_3D_FUNCTIONS
+    void IniSendNReceivePartitionedGeoCoordi(
+        const GridManager3D& grid_manager3d,
+        const std::vector<DefSFBitset>& bitset_max,
+        Geometry3DInterface* const ptr_geo3d) const;
+#endif  // DEBUG_DISABLE_3D_FUNCTIONS
 
     // functions to convert host unsigned integer to network one
     inline uint8_t HtoNUint(uint8_t val_host) const {

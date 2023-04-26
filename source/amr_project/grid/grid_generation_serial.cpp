@@ -496,7 +496,7 @@ void GridManagerInterface::FindOverlappingLayersBasedOnOutermostCoarse(
 * @param[out]  ptr_map_outmost nodes on the outmost layer.
 * @note  add the number of layer around the geometry in all the directions.
 *        Used to set number of layers inside the geometry different from that
-*        outsite the geometry.
+*        outside the geometry.
 */
 void GridManagerInterface::ExtendGivenNumbOfLayer(
     const DefSizet i_level, const std::vector<DefLUint> num_extend_neg,

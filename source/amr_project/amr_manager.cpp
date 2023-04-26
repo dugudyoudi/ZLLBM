@@ -88,10 +88,10 @@ void AmrManager::InitializeSimulation() {
 */
 void AmrManager::SetTheSameLevelDependentInfoForAllLevels(
     SolverCreatorInterface* const ptr_solver_creator) {
-    std::shared_ptr<SolverInterface> ptr_sovler =
+    std::shared_ptr<SolverInterface> ptr_solver =
         ptr_solver_creator->CreateSolver();
     ptr_grid_manager_->CreateSameGridInstanceForAllLevel(
-        ptr_sovler->ptr_grid_info_creator_.get());
+        ptr_solver->ptr_grid_info_creator_.get());
 }
 /**
 * @brief   function to finalize simulation

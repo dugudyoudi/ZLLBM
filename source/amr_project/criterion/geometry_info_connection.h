@@ -5,7 +5,7 @@
 * @file geometry_info_connection.h
 * @author Zhengliang Liu
 * @date  2022-9-25
-* @brief  define classes to store geometry informtion with
+* @brief  define classes to store geometry information with
 *         connection relationship of vertices.
 */
 
@@ -14,13 +14,18 @@
 #include <memory>
 #include <set>
 #include <map>
+#include <unordered_map>
+#include <vector>
 #include <utility>
-#include "criterion/geometry_info_Interface.h"
-//#include "grid/grid_info_preset.h"
+#include "criterion/geometry_info_interface.h"
 namespace rootproject {
 namespace amrproject {
+#ifndef  DEBUG_DISABLE_2D_FUNCTIONS
 class  SFBitsetAux2D;
+#endif  // DEBUG_DISABLE_2D_FUNCTIONS
+#ifndef  DEBUG_DISABLE_3D_FUNCTIONS
 class  SFBitsetAux3D;
+#endif  // DEBUG_DISABLE_3D_FUNCTIONS
 /**
 * @struct GeometryConnectionSurface
 * @brief structure to store surface connection information
@@ -28,7 +33,6 @@ class  SFBitsetAux3D;
 struct GeometryConnectionSurface {
     DefSizet parent_surface = ~0;
     std::vector<DefSizet> child_surface;
-    //std::vector<DefSizet> edge_connection;
     std::vector<std::pair<DefSizet, DefSizet>> vertex_connection;
 };
 struct GeometryConnectionSurfaceLevel {
@@ -41,8 +45,6 @@ struct GeometryConnectionSurfaceLevel {
 * @brief structure to store edge connection information
 */
 struct GeometryConnectionEdge {
-    //DefUint status_added = 2;
-    //std::array<std::pair<DefSizet, DefSizet>, 2> vertex_connection;
     std::set<DefSizet> set_index_surfaces;
 };
 
@@ -58,14 +60,14 @@ struct GeometryConnectionEdgeLevel {
 * @brief structure to store vertex formation
 */
 struct GeometryConnectionCoordinate {
-    //bool bool_decomposed = false;
     std::map<DefSizet,
         std::set<std::pair<DefSizet, DefSizet>>> map_linked_vertices_level;
+    ///< indices of vertices at current or different levels linked to this vertex
     std::array<std::pair<DefSizet, DefSizet>, 2> parent_vertices;
     std::set<std::pair<DefSizet, DefSizet>> child_vertices;
     GeometryVertexInfo vertex_info;
     std::vector<DefReal> coordinates;
-    std::map<DefSizet, DefSFBitset> map_bitset_ref;
+    std::map<DefSizet, DefSFBitset> map_bitset_ref;  ///< spacing filing code of vertices
     DefSizet highest_grid_level = 0;
 };
 /**
@@ -86,7 +88,7 @@ class GeometryConnectionInterface : virtual public GeometryInfoInterface {
     bool bool_vec_velocities_ = true;
     bool bool_vec_forces_ = true;
 
-    // if true, the last and first elements in the connection relation 
+    // if true, the last and first elements in the connection relation
     // (connection_relation_) consist of an edge
     bool bool_periodic_connection_ = false;
 
@@ -109,7 +111,7 @@ class GeometryConnectionInterface : virtual public GeometryInfoInterface {
         connection_surface_given_level_{};
     std::vector<std::set<std::pair<DefSizet, DefSizet>>>
         connection_vertex_given_level_{};
-        
+
     virtual void InitialCoordinateGivenLevel(
         std::vector<DefReal>* const ptr_coordi_min,
         std::vector<DefReal>* const ptr_coordi_max) = 0;
@@ -139,11 +141,11 @@ class GeometryConnectionInterface : virtual public GeometryInfoInterface {
         std::set<std::pair<std::pair<DefSizet, DefSizet>,
         std::pair<DefSizet, DefSizet>>>* const  ptr_surface_remain_for_biset,
         DefMap<DefUint>* const ptr_sfbitset_ref_added);
-    
+
     // virtual function from GeometryInfoInterface
-    virtual void FindTrackingNodeBasedOnGeo(
+    void FindTrackingNodeBasedOnGeo(
         const SFBitsetAuxInterface* ptr_sfbitset_aux,
-        GridInfoInterface* const ptr_grid_info) override final;
+        GridInfoInterface* const ptr_grid_info) final;
 
  protected:
     GeometryConnectionCoordinate vertex_instance_;
@@ -178,7 +180,7 @@ class GeometryInfoConnection2D:public Geometry2DInterface,
         const DefaultGeoManager& default_geo_managerr) override;
     int UpdateGeometry(
         const DefaultGeoManager& default_geo_manager) override;
-    void DecomposeNHigerLevel(const DefSizet i_level_grid,
+    void DecomposeNHigherLevel(const DefSizet i_level_grid,
         const DefReal decompose_length,
         const std::unordered_map<DefSizet, bool>& map_indices_base,
         std::unordered_map<DefSizet, bool>* const ptr_map_indices_remain)
@@ -195,15 +197,15 @@ class GeometryInfoConnection2D:public Geometry2DInterface,
         const std::pair<DefSizet, DefSizet>& vertex0,
         const std::pair<DefSizet, DefSizet>& vertex1,
         std::vector<DefReal>* const ptr_coordinates) override;
-    std::vector<DefReal> GetFloodFillOriginArrAsVec() const override final {
+    std::vector<DefReal> GetFloodFillOriginArrAsVec() const final {
         return { flood_fill_origin_[kXIndex], flood_fill_origin_[kYIndex] };
     }
-    DefSizet GetNumOfGeometryPoints() const override final {
+    DefSizet GetNumOfGeometryPoints() const final {
         return coordinate_origin_.size();
     }
 };
 class GeometryInfoConnection2DCreator :public GeometryInfoCreatorInterface {
-public:
+ public:
     std::shared_ptr<GeometryInfoInterface>
         CreateGeometryInfo() override {
         std::shared_ptr<GeometryInfoConnection2D> ptr_temp =
@@ -228,7 +230,7 @@ class GeometryInfoConnection3D :public Geometry3DInterface,
         const DefaultGeoManager& default_geo_manager) override;
     int UpdateGeometry(
         const DefaultGeoManager& default_geo_manager) override;
-    void DecomposeNHigerLevel(const DefSizet i_level_grid,
+    void DecomposeNHigherLevel(const DefSizet i_level_grid,
         const DefReal decompose_length,
         const std::unordered_map<DefSizet, bool>& map_indices_base,
         std::unordered_map<DefSizet, bool>* const ptr_map_indices_remain)
@@ -245,16 +247,16 @@ class GeometryInfoConnection3D :public Geometry3DInterface,
         const std::pair<DefSizet, DefSizet>& vertex0,
         const std::pair<DefSizet, DefSizet>& vertex1,
         std::vector<DefReal>* const ptr_coordinates) override;
-    std::vector<DefReal> GetFloodFillOriginArrAsVec() const override final {
+    std::vector<DefReal> GetFloodFillOriginArrAsVec() const final {
         return { flood_fill_origin_[kXIndex], flood_fill_origin_[kYIndex],
         flood_fill_origin_[kZIndex] };
     }
-    DefSizet GetNumOfGeometryPoints() const override final {
+    DefSizet GetNumOfGeometryPoints() const final {
         return coordinate_origin_.size();
     }
 };
 class GeometryInfoConnection3DCreator :public GeometryInfoCreatorInterface {
-public:
+ public:
     std::shared_ptr<GeometryInfoInterface>
         CreateGeometryInfo() override {
         std::shared_ptr<GeometryInfoConnection3D> ptr_temp =

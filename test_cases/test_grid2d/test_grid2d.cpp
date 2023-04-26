@@ -12,7 +12,7 @@
 using namespace rootproject;
 using namespace rootproject::amrproject;
 class GridInfoTest :public GridInfoInterface {
-public:
+ public:
     void set_number_of_vec_elements() override {};
     void InitialGridNode(const DefSFBitset& bitset_in) override {};
     GridInfoTest() {
@@ -21,30 +21,30 @@ public:
 };
 class GridInfoTestCreator :
     public GridInfoCreatorInterface {
-public:
+ public:
     std::shared_ptr<GridInfoInterface>
         CreateGridInfo()override {
         return std::make_shared<GridInfoTest>();
     };
 };
-class TrackinGridInfoTest :public TrackingGridInfoInterface {
-public:
-    TrackinGridInfoTest() {
-        this->node_type_ = "TrackinGridInfoTest";
+class TrackingGridInfoTest :public TrackingGridInfoInterface {
+ public:
+    TrackingGridInfoTest() {
+        this->node_type_ = "TrackingGridInfoTest";
     }
 };
-class TrackinGridInfoTestCreator :
+class TrackingGridInfoTestCreator :
     public TrackingGridInfoCreatorInterface {
-public:
+ public:
     std::shared_ptr<TrackingGridInfoInterface>
         CreateTrackingGridInfo()override {
-        return std::make_shared<TrackinGridInfoTest>();
+        return std::make_shared<TrackingGridInfoTest>();
     };
 };
 class SolverTest :public SolverInterface {
  public:
     std::string GetSolverMethod() override {
-        return "A temperal sovler for test.";
+        return "A temporal solver for test.";
     };
     void SolverInitial() override {};
     void RunSolver() override {};
@@ -66,7 +66,7 @@ int main(int argc, char* argv[]) {
     // instantiate modules will be used
     AmrManager* amr_instance = AmrManager::GetInstance();
 
-    // must call DefaultInitialize fisrt for mpi initialization
+    // must call DefaultInitialize first for mpi initialization
     amr_instance->DefaultInitialization(
         dims, max_refinement_level, argc, argv);
 
@@ -76,8 +76,8 @@ int main(int argc, char* argv[]) {
     //amr_instance->ptr_io_manager_->bool_binary_ = true;
 
     // grid related parameters //
-    std::shared_ptr<TrackinGridInfoTestCreator> ptr_tracking_creator =
-        std::make_shared<TrackinGridInfoTestCreator>();
+    std::shared_ptr<TrackingGridInfoTestCreator> ptr_tracking_creator =
+        std::make_shared<TrackingGridInfoTestCreator>();
     GridManager2D* grid_manager = dynamic_cast<GridManager2D*>(
         amr_instance->ptr_grid_manager_.get());
     // domain size
@@ -109,7 +109,7 @@ int main(int argc, char* argv[]) {
         EGridExtendType::kInAndOut;
     ptr_geo_temp->bool_vec_forces_ = false;
     ptr_geo_temp->i_level_ = max_refinement_level;
-    /* used for generating predefined geometries, number of input paramters
+    /* used for generating predefined geometries, number of input parameters
     is based on the type of geometry_shape_*/
     DefReal dx = grid_manager->k0DomainDx_.at(kXIndex)
         / std::pow(2, max_refinement_level);
@@ -121,11 +121,11 @@ int main(int argc, char* argv[]) {
 
     amr_instance->SetupParameters();
 
-    // set grid node type and sovler at all levels the same
-    std::shared_ptr<SolverCreatorTest> ptr_sovler_creator =
+    // set grid node type and solver at all levels the same
+    std::shared_ptr<SolverCreatorTest> ptr_solver_creator =
         std::make_shared<SolverCreatorTest>();
     amr_instance->SetTheSameLevelDependentInfoForAllLevels(
-        ptr_sovler_creator.get());
+        ptr_solver_creator.get());
 
     amr_instance->InitializeSimulation();
 

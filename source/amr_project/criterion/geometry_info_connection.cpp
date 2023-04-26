@@ -19,7 +19,7 @@ namespace rootproject {
 namespace amrproject {
 /**
 * @brief function to setup geometry type related parameters.
-* @param[in]  cell_type    type of geomemtry cell.
+* @param[in]  cell_type    type of geometry cell.
 */
 void GeometryConnectionInterface::SetupConnectionParameters(
     EGeometryCellType cell_type) {
@@ -142,7 +142,7 @@ void GeometryConnectionInterface::InitialConnection(
 * @param[in]  edge_for_bisect    edges need to be bisected.
 * @param[out]  ptr_surface_remain_for_bisect    edge remain to be bisected.
 * @param[out] ptr_sfbitset_ref_added space filling code corresponding
-*               to addded verices.
+*               to added vertices.
 */
 void GeometryConnectionInterface::BisectEdgeOnce(
     const DefSizet i_input_level, const DefReal ds_max,
@@ -449,7 +449,7 @@ void GeometryConnectionInterface::BisectEdgeOnce(
 * @param[in]  edge_for_merge    edges need to be merged.
 * @param[out]  ptr_surface_remain_for_merge    edge remain to be merged.
 * @param[out] ptr_sfbitset_ref_removed space filling code corresponding
-*               to removed verices.
+*               to removed vertices.
 */
 void GeometryConnectionInterface::MergeEdgeOnce(
     const DefSizet i_input_level, const DefReal ds_min,
@@ -466,7 +466,7 @@ void GeometryConnectionInterface::MergeEdgeOnce(
     std::set<DefSizet> surface_process;
     std::pair<DefSizet, DefSizet> vertex_index_temp;
     std::pair<DefSizet, DefSizet> vertex_temp0, vertex_temp1, vertex_temp2;
-    // (vertex_porcessed) include (set_vertex_remove) and vertices linked
+    // (vertex_processed) include (set_vertex_remove) and vertices linked
     // to edges at levels other than i_input_level
     std::set<std::pair<DefSizet, DefSizet>> set_vertex_processed,
         set_vertex_remain;
@@ -729,10 +729,10 @@ void GeometryConnectionInterface::MergeEdgeOnce(
         ptr_sfbitset_aux, set_vertex_remove, ptr_sfbitset_ref_removed);
 }
 /**
-* @brief function to update the likage relation of vertex.
+* @brief function to update the linkage relation of vertex.
 * @param[in]  i_input_level    level of current connection relations.
 * @param[in]  vertex_new    newly added vertex.
-* @param[in]  vertex_origin    vertex alreay exists.
+* @param[in]  vertex_origin    vertex already exists.
 */
 void GeometryConnectionInterface::AddNewLinkage(const DefSizet i_input_level,
     const std::pair<DefSizet, DefSizet>& vertex_new,
@@ -756,13 +756,13 @@ void GeometryConnectionInterface::AddNewLinkage(const DefSizet i_input_level,
         .at(i_input_level).insert(vertex_new);
 }
 /**
-* @brief function to remove vertices and thier connection relations.
+* @brief function to remove vertices and their connection relations.
 * @param[in]  i_input_level    level of current connection relations.
 * @param[in] grid_space   grid spacing
 * @param[in]  ptr_sfbitset_aux pointer to class manage space filling curves.
 * @param[in]  set_vertex_remove    vertices need to be removed.
 * @param[out] ptr_sfbitset_ref_removed space filling code corresponding
-*             to removed verices.
+*             to removed vertices.
 */
 void GeometryConnectionInterface::RemoveVertex(const DefSizet i_input_level,
     const std::vector<DefReal>& grid_space,
@@ -870,8 +870,8 @@ void GeometryConnectionInterface::RemoveVertex(const DefSizet i_input_level,
                     vertex_given_level_.at(iter_link.first)
                         .vec_vertex_coordinate.at(iter_link.second)
                         .map_linked_vertices_level.at(level_diff)
-                        .insert(*iter_vertex);                    
-                    // update edge and surface for the swaped node
+                        .insert(*iter_vertex);
+                    // update edge and surface for the swapped node
                     if (vertex_temp0 > iter_link) {
                         edge_index0 = { vertex_temp0,  iter_link };
                     } else {
@@ -923,11 +923,11 @@ void GeometryConnectionInterface::RemoveVertex(const DefSizet i_input_level,
     }
 }
 /**
-* @brief function to find surface need to be reconsturcted.
+* @brief function to find surface need to be reconstructed.
 * @param[in]  i_input_level    level of current connection relations.
 * @param[in]  surface_process    input surfaces.
 * @param[in]  set_vertex_remove    vertices need to be removed.
-* @param[out] ptr_surface_reconstruct surfaces need to be reconsturcted.
+* @param[out] ptr_surface_reconstruct surfaces need to be reconstructed.
 */
 void GeometryConnectionInterface::FindSurfaceForReconstruction(
     const DefSizet i_input_level, const std::set<DefSizet>& surface_process,
@@ -988,7 +988,7 @@ void GeometryConnectionInterface::ReconstructSurfaceBasedOnExistingVertex(
             if (connection_surface_given_level_
                 .at(i_input_level).vec_surface_connection.at(i_surface)
                 .child_surface.empty()) {
-                // delete sufrace from edges (assuming the vertex are connected
+                // delete surface from edges (assuming the vertex are connected
                 // sequentially)
                 max_vertex = connection_surface_given_level_
                     .at(i_input_level).vec_surface_connection.at(i_surface)

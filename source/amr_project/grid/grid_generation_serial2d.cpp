@@ -49,10 +49,10 @@ void GridManager2D::GenerateGridNodeNearTrackingNode(const DefSizet i_level,
 * @brief   function to add layers near tracking grids.
 * @param[in] i_level refinement level.
 * @param[in]  i_geo index of the geometry (only for write log).
-* @param[in]  ptr_geo_info vertexer to instance storing geometry information.
+* @param[in]  ptr_geo_info vertex to instance storing geometry information.
 * @param[in]  map_sfbitset   existing nodes.
 * @param[out] ptr_map_nodes_outside   nodes haven't been colored.
-* @param[out] ptr_map_nodes_inside   nodes havebeen colored.
+* @param[out] ptr_map_nodes_inside   nodes have been colored.
 */
 void GridManager2D::IdentifyTypeOfLayerByFloodFill(
     const DefSizet i_level, const DefSizet i_geo,
@@ -60,7 +60,7 @@ void GridManager2D::IdentifyTypeOfLayerByFloodFill(
     const DefMap<DefUint>& map_nodes_exist,
     DefMap<DefUint>* const ptr_map_nodes_outside,
     DefMap<DefUint>* const ptr_map_nodes_inside) const {
-    // step 1: find start poitn for flood fill
+    // step 1: find start point for flood fill
     if (flood_fill_start_point.size() != k0GridDims_) {
         LogWarning("Dimension of flood_fill_start_point is different"
             "from k0GridDims_.");
@@ -83,7 +83,7 @@ void GridManager2D::IdentifyTypeOfLayerByFloodFill(
     DefUint i_count = 0, count_sum = 0;;
     DefSFBitset sfbitset_origin_vertex =
         SFBitsetEncoding(std::array<DefLUint, 2>({ x_index , y_index }));
-    // search in -x direction from the vec_origin untill meet the first vertex
+    // search in -x direction from the vec_origin until meet the first vertex
     // in map_nodes_exist
     DefSFBitset sfbitset_temp = sfbitset_origin_vertex, sfbitset_start_vertex;
     while (i_count < x_index) {
@@ -96,7 +96,7 @@ void GridManager2D::IdentifyTypeOfLayerByFloodFill(
         ++i_count;
     }
     count_sum += i_count;
-    // search in -y direction from the vec_origin untill meet the first vertex
+    // search in -y direction from the vec_origin until meet the first vertex
     // in map_nodes_exist
     if (!bool_find_node_for_flood_fill) {
         sfbitset_temp = sfbitset_origin_vertex;
@@ -112,7 +112,7 @@ void GridManager2D::IdentifyTypeOfLayerByFloodFill(
         }
     }
     count_sum += i_count;
-    // search in +x direction from the vec_origin untill meet the first vertex
+    // search in +x direction from the vec_origin until meet the first vertex
     // in map_nodes_exist
     if (!bool_find_node_for_flood_fill) {
         sfbitset_temp = sfbitset_origin_vertex;
@@ -128,7 +128,7 @@ void GridManager2D::IdentifyTypeOfLayerByFloodFill(
         }
     }
     count_sum += i_count;
-    // search in +y direction from the vec_origin untill meet the first vertex
+    // search in +y direction from the vec_origin until meet the first vertex
     // in map_nodes_exist
     if (!bool_find_node_for_flood_fill) {
         sfbitset_temp = sfbitset_origin_vertex;
@@ -166,7 +166,7 @@ void GridManager2D::IdentifyTypeOfLayerByFloodFill(
 /**
 * @brief   function to add layers near tracking grids.
 * @param[in] sfbitset_in space filling code of at the center.
-* @param[out] ptr_vec_stk adjecent nodes in positive and negative directions.
+* @param[out] ptr_vec_stk adjacent nodes in positive and negative directions.
 */
 void GridManager2D::PushBackSFBitsetInFloodFill(const DefSFBitset& sfbitset_in,
     std::vector<DefSFBitset>* const ptr_vec_stk) const {
@@ -240,7 +240,7 @@ void GridManager2D::ExtendOneLayerGrid(
         }
         if ((flag_node_boundary & kFlagCurrentNodeXNeg_)
             == kFlagCurrentNodeXNeg_) {
-            if (bool_neg_boundary[kXIndex]) {  // on the mimimum x boundary
+            if (bool_neg_boundary[kXIndex]) {  // on the minimum x boundary
                 ptr_vector_boundary_min->at(kXIndex)
                     .insert({ iter.first, kFlag0_ });
             } else {
@@ -258,7 +258,7 @@ void GridManager2D::ExtendOneLayerGrid(
         }
         if ((flag_node_boundary & kFlagCurrentNodeYNeg_)
             == kFlagCurrentNodeYNeg_) {
-            if (bool_neg_boundary[kYIndex]) {  // on the mimimum y boundary
+            if (bool_neg_boundary[kYIndex]) {  // on the minimum y boundary
                 ptr_vector_boundary_min->at(kYIndex)
                     .insert({ iter.first, kFlag0_ });
             } else {
@@ -322,7 +322,7 @@ void GridManager2D::ComputeSFBitsetOnBoundaryAtGivenLevel(
 /**
 * @brief   function to compute space filling code of neighbours
             in given directions.
-* @param[in] bitset_in space filling code of the cetner node.
+* @param[in] bitset_in space filling code of the center node.
 * @param[in] bool_neg indicators of extending in negative directions.
 * @param[in] bool_pos indicators of extending in positive directions.
 * @param[out] ptr_vec_neighbours space filling codes of neighbours.

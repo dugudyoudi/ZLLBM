@@ -12,7 +12,7 @@
 using namespace rootproject;
 using namespace rootproject::amrproject;
 class GridInfoTest :public GridInfoInterface {
-public:
+ public:
     void set_number_of_vec_elements() override {};
     void InitialGridNode(const DefSFBitset& bitset_in) override {};
     GridInfoTest() {
@@ -21,30 +21,30 @@ public:
 };
 class GridInfoTestCreator :
     public GridInfoCreatorInterface {
-public:
+ public:
     std::shared_ptr<GridInfoInterface>
         CreateGridInfo()override {
         return std::make_shared<GridInfoTest>();
     };
 };
-class TrackinGridInfoTest :public TrackingGridInfoInterface {
-public:
-    TrackinGridInfoTest() {
-        this->node_type_ = "TrackinGridInfoTest";
+class TrackingGridInfoTest :public TrackingGridInfoInterface {
+ public:
+    TrackingGridInfoTest() {
+        this->node_type_ = "TrackingGridInfoTest";
     }
 };
-class TrackinGridInfoTestCreator :
+class TrackingGridInfoTestCreator :
     public TrackingGridInfoCreatorInterface {
-public:
+ public:
     std::shared_ptr<TrackingGridInfoInterface>
         CreateTrackingGridInfo()override {
-        return std::make_shared<TrackinGridInfoTest>();
+        return std::make_shared<TrackingGridInfoTest>();
     };
 };
 class SolverTest :public SolverInterface {
  public:
     std::string GetSolverMethod() override {
-        return "A temperal sovler for test.";
+        return "A temporal solver for test.";
     };
     void SolverInitial() override {};
     void RunSolver() override {};
@@ -75,8 +75,8 @@ int main(int argc, char* argv[]) {
     amr_instance->ptr_io_manager_->bool_binary_ = true;
 
     // grid related parameters //
-    std::shared_ptr<TrackinGridInfoTestCreator> ptr_tracking_creator =
-        std::make_shared<TrackinGridInfoTestCreator>();
+    std::shared_ptr<TrackingGridInfoTestCreator> ptr_tracking_creator =
+        std::make_shared<TrackingGridInfoTestCreator>();
     GridManager3D* grid_manager = dynamic_cast<GridManager3D*>(
         amr_instance->ptr_grid_manager_.get());
     // domain size
@@ -98,7 +98,7 @@ int main(int argc, char* argv[]) {
     ptr_geo_temp->ptr_tracking_grid_info_creator_ = ptr_tracking_creator;
     ptr_geo_temp->geometry_center_ = { 1, 1, 1 };
     ptr_geo_temp->k0XIntExtendPositive_ = {3, 6 };
-    ptr_geo_temp->k0XIntExtendNegative_ = 
+    ptr_geo_temp->k0XIntExtendNegative_ =
         std::vector<DefUint>(max_refinement_level + 1 , 2);
     ptr_geo_temp->k0YIntExtendPositive_ = { 2, 4 };
     ptr_geo_temp->k0YIntExtendNegative_ = { 2, 4 };
@@ -121,11 +121,11 @@ int main(int argc, char* argv[]) {
 
     amr_instance->SetupParameters();
 
-    // set grid node type and sovler at all levels the same
-    std::shared_ptr<SolverCreatorTest> ptr_sovler_creator =
+    // set grid node type and solver at all levels the same
+    std::shared_ptr<SolverCreatorTest> ptr_solver_creator =
         std::make_shared<SolverCreatorTest>();
     amr_instance->SetTheSameLevelDependentInfoForAllLevels(
-        ptr_sovler_creator.get());
+        ptr_solver_creator.get());
 
     amr_instance->InitializeSimulation();
 

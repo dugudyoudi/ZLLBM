@@ -16,6 +16,7 @@
 #ifdef ENABLE_MPI
 #include "grid/grid_manager.h"
 #include "io/log_write.h"
+#include "criterion/geometry_info_interface.h"
 namespace rootproject {
 namespace amrproject {
 void MpiManager::StartupMpi(int argc, char* argv[]) {
@@ -239,6 +240,30 @@ void MpiManager::IniSendNReceivePartitionedGrid(
         }
     }
 }
+#ifndef  DEBUG_DISABLE_2D_FUNCTIONS
+void MpiManager::IniSendNReceivePartitionedGeoCoordi(
+    const GridManager2D& grid_manager2d,
+    const std::vector<DefSFBitset>& bitset_max,
+    Geometry2DInterface* const ptr_geo2d) const {
+    std::vector<DefReal> background_space(2), coordi(2);
+    background_space.at(kXIndex) = grid_manager2d.k0DomainDx_.at(kXIndex);
+    background_space.at(kYIndex) = grid_manager2d.k0DomainDx_.at(kYIndex);
+    DefSFBitset bitset_temp;
+    if (rank_id_ == 0) {
+        for (const auto& i_point : ptr_geo2d->coordinate_origin_) {
+            grid_manager2d.SFBitsetEncodingCoordi()
+        }
+    }
+}
+#endif  // DEBUG_DISABLE_2D_FUNCTIONS
+#ifndef  DEBUG_DISABLE_3D_FUNCTIONS
+void MpiManager::IniSendNReceivePartitionedGeoCoordi(
+    const GridManager3D& grid_manager3d,
+    const std::vector<DefSFBitset>& bitset_max,
+    Geometry3DInterface* const ptr_geo3d) const {
+
+}
+#endif  // DEBUG_DISABLE_3D_FUNCTIONS
 }  // end namespace amrproject
 }  // end namespace rootproject
 #endif  // ENABLE_MPI

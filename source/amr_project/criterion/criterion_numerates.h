@@ -26,8 +26,8 @@ enum class EGridExtendType {
 };
 ///////////// geometry related //////////////
 /**
-* @class EGeometryOutputkDataType
-* @brief enum class to store data type for geometry output
+* @class EGeometryCellType
+* @brief enum class to store data type for geometry connection type
 * @note numbering is the same as the cell types of vtk
 */
 enum class EGeometryCellType {

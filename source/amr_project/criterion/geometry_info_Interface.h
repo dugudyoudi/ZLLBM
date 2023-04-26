@@ -13,6 +13,7 @@
 #include <vector>
 #include <array>
 #include <memory>
+#include <unordered_map>
 #include <string>
 #include "../defs_libs.h"
 #include "criterion/criterion_numerates.h"
@@ -69,7 +70,7 @@ class GeometryInfoInterface {
         ///< number of extened layers
 
     /* number of layer extended inside the geometry
-     at (i_level - 1) refienemnt level*/
+     at (i_level - 1) refinement level*/
     std::vector<DefLUint>  k0IntInnerExtend_;
     ///< number of extened layers inside the geometry
 
@@ -79,7 +80,8 @@ class GeometryInfoInterface {
     virtual std::vector<DefReal> GetFloodFillOriginArrAsVec() const = 0;
     virtual DefSizet GetNumOfGeometryPoints() const = 0;
     virtual ~GeometryInfoInterface() {}
-  protected:
+
+ protected:
     GeometryVertexInfo geo_vertex_info_instance_;
     ///< instance for a geometry vertex with preset vector sizes
 };
@@ -88,7 +90,7 @@ class GeometryInfoInterface {
 * @brief interface class used to create geometry instance
 */
 class GeometryInfoCreatorInterface {
-public:
+ public:
     virtual std::shared_ptr<GeometryInfoInterface>
         CreateGeometryInfo() = 0;
 };
@@ -125,7 +127,7 @@ struct GeometryCoordinate2D {
 * @brief interface class used to store 2D information of a geometry
 */
 class Geometry2DInterface{
-public:
+ public:
     // information of geometry itself
     std::array<DefReal, 2> geometry_center_{};
     std::array<DefReal, 2> flood_fill_origin_{};
@@ -139,7 +141,7 @@ public:
         const DefaultGeoManager& default_geo_manager);
 
     virtual void SetIndex() = 0;
-    virtual void DecomposeNHigerLevel(const DefSizet i_level_grid,
+    virtual void DecomposeNHigherLevel(const DefSizet i_level_grid,
         const DefReal decompose_length,
         const std::unordered_map<DefSizet, bool>& map_indices_base,
         std::unordered_map<DefSizet, bool>* const ptr_map_indices_remain) = 0;
@@ -159,7 +161,7 @@ struct GeometryCoordinate3D {
 * @brief interface class used to store 3D information of a geometry
 */
 class Geometry3DInterface {
-public:
+ public:
     // information of geometry itself
     std::array<DefReal, 3> geometry_center_{};
     std::array<DefReal, 3> flood_fill_origin_{};
@@ -172,7 +174,7 @@ public:
         const DefaultGeoManager& default_geo_manager);
     virtual int UpdateGeometry(
         const DefaultGeoManager& default_geo_manager);
-    virtual void DecomposeNHigerLevel(const DefSizet i_level_grid,
+    virtual void DecomposeNHigherLevel(const DefSizet i_level_grid,
         const DefReal decompose_length,
         const std::unordered_map<DefSizet, bool>& map_indices_base,
         std::unordered_map<DefSizet, bool>* const ptr_map_indices_remain) = 0;
@@ -180,7 +182,7 @@ public:
 };
 #endif  // DEBUG_DISABLE_3D_FUNCTIONS
 class DefaultGeoManager {
-public:
+ public:
 #ifndef  DEBUG_DISABLE_2D_FUNCTIONS
     void circle_initial(Geometry2DInterface* const ptr_geo) const;
     void circle_update(DefReal sum_t,

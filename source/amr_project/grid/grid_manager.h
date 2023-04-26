@@ -140,20 +140,14 @@ class GridManagerInterface{
         vec_ptr_interface) const;
 
     virtual ~GridManagerInterface() {}
+
  protected:
     //// Generate grid
-    const DefUint kFlag0_ = 0;  // flag to initilize status of a node
-    const DefUint kFlagTrackingCell_ = 1;  // flag to initilize status of a node
+    const DefUint kFlag0_ = 0;  // flag to initialize status of a node
+    const DefUint kFlagTrackingCell_ = 1;  // flag to initialize status of a node
     // node on the outmost interface
     const DefUint kFlagGridInterfaceOutermost_ = 1 << 2;
 
-    //const DefUint kFlagGridInterfaceInnermost_ = 1 << 3;
-    //// node with criterion at lower level
-    //const DefUint kFlagBitLowerLevel_ = 1 << 1;
-    //// node inside enclosed shape will be removed
-    //const DefUint kFlagBitEnclosedRemove_ = 1 << 2;
-    //// node inside enclosed shape will be extended at given number of layers
-    //const DefUint kFlagBitEnclosedExtend_ = 1 << 3;
     // functions to generate grid (Serial)
     int FloodFillForInAndOut(const DefSFBitset& sfbitset_start,
         const DefMap<DefUint>& map_nodes_exist,

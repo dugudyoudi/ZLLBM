@@ -19,7 +19,6 @@ namespace amrproject {
 /**
 * @brief   function to set indices and size of vectors in GeometryCoordinate to
 *          store real and int variable
-* @note
 */
 void GeometryInfoConnection3D::SetIndex() {
     if (bool_vec_velocities_) {
@@ -42,19 +41,14 @@ void GeometryInfoConnection3D::SetIndex() {
 int GeometryInfoConnection3D::InitialGeometry(
     const DefReal dx,
     const DefaultGeoShapeType shape_type,
-    const DefaultGeoManager& default_geo_manager){
+    const DefaultGeoManager& default_geo_manager) {
+    int return_status = 0;
     this->SetIndex();
     this->SetupConnectionParameters(this->geometry_cell_type_);
     this->k0DefaultGeoShapeType_ = shape_type;
-    this->Geometry3DInterface::InitialGeometry(
+    return_status = this->Geometry3DInterface::InitialGeometry(
         dx, shape_type, default_geo_manager);
-    switch (shape_type) {
-    case DefaultGeoShapeType::kCube:
-        return 0;
-    default:
-        return 1;
-    }
-    return 0;
+    return return_status;
 }
 int GeometryInfoConnection3D::UpdateGeometry(
     const DefaultGeoManager& default_geo_manager) {
@@ -171,7 +165,7 @@ void GeometryInfoConnection3D::ComputeMidCoordinates(
         + vertex_given_level_.at(vertex1.first).vec_vertex_coordinate
         .at(vertex1.second).coordinates.at(kZIndex)) / 2.;
 }
-void GeometryInfoConnection3D::DecomposeNHigerLevel(const DefSizet i_level_grid,
+void GeometryInfoConnection3D::DecomposeNHigherLevel(const DefSizet i_level_grid,
     const DefReal decompose_length,
     const std::unordered_map<DefSizet, bool>& map_indices_base,
     std::unordered_map<DefSizet, bool>* const ptr_map_indices_remain){

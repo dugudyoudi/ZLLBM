@@ -2,12 +2,12 @@
 //  All rights reserved
 
 /**
-* @file geometry_info_Interface.cpp
+* @file geometry_info_interface.cpp
 * @author Zhengliang Liu
 * @brief functions to initialize and update geometry information
 * @date  2022-8-5
 */
-#include "criterion/geometry_info_Interface.h"
+#include "criterion/geometry_info_interface.h"
 namespace rootproject {
 namespace amrproject {
 #ifndef  DEBUG_DISABLE_2D_FUNCTIONS

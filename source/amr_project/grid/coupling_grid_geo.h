@@ -9,18 +9,10 @@
 */
 #ifndef ROOTPROJECT_SOURCE_AMR_PROJECT_GRID_COUPLING_GRID_GEO_H_
 #define ROOTPROJECT_SOURCE_AMR_PROJECT_GRID_COUPLING_GRID_GEO_H_
+#include <memory>
 #include "grid/grid_info_interface.h"
 namespace rootproject {
-namespace amrproject{
-//class TrackingGridInfoGeo :public TrackingGridInfoInterface {
-//};
-//class TrackingGridInfoGeoCreator :public TrackingGridInfoCreatorInterface {
-//public:
-//   std::shared_ptr<TrackingGridInfoInterface>
-//        CreateTrackingGridInfo() override {
-//       return std::make_shared<TrackingGridInfoGeo>();
-//   };
-//};
+namespace amrproject {
 class GhostGridInfoGeo : public GhostGridInfoInterface {
     void InitialGhostNode(const DefSFBitset& bitset_in) override {};
 };
@@ -29,7 +21,7 @@ class GhostGridInfoGeo : public GhostGridInfoInterface {
 * @brief abstract class used to generate GhostGridInfo instance.
 */
 class GhostGridInfoGeoCreator : public GhostGridInfoCreatorInterface {
-public:
+ public:
     std::shared_ptr<GhostGridInfoInterface>
         CreateGhostGridInfo() override {
         return std::make_shared<GhostGridInfoGeo>();

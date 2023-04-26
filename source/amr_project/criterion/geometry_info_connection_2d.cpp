@@ -45,17 +45,13 @@ int GeometryInfoConnection2D::InitialGeometry(
     const DefReal dx,
     const DefaultGeoShapeType shape_type,
     const DefaultGeoManager& default_geo_manager) {
+    int return_status = 0;
     this->SetIndex();
     this->SetupConnectionParameters(this->geometry_cell_type_);
     this->k0DefaultGeoShapeType_ = shape_type;
-    this->Geometry2DInterface::InitialGeometry(
+    return_status = this->Geometry2DInterface::InitialGeometry(
         dx, shape_type, default_geo_manager);
-    switch (shape_type) {
-    case DefaultGeoShapeType::kCircle:
-        return 0;
-    default:
-        return 1;
-    }
+    return return_status;
 }
 int GeometryInfoConnection2D::UpdateGeometry(
     const DefaultGeoManager& default_geo_manager) {
@@ -155,7 +151,7 @@ void GeometryInfoConnection2D::ComputeMidCoordinates(
         .at(vertex1.second).coordinates.at(kYIndex)) / 2.;
 }
 
-void GeometryInfoConnection2D::DecomposeNHigerLevel(const DefSizet i_level_grid,
+void GeometryInfoConnection2D::DecomposeNHigherLevel(const DefSizet i_level_grid,
     const DefReal decompose_length,
     const std::unordered_map<DefSizet, bool>& map_indices_base,
     std::unordered_map<DefSizet, bool>* const ptr_map_indices_remain) {

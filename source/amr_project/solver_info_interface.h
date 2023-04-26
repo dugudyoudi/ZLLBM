@@ -30,7 +30,7 @@ public:
 };
 /**
 * @class SolverCreatorInterface
-* @brief abstract class used to generate sovler instance.
+* @brief abstract class used to generate solver instance.
 */
 class SolverCreatorInterface {
 public:

@@ -18,11 +18,11 @@ void GridInfoLBM::set_number_of_vec_elements() {
         std::dynamic_pointer_cast<SolverLbmDnQn>(ptr_solver_)->k0FzIndex_) + 1;
 }
 void GridInfoLBM::initial_grid_node(const DefSFBitset& bit_set_in) {
-    std::shared_ptr<SolverLbmDnQn> ptr_sovler =
+    std::shared_ptr<SolverLbmDnQn> ptr_solver =
         std::dynamic_pointer_cast<SolverLbmDnQn>(ptr_solver_);
-    map_grid_node_.at(bit_set_in).vec_real[ptr_sovler->k0RhoIndex_] = 0.;
-    map_grid_node_.at(bit_set_in).vec_real[ptr_sovler->k0UxIndex_] = 0.2;
-    map_grid_node_.at(bit_set_in).vec_real[ptr_sovler->k0UyIndex_] = 0.;
+    map_grid_node_.at(bit_set_in).vec_real[ptr_solver->k0RhoIndex_] = 0.;
+    map_grid_node_.at(bit_set_in).vec_real[ptr_solver->k0UxIndex_] = 0.2;
+    map_grid_node_.at(bit_set_in).vec_real[ptr_solver->k0UyIndex_] = 0.;
 }
 void SolverLbmDnQn::SolverInitial() {
     io::LogError("Need to sepecify LBM DnQn Model.");
