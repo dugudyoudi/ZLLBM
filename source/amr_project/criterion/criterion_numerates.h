@@ -12,9 +12,10 @@
 #define ROOTPROJECT_AMR_PROJECT_CRITERION_CRITERION_NUMERATES_H_
 namespace rootproject {
 namespace amrproject {
-enum class ECriterionType {
+enum class ECriterionType : char {
     kUndefined = 0,
-    kGeometry = 1
+    kGeometry = 1,
+    kFreeSurface = 2
 };
 /**
 * @struct EGridExtendType

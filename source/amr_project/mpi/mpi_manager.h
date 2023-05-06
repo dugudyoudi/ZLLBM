@@ -17,10 +17,10 @@
 #ifdef __linux__
 #include <netinet/in.h>
 #include <endian.h>
+#elif  _WIN32
+#include <winsock2.h>
 #endif
 #include <mpi.h>
-#include "grid/grid_manager.h"
-#include "criterion/criterion_manager.h"
 namespace rootproject {
 namespace amrproject {
 /**
@@ -32,37 +32,10 @@ class MpiManager{
     int num_of_ranks_ = 1;  ///< total number of mpi ranks
     int rank_id_;  ///< current rank
     void StartupMpi(int argc, char* argv[]);
+    void FinalizeMpi();
     void SetMpiParameters();
 
-    int SerializeData(const DefMap<DefUint>& map_nodes,
-        std::unique_ptr<char[]>& buffer) const;
-    void DeserializeData(const std::unique_ptr<char[]>& buffer,
-        DefMap<DefUint>* const map_nodes) const;
-
-    void IniPartiteGridBySpaceFillingCurves(
-        const std::vector<DefMap<DefUint>>& sfbitset_one_lower_level,
-        GridManagerInterface const& grid_manager,
-        std::vector<DefSFBitset>* const ptr_bitset_min,
-        std::vector<DefSFBitset>* const ptr_bitset_max);
     void IniBroadcastBitsetBounds(std::vector<DefSFBitset>* const ptr_bitset_bounds);
-    void IniSendNReceivePartitionedGrid(
-        const std::vector<DefSFBitset>& ptr_bitset_max,
-        const std::vector<DefMap<DefUint>>& sfbitset_all_one_lower_level,
-        GridManagerInterface const& grid_manager,
-        std::vector<DefMap<DefUint>>* const ptr_sfbitset_each_one_lower_level) const;
-
-#ifndef  DEBUG_DISABLE_2D_FUNCTIONS
-    void IniSendNReceivePartitionedGeoCoordi(
-        const GridManager2D& grid_manager2d,
-        const std::vector<DefSFBitset>& bitset_max,
-        Geometry2DInterface* const ptr_geo2d) const;
-#endif  // DEBUG_DISABLE_2D_FUNCTIONS
-#ifndef  DEBUG_DISABLE_3D_FUNCTIONS
-    void IniSendNReceivePartitionedGeoCoordi(
-        const GridManager3D& grid_manager3d,
-        const std::vector<DefSFBitset>& bitset_max,
-        Geometry3DInterface* const ptr_geo3d) const;
-#endif  // DEBUG_DISABLE_3D_FUNCTIONS
 
     // functions to convert host unsigned integer to network one
     inline uint8_t HtoNUint(uint8_t val_host) const {

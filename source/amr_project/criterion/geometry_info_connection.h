@@ -104,13 +104,17 @@ class GeometryConnectionInterface : virtual public GeometryInfoInterface {
     std::vector<std::vector<DefSizet>> connection_relation_;
 
     std::vector<GeometryConnectionCoordinateLevel>
-        vertex_given_level_{};
+        vertex_given_level_{};   ///< vertices at the given level (the ith element)
     std::vector<GeometryConnectionEdgeLevel>
-        connection_edge_given_level_{};
+        connection_edge_given_level_{};  ///< edges at the given level (the ith element)
     std::vector<GeometryConnectionSurfaceLevel>
-        connection_surface_given_level_{};
+        connection_surface_given_level_{};  ///< surfaces at the given level (ith element)
+    // connection_vertex_given_level_ records the vertices at a given level since vertices may exist simultaneously
+    // at lower and higher levels, while vertex_given_level_ only store vertices at the lowest levels to
+    // to reduce memory cost
     std::vector<std::set<std::pair<DefSizet, DefSizet>>>
         connection_vertex_given_level_{};
+    ///<  vertices at the current and higher geometry levels exist simultaneously at the given level (the ith element)
 
     virtual void InitialCoordinateGivenLevel(
         std::vector<DefReal>* const ptr_coordi_min,

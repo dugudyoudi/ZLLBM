@@ -10,9 +10,6 @@
 #include "./auxiliary_inline_func.h"
 #include "grid/grid_manager.h"
 #include "io/log_write.h"
-#ifdef ENABLE_MPI
-#include "mpi/mpi_manager.h"
-#endif  // ENABLE_MPI
 namespace rootproject {
 namespace amrproject {
 void GridManagerInterface::GenerateInitialMeshBasedOnGeoSerial(
@@ -209,7 +206,7 @@ void GridManagerInterface::GenerateGridFromHighToLowLevelSerial(
                 outermost_layer_current.clear();
             }
         }
-        // find interface between different grid
+        // find interface between different grids
         DefSizet level_low = i_level - 1;
         for (auto& iter_inner : innermost_layer_current) {
             innermost_layer.at(iter_inner.first).clear();
@@ -256,10 +253,6 @@ void GridManagerInterface::InstantiateGridNodeAllLevelSerial(
     InterfaceLayerInfo* ptr_interface_info = nullptr;
     InterfaceLayerInfo* ptr_interface_info_lower = nullptr;
     DefSizet layer_coarse0, layer_coarse_m1, layer0, layer_m1, layer_m2;
-
-#ifdef ENABLE_MPI
-
-#endif  // ENABLE_MPI
 
     DefMap<DefUint> background_occupied;
     DefUint flag_temp, flag_refined = kFlagExist_;
@@ -584,7 +577,7 @@ int GridManagerInterface::FloodFillForInAndOut(
     std::vector<DefSFBitset> bitset_neigh;
     if (map_nodes_exist.find(sfbitset_inside) != map_nodes_exist.end()) {
         // node inside the geometry is in map_nodes_exist, then
-        // the colored nodes are indentified as the outside nodes
+        // nodes which is lack one or more neighbours are identified as outside nodes
         std::vector<DefSFBitset> bitset_neigh;
         for (auto iter = map_nodes_exist.begin();
             iter != map_nodes_exist.end(); ++iter) {
@@ -608,10 +601,10 @@ int GridManagerInterface::FloodFillForInAndOut(
             iter != map_nodes_exist.end(); ++iter) {
             map_nodes_temp.at(iter->first) = flag_bit_exist;
             FindAllNeighboursSFBitset(iter->first, &bitset_neigh);
-            for (const auto& iter_neigbour : bitset_neigh) {
-                if (map_nodes_temp.find(iter_neigbour)
+            for (const auto& iter_neighbour : bitset_neigh) {
+                if (map_nodes_temp.find(iter_neighbour)
                     == map_nodes_temp.end()) {
-                    map_nodes_temp.insert({ iter_neigbour, kFlag0_ });
+                    map_nodes_temp.insert({ iter_neighbour, kFlag0_ });
                 }
             }
         }

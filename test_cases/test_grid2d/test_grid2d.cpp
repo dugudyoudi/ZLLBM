@@ -76,10 +76,10 @@ int main(int argc, char* argv[]) {
     //amr_instance->ptr_io_manager_->bool_binary_ = true;
 
     // grid related parameters //
-    std::shared_ptr<TrackingGridInfoTestCreator> ptr_tracking_creator =
-        std::make_shared<TrackingGridInfoTestCreator>();
     GridManager2D* grid_manager = dynamic_cast<GridManager2D*>(
         amr_instance->ptr_grid_manager_.get());
+    grid_manager->vec_ptr_tracking_info_creator.push_back(
+        std::make_unique<TrackingGridInfoTestCreator>());
     // domain size
     grid_manager->k0DomainSize_.at(kXIndex) = 2.;
     grid_manager->k0DomainSize_.at(kYIndex) = 2.;
@@ -95,10 +95,10 @@ int main(int argc, char* argv[]) {
     GeometryInfoConnection2D* ptr_geo_temp =
         dynamic_cast<GeometryInfoConnection2D*>(amr_instance->
         ptr_criterion_manager_->vec_ptr_geometries_.at(0).get());
-    ptr_geo_temp->ptr_tracking_grid_info_creator_ = ptr_tracking_creator;
+    ptr_geo_temp->ptr_tracking_grid_info_creator_ = grid_manager->vec_ptr_tracking_info_creator.at(0).get();
     ptr_geo_temp->geometry_center_ = { 1, 1 };
     ptr_geo_temp->k0XIntExtendPositive_ = {3, 6 };
-    ptr_geo_temp->k0XIntExtendNegative_ = 
+    ptr_geo_temp->k0XIntExtendNegative_ =
         std::vector<DefUint>(max_refinement_level + 1 , 2);
     ptr_geo_temp->k0YIntExtendPositive_ = { 2, 4 };
     ptr_geo_temp->k0YIntExtendNegative_ = { 2, 4 };
@@ -129,11 +129,10 @@ int main(int argc, char* argv[]) {
 
     amr_instance->InitializeSimulation();
 
-    amr_instance->FinalizeSimulation();
 #ifdef ENABLE_MPI
     int myid, numprocs, namelen;
     char processor_name[MPI_MAX_PROCESSOR_NAME];
-    // MPI_Init(&argc, &argv);
+
     MPI_Comm_rank(MPI_COMM_WORLD, &myid);
     MPI_Comm_size(MPI_COMM_WORLD, &numprocs);
     MPI_Get_processor_name(processor_name, &namelen);
@@ -141,9 +140,10 @@ int main(int argc, char* argv[]) {
     // if (myid == 0) printf("number of processes: %d\n", numprocs);
     printf("Mpi test (test_grid.cpp) finished on %s: node %d \n",
         processor_name, myid);
-
-    MPI_Finalize();
 #else
     printf("Serial test (test_grid2d.cpp) finished");
 #endif
+
+    amr_instance->FinalizeSimulation();
+
 }

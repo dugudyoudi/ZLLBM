@@ -12,6 +12,7 @@
 #define ROOTPROJECT_SOURCE_AMR_PROJECT_GRID_GRID_MANAGER_H_
 #include <concepts>
 #include <array>
+#include <string>
 #include <vector>
 #include <utility>
 #include <memory>
@@ -24,12 +25,15 @@
 #ifdef DEBUG_UNIT_TEST
 #include "../../googletest-main/googletest/include/gtest/gtest_prod.h"
 #endif  // DEBUG_UNIT_TEST
+#ifdef ENABLE_MPI
+#include "mpi/mpi_manager.h"
+#endif  // ENABLE_MPI
 namespace rootproject {
 namespace amrproject {
 template<typename InterfaceInfo>
-concept InterfaceInfoHasType =requires (
-    InterfaceInfo type_inferface){
-    type_inferface.node_type_;
+concept InterfaceInfoHasType = requires(
+    InterfaceInfo type_interface) {
+    type_interface.node_type_;
 };
 /**
 * @class GridManager
@@ -46,7 +50,7 @@ class GridManagerInterface{
     DefUint  k0NumNeighbours_ = 0;  ///< number of neighbouring nodes
     // 0 refers to uniform mesh
     DefSizet  k0MaxLevel_ = 0;  ///< maximum levels of refinement
-    
+
     /* this setup is used to avoid issues caused by rapid change of
     refinement level in a small region. Number of layers is counted
     at the lower refinement level.*/
@@ -56,9 +60,9 @@ class GridManagerInterface{
     /* number of nodes extended from position of given criterion,
     e.g. solid boundary and free surface*/
 
-    // overlapping region between differen refinement level
+    // overlapping region between different refinement levels
     const DefUint kOverlappingOutmostM1_ = 1;
-    ///< index of the outmost layer of the overlapping region 
+    ///< index of the outmost layer of the overlapping region
     const DefUint kOverlappingOutmostM2_ = 2;
     ///< index of the second outmost layer of the overlapping region
 
@@ -69,11 +73,13 @@ class GridManagerInterface{
     const DefUint kFlagFine2Coarse0_ = 1 << 7;
     const DefUint kFlagFine2CoarseM1_ = 1 << 8;
 
-    // grid type
+    // list of creators to construct classes
+    std::vector<std::unique_ptr<TrackingGridInfoCreatorInterface>> vec_ptr_tracking_info_creator;
+
     /*the method is used to create grid instance for all refinement levels.
       Give different methods for each grid is possible by using other functions
       instead of SetGridInfoInterfaceAllLevels(EGridNodeType node_type) during
-      initilization in function SetGridParameters(). */
+      initialization in function SetGridParameters(). */
     std::vector<std::shared_ptr<GridInfoInterface>> vec_ptr_grid_info_;
     void CreateSameGridInstanceForAllLevel(
         GridInfoCreatorInterface* ptr_grid_creator);
@@ -95,7 +101,7 @@ class GridManagerInterface{
         std::vector<DefLUint>* const num_extend_inner_layer_pos,
         std::vector<DefLUint>* const num_extend_outer_layer_neg,
         std::vector<DefLUint>* const num_extend_outer_layer_pos);
-    
+
     virtual void PrintGridInfo(void) const = 0;
     virtual void SetGridParameters(void) = 0;
 
@@ -113,7 +119,7 @@ class GridManagerInterface{
         const std::vector<DefSFBitset> bitset_cell,
         std::vector<DefSFBitset>* const ptr_bitset_all) const = 0;
     virtual DefSFBitset NodeAtNLowerLevel(
-        const DefSizet n_level, const DefSFBitset& biset_in) const = 0;
+        const DefSizet n_level, const DefSFBitset& bitset_in) const = 0;
     virtual DefLUint CalNumOfBackgroundNode() const = 0;
     virtual bool CheckBackgroundOffset(const DefSFBitset& bitset_in) const = 0;
     virtual void TraverseBackgroundForPartition(
@@ -133,13 +139,16 @@ class GridManagerInterface{
         const std::vector<DefMap<DefUint>>& sfbitset_one_lower_level);
 
     template<InterfaceInfoHasType InterfaceInfo>
-    //template<typename Type, typename InterfaceInfo>
-    DefSizet CheckExistanceOfTypeAtGivenLevel(
+    DefSizet CheckExistenceOfTypeAtGivenLevel(
         const DefSizet i_level, const std::string& type,
         const std::vector<std::shared_ptr<InterfaceInfo>>&
         vec_ptr_interface) const;
 
     virtual ~GridManagerInterface() {}
+    GridManagerInterface() {
+        static_assert(sizeof(DefSFBitset) == sizeof(DefSFCodeToUint),
+            "size of DefSFBitset and DefSFCodeToU must be the same");
+    }
 
  protected:
     //// Generate grid
@@ -180,7 +189,7 @@ class GridManagerInterface{
         DefMap<DefUint>* const ptr_layer_fine_0,
         DefMap<DefUint>* const ptr_layer_fine_m1,
         DefMap<DefUint>* const ptr_layer_fine_m2);
-    
+
     virtual void ResetExtendLayerBasedOnDomainSize(
         const DefSizet i_level, const DefSFBitset& sfbitset_in,
         std::vector<DefLUint>* const ptr_vec_extend_neg,
@@ -226,7 +235,28 @@ class GridManagerInterface{
         DefMap<DefUint>* const ptr_layer_lower_level,
         DefMap<DefUint>* const ptr_layer_lower_level_outer) = 0;
 
+#ifdef ENABLE_MPI
+
+ public:
+    void IniPartiteGridBySpaceFillingCurves(
+        const std::vector<DefMap<DefUint>>& vec_sfbitset,
+        const MpiManager& mpi_manager,
+        std::vector<DefSFBitset>* const ptr_bitset_min,
+        std::vector<DefSFBitset>* const ptr_bitset_max);
+    void IniSendNReceivePartitionedGrid(
+        const std::vector<DefSFBitset>& ptr_bitset_max,
+        const std::vector<DefMap<DefUint>>& sfbitset_all_one_lower_level,
+        const MpiManager& mpi_manager,
+        std::vector<DefMap<DefUint>>* const ptr_sfbitset_each_one_lower_level) const;
+
+    int SerializeNode(const DefMap<DefUint>& map_nodes,
+        std::unique_ptr<char[]>& buffer) const;
+    void DeserializeNode(const std::unique_ptr<char[]>& buffer,
+        DefMap<DefUint>* const map_nodes) const;
+#endif  // ENABLE_MPI
+
 #ifdef DEBUG_UNIT_TEST
+
  private:
      // gtest to access private member functions
 #ifndef  DEBUG_DISABLE_2D_FUNCTIONS
@@ -248,12 +278,12 @@ class GridManager2D :public  GridManagerInterface, public SFBitsetAux2D {
  public:
     std::array<DefLUint, 2> k0IntOffset_ = {1, 1};
     ///< number of offset background node
-    std::array<DefReal, 2> k0DomainSize_{};  ///< domian size
+    std::array<DefReal, 2> k0DomainSize_{};  ///< domain size
     std::array<DefReal, 2> k0DomainDx_{};  ///< grid space
     /* offset to avoid exceeding the boundary limits when searching nodes.
-    The offset distance is (kXintOffset * kDomianDx),
+    The offset distance is (kXintOffset * kDomainDx),
     and the default value is 1. */
-    std::array<DefReal, 2> k0RealOffset_{};  ///< kXintOffset * kDomianDx
+    std::array<DefReal, 2> k0RealOffset_{};  ///< kXintOffset * kDomainDx
     std::array<DefLUint, 2> k0MaxIndexOfBackgroundNode_{};
     ///< the maximum index of background nodes in each direction*/
     // k0IntOffset_ is included in k0MaxIndexOfBackgroundNode_
@@ -263,7 +293,7 @@ class GridManager2D :public  GridManagerInterface, public SFBitsetAux2D {
     SFBitsetAuxInterface* GetSFBitsetAuxPtr() override {
         return dynamic_cast<SFBitsetAuxInterface*>(this);
     }
-    std::vector<DefReal> GetDomainDxArrAsVec() const override final {
+    std::vector<DefReal> GetDomainDxArrAsVec() const final {
         return { k0DomainDx_[kXIndex], k0DomainDx_[kYIndex] };
     };
 
@@ -291,10 +321,10 @@ class GridManager2D :public  GridManagerInterface, public SFBitsetAux2D {
         k0NumNeighbours_ = 9;
     }
 
-protected:
-   void GenerateBackgroundGrid(
+ protected:
+    void GenerateBackgroundGrid(
         const DefMap<DefUint>& map_occupied) override;
-   void OverlapLayerFromHighToLow(
+    void OverlapLayerFromHighToLow(
        const DefMap<DefUint>& layer_high_level,
        DefMap<DefUint>* const ptr_layer_low_level) override;
 
@@ -340,7 +370,7 @@ protected:
         DefMap<DefUint>* const ptr_map_exist,
         DefMap<DefUint>* const ptr_outmost_layer,
         std::vector<DefMap<DefUint>>* const ptr_vector_boundary_min,
-        std::vector<DefMap<DefUint>>* const ptr_vector_boundary_max) 
+        std::vector<DefMap<DefUint>>* const ptr_vector_boundary_max)
         const override;
     void FindInterfaceBetweenGrid(
         const DefSizet i_level, const DefMap<DefUint>& map_outmost_layer,
@@ -348,19 +378,21 @@ protected:
         DefMap<DefUint>* const ptr_interface_outmost,
         DefMap<DefUint>* const ptr_layer_lower_level,
         DefMap<DefUint>* const ptr_layer_lower_level_outer) override;
-private:
+
+ private:
     DefUint kFlagCurrentNodeXNeg_ = 1, kFlagCurrentNodeXPos_ = 1 << 1,
         kFlagCurrentNodeYNeg_ = 1 << 2, kFlagCurrentNodeYPos_ = 1 << 3;
     DefUint FindAllNeighboursWithSpecifiedDirection(const DefSFBitset bitset_in,
-        std::array<bool, 2>& bool_neg, std::array<bool, 2>& bool_pos,
-        std::vector <DefSFBitset>* const ptr_vec_neigbours) const;
+        const std::array<bool, 2>& bool_neg, const std::array<bool, 2>& bool_pos,
+        std::vector <DefSFBitset>* const ptr_vec_neighbours) const;
     void IdentifyInterfaceNodeOnEdge(const DefUint flag_interface,
         const std::array<DefSFBitset, 2>& arr_bitset_lower,
         const DefSFBitset bitset_mid_higher,
         const DefMap<DefUint>& node_exist,
         const std::array<DefMap<DefUint>* const, 3>& arr_ptr_layer);
 #ifdef DEBUG_UNIT_TEST
-private:
+
+ private:
         // gtest to access private member functions
         FRIEND_TEST(GridManagerGeneration2D, ResetExtendLayer);
         FRIEND_TEST(GridManagerGeneration2D, IdentifyLayerThroughFloodFill);
@@ -371,8 +403,7 @@ private:
 };
 #endif  // DEBUG_DISABLE_2D_FUNCTIONS
 #ifndef  DEBUG_DISABLE_3D_FUNCTIONS
-class GridManager3D :public  GridManagerInterface, public SFBitsetAux3D
- {
+class GridManager3D :public  GridManagerInterface, public SFBitsetAux3D {
  public:
     std::array<DefLUint, 3> k0IntOffset_ = { 1, 1, 1};
     ///< number of offset background node
@@ -392,7 +423,7 @@ class GridManager3D :public  GridManagerInterface, public SFBitsetAux3D
     SFBitsetAuxInterface* GetSFBitsetAuxPtr() override {
         return dynamic_cast<SFBitsetAuxInterface*>(this);
     }
-    std::vector<DefReal> GetDomainDxArrAsVec() const override final {
+    std::vector<DefReal> GetDomainDxArrAsVec() const final {
         return { k0DomainDx_[kXIndex], k0DomainDx_[kYIndex],
         k0DomainDx_[kZIndex] };
     };
@@ -480,12 +511,13 @@ class GridManager3D :public  GridManagerInterface, public SFBitsetAux3D
         DefMap<DefUint>* const ptr_interface_outmost,
         DefMap<DefUint>* const ptr_layer_lower_level,
         DefMap<DefUint>* const ptr_layer_lower_level_outer) override;
+
  private:
      DefUint kFlagCurrentNodeXNeg_ = 1, kFlagCurrentNodeXPos_ = 1 << 1,
          kFlagCurrentNodeYNeg_ = 1 << 2, kFlagCurrentNodeYPos_ = 1 << 3,
          kFlagCurrentNodeZNeg_ = 1 << 4, kFlagCurrentNodeZPos_ = 1 << 5;
      DefUint FindAllNeighboursWithSpecifiedDirection(const DefSFBitset bitset_in,
-         std::array<bool, 3>& bool_neg, std::array<bool, 3>& bool_pos,
+         const std::array<bool, 3>& bool_neg, const std::array<bool, 3>& bool_pos,
          std::vector <DefSFBitset>* const ptr_vec_neigbours) const;
      void IdentifyInterfaceNodeOnEdge(const DefUint flag_interface,
          const std::array<DefSFBitset, 2>& arr_bitset_lower,
@@ -498,6 +530,7 @@ class GridManager3D :public  GridManagerInterface, public SFBitsetAux3D
          const DefMap<DefUint>& node_exist,
          const std::array<DefMap<DefUint>* const, 3>& arr_ptr_layer);
 #ifdef DEBUG_UNIT_TEST
+
  private:
      // gtest to access private member functions
      FRIEND_TEST(GridManagerGeneration3D, ResetExtendLayer);
@@ -520,22 +553,20 @@ class GridManager3D :public  GridManagerInterface, public SFBitsetAux3D
 *          the given type.
 */
 template<InterfaceInfoHasType InterfaceInfo>
-//template<typename Type, typename InterfaceInfo>
-DefSizet GridManagerInterface::CheckExistanceOfTypeAtGivenLevel(
+DefSizet GridManagerInterface::CheckExistenceOfTypeAtGivenLevel(
     const DefSizet i_level, const std::string& type,
     const std::vector<std::shared_ptr<InterfaceInfo>>&
     vec_ptr_interface) const {
     DefSizet iter_count = 0;
     if (vec_ptr_interface.empty()) {
         return 0;
-    }
-    else {
+    } else {
         for (const auto& iter : vec_ptr_interface) {
             ++iter_count;
             if ((iter->i_level_ == i_level)
                 && (iter->node_type_ == type)) {
                 return iter_count;
-            }          
+            }
         }
     }
     return 0;

@@ -14,38 +14,31 @@
 #include "grid/grid_manager.h"
 #include "criterion/criterion_manager.h"
 #include "io/log_write.h"
-#include "mpi/mpi_manager.h"
 namespace rootproject {
 namespace amrproject {
 /**
 * @brief function to setup and check grid related parameters.
 */
 void GridManager2D::SetGridParameters() {
-    int rank_id = 0;
-#ifdef ENABLE_MPI
-    MPI_Comm_rank(MPI_COMM_WORLD, &rank_id);
-#endif  // ENABLE_MPI
-    SFBitsetMinAndMaxGloble(
+    SFBitsetMinAndMaxGlobal(
         k0IntOffset_, k0MaxIndexOfBackgroundNode_);
     SFBitsetMinAndMaxCoordinates(k0MaxLevel_,
         k0IntOffset_, k0MaxIndexOfBackgroundNode_);
 
-    if (rank_id == 0) {
-        // check if length of computational domain is given
-        if (k0DomainSize_.at(kXIndex) < kEps) {
-            LogError("Domain length in x direction (k0DomainSize_[0])"
-                " should be a positive value");
-        } else if (k0DomainSize_.at(kYIndex) < kEps) {
-            LogError("Domain length in x direction (k0DomainSize_[1])"
-                " should be a positive value");
-        }
-        // check if grid space is given
-        if (k0DomainDx_.at(kXIndex) < kEps
-            && k0DomainDx_.at(kYIndex) < kEps) {
-            LogError("Grid space of x or y(k0DomianDx_)"
-                " shoud be positive values");
-        }
-    }  // end if (rank_id == 0)
+    // check if length of computational domain is given
+    if (k0DomainSize_.at(kXIndex) < kEps) {
+        LogError("Domain length in x direction (k0DomainSize_[0])"
+            " should be a positive value");
+    } else if (k0DomainSize_.at(kYIndex) < kEps) {
+        LogError("Domain length in x direction (k0DomainSize_[1])"
+            " should be a positive value");
+    }
+    // check if grid space is given
+    if (k0DomainDx_.at(kXIndex) < kEps
+        && k0DomainDx_.at(kYIndex) < kEps) {
+        LogError("Grid space of x or y(k0DomainDx_)"
+            " should be positive values");
+    }
 
     // set grid space if not all grid spaces are given
     if (k0DomainDx_.at(kXIndex) < kEps) {
@@ -54,9 +47,9 @@ void GridManager2D::SetGridParameters() {
     if (k0DomainDx_.at(kYIndex) < kEps) {
         k0DomainDx_.at(kYIndex) = k0DomainDx_.at(kXIndex);
     }
-    k0SpaceBackgroud_ = { k0DomainDx_[kXIndex], k0DomainDx_[kYIndex] };
+    k0SpaceBackground_ = { k0DomainDx_[kXIndex], k0DomainDx_[kYIndex] };
 
-    // caculate number of background nodes in each direction
+    // calculate number of background nodes in each direction
     DefLUint x_max = static_cast<DefLUint>(k0DomainSize_[kXIndex]
         / k0DomainDx_[kXIndex] + kEps);
 
@@ -84,13 +77,13 @@ void GridManager2D::SetGridParameters() {
     DefLUint scale_i_level = static_cast<DefLUint>(TwoPowerN(k0MaxLevel_));
 
     if (k0MaxIndexOfBackgroundNode_.at(kXIndex) > index_max) {
-        LogError("Domain size exceeds the limist of sfbitset in"
-            " x direciont, try to increase number of bits for "
+        LogError("Domain size exceeds the limits of space filling code in"
+            " x direction, try to increase number of bits for "
             " storing space filling code (kSFBitsetBit) in defs_libs.h");
     }
     if (k0MaxIndexOfBackgroundNode_.at(kYIndex) > index_max) {
-        LogError("Domain size exceeds the limist of sfbitset in"
-            " y direciont, try to increase number of bits for "
+        LogError("Domain size exceeds the limits of space filling code in"
+            " y direction, try to increase number of bits for "
             " storing space filling code (kSFBitsetBit) in defs_libs.h");
     }
 }
@@ -98,22 +91,16 @@ void GridManager2D::SetGridParameters() {
 * @brief   function to write grid information in log file.
 */
 void GridManager2D::PrintGridInfo(void) const {
-    int rank_id = 0;
-#ifdef ENABLE_MPI
-    MPI_Comm_rank(MPI_COMM_WORLD, &rank_id);
-#endif  // ENABLE_MPI
     // print information of grid parameters
-    if (rank_id == 0) {
-        LogInfo("Dimension is: " + std::to_string(k0GridDims_));
-        LogInfo("Maximum refinement level is: "
-            + std::to_string(k0MaxLevel_));
-        LogInfo("Domain size is: "
-            + std::to_string(k0DomainSize_.at(kXIndex)) + " X "
-            + std::to_string(k0DomainSize_.at(kYIndex)));
-        LogInfo("Grid space dx is: "
-            + std::to_string(k0DomainDx_.at(kXIndex)) + ", and dy is: "
-            + std::to_string(k0DomainDx_.at(kYIndex)));
-    }
+    LogInfo("Dimension is: " + std::to_string(k0GridDims_));
+    LogInfo("Maximum refinement level is: "
+        + std::to_string(k0MaxLevel_));
+    LogInfo("Domain size is: "
+        + std::to_string(k0DomainSize_.at(kXIndex)) + " X "
+        + std::to_string(k0DomainSize_.at(kYIndex)));
+    LogInfo("Grid space dx is: "
+        + std::to_string(k0DomainDx_.at(kXIndex)) + ", and dy is: "
+        + std::to_string(k0DomainDx_.at(kYIndex))); 
 }
 /**
 * @brief   function to reset number of extended layers.
@@ -220,8 +207,8 @@ void GridManager2D::IdentifyInterfaceForACell(const DefUint flag_interface,
     DefMap<DefUint>* const ptr_inner_layer,
     DefMap<DefUint>* const ptr_mid_layer,
     DefMap<DefUint>* const ptr_outer_layer) {
-    //bitset_neighbours[0]:(0, 0); bitset_neighbours[1]:(+x, 0);
-    //bitset_neighbours[2]:(0, +y); bitset_neighbours[3]:(+x, +y);
+    // bitset_neighbours[0]:(0, 0); bitset_neighbours[1]:(+x, 0);
+    // bitset_neighbours[2]:(0, +y); bitset_neighbours[3]:(+x, +y);
     std::array<DefSFBitset, 4> bitset_neighbours;
     DefSFBitset bitset_mid_higher;
     std::array<DefMap<DefUint>* const, 3> arr_ptr_layer = {
@@ -332,8 +319,8 @@ void GridManager2D::FindAllNodesInACellAtLowerLevel(
     const std::vector<DefSFBitset> bitset_cell,
     std::vector<DefSFBitset>* const ptr_bitset_all) const {
     ptr_bitset_all->resize(9);
-    //bitset_cell[0]:(0, 0); bitset_cell[1]:(+x, 0);
-    //bitset_cell[2]:(0, +y); bitset_cell[3]:(+x, +y);
+    // bitset_cell[0]:(0, 0); bitset_cell[1]:(+x, 0);
+    // bitset_cell[2]:(0, +y); bitset_cell[3]:(+x, +y);
     DefSFBitset bitset_temp;
     // bottom
     bitset_temp = SFBitsetToOneHigherLevel(bitset_cell.at(0));

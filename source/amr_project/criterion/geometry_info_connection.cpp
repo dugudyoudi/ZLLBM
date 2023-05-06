@@ -164,7 +164,7 @@ void GeometryConnectionInterface::BisectEdgeOnce(
     DefSizet i_grid_level = i_level_ + i_input_level;
     DefReal grid_scale = DefReal(TwoPowerN(i_grid_level));
     DefSFBitset bitset_temp;
-    for (const auto iter : ptr_sfbitset_aux->k0SpaceBackgroud_) {
+    for (const auto iter : ptr_sfbitset_aux->k0SpaceBackground_) {
         grid_space.push_back(iter / grid_scale);
     }
     vertex_instance_.highest_grid_level = i_grid_level;
@@ -721,7 +721,7 @@ void GeometryConnectionInterface::MergeEdgeOnce(
     DefSizet i_grid_level = i_level_ + i_input_level;
     DefReal grid_scale = DefReal(TwoPowerN(i_grid_level));
     DefSFBitset bitset_temp;
-    for (const auto iter : ptr_sfbitset_aux->k0SpaceBackgroud_) {
+    for (const auto iter : ptr_sfbitset_aux->k0SpaceBackground_) {
         grid_space.push_back(iter / grid_scale);
     }
     // remove coordinates from (vertex_given_level_)

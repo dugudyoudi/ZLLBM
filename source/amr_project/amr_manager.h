@@ -10,6 +10,8 @@
 
 #ifndef ROOTPROJECT_SOURCE_OBJ_MANAGER_H_
 #define ROOTPROJECT_SOURCE_OBJ_MANAGER_H_
+#include <memory>
+#include <string>
 #include "../defs_libs.h"
 #include "./solver_info_interface.h"
 #include "io/io_manager.h"
@@ -20,7 +22,7 @@ namespace rootproject {
 namespace amrproject {
 /**
 * @class AmrManager
-* @brief class used to manage the amr processess.
+* @brief class used to manage the amr processes.
 * @note using singleton design pattern
 */
 class AmrManager {
@@ -33,7 +35,7 @@ class AmrManager {
     // modules
 #ifdef ENABLE_MPI
     std::unique_ptr<MpiManager> ptr_mpi_manager_;
-#endif
+#endif  // ENABLE_MPI
     std::unique_ptr<GridManagerInterface> ptr_grid_manager_;
     std::unique_ptr<IoManager> ptr_io_manager_;
     std::unique_ptr<CriterionManager> ptr_criterion_manager_;

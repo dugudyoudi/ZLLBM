@@ -15,18 +15,23 @@
 #include <map>
 #include <set>
 #include <memory>
+#include <utility>
 #include <string>
 #include "../defs_libs.h"
 #include "criterion/criterion_numerates.h"
 #include "./solver_info_interface.h"
+#include "grid/sfbitset_aux.h"
+#ifdef ENABLE_MPI
+#include "mpi/mpi_manager.h"
+#endif
 namespace rootproject {
-namespace amrproject{
+namespace amrproject {
 /**
 * @struct TrackingNode
-* @brief structure to nodes information for traking movement
+* @brief structure to nodes information for tracking movement
 */
 struct TrackingNode {
-public:
+ public:
     std::set<std::pair<DefSizet, DefSizet>> set_point_index;
     std::vector<DefInt> vec_int{};
     std::vector<DefReal> vec_real{};
@@ -36,7 +41,7 @@ public:
 * @brief structure to store ghost node information
 */
 struct GhostNode {
-public:
+ public:
     std::vector<DefInt> vec_int{};
     std::vector<DefReal> vec_real{};
 };
@@ -46,7 +51,7 @@ public:
 * @date  2022-6-4
 */
 struct GridNode {
-public:
+ public:
     DefUint flag_status_;
     std::vector<DefInt> vec_int{};
     std::vector<DefReal> vec_real{};
@@ -57,7 +62,7 @@ public:
 * @date  2023-1-5
 */
 class InterfaceLayerInfo {
-public:
+ public:
     // number of extended based on the interface grid
     std::vector<DefLUint> k0ExtendOuterNeg, k0ExtendOuterPos;
     ///< number of extened layers outside the geometry
@@ -75,29 +80,38 @@ public:
 * @date  2022-6-4
 */
 class TrackingGridInfoInterface {
-public:
+ public:
     DefUint computational_cost_ = 1;
     std::string node_type_;
     EGridExtendType grid_extend_type_ = EGridExtendType::kSameInAllDirections;
 
-    // number of extended based on the trakcing grid
+    // number of extended based on the tracking grid
     std::vector<DefLUint> k0ExtendOuterNeg, k0ExtendOuterPos;
     ///< number of extened layers outside the geometry
     std::vector<DefLUint> k0ExtendInnerNeg, k0ExtendInnerPos;
     ///< number of extened layers inside the geometry
+
+    // index of creators in corresponding vector
+    unsigned int k0IndexCreator = 0;
 
     // information of TrackingNode
     DefMap<TrackingNode> map_tracking_node_{};
     DefSizet k0NumIntForEachNode_ = 1;
     DefSizet k0NumRealForEachNode_ = 0;
     TrackingNode k0TrackNodeInstance_;
+
+#ifdef ENABLE_MPI
+    virtual int SizeOfEachNodeForMpi() {
+        return sizeof(DefSFBitset);
+    }
+#endif
 };
 /**
 * @class TrackingGridInfoCreatorInterface
 * @brief abstract class used to generate TrackingGridInfo instance.
 */
 class TrackingGridInfoCreatorInterface {
-public:
+ public:
     virtual std::shared_ptr<TrackingGridInfoInterface>
         CreateTrackingGridInfo() = 0;
     virtual ~TrackingGridInfoCreatorInterface() {}
@@ -109,7 +123,7 @@ public:
 * @date  2022-6-4
 */
 class GhostGridInfoInterface {
-public:
+ public:
     // information of grid at each level of refinement
     DefSizet i_level_ = 0;
     const DefUint kCountIndex_ = 1;
@@ -123,7 +137,7 @@ public:
     GridNode k0GhostNodeInstance_;
     ///< instance for a ghost node with preset vector sizes
     virtual ~GhostGridInfoInterface() {}
-protected:
+ protected:
     virtual void InitialGhostNode(const DefSFBitset& bitset_in) = 0;
 };
 /**
@@ -131,7 +145,7 @@ protected:
 * @brief abstract class used to generate GhostGridInfo instance.
 */
 class GhostGridInfoCreatorInterface {
-public:
+ public:
     virtual std::shared_ptr<GhostGridInfoInterface>
         CreateGhostGridInfo() = 0;
     virtual ~GhostGridInfoCreatorInterface() {}
@@ -143,7 +157,7 @@ public:
 * @date  2022-6-4
 */
 class GridInfoInterface {
-public:
+ public:
     // information of grid at each level of refinement
     DefSizet i_level_ = 0;
 
@@ -158,7 +172,7 @@ public:
     std::shared_ptr<GhostGridInfoInterface>
         ptr_ghost_grid_info_;
 
-    // interface between grid of differet refinement levels
+    // interface between grid of different refinement levels
     DefSizet k0NumFine2CoarseLayer_ = 3;
     DefSizet k0NumCoarse2FineLayer_ = 2;
     std::map<std::pair<ECriterionType, DefSizet>,
@@ -177,13 +191,32 @@ public:
     virtual void InitialGridNode(const DefSFBitset& bitset_in) = 0;
 
     virtual ~GridInfoInterface() {}
+
+#ifdef ENABLE_MPI
+
+ public:
+    virtual void IniSendNReceiveInterface(const std::vector<DefSFBitset>& bitset_max,
+        const MpiManager&  mpi_manager);
+    virtual void IniSendNReceiveTracking(const std::vector<DefSFBitset>& bitset_max,
+        const MpiManager& mpi_manager, const SFBitsetAuxInterface& bistset_aux,
+        const std::vector<std::unique_ptr<TrackingGridInfoCreatorInterface>>& vec_tracking_info_creator);
+
+ protected:
+    int CreateAndCommitTrackingIndexType(MPI_Datatype *ptr_mpi_pair_type);
+    virtual int SerializeTrackingNode(const std::set<DefSFCodeToUint>& set_nodes,
+        std::unique_ptr<char[]>& buffer) const;
+    virtual void DeserializeTrackingNode(const ECriterionType& criterion_type, DefSizet index_criterion,
+    const std::unique_ptr<char[]>& buffer) const;
+
+
+#endif  // ENABLE_MPI
 };
 /**
 * @class GridInfoCreatorInterface
 * @brief abstract class used to generate GhostGridInfo instance.
 */
 class GridInfoCreatorInterface {
-public:
+ public:
     virtual std::shared_ptr<GridInfoInterface>
         CreateGridInfo() = 0;
     virtual ~GridInfoCreatorInterface() {}

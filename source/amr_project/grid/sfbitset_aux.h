@@ -21,13 +21,16 @@ class  SFBitsetAuxInterface {
     // .at(kRefOthers) takes directions other than the given one
     static constexpr DefUint kRefOthers_ = 0, kRefCurrent_ = 1;
     DefSFBitset k0SfBitsetCurrentLevelBits_ = 0;
-    /**< refernece bitset used to take digitals at the center of
+    /**< reference bitset used to take digitals at the center of
     a cell of one level lower.*/
-    std::vector<DefReal> k0SpaceBackgroud_;
+    std::vector<DefReal> k0SpaceBackground_;
     virtual void SFBitsetInitial() = 0;
     virtual DefSFBitset SFBitsetEncodingCoordi(
         const std::vector<DefReal>& grid_space,
         const std::vector<DefReal>& coordi) const = 0;
+    // compared to inline function, this virtual is costly, avoiding using this if possible
+    virtual DefSFBitset SFBitsetToNLowerLevelVir(
+        const DefSizet n_level, const DefSFBitset& morton_in) const = 0;
     virtual ~SFBitsetAuxInterface() {}
 };
 #ifndef  DEBUG_DISABLE_2D_FUNCTION
@@ -78,7 +81,7 @@ class  SFBitsetAux2D : public SFBitsetAuxInterface {
     void SFBitsetMinAndMaxCoordinates(const DefSizet max_level,
         const std::array<DefLUint, 2>& indices_min,
         const std::array<DefLUint, 2>& indices_max);
-    void SFBitsetMinAndMaxGloble(
+    void SFBitsetMinAndMaxGlobal(
         const std::array<DefLUint, 2>& indices_min,
         const std::array<DefLUint, 2>& indices_max);
     void SFBitsetNotOnDomainBoundary(const DefSFBitset& sfbitset_in,
@@ -106,8 +109,11 @@ class  SFBitsetAux2D : public SFBitsetAuxInterface {
     DefSFBitset SFBitsetEncodingCoordi(
         const std::vector<DefReal>& grid_space,
         const std::vector<DefReal>& coordi) const override;
+    DefSFBitset  SFBitsetToNLowerLevelVir(const DefSizet n_level, const DefSFBitset& morton_in) const final {
+        return SFBitsetToNLowerLevel(n_level, morton_in);
+    }
 
-    SFBitsetAux2D() { SFBitsetInitial(); };
+    SFBitsetAux2D() { SFBitsetInitial(); }
 };
 #endif  // DEBUG_DISABLE_2D_FUNCTIONS
 #ifndef  DEBUG_DISABLE_3D_FUNCTION
@@ -131,7 +137,7 @@ class  SFBitsetAux3D : public SFBitsetAuxInterface {
     std::array<DefSFBitset, 3> SFBitsetMin_, SFBitsetMax_;
     std::array<DefSFBitset, 3> k0SFBitsetGlobleMin_, k0SFBitsetGlobleMax_;
     /**< bitset corresponding to the minimum and maximum
-     coodirnte in each diretion*/
+     coordinate in each direction*/
     inline DefSFBitset SFBitsetToOneLowerLevel(
         const DefSFBitset& morton_in) const;
     inline DefSFBitset SFBitsetToOneHigherLevel(
@@ -159,7 +165,7 @@ class  SFBitsetAux3D : public SFBitsetAuxInterface {
     void SFBitsetMinAndMaxCoordinates(const DefSizet max_level,
         const std::array<DefLUint, 3>& indices_min,
         const std::array<DefLUint, 3>& indices_max);
-    void SFBitsetMinAndMaxGloble(
+    void SFBitsetMinAndMaxGlobal(
         const std::array<DefLUint, 3>& indices_min,
         const std::array<DefLUint, 3>& indices_max);
     void SFBitsetNotOnDomainBoundary(const DefSFBitset& sfbitset_in,
@@ -187,8 +193,11 @@ class  SFBitsetAux3D : public SFBitsetAuxInterface {
     DefSFBitset SFBitsetEncodingCoordi(
         const std::vector<DefReal>& grid_space,
         const std::vector<DefReal>& coordi) const override;
+        DefSFBitset  SFBitsetToNLowerLevelVir(const DefSizet n_level, const DefSFBitset& morton_in) const final {
+        return SFBitsetToNLowerLevel(n_level, morton_in);
+    }
 
-    SFBitsetAux3D() { SFBitsetInitial(); };
+    SFBitsetAux3D() { SFBitsetInitial(); }
 };
 #endif  // DEBUG_DISABLE_3D_FUNCTION
 }  // end namespace amrproject

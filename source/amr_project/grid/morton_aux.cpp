@@ -182,11 +182,11 @@ DefSFBitset SFBitsetAux3D::SFBitsetEncoding(
 DefSFBitset SFBitsetAux3D::SFBitsetEncodingCoordi(
     const std::vector<DefReal>& grid_space,
     const std::vector<DefReal>& coordi) const {
-    std::array<DefLUint, 3> coorid_index =
+    std::array<DefLUint, 3> coordi_index =
     { static_cast<DefLUint>(coordi.at(kXIndex) / grid_space[kXIndex] + kEps),
       static_cast<DefLUint>(coordi.at(kYIndex) / grid_space[kYIndex] + kEps),
       static_cast<DefLUint>(coordi.at(kZIndex) / grid_space[kZIndex] + kEps) };
-    return this->SFBitsetEncoding(coorid_index);
+    return this->SFBitsetEncoding(coordi_index);
 }
 /**
 * @brief function to compute the 3D coordinates from morton code.

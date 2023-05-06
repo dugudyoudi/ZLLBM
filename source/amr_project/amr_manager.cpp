@@ -8,6 +8,7 @@
 * @date  2022-5-16
 * @note .
 */
+#include <memory>
 #include <filesystem>
 #include "io/log_write.h"
 #include "auxiliary_inline_func.h"
@@ -100,6 +101,9 @@ void AmrManager::FinalizeSimulation() {
     //ptr_io_manager_->OutputFlowfield(
     //    program_name_, ptr_grid_manager_.get(),
     //    ptr_criterion_manager_.get());
+#ifdef ENABLE_MPI
+    ptr_mpi_manager_->FinalizeMpi();
+#endif  // ENABLE_MPI
 }
 }  // end amrproject
 }  // end namespace rootproject

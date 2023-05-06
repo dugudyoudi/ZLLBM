@@ -7,6 +7,7 @@
 * @brief functions used to manage io processes.
 * @date  2022-8-6
 */
+#include <string>
 #include "io/log_write.h"
 #include "io/io_manager.h"
 #include "criterion/criterion_manager.h"
@@ -74,12 +75,12 @@ void IoManager::SetIoParameters() {
     vtk_instance_.OptionInitial(bool_binary_);
 }
 /**
-* @brief function to write flowfield.
+* @brief function to write flow field.
 */
 void IoManager::OutputFlowfield(
     const std::string& prog_name,
     GridManagerInterface* const ptr_grid_manager,
-    CriterionManager* const ptr_criterion_manager){
+    CriterionManager* const ptr_criterion_manager) {
     vtk_instance_.WriteVtuAll(prog_name, bool_binary_, k0OutputDataFormat_,
         *ptr_grid_manager, *ptr_criterion_manager);
 }

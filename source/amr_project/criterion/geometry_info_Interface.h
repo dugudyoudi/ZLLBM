@@ -17,6 +17,10 @@
 #include <string>
 #include "../defs_libs.h"
 #include "criterion/criterion_numerates.h"
+#ifdef ENABLE_MPI
+#include "mpi/mpi_manager.h"
+#include "grid/sfbitset_aux.h"
+#endif  // ENABLE_MPI
 namespace rootproject {
 namespace amrproject {
 class TrackingGridInfoCreatorInterface;
@@ -53,9 +57,9 @@ class GeometryInfoInterface {
     DefSizet k0NumRealForEachVertex_ = 0;
     std::vector<GeometryVertexInfo> vec_vertices_info_{};
 
-    std::shared_ptr<TrackingGridInfoCreatorInterface>
+    TrackingGridInfoCreatorInterface*
         ptr_tracking_grid_info_creator_ = nullptr;
-    std::shared_ptr<GhostGridInfoCreatorInterface>
+    GhostGridInfoCreatorInterface*
         ptr_ghost_grid_info_creator_ = nullptr;
 
     // type of default geometry shape
@@ -139,6 +143,15 @@ class Geometry2DInterface{
         const DefaultGeoManager& default_geo_manager);
     virtual int UpdateGeometry(
         const DefaultGeoManager& default_geo_manager);
+#ifdef ENABLE_MPI
+    int SerializeCoordiOrigin(const std::vector<GeometryCoordinate2D>& vec_points,
+        std::unique_ptr<char[]>& buffer) const;
+    void DeserializeCoordiOrigin(const std::unique_ptr<char[]>& buffer,
+        std::vector<GeometryCoordinate2D>* const vec_points) const;
+    virtual void IniSendNReceivePartitionedGeo(const std::array<DefReal, 2>& background_space,
+        const SFBitsetAux2D& sfbitset_aux, const MpiManager& mpi_manager,
+        const std::vector<DefSFBitset>& bitset_max);
+#endif  // ENABLE_MPI
 
     virtual void SetIndex() = 0;
     virtual void DecomposeNHigherLevel(const DefSizet i_level_grid,
@@ -174,6 +187,16 @@ class Geometry3DInterface {
         const DefaultGeoManager& default_geo_manager);
     virtual int UpdateGeometry(
         const DefaultGeoManager& default_geo_manager);
+#ifndef  DEBUG_DISABLE_3D_FUNCTIONS
+    int SerializeCoordiOrigin(const std::vector<GeometryCoordinate3D>& vec_points,
+        std::unique_ptr<char[]>& buffer) const;
+    void DeserializeCoordiOrigin(const std::unique_ptr<char[]>& buffer,
+        std::vector<GeometryCoordinate3D>* const vec_points) const;
+    virtual void IniSendNReceivePartitionedGeo(const std::array<DefReal, 3>& background_space,
+       const SFBitsetAux3D& sfbitset_aux, const MpiManager& mpi_manager,
+       const std::vector<DefSFBitset>& bitset_max);
+#endif  // DEBUG_DISABLE_3D_FUNCTIONS
+
     virtual void DecomposeNHigherLevel(const DefSizet i_level_grid,
         const DefReal decompose_length,
         const std::unordered_map<DefSizet, bool>& map_indices_base,

@@ -18,10 +18,10 @@
 namespace rootproject {
 namespace amrproject {
 /**
-* @brief function to find tracking near the geometry decribed
+* @brief function to find tracking near the geometry described
 *               by connection relations.
 * @param[in]  ptr_sfbitset_aux   pointer to class manage space filling curves.
-* @param[out]  ptr_grid_info grid with updated traking node information.
+* @param[out]  ptr_grid_info grid with updated tracking node information.
 */
 void GeometryConnectionInterface::FindTrackingNodeBasedOnGeo(
     const SFBitsetAuxInterface* ptr_sfbitset_aux,
@@ -29,7 +29,7 @@ void GeometryConnectionInterface::FindTrackingNodeBasedOnGeo(
     if (ptr_grid_info->grid_space_.size() != vertex_given_level_.at(0)
         .vec_vertex_coordinate.at(0).coordinates.size()) {
         LogError("Size of grid_space ("
-            + std::to_string(ptr_grid_info->grid_space_.size()) + 
+            + std::to_string(ptr_grid_info->grid_space_.size()) +
             ") is not equal to size of coordinates("
         + std::to_string(vertex_given_level_.at(0).vec_vertex_coordinate
             .at(0).coordinates.size()) + ") in vertex_given_level_.");

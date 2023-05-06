@@ -5,7 +5,7 @@
 * @file def_libs.h
 * @author Zhengliang Liu
 * @date  2022-5-12
-* @brief contain definations and libaries will be used in all modules.
+* @brief contain definations and libraries will be used in all modules.
 */
 
 #ifndef ROOTPROJECT_SOURCE_DEF_LIB_H_
@@ -33,7 +33,7 @@ using DefSFBitset = std::bitset<kSFBitsetBit>;
 class HashFunc {
  public:
     DefSFCodeToUint operator()(const DefSFBitset&bit_set_in) const noexcept {
-        DefSFCodeToUint hashVal =bit_set_in.to_ullong();
+        DefSFCodeToUint hashVal = bit_set_in.to_ullong();
         return hashVal;
     }
 };

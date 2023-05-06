@@ -12,9 +12,6 @@
 #include "auxiliary_inline_func.h"
 #include "grid/grid_manager.h"
 #include "io/log_write.h"
-#ifdef ENABLE_MPI
-#include "mpi/mpi_manager.h"
-#endif  // ENABLE_MPI
 namespace rootproject {
 namespace amrproject {
 /**
@@ -180,16 +177,18 @@ void GridManager3D::IdentifyTypeOfLayerByFloodFill(
         }
     }
     count_sum += i_count;
+    if (map_nodes_exist.find(sfbitset_origin_vertex) != map_nodes_exist.end()) {
+        sfbitset_start_vertex = sfbitset_origin_vertex;
+        LogInfo("input node for flood fill is close to geometry ("
+            + std::to_string(i_geo) + "), will mark all nodes which are lack at least"
+            " one neighbouring node thus do not distinguish inside and outside.");
+    }
 
     if (bool_find_node_for_flood_fill) {
         int flag_floodfill;
         flag_floodfill = FloodFillForInAndOut(sfbitset_start_vertex,
             map_nodes_exist, ptr_map_nodes_outside, ptr_map_nodes_inside);
-        if (flag_floodfill == 1) {
-            LogInfo("input node for flood fill is close to geometry ("
-                + std::to_string(i_geo) + "), can only find nodes outside"
-                " the geometry.");
-        } else if (flag_floodfill == 2) {
+       if (flag_floodfill == 2) {
             LogWarning("Iteration of flood fill exceed preset limits for."
             " geometry (" + std::to_string(i_geo) + ").");
         }
@@ -398,7 +397,7 @@ void GridManager3D::ComputeSFBitsetOnBoundaryAtGivenLevel(
 */
 DefUint GridManager3D::FindAllNeighboursWithSpecifiedDirection(
     const DefSFBitset bitset_in,
-    std::array<bool, 3>& bool_neg, std::array<bool, 3>& bool_pos,
+    const std::array<bool, 3>& bool_neg, const std::array<bool, 3>& bool_pos,
     std::vector <DefSFBitset>* const ptr_vec_neigbours) const {
     ptr_vec_neigbours->clear();
     DefUint flag_current_node = 0;

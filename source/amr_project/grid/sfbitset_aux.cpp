@@ -52,7 +52,7 @@ void SFBitsetAux2D::SFBitsetMinAndMaxCoordinates(
 * @param[in]  indices_max      maximum indices.
 * @return  morton code.
 */
-void SFBitsetAux2D::SFBitsetMinAndMaxGloble(
+void SFBitsetAux2D::SFBitsetMinAndMaxGlobal(
     const std::array<DefLUint, 2>& indices_min,
     const std::array<DefLUint, 2>& indices_max) {
     k0SFBitsetGlobleMin_.at(kXIndex) =
@@ -97,7 +97,7 @@ void SFBitsetAux3D::SFBitsetMinAndMaxCoordinates(
 * @param[in]  indices_max      maximum indices.
 * @return  morton code.
 */
-void SFBitsetAux3D::SFBitsetMinAndMaxGloble(
+void SFBitsetAux3D::SFBitsetMinAndMaxGlobal(
     const std::array<DefLUint, 3>& indices_min,
     const std::array<DefLUint, 3>& indices_max) {
     k0SFBitsetGlobleMin_.at(kXIndex) =
