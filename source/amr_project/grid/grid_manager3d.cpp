@@ -1,4 +1,4 @@
-//  Copyright (c) 2022, Zhengliang Liu
+//  Copyright (c) 2021 - 2023, Zhengliang Liu
 //  All rights reserved
 
 /**
@@ -490,10 +490,10 @@ void GridManager3D::FindAllNodesInACellAtLowerLevel(
     const std::vector<DefSFBitset> bitset_cell,
     std::vector<DefSFBitset>* const ptr_bitset_all) const {
     ptr_bitset_all->resize(27);
-    //bitset_cell[0]:(0, 0, 0);   bitset_cell[1]:(+x, 0, 0);
-    //bitset_cell[2]:(0, +y, 0);  bitset_cell[3]:(+x, +y, 0);
-    //bitset_cell[4]:(0, 0, +z);  bitset_cell[5]:(+x, 0, +z);
-    //bitset_cell[6]:(0, +y, +z); bitset_cell[7]:(+x, +y, +z).
+    // bitset_cell[0]:(0, 0, 0);   bitset_cell[1]:(+x, 0, 0);
+    // bitset_cell[2]:(0, +y, 0);  bitset_cell[3]:(+x, +y, 0);
+    // bitset_cell[4]:(0, 0, +z);  bitset_cell[5]:(+x, 0, +z);
+    // bitset_cell[6]:(0, +y, +z); bitset_cell[7]:(+x, +y, +z).
     DefSFBitset bitset_temp;
     // bottom
     bitset_temp = SFBitsetToOneHigherLevel(bitset_cell.at(0));
@@ -570,8 +570,105 @@ bool GridManager3D::CheckBackgroundOffset(const DefSFBitset& bitset_in) const {
         || (indices[kZIndex] < k0IntOffset_[kZIndex])) {
         return true;
     } else {
-        return true;
+        return false;
     }
+}
+/**
+ * @brief function to reset the indices exceeding the domain of the 2D grid manager using the given space filling code.
+ * @param ptr_i_code pointer to a number to record increment of the space filling code
+ * @param ptr_bitset_tmp pointer to space filling code
+ * @return an integer indicating the success of the operation
+ */
+int GridManager3D::ResetIndicesExceedingDomain(
+    DefSFCodeToUint* const ptr_i_code, DefSFBitset* ptr_bitset_tmp) const {
+    std::array<DefLUint, 3> indices;
+    DefSFCodeToUint& i_code = *ptr_i_code;
+    DefSFBitset& bitset_temp = *ptr_bitset_tmp;
+    bitset_temp = static_cast<DefSFBitset>(i_code);
+    DefUint iter_count;
+    DefUint sfcode_block;  // block size of space filling code
+    bool bool_exceed_x, bool_exceed_y, bool_exceed_z;
+    SFBitsetComputeIndices(bitset_temp, &indices);
+    bool_exceed_x =
+        indices[kXIndex] > k0MaxIndexOfBackgroundNode_[kXIndex];
+    bool_exceed_y =
+        indices[kYIndex] > k0MaxIndexOfBackgroundNode_[kYIndex];
+    bool_exceed_z =
+        indices[kZIndex] > k0MaxIndexOfBackgroundNode_[kZIndex];
+    iter_count = 0;
+    while ((bool_exceed_x || bool_exceed_y || bool_exceed_z)
+        && iter_count < imax_reset_icode) {
+        if (bool_exceed_x) {
+            sfcode_block = 8;
+            while ((i_code % sfcode_block) == 0) {
+                sfcode_block *= 8;
+            }
+            i_code += sfcode_block / 8;
+            bitset_temp = static_cast<DefSFBitset>(i_code);
+            SFBitsetComputeIndices(bitset_temp, &indices);
+            bool_exceed_x =
+                indices[kXIndex] > k0MaxIndexOfBackgroundNode_[kXIndex];
+            bool_exceed_y =
+                indices[kYIndex] > k0MaxIndexOfBackgroundNode_[kYIndex];
+            bool_exceed_z =
+                indices[kZIndex] > k0MaxIndexOfBackgroundNode_[kZIndex];
+        }
+        if (bool_exceed_y) {
+            sfcode_block = 8;
+            while ((i_code % sfcode_block) == 0) {
+                sfcode_block *= 8;
+            }
+            i_code += sfcode_block / 8 * 2;
+            bitset_temp = static_cast<DefSFBitset>(i_code);
+            SFBitsetComputeIndices(bitset_temp, &indices);
+            bool_exceed_x =
+                indices[kXIndex] > k0MaxIndexOfBackgroundNode_[kXIndex];
+            bool_exceed_y =
+                indices[kYIndex] > k0MaxIndexOfBackgroundNode_[kYIndex];
+            bool_exceed_z =
+                indices[kZIndex] > k0MaxIndexOfBackgroundNode_[kZIndex];
+        }
+        if (bool_exceed_z) {
+            sfcode_block = 8;
+            while ((i_code % sfcode_block) == 0) {
+                sfcode_block *= 8;
+            }
+            i_code += sfcode_block / 8 * 4;
+            bitset_temp = static_cast<DefSFBitset>(i_code);
+            SFBitsetComputeIndices(bitset_temp, &indices);
+            bool_exceed_x =
+                indices[kXIndex] > k0MaxIndexOfBackgroundNode_[kXIndex];
+            bool_exceed_y =
+                indices[kYIndex] > k0MaxIndexOfBackgroundNode_[kYIndex];
+            bool_exceed_z =
+                indices[kZIndex] > k0MaxIndexOfBackgroundNode_[kZIndex];
+        }
+        ++iter_count;
+    }
+#ifdef DEBUG_CHECK_GRID
+    if (iter_count > imax_reset_icode) {
+        return 1;
+    }
+#endif
+    if (indices[kXIndex] < k0IntOffset_[kXIndex]) {
+        bitset_temp = SFBitsetEncoding(
+            { k0IntOffset_[kXIndex], indices[kYIndex], indices[kZIndex] });
+        i_code = bitset_temp.to_ullong();
+        SFBitsetComputeIndices(bitset_temp, &indices);
+    }
+    if (indices[kYIndex] < k0IntOffset_[kYIndex]) {
+        bitset_temp = SFBitsetEncoding(
+            { indices[kXIndex], k0IntOffset_[kYIndex], indices[kZIndex] });
+        i_code = bitset_temp.to_ullong();
+        SFBitsetComputeIndices(bitset_temp, &indices);
+    }
+    if (indices[kZIndex] < k0IntOffset_[kZIndex]) {
+        bitset_temp = SFBitsetEncoding(
+            { indices[kXIndex], indices[kYIndex], k0IntOffset_[kZIndex] });
+        i_code = bitset_temp.to_ullong();
+        SFBitsetComputeIndices(bitset_temp, &indices);
+    }
+    return 0;
 }
 }  // end namespace amrproject
 }  // end namespace rootproject

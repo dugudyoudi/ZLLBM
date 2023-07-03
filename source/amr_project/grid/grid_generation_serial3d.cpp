@@ -1,4 +1,4 @@
-//  Copyright (c) 2022, Zhengliang Liu
+//  Copyright (c) 2021 - 2023, Zhengliang Liu
 //  All rights reserved
 
 /**
@@ -661,8 +661,8 @@ void  GridManager3D::FindInterfaceBetweenGrid(
 * @brief   function to instantiate background node.
 * @param[in] map_occupied node exist in grid at high refinement level.
 */
-void GridManager3D::GenerateBackgroundGrid(
-    const DefMap<DefUint>& map_occupied) {
+void GridManager3D::GenerateBackgroundGrid(const DefSFBitset bitset_min,
+    const DefSFBitset bitset_max, const DefMap<DefUint>& map_occupied) {
     DefSFBitset bitset_temp;
     GridInfoInterface& grid_info = *(vec_ptr_grid_info_.at(0));
     for (DefLUint iz = k0IntOffset_[kZIndex];
@@ -694,6 +694,7 @@ void GridManager3D::TraverseBackgroundForPartition(
     DefLUint load_count = 0;
     DefLUint bk_cost = vec_ptr_grid_info_.at(0)->computational_cost_;
     int i_rank = 0;
+    int status;
     ptr_bitset_min->at(i_rank) = 0;
     ptr_bitset_max->back() = SFBitsetEncoding({
         k0MaxIndexOfBackgroundNode_[kXIndex],
@@ -704,9 +705,6 @@ void GridManager3D::TraverseBackgroundForPartition(
          k0IntOffset_[kYIndex],  k0IntOffset_[kZIndex] };
     DefSFCodeToUint i_code = SFBitsetEncoding(indices).to_ullong();
     DefSFBitset bitset_temp = static_cast<DefSFBitset>(i_code);
-    DefUint sfcode_block;  // block size of space filling code
-    DefUint iter_max = 10000, iter_count;
-    bool bool_exceed_x, bool_exceed_y, bool_exceed_z;
     for (DefLUint i_node = 0; i_node < num_node - 1; ++i_node) {
         if (load_count >= rank_load.at(i_rank)) {
             load_count = 0;
@@ -724,89 +722,13 @@ void GridManager3D::TraverseBackgroundForPartition(
         }
         //  reset i_code if indices exceed domain
         ++i_code;
-        bitset_temp = static_cast<DefSFBitset>(i_code);
-        SFBitsetComputeIndices(bitset_temp, &indices);
-        bool_exceed_x =
-            indices[kXIndex] > k0MaxIndexOfBackgroundNode_[kXIndex];
-        bool_exceed_y =
-            indices[kYIndex] > k0MaxIndexOfBackgroundNode_[kYIndex];
-        bool_exceed_z =
-            indices[kZIndex] > k0MaxIndexOfBackgroundNode_[kZIndex];
-        iter_count = 0;
-        while ((bool_exceed_x || bool_exceed_y || bool_exceed_z)
-            && iter_count < iter_max) {
-            if (bool_exceed_x) {
-                sfcode_block = 8;
-                while ((i_code % sfcode_block) == 0) {
-                    sfcode_block *= 8;
-                }
-                i_code += sfcode_block / 8;
-                bitset_temp = static_cast<DefSFBitset>(i_code);
-                SFBitsetComputeIndices(bitset_temp, &indices);
-                bool_exceed_x =
-                    indices[kXIndex] > k0MaxIndexOfBackgroundNode_[kXIndex];
-                bool_exceed_y =
-                    indices[kYIndex] > k0MaxIndexOfBackgroundNode_[kYIndex];
-                bool_exceed_z =
-                    indices[kZIndex] > k0MaxIndexOfBackgroundNode_[kZIndex];
-            }
-            if (bool_exceed_y) {
-                sfcode_block = 8;
-                while ((i_code % sfcode_block) == 0) {
-                    sfcode_block *= 8;
-                }
-                i_code += sfcode_block / 8 * 2;
-                bitset_temp = static_cast<DefSFBitset>(i_code);
-                SFBitsetComputeIndices(bitset_temp, &indices);
-                bool_exceed_x =
-                    indices[kXIndex] > k0MaxIndexOfBackgroundNode_[kXIndex];
-                bool_exceed_y =
-                    indices[kYIndex] > k0MaxIndexOfBackgroundNode_[kYIndex];
-                bool_exceed_z =
-                    indices[kZIndex] > k0MaxIndexOfBackgroundNode_[kZIndex];
-            }
-            if (bool_exceed_z) {
-                sfcode_block = 8;
-                while ((i_code % sfcode_block) == 0) {
-                    sfcode_block *= 8;
-                }
-                i_code += sfcode_block / 8 * 4;
-                bitset_temp = static_cast<DefSFBitset>(i_code);
-                SFBitsetComputeIndices(bitset_temp, &indices);
-                bool_exceed_x =
-                    indices[kXIndex] > k0MaxIndexOfBackgroundNode_[kXIndex];
-                bool_exceed_y =
-                    indices[kYIndex] > k0MaxIndexOfBackgroundNode_[kYIndex];
-                bool_exceed_z =
-                    indices[kZIndex] > k0MaxIndexOfBackgroundNode_[kZIndex];
-            }
-            ++iter_count;
-        }
+        status = ResetIndicesExceedingDomain(&i_code, &bitset_temp);
 #ifdef DEBUG_CHECK_GRID
-        if (iter_count > iter_max) {
-            LogError("iterations exceed the maximum when space filling code "
-                "exceed x domain boundary in"
-                " GridManager3D::TraverseBackgroundForPartition");
+        if (status) {
+            LogError("iterations exceed the maximum when space filling code exceed domain boundary "
+                "in ResetIndicesExceedingDomain in GridManager3D::TraverseBackgroundForPartition");
         }
 #endif
-        if (indices[kXIndex] < k0IntOffset_[kXIndex]) {
-            bitset_temp = SFBitsetEncoding(
-                { k0IntOffset_[kXIndex], indices[kYIndex], indices[kZIndex] });
-            i_code = bitset_temp.to_ullong();
-            SFBitsetComputeIndices(bitset_temp, &indices);
-        }
-        if (indices[kYIndex] < k0IntOffset_[kYIndex]) {
-            bitset_temp = SFBitsetEncoding(
-                { indices[kXIndex], k0IntOffset_[kYIndex], indices[kZIndex] });
-            i_code = bitset_temp.to_ullong();
-            SFBitsetComputeIndices(bitset_temp, &indices);
-        }
-        if (indices[kZIndex] < k0IntOffset_[kZIndex]) {
-            bitset_temp = SFBitsetEncoding(
-                { indices[kXIndex], indices[kYIndex], k0IntOffset_[kZIndex] });
-            i_code = bitset_temp.to_ullong();
-            SFBitsetComputeIndices(bitset_temp, &indices);
-        }
     }
 }
 }  // end namespace amrproject

@@ -1,4 +1,4 @@
-//  Copyright (c) 2022, Zhengliang Liu
+//  Copyright (c) 2021 - 2023, Zhengliang Liu
 //  All rights reserved
 
 /**
@@ -134,7 +134,7 @@ void SFBitsetAux2D::SFBitsetNotOnDomainBoundary(
     const std::array<DefSFBitset, 2>& sfbitset_max,
     std::array<bool, 2>* const ptr_bool_not_at_boundary_neg,
     std::array<bool, 2>* const ptr_bool_not_at_boundary_pos) const {
-    // use refernece sfbitset to take digits for x negative direction
+    // use reference sfbitset to take digits for x negative direction
     if ((sfbitset_in & k0SFBitsetTakeXRef_[kRefCurrent_])
         == sfbitset_min[kXIndex]) {
         ptr_bool_not_at_boundary_neg->at(kXIndex) = false;

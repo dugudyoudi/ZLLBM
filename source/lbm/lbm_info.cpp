@@ -1,5 +1,5 @@
 #include "lbm/lbm_info.h"
-//  Copyright (c) 2022, Zhengliang Liu
+//  Copyright (c) 2021 - 2023, Zhengliang Liu
 //  All rights reserved
 
 /**
@@ -13,7 +13,7 @@
 #include "io/log_write.h"
 namespace rootproject {
 namespace lbm {
-void GridInfoLBM::set_number_of_vec_elements() {
+void GridInfoLBM::SetNumberOfVecElements() {
     k0NumRealForEachNode_ = static_cast<DefSizet>(
         std::dynamic_pointer_cast<SolverLbmDnQn>(ptr_solver_)->k0FzIndex_) + 1;
 }

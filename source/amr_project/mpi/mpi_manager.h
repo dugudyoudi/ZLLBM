@@ -1,4 +1,4 @@
-//  Copyright (c) 2022, Zhengliang Liu
+//  Copyright (c) 2021 - 2023, Zhengliang Liu
 //  All rights reserved
 
 /**
@@ -31,6 +31,10 @@ class MpiManager{
  public:
     int num_of_ranks_ = 1;  ///< total number of mpi ranks
     int rank_id_;  ///< current rank
+
+    DefMap<DefUint> map_partitioned_interface_background_node;
+    ///< space filling codes of background nodes on the interfaces of partitioned grid
+
     void StartupMpi(int argc, char* argv[]);
     void FinalizeMpi();
     void SetMpiParameters();

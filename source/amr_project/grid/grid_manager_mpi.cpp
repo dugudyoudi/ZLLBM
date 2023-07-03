@@ -1,4 +1,4 @@
-//  Copyright (c) 2022, Zhengliang Liu
+//  Copyright (c) 2021 - 2023, Zhengliang Liu
 //  All rights reserved
 
 /**
@@ -71,7 +71,7 @@ void GridManagerInterface::IniPartiteGridBySpaceFillingCurves(
 int GridManagerInterface::SerializeNode(const DefMap<DefUint>& map_nodes,
     std::unique_ptr<char[]>& buffer) const {
     int key_size = sizeof(DefSFBitset), node_size = sizeof(DefUint);
-    int num_nodes;
+    int num_nodes = 1;
     if  (sizeof(int) + map_nodes.size() *(key_size + node_size) > 0x7FFFFFFF) {
         LogError("size of the buffer is greater than the maximum of int in MpiManager::SerializeData(DefMap<DefUint>)");
     } else {
@@ -155,7 +155,7 @@ void GridManagerInterface::IniSendNReceivePartitionedGrid(
             for (const auto& iter_node : vec_sfbitset.at(i_level)) {
                 background_code = (NodeAtNLowerLevel(i_level, iter_node.first)).to_ullong();
                 auto iter_index = std::lower_bound(ull_max.begin(),
-                     ull_max.end(), background_code);
+                    ull_max.end(), background_code);
                 index = static_cast<int>(iter_index - ull_max.begin());
                 if (index == 0) {
                     ptr_sfbitset_each->at(i_level).insert(iter_node);
@@ -164,7 +164,8 @@ void GridManagerInterface::IniSendNReceivePartitionedGrid(
                     if (index == num_max) {
                         // lower_bound returns the next element of last in ull_max if not found the desired one,
                         // which means that the space filling code of the node exceeds the maximum given by ull_max
-                        LogError("nodes is out of computational domain in MpiManager::IniSendNReceivePartitionedGrid");
+                        LogError("nodes is out of computational domain"
+                            " in MpiManager::IniSendNReceivePartitionedGrid");
                     }
 #endif  // DEBUG_CHECK_GRID
                     if (i_counts.at(index) == 0) {
@@ -181,26 +182,20 @@ void GridManagerInterface::IniSendNReceivePartitionedGrid(
                     }
                 }
             }
-            if (num_ranks > 1) {
-                int buffer_size_send = 0;
-                for (auto iter_rank = 1; iter_rank < num_ranks; ++iter_rank) {
-                    int num_chunks = static_cast<int>(vec_nodes_ranks.at(iter_rank).size());
-                    MPI_Send(&num_chunks, 1, MPI_INT, iter_rank, i_level, MPI_COMM_WORLD);
-                    std::vector<std::unique_ptr<char[]>> vec_ptr_buffer(num_chunks);
-                    std::vector<std::unique_ptr<MPI_Request>> reqs_send(num_chunks);
-                    std::vector<std::unique_ptr<MPI_Status>> stats_send(num_chunks);
-                    for (int i_chunk = 0; i_chunk < num_chunks; ++i_chunk) {
-                        buffer_size_send = SerializeNode(vec_nodes_ranks.at(iter_rank).at(i_chunk),
-                        vec_ptr_buffer.at(i_chunk));
-                        reqs_send[i_chunk].reset(new MPI_Request);
-                        stats_send[i_chunk].reset(new MPI_Status);
-                        MPI_Send(&buffer_size_send, 1, MPI_INT, iter_rank, i_chunk, MPI_COMM_WORLD);
-                        MPI_Isend(vec_ptr_buffer.at(i_chunk).get(), buffer_size_send, MPI_BYTE, iter_rank,
-                        i_chunk, MPI_COMM_WORLD, reqs_send[i_chunk].get());
-                    }
-                    MPI_Waitall(num_chunks, reinterpret_cast<MPI_Request*>(reqs_send.data()),
-                    reinterpret_cast<MPI_Status*>(stats_send.data()));
+            int buffer_size_send = 0;
+            for (auto iter_rank = 1; iter_rank < num_ranks; ++iter_rank) {
+                int num_chunks = static_cast<int>(vec_nodes_ranks.at(iter_rank).size());
+                MPI_Send(&num_chunks, 1, MPI_INT, iter_rank, i_level, MPI_COMM_WORLD);
+                std::vector<std::unique_ptr<char[]>> vec_ptr_buffer(num_chunks);
+                std::vector<MPI_Request> reqs_send(num_chunks);
+                for (int i_chunk = 0; i_chunk < num_chunks; ++i_chunk) {
+                    buffer_size_send = SerializeNode(vec_nodes_ranks.at(iter_rank).at(i_chunk),
+                    vec_ptr_buffer.at(i_chunk));
+                    MPI_Send(&buffer_size_send, 1, MPI_INT, iter_rank, i_chunk, MPI_COMM_WORLD);
+                    MPI_Isend(vec_ptr_buffer.at(i_chunk).get(), buffer_size_send, MPI_BYTE, iter_rank,
+                    i_chunk, MPI_COMM_WORLD, &reqs_send[i_chunk]);
                 }
+                MPI_Waitall(num_chunks, reqs_send.data(), MPI_STATUS_IGNORE);
             }
         } else {
             int num_chunks = 0;
@@ -215,6 +210,22 @@ void GridManagerInterface::IniSendNReceivePartitionedGrid(
             }
         }
     }
+}
+void GridManagerInterface::InstantiateGridNodeForEachRankAllLevel(const SFBitsetAuxInterface& bitset_aux,
+    const MpiManager& mpi_manager, std::vector<DefMap<DefUint>>* const ptr_sfbitset_one_lower_level) {
+    std::vector<DefSFBitset> bitset_min, bitset_max;
+    IniPartiteGridBySpaceFillingCurves(*ptr_sfbitset_one_lower_level, mpi_manager, &bitset_min, &bitset_max);
+    std::vector<DefMap<DefUint>> sfbitset_each;
+    IniSendNReceivePartitionedGrid(bitset_max, *ptr_sfbitset_one_lower_level, mpi_manager, &sfbitset_each);
+    ptr_sfbitset_one_lower_level->clear();
+    // send and receive tracking and interface nodes
+    for (DefSizet i_level = k0MaxLevel_; i_level > 0; --i_level) {
+        GridInfoInterface& grid_info = *(vec_ptr_grid_info_.at(i_level));
+        grid_info.IniSendNReceiveTracking(k0GridDims_, bitset_max,
+            mpi_manager, bitset_aux, vec_ptr_tracking_info_creator);
+        grid_info.IniSendNReceiveInterface(k0GridDims_, bitset_max, mpi_manager, bitset_aux);
+    }
+
 }
 }  // end namespace amrproject
 }  // end namespace rootproject

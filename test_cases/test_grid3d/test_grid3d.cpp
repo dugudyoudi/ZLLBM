@@ -13,7 +13,7 @@ using namespace rootproject;
 using namespace rootproject::amrproject;
 class GridInfoTest :public GridInfoInterface {
  public:
-    void set_number_of_vec_elements() override {};
+    void SetNumberOfVecElements() override {};
     void InitialGridNode(const DefSFBitset& bitset_in) override {};
     GridInfoTest() {
         this->node_type_ = "GridInfoTest";

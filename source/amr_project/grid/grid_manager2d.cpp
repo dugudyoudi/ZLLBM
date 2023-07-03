@@ -1,4 +1,4 @@
-//  Copyright (c) 2022, Zhengliang Liu
+//  Copyright (c) 2021 - 2023, Zhengliang Liu
 //  All rights reserved
 
 /**
@@ -200,7 +200,7 @@ void GridManager2D::FindCornersForNeighbourCells(const DefSFBitset bitset_in,
 *  x  x  x  x  x  x  x mid layer \n
 *  o  x  o  x  o  x  o inner layer \n
 *  x  x  x  x  x  x  x fine grid \n
-*  x is node at higer level and o is node at lower level
+*  x is node at higher level and o is node at lower level
 */
 void GridManager2D::IdentifyInterfaceForACell(const DefUint flag_interface,
     const DefSFBitset bitset_in, const DefMap<DefUint>& node_exist,
@@ -339,13 +339,13 @@ void GridManager2D::FindAllNodesInACellAtLowerLevel(
 }
 /**
 * @brief function to space filling code to n level lower
-* @param[in]  n_level  number of levels need to be shrinked.
-* @param[in]  biset_in   input space filling codee.
+* @param[in]  n_level  number of levels need to be shrink.
+* @param[in]  bitset_in   input space filling code.
 * @return   space filling code at lower levels.
 */
 DefSFBitset GridManager2D::NodeAtNLowerLevel(
-    const DefSizet n_level, const DefSFBitset& biset_in) const {
-    return SFBitsetToNLowerLevel(n_level, biset_in);
+    const DefSizet n_level, const DefSFBitset& bitset_in) const {
+    return SFBitsetToNLowerLevel(n_level, bitset_in);
 }
 /**
 * @brief   function to find layer in the overlapping region based on the layer
@@ -375,7 +375,96 @@ bool GridManager2D::CheckBackgroundOffset(const DefSFBitset& bitset_in) const {
         || (indices[kYIndex] < k0IntOffset_[kYIndex])) {
         return true;
     } else {
-        return true;
+        return false;
+    }
+}
+/**
+ * @brief function to reset the indices exceeding the domain of the 2D grid manager using the given space filling code.
+ * @param ptr_i_code pointer to a number to record increment of the space filling code
+ * @param ptr_bitset_tmp pointer to space filling code
+ * @return an integer indicating the success of the operation
+ */
+int GridManager2D::ResetIndicesExceedingDomain(
+    DefSFCodeToUint* const ptr_i_code, DefSFBitset* ptr_bitset_tmp) const {
+    std::array<DefLUint, 2> indices;
+    DefSFCodeToUint& i_code = *ptr_i_code;
+    DefSFBitset& bitset_temp = *ptr_bitset_tmp;
+    bitset_temp = static_cast<DefSFBitset>(i_code);
+    DefUint iter_count;
+    DefUint sfcode_block;  // block size of space filling code
+    bool bool_exceed_x, bool_exceed_y;
+    SFBitsetComputeIndices(bitset_temp, &indices);
+    bool_exceed_x =
+        indices[kXIndex] > k0MaxIndexOfBackgroundNode_[kXIndex];
+    bool_exceed_y =
+        indices[kYIndex] > k0MaxIndexOfBackgroundNode_[kYIndex];
+    iter_count = 0;
+    while ((bool_exceed_x || bool_exceed_y)
+        && iter_count < imax_reset_icode) {
+        if (bool_exceed_x) {
+            sfcode_block = 4;
+            while ((i_code % sfcode_block) == 0) {
+                sfcode_block *= 4;
+            }
+            i_code += sfcode_block / 4;
+            bitset_temp = static_cast<DefSFBitset>(i_code);
+            SFBitsetComputeIndices(bitset_temp, &indices);
+            bool_exceed_x =
+                indices[kXIndex] > k0MaxIndexOfBackgroundNode_[kXIndex];
+            bool_exceed_y =
+                indices[kYIndex] > k0MaxIndexOfBackgroundNode_[kYIndex];
+        }
+        if (bool_exceed_y) {
+            sfcode_block = 4;
+            while ((i_code % sfcode_block) == 0) {
+                sfcode_block *= 4;
+            }
+            i_code += sfcode_block / 4 * 2;
+            bitset_temp = static_cast<DefSFBitset>(i_code);
+            SFBitsetComputeIndices(bitset_temp, &indices);
+            bool_exceed_x =
+                indices[kXIndex] > k0MaxIndexOfBackgroundNode_[kXIndex];
+            bool_exceed_y =
+                indices[kYIndex] > k0MaxIndexOfBackgroundNode_[kYIndex];
+        }
+        ++iter_count;
+    }
+#ifdef DEBUG_CHECK_GRID
+    if (iter_count > imax_reset_icode) {
+        return 1;
+    }
+#endif
+    if (indices[kXIndex] < k0IntOffset_[kXIndex]) {
+        bitset_temp = SFBitsetEncoding(
+            { k0IntOffset_[kXIndex], indices[kYIndex] });
+        i_code = bitset_temp.to_ullong();
+        SFBitsetComputeIndices(bitset_temp, &indices);
+    }
+    if (indices[kYIndex] < k0IntOffset_[kYIndex]) {
+        bitset_temp = SFBitsetEncoding(
+            { indices[kXIndex] , k0IntOffset_[kYIndex] });
+        i_code = bitset_temp.to_ullong();
+        SFBitsetComputeIndices(bitset_temp, &indices);
+    }
+    return 0;
+}
+/**
+* @brief   function to instantiate background node.
+* @param[in] map_occupied node exist in grid at high refinement level.
+*/
+void GridManager2D::GenerateBackgroundGrid(const DefSFBitset bitset_min,
+    const DefSFBitset bitset_max, const DefMap<DefUint>& map_occupied) {
+    DefSFBitset bitset_temp;
+    GridInfoInterface& grid_info = *(vec_ptr_grid_info_.at(0));
+
+    DefSFCodeToUint i_code = bitset_min.to_ullong(), code_max = bitset_max.to_ullong();
+    while (i_code < code_max) {
+        ResetIndicesExceedingDomain(&i_code, &bitset_temp);
+        if (map_occupied.find(bitset_temp) == map_occupied.end()) {
+                grid_info.map_grid_node_.insert({ bitset_temp,
+                    grid_info.k0GridNodeInstance_ });
+        }
+        ++i_code;
     }
 }
 }  // end namespace amrproject

@@ -1,4 +1,4 @@
-//  Copyright (c) 2022, Zhengliang Liu
+//  Copyright (c) 2021 - 2023, Zhengliang Liu
 //  All rights reserved
 
 /**
@@ -501,26 +501,6 @@ void  GridManager2D::FindInterfaceBetweenGrid(
     }
 }
 /**
-* @brief   function to instantiate background node.
-* @param[in] map_occupied node exist in grid at high refinement level.
-*/
-void GridManager2D::GenerateBackgroundGrid(
-    const DefMap<DefUint>& map_occupied) {
-    DefSFBitset bitset_temp;
-    GridInfoInterface& grid_info = *(vec_ptr_grid_info_.at(0));
-    for (DefLUint iy = k0IntOffset_[kYIndex];
-        iy <= k0MaxIndexOfBackgroundNode_[kYIndex]; ++iy) {
-        for (DefLUint ix = k0IntOffset_[kXIndex];
-            ix <= k0MaxIndexOfBackgroundNode_[kXIndex]; ++ix) {
-            bitset_temp = SFBitsetEncoding({ ix, iy });
-            if (map_occupied.find(bitset_temp) == map_occupied.end()) {
-                grid_info.map_grid_node_.insert({ bitset_temp,
-                                grid_info.k0GridNodeInstance_ });
-            }
-        }
-    }
-}
-/**
 * @brief   function to calculate space filling code for mpi partition.
 * @param[in] rank_load computational load of each rank.
 * @param[out] ptr_bitset_min minimum space filling code for each rank.
@@ -532,6 +512,7 @@ void GridManager2D::TraverseBackgroundForPartition(
     std::vector<DefSFBitset>* const ptr_bitset_min,
     std::vector<DefSFBitset>* const ptr_bitset_max) const {
     DefLUint load_count = 0;
+    int status;
     DefLUint bk_cost = vec_ptr_grid_info_.at(0)->computational_cost_;
     int i_rank = 0;
     ptr_bitset_min->at(i_rank) = 0;
@@ -543,9 +524,6 @@ void GridManager2D::TraverseBackgroundForPartition(
         k0IntOffset_[kXIndex], k0IntOffset_[kYIndex] };
     DefSFCodeToUint i_code = SFBitsetEncoding(indices).to_ullong();
     DefSFBitset bitset_temp = static_cast<DefSFBitset>(i_code);
-    DefUint sfcode_block;  // block size of space filling code
-    DefUint iter_max = 1000, iter_count;
-    bool bool_exceed_x, bool_exceed_y;
     for (DefLUint i_node = 0; i_node < num_node - 1; ++i_node) {
         if (load_count >= rank_load.at(i_rank)) {
             load_count = 0;
@@ -564,63 +542,16 @@ void GridManager2D::TraverseBackgroundForPartition(
         //  reset i_code if indices exceed domain
         ++i_code;
         bitset_temp = static_cast<DefSFBitset>(i_code);
-        SFBitsetComputeIndices(bitset_temp, &indices);
-        bool_exceed_x =
-            indices[kXIndex] > k0MaxIndexOfBackgroundNode_[kXIndex];
-        bool_exceed_y =
-            indices[kYIndex] > k0MaxIndexOfBackgroundNode_[kYIndex];
-        iter_count = 0;
-        while ((bool_exceed_x || bool_exceed_y)
-            && iter_count < iter_max) {
-            if (bool_exceed_x) {
-                sfcode_block = 4;
-                while ((i_code % sfcode_block) == 0) {
-                    sfcode_block *= 4;
-                }
-                i_code += sfcode_block / 4;
-                bitset_temp = static_cast<DefSFBitset>(i_code);
-                SFBitsetComputeIndices(bitset_temp, &indices);
-                bool_exceed_x =
-                    indices[kXIndex] > k0MaxIndexOfBackgroundNode_[kXIndex];
-                bool_exceed_y =
-                    indices[kYIndex] > k0MaxIndexOfBackgroundNode_[kYIndex];
-            }
-            if (bool_exceed_y) {
-                sfcode_block = 4;
-                while ((i_code % sfcode_block) == 0) {
-                    sfcode_block *= 4;
-                }
-                i_code += sfcode_block / 4 * 2;
-                bitset_temp = static_cast<DefSFBitset>(i_code);
-                SFBitsetComputeIndices(bitset_temp, &indices);
-                bool_exceed_x =
-                    indices[kXIndex] > k0MaxIndexOfBackgroundNode_[kXIndex];
-                bool_exceed_y =
-                    indices[kYIndex] > k0MaxIndexOfBackgroundNode_[kYIndex];
-            }
-            ++iter_count;
-        }
+        status = ResetIndicesExceedingDomain(&i_code, &bitset_temp);
 #ifdef DEBUG_CHECK_GRID
-        if (iter_count > iter_max) {
-            LogError("iterations exceed the maximum when space filling code "
-                "exceed x domain boundary in"
-                " GridManager2D::TraverseBackgroundForPartition");
+        if (status) {
+            LogError("iterations exceed the maximum when space filling code exceed domain boundary"
+                " in ResetIndicesExceedingDomain in GridManager2D::TraverseBackgroundForPartition");
         }
 #endif
-        if (indices[kXIndex] < k0IntOffset_[kXIndex]) {
-            bitset_temp = SFBitsetEncoding(
-                { k0IntOffset_[kXIndex], indices[kYIndex] });
-            i_code = bitset_temp.to_ullong();
-            SFBitsetComputeIndices(bitset_temp, &indices);
-        }
-        if (indices[kYIndex] < k0IntOffset_[kYIndex]) {
-            bitset_temp = SFBitsetEncoding(
-                { indices[kXIndex] , k0IntOffset_[kYIndex] });
-            i_code = bitset_temp.to_ullong();
-            SFBitsetComputeIndices(bitset_temp, &indices);
-        }
     }
 }
+
 }  // end namespace amrproject
 }  // end namespace rootproject
 #endif  // DEBUG_DISABLE_2D_FUNCTIONSs

@@ -1,4 +1,4 @@
-//  Copyright (c) 2022, Zhengliang Liu
+//  Copyright (c) 2021 - 2023, Zhengliang Liu
 //  All rights reserved
 
 /**
@@ -147,7 +147,7 @@ void SFBitsetAux3D::SFBitsetInitial() {
 * @param[in] i_level level of refinement
 */
 DefSFBitset SFBitsetAux3D::SFBitsetBitsForRefinement(
-    const DefSizet max_level) const{
+    const DefSizet max_level) const {
     DefSFBitset bitset = 0;
     for (DefSizet i = 0; i < 3 * max_level; ++i) {
         bitset.set(i, true);

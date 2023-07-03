@@ -1,4 +1,4 @@
-//  Copyright (c) 2022, Zhengliang Liu
+//  Copyright (c) 2021 - 2023, Zhengliang Liu
 //  All rights reserved
 
 /**
@@ -31,7 +31,7 @@ enum class ELbmCollisionOperatorType {
 class GridInfoLBM final :public grid::GridInfoInterface {
  public:
     void initial_grid_node(const DefSFBitset& bit_set_in) override;
-    void set_number_of_vec_elements() override;
+    void SetNumberOfVecElements() override;
 };
 class SolverLbmDnQn:public SolverInterface {
     friend class GridInfoLBM;

@@ -1,4 +1,4 @@
-//  Copyright (c) 2022, Zhengliang Liu
+//  Copyright (c) 2021 - 2023, Zhengliang Liu
 //  All rights reserved
 
 /**
@@ -12,6 +12,9 @@
 #define ROOTPROJECT_SOURCE_AMR_PROJECT_GRID_SFBITSET_AUX_H_
 #include <array>
 #include <vector>
+#ifdef DEBUG_UNIT_TEST
+#include "../../googletest-main/googletest/include/gtest/gtest_prod.h"
+#endif  // DEBUG_UNIT_TEST
 #include "../defs_libs.h"
 namespace rootproject {
 namespace amrproject {
@@ -114,6 +117,37 @@ class  SFBitsetAux2D : public SFBitsetAuxInterface {
     }
 
     SFBitsetAux2D() { SFBitsetInitial(); }
+
+
+#ifdef ENABLE_MPI
+    // mpi related
+ public:
+    void FindPartitionBlocksMax(const DefSFCodeToUint& code_in, const DefUint block_length,
+        const DefSFCodeToUint& code_partition_min, const DefSFCodeToUint& code_partition_max,
+        const std::array<DefLUint, 2>& code_domain_min, const std::array<DefLUint, 2>& code_domain_max,
+        DefMap<DefUint>* const ptr_map_partitioned) const;
+    void FindPartitionBlocksMin(const DefSFCodeToUint& code_in, const DefUint block_length,
+        const DefSFCodeToUint& code_partition_min, const DefSFCodeToUint& code_partition_max,
+        const std::array<DefLUint, 2>& code_domain_min, const std::array<DefLUint, 2>& code_domain_max,
+        DefMap<DefUint>* const ptr_map_partitioned) const;
+    void FindPartitionRemainMax(const DefSFCodeToUint& code_in, const DefUint block_length,
+        const DefSFCodeToUint& code_partition_min, const DefSFCodeToUint& code_partition_max,
+        const std::array<DefLUint, 2>& code_domain_min, const std::array<DefLUint, 2>& code_domain_max,
+        DefMap<DefUint>* const ptr_map_partitioned) const;
+    void FindPartitionRemainMin(const DefSFCodeToUint& code_in, const DefUint block_length,
+        const DefSFCodeToUint& code_partition_min, const DefSFCodeToUint& code_partition_max,
+        const std::array<DefLUint, 2>& code_domain_min, const std::array<DefLUint, 2>& code_domain_max,
+        DefMap<DefUint>* const ptr_map_partitioned) const;
+
+ protected:
+    void FindPartitionOneBlock(const DefSFBitset& bitset_corner, const DefUint block_length,
+        const DefSFCodeToUint& code_partition_min, const DefSFCodeToUint& code_partition_max,
+        const std::array<DefLUint, 2>& code_domain_min, const std::array<DefLUint, 2>& code_domain_max,
+        DefMap<DefUint>* const ptr_map_partitioned) const;
+    bool CheckPartitionLimits(const DefSFBitset& code_in,
+        const DefSFCodeToUint& code_partition_min, const DefSFCodeToUint& code_partition_max,
+        const std::array<DefLUint, 2>& code_domain_min, const std::array<DefLUint, 2>& code_domain_max) const;
+#endif  // ENABLE_MPI
 };
 #endif  // DEBUG_DISABLE_2D_FUNCTIONS
 #ifndef  DEBUG_DISABLE_3D_FUNCTION
@@ -198,6 +232,67 @@ class  SFBitsetAux3D : public SFBitsetAuxInterface {
     }
 
     SFBitsetAux3D() { SFBitsetInitial(); }
+
+#ifdef ENABLE_MPI
+    // mpi related
+ public:
+    void FindPartitionBlocksMax(const DefSFCodeToUint& code_in, const DefUint block_level,
+        const DefSFCodeToUint& code_partition_min, const DefSFCodeToUint& code_partition_max,
+        const std::array<DefLUint, 3>& code_domain_min, const std::array<DefLUint, 3>& code_domain_max,
+        DefMap<DefUint>* const ptr_map_partitioned) const;
+    void FindPartitionBlocksMin(const DefSFCodeToUint& code_in, const DefUint block_level,
+        const DefSFCodeToUint& code_partition_min, const DefSFCodeToUint& code_partition_max,
+        const std::array<DefLUint, 3>& code_domain_min, const std::array<DefLUint, 3>& code_domain_max,
+        DefMap<DefUint>* const ptr_map_partitioned) const;
+    void FindPartitionRemainMax(const DefSFCodeToUint& code_in, const DefUint block_level,
+        const DefSFCodeToUint& code_partition_min, const DefSFCodeToUint& code_partition_max,
+        const std::array<DefLUint, 3>& code_domain_min, const std::array<DefLUint, 3>& code_domain_max,
+        DefMap<DefUint>* const ptr_map_partitioned) const;
+    void FindPartitionRemainMin(const DefSFCodeToUint& code_in, const DefUint block_level,
+        const DefSFCodeToUint& code_partition_min, const DefSFCodeToUint& code_partition_max,
+        const std::array<DefLUint, 3>& code_domain_min, const std::array<DefLUint, 3>& code_domain_max,
+        DefMap<DefUint>* const ptr_map_partitioned) const;
+
+ protected:
+    void FindPartitionOneBlock(const DefSFBitset& bitset_corner, const DefUint block_level,
+        const DefSFCodeToUint& code_partition_min, const DefSFCodeToUint& code_partition_max,
+        const std::array<DefLUint, 3>& code_domain_min, const std::array<DefLUint, 3>& code_domain_max,
+        DefMap<DefUint>* const ptr_map_partitioned) const;
+    void FindPartition2BlocksMax(const DefSFBitset& bitset_corner, const DefUint block_level,
+        const DefSFCodeToUint& code_partition_min, const DefSFCodeToUint& code_partition_max,
+        const std::array<DefLUint, 3>& code_domain_min, const std::array<DefLUint, 3>& code_domain_max,
+        DefMap<DefUint>* const ptr_map_partitioned) const;
+    void FindPartition3BlocksMax(const DefSFBitset& bitset_corner, const DefUint block_level,
+        const DefSFCodeToUint& code_partition_min, const DefSFCodeToUint& code_partition_max,
+        const std::array<DefLUint, 3>& code_domain_min, const std::array<DefLUint, 3>& code_domain_max,
+        DefMap<DefUint>* const ptr_map_partitioned) const;
+    void FindPartition4BlocksMax(const DefSFBitset& bitset_corner, const DefUint block_level,
+        const DefSFCodeToUint& code_partition_min, const DefSFCodeToUint& code_partition_max,
+        const std::array<DefLUint, 3>& code_domain_min, const std::array<DefLUint, 3>& code_domain_max,
+        DefMap<DefUint>* const ptr_map_partitioned) const;
+    void FindPartition5BlocksMax(const DefSFBitset& bitset_corner, const DefUint block_level,
+        const DefSFCodeToUint& code_partition_min, const DefSFCodeToUint& code_partition_max,
+        const std::array<DefLUint, 3>& code_domain_min, const std::array<DefLUint, 3>& code_domain_max,
+        DefMap<DefUint>* const ptr_map_partitioned) const;
+    void FindPartition6BlocksMax(const DefSFBitset& bitset_corner, const DefUint block_level,
+        const DefSFCodeToUint& code_partition_min, const DefSFCodeToUint& code_partition_max,
+        const std::array<DefLUint, 3>& code_domain_min, const std::array<DefLUint, 3>& code_domain_max,
+        DefMap<DefUint>* const ptr_map_partitioned) const;
+    void FindPartition7BlocksMax(const DefSFBitset& bitset_corner, const DefUint block_level,
+        const DefSFCodeToUint& code_partition_min, const DefSFCodeToUint& code_partition_max,
+        const std::array<DefLUint, 3>& code_domain_min, const std::array<DefLUint, 3>& code_domain_max,
+        DefMap<DefUint>* const ptr_map_partitioned) const;
+    bool CheckPartitionLimits(const DefSFBitset& code_in,
+        const DefSFCodeToUint& code_partition_min, const DefSFCodeToUint& code_partition_max,
+        const std::array<DefLUint, 3>& code_domain_min, const std::array<DefLUint, 3>& code_domain_max) const;
+
+
+#ifdef DEBUG_UNIT_TEST
+     // gtest to access private member functions
+ private:
+     FRIEND_TEST(MpiPartition3D, Rank0FindPartitionedBlockInterface);
+#endif  // DEBUG_UNIT_TEST
+#endif  // ENABLE_MPI
 };
 #endif  // DEBUG_DISABLE_3D_FUNCTION
 }  // end namespace amrproject

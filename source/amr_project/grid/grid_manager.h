@@ -1,4 +1,4 @@
-//  Copyright (c) 2022, Zhengliang Liu
+//  Copyright (c) 2021 - 2023, Zhengliang Liu
 //  All rights reserved
 
 /**
@@ -135,7 +135,7 @@ class GridManagerInterface{
     void GenerateGridFromHighToLowLevelSerial(const std::vector<std::shared_ptr
         <GeometryInfoInterface>>&vec_geo_info,
         std::vector<DefMap<DefUint>>* const ptr_sfbitset_one_lower_level);
-    void InstantiateGridNodeAllLevelSerial(
+    void InstantiateGridNodeAllLevel(
         const std::vector<DefMap<DefUint>>& sfbitset_one_lower_level);
 
     template<InterfaceInfoHasType InterfaceInfo>
@@ -157,6 +157,9 @@ class GridManagerInterface{
     // node on the outmost interface
     const DefUint kFlagGridInterfaceOutermost_ = 1 << 2;
 
+    const DefUint imax_reset_icode = 1000;
+    ///<  maximum iteration for reseting indices
+
     // functions to generate grid (Serial)
     int FloodFillForInAndOut(const DefSFBitset& sfbitset_start,
         const DefMap<DefUint>& map_nodes_exist,
@@ -165,8 +168,10 @@ class GridManagerInterface{
     virtual void OverlapLayerFromHighToLow(
         const DefMap<DefUint>& layer_high_level,
         DefMap<DefUint>* const ptr_layer_low_level) = 0;
-    virtual void GenerateBackgroundGrid(
-        const DefMap<DefUint>& map_occupied) = 0;
+    virtual int ResetIndicesExceedingDomain(
+        DefSFCodeToUint* const ptr_i_code, DefSFBitset* ptr_bitset_tmp) const = 0;
+    virtual void GenerateBackgroundGrid(const DefSFBitset bitset_min,
+        const DefSFBitset bitset_max, const DefMap<DefUint>& map_occupied) = 0;
 
     virtual bool CheckCoincideBackground(const DefSizet i_level,
         const DefSFBitset& bitset_higher,
@@ -238,21 +243,25 @@ class GridManagerInterface{
 #ifdef ENABLE_MPI
 
  public:
+    int SerializeNode(const DefMap<DefUint>& map_nodes,
+        std::unique_ptr<char[]>& buffer) const;
+    void DeserializeNode(const std::unique_ptr<char[]>& buffer,
+        DefMap<DefUint>* const map_nodes) const;
     void IniPartiteGridBySpaceFillingCurves(
         const std::vector<DefMap<DefUint>>& vec_sfbitset,
         const MpiManager& mpi_manager,
         std::vector<DefSFBitset>* const ptr_bitset_min,
         std::vector<DefSFBitset>* const ptr_bitset_max);
     void IniSendNReceivePartitionedGrid(
-        const std::vector<DefSFBitset>& ptr_bitset_max,
+        const std::vector<DefSFBitset>& bitset_max,
         const std::vector<DefMap<DefUint>>& sfbitset_all_one_lower_level,
         const MpiManager& mpi_manager,
         std::vector<DefMap<DefUint>>* const ptr_sfbitset_each_one_lower_level) const;
-
-    int SerializeNode(const DefMap<DefUint>& map_nodes,
-        std::unique_ptr<char[]>& buffer) const;
-    void DeserializeNode(const std::unique_ptr<char[]>& buffer,
-        DefMap<DefUint>* const map_nodes) const;
+    void InstantiateGridNodeForEachRankAllLevel(const SFBitsetAuxInterface& bitset_aux, const MpiManager& mpi_manager,
+        std::vector<DefMap<DefUint>>* const ptr_sfbitset_one_lower_level);
+    virtual void FindBlockInterfaceForPartitionFromMinNMax(const DefSFBitset& bitset_min,
+        const DefSFBitset& bitset_max, const std::vector<DefUint>& code_domain_min,
+        const std::vector<DefUint>& code_domain_max, DefMap<DefUint>* const ptr_partition_interface_background) = 0;
 #endif  // ENABLE_MPI
 
 #ifdef DEBUG_UNIT_TEST
@@ -322,11 +331,13 @@ class GridManager2D :public  GridManagerInterface, public SFBitsetAux2D {
     }
 
  protected:
-    void GenerateBackgroundGrid(
-        const DefMap<DefUint>& map_occupied) override;
+    int ResetIndicesExceedingDomain(
+        DefSFCodeToUint* const ptr_i_code, DefSFBitset* ptr_bitset_tmp) const override;
+    void GenerateBackgroundGrid(const DefSFBitset bitset_min,
+        const DefSFBitset bitset_max, const DefMap<DefUint>& map_occupied) override;
     void OverlapLayerFromHighToLow(
-       const DefMap<DefUint>& layer_high_level,
-       DefMap<DefUint>* const ptr_layer_low_level) override;
+        const DefMap<DefUint>& layer_high_level,
+        DefMap<DefUint>* const ptr_layer_low_level) override;
 
     bool CheckCoincideBackground(const DefSizet i_level,
         const DefSFBitset& bitset_higher,
@@ -390,6 +401,15 @@ class GridManager2D :public  GridManagerInterface, public SFBitsetAux2D {
         const DefSFBitset bitset_mid_higher,
         const DefMap<DefUint>& node_exist,
         const std::array<DefMap<DefUint>* const, 3>& arr_ptr_layer);
+
+#ifdef ENABLE_MPI
+
+ public:
+    void FindBlockInterfaceForPartitionFromMinNMax(const DefSFBitset& bitset_min,
+        const DefSFBitset& bitset_max, const std::vector<DefUint>& code_domain_min,
+        const std::vector<DefUint>& code_domain_max,
+        DefMap<DefUint>* const ptr_partition_interface_background) override;
+#endif  // ENABLE_MPI
 #ifdef DEBUG_UNIT_TEST
 
  private:
@@ -407,12 +427,12 @@ class GridManager3D :public  GridManagerInterface, public SFBitsetAux3D {
  public:
     std::array<DefLUint, 3> k0IntOffset_ = { 1, 1, 1};
     ///< number of offset background node
-    std::array<DefReal, 3> k0DomainSize_{};  ///< domian size
+    std::array<DefReal, 3> k0DomainSize_{};  ///< domain size
     std::array<DefReal, 3> k0DomainDx_{};  ///< grid space
     /* offset to avoid exceeding the boundary limits when searching nodes.
-    The offset distance is (kXintOffset * kDomianDx),
+    The offset distance is (kXintOffset * kDomainDx),
     and the default value is 1. */
-    std::array<DefReal, 3>k0RealOffset_{};  ///< kXintOffset * kDomianDx
+    std::array<DefReal, 3> k0RealOffset_{};  ///< kXintOffset * kDomainDx
     std::array<DefLUint, 3> k0MaxIndexOfBackgroundNode_{};
     ///< the maximum index of background nodes in each direction*/
     // k0IntOffset_ is included in k0MaxIndexOfBackgroundNode_
@@ -424,8 +444,7 @@ class GridManager3D :public  GridManagerInterface, public SFBitsetAux3D {
         return dynamic_cast<SFBitsetAuxInterface*>(this);
     }
     std::vector<DefReal> GetDomainDxArrAsVec() const final {
-        return { k0DomainDx_[kXIndex], k0DomainDx_[kYIndex],
-        k0DomainDx_[kZIndex] };
+        return { k0DomainDx_[kXIndex], k0DomainDx_[kYIndex], k0DomainDx_[kZIndex] };
     };
 
     // node related function
@@ -455,8 +474,10 @@ class GridManager3D :public  GridManagerInterface, public SFBitsetAux3D {
 
 
  protected:
-    void GenerateBackgroundGrid(
-         const DefMap<DefUint>& map_occupied) override;
+    int ResetIndicesExceedingDomain(
+        DefSFCodeToUint* const ptr_i_code, DefSFBitset* ptr_bitset_tmp)const override;
+    void GenerateBackgroundGrid(const DefSFBitset bitset_min,
+        const DefSFBitset bitset_max, const DefMap<DefUint>& map_occupied) override;
     void OverlapLayerFromHighToLow(
         const DefMap<DefUint>& layer_high_level,
         DefMap<DefUint>* const ptr_layer_low_level) override;
@@ -529,6 +550,15 @@ class GridManager3D :public  GridManagerInterface, public SFBitsetAux3D {
          const DefSFBitset bitset_center_higher,
          const DefMap<DefUint>& node_exist,
          const std::array<DefMap<DefUint>* const, 3>& arr_ptr_layer);
+
+#ifdef ENABLE_MPI
+
+ public:
+    void FindBlockInterfaceForPartitionFromMinNMax(const DefSFBitset& bitset_min,
+        const DefSFBitset& bitset_max, const std::vector<DefUint>& code_domain_min,
+        const std::vector<DefUint>& code_domain_max,
+        DefMap<DefUint>* const ptr_partition_interface_background) override;
+#endif  // ENABLE_MPI
 #ifdef DEBUG_UNIT_TEST
 
  private:
@@ -539,7 +569,6 @@ class GridManager3D :public  GridManagerInterface, public SFBitsetAux3D {
      FRIEND_TEST(GridManagerGeneration3D, ExtendNumbOfLayerAndFindInterface);
      FRIEND_TEST(GridManagerGeneration3D, FindInterfaceCurrentLevel);
 #endif  // DEBUG_UNIT_TEST
-
 };
 #endif  // DEBUG_DISABLE_3D_FUNCTIONS
 /**
@@ -547,9 +576,9 @@ class GridManager3D :public  GridManagerInterface, public SFBitsetAux3D {
 * @param[in]  i_level level of refinement.
 * @param[in]  type the given type.
 * @param[in]  vec_ptr_interface pointer to vector of information
-*             with a sepecified node type.
+*             with a specified node type.
 * @return  if return 0, then the node type does not exist in the vector 
-*          elements; else return the (indice + 1) of the element with
+*          elements; else return the (indices + 1) of the element with
 *          the given type.
 */
 template<InterfaceInfoHasType InterfaceInfo>

@@ -1,4 +1,4 @@
-//  Copyright (c) 2022, Zhengliang Liu
+//  Copyright (c) 2021 - 2023, Zhengliang Liu
 //  All rights reserved
 
 /**
@@ -10,7 +10,7 @@
 #include "../defs_libs.h"
 #ifdef ENABLE_MPI
 #include <mpi.h>
-#endif ENABLE_MPI
+#endif  // ENABLE_MPI
 #include "io/log_write.h"
 #include "io/io_manager.h"
 namespace rootproject {
@@ -87,7 +87,7 @@ void LogInfo(const int mpi_id, const std::string& msg) {
         fprintf(fp, "Infor: %s \n", msg.c_str());
         fclose(fp);
     }
-    printf("Infor of node %d: %s \n", mpi_id, msg.c_str());
+    printf("Infor of rank %d: %s \n", mpi_id, msg.c_str());
 }
 
 /**
@@ -113,7 +113,7 @@ void LogWarning(const std::string& msg) {
     SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE),
         FOREGROUND_INTENSITY | FOREGROUND_RED | FOREGROUND_GREEN);
 #endif
-    printf("Warning of node %d: %s \n", rank_id, msg.c_str());
+    printf("Warning of rank %d: %s \n", rank_id, msg.c_str());
 #ifdef _WIN32
     SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE),
         FOREGROUND_INTENSITY | FOREGROUND_RED
@@ -144,7 +144,7 @@ void LogError(const std::string& msg) {
     SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE),
         FOREGROUND_INTENSITY | FOREGROUND_RED);
 #endif
-    printf("Error of node %d: %s \n", rank_id, msg.c_str());
+    printf("Error of rank %d: %s \n", rank_id, msg.c_str());
 #ifdef _WIN32
     SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE),
         FOREGROUND_INTENSITY | FOREGROUND_RED
@@ -152,5 +152,5 @@ void LogError(const std::string& msg) {
 #endif
     exit(0);
 }
-}  // end amrproject
+}  // end namespace amrproject
 }  // end namespace rootproject

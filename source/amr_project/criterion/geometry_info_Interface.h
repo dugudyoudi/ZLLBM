@@ -1,4 +1,4 @@
-//  Copyright (c) 2022, Zhengliang Liu
+//  Copyright (c) 2021 - 2023, Zhengliang Liu
 //  All rights reserved
 
 /**
@@ -42,7 +42,7 @@ struct GeometryVertexInfo {
 class GeometryInfoInterface {
  public:
     // information of geometry itself
-    DefUint computational_cost_ = 1;
+    DefTypeUint computational_cost_ = 1;
     DefReal decompose_factor_ = 1.;
     DefSizet i_level_ = 0;
     DefSizet i_geo_ = ~0;
@@ -67,7 +67,7 @@ class GeometryInfoInterface {
         DefaultGeoShapeType::kUndefined;
 
     // number of extended layer based on geometry
-    std::vector<DefLUint>
+    std::vector<DefUint>
         k0XIntExtendPositive_, k0XIntExtendNegative_,
         k0YIntExtendPositive_, k0YIntExtendNegative_,
         k0ZIntExtendPositive_, k0ZIntExtendNegative_;
@@ -75,7 +75,7 @@ class GeometryInfoInterface {
 
     /* number of layer extended inside the geometry
      at (i_level - 1) refinement level*/
-    std::vector<DefLUint>  k0IntInnerExtend_;
+    std::vector<DefUint>  k0IntInnerExtend_;
     ///< number of extened layers inside the geometry
 
     virtual void FindTrackingNodeBasedOnGeo(

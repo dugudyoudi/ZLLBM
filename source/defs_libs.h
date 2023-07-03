@@ -1,4 +1,4 @@
-//  Copyright (c) 2022, Zhengliang Liu
+//  Copyright (c) 2021 - 2023, Zhengliang Liu
 //  All rights reserved
 
 /**
@@ -16,16 +16,37 @@
 #include <unordered_map>
 #include <iostream>
 #include "./config.h"  // configuration file generated
-                     // by CMAKE based on "config.h.in"
 namespace rootproject {
 using DefReal = double;
 using DefInt = int;
 using DefLInt = int;
 using DefUint = unsigned int;
-using DefSizet = size_t;
 using DefLUint = unsigned int;
 using DefTypeUint = unsigned int;
 using DefSFCodeToUint = uint64_t;
+using DefSizet = size_t;
+
+// data type for mpi communication
+#define MPI_REAL_DATA_TYPE MPI_DOUBLE
+#define MPI_INT_DATA_TYPE MPI_INT
+#define MPI_LINT_DATA_TYPE MPI_INT
+#define MPI_UINT_DATA_TYPE MPI_UNSIGNED
+#define MPI_LUINT_DATA_TYPE MPI_UNSIGNED
+#define MPI_TYPEUINT_DATA_TYPE MPI_UNSIGNED
+#define MPI_CODEUINT_DATA_TYPE MPI_UINT64_T
+#if SIZE_MAX == UCHAR_MAX
+#define MPI_SIZET_DATA_TYPE MPI_UNSIGNED_CHAR
+#elif SIZE_MAX == USHRT_MAX
+#define MPI_SIZET_DATA_TYPE MPI_UNSIGNED_SHORT
+#elif SIZE_MAX == UINT_MAX
+#define MPI_SIZET_DATA_TYPE MPI_UNSIGNED
+#elif SIZE_MAX == ULONG_MAX
+#define MPI_SIZET_DATA_TYPE MPI_UNSIGNED_LONG
+#elif SIZE_MAX == ULLONG_MAX
+#define MPI_SIZET_DATA_TYPE MPI_UNSIGNED_LONG_LONG
+#else
+#error "MPI_SIZET_DATA_TYPE is undefined"
+#endif
 
 // bitset to store code for space filling curves
 static constexpr DefUint kSFBitsetBit = 64;

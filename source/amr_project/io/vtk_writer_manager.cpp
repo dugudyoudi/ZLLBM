@@ -1,4 +1,4 @@
-//  Copyright (c) 2022, Zhengliang Liu
+//  Copyright (c) 2021 - 2023, Zhengliang Liu
 //  All rights reserved
 
 /**
@@ -92,7 +92,7 @@ void VtkWriterManager::OptionInitial(const bool bool_binary) {
 /**
 * @brief   function to write all grid levels
 * @param[in]  folder_name name of the folder
-* @param[in]  bool_binary write data in bindary or ascii format
+* @param[in]  bool_binary write data in binary or ascii format
 * @param[in]  output_data_format output data (real or integer) format
 * @param[in]  grid_manager class to manage grid information
 * @param[in]  criterion_manager class to manage criterion information

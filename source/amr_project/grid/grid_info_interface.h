@@ -1,4 +1,4 @@
-//  Copyright (c) 2022, Zhengliang Liu
+//  Copyright (c) 2021 - 2023, Zhengliang Liu
 //  All rights reserved
 
 /**
@@ -64,15 +64,27 @@ struct GridNode {
 class InterfaceLayerInfo {
  public:
     // number of extended based on the interface grid
-    std::vector<DefLUint> k0ExtendOuterNeg, k0ExtendOuterPos;
+    std::vector<DefUint> k0ExtendOuterNeg, k0ExtendOuterPos;
     ///< number of extened layers outside the geometry
-    std::vector<DefLUint> k0ExtendInnerNeg, k0ExtendInnerPos;
+    std::vector<DefUint> k0ExtendInnerNeg, k0ExtendInnerPos;
     ///< number of extened layers inside the geometry
 
     std::vector<DefMap<DefUint>> vec_outer_coarse2fine_,
         vec_outer_fine2coarse_;
     std::vector<DefMap<DefUint>> vec_inner_coarse2fine_,
         vec_inner_fine2coarse_;
+#ifdef ENABLE_MPI
+    virtual int SizeOfEachNodeForMpi() {
+        return sizeof(DefSFBitset);
+    }
+    virtual int SerializeInterfaceNode(const std::set<DefSFCodeToUint>& set_nodes,
+        std::unique_ptr<char[]>& buffer) const;
+    virtual void DeserializeInterfaceNode(
+        const std::unique_ptr<char[]>& buffer, DefMap<DefUint>* ptr_map_interface_layer);
+    virtual void SendNReiveOneLayer(const DefSizet i_level, const std::vector<DefSFCodeToUint>& ull_max,
+        const MpiManager& mpi_manager, const SFBitsetAuxInterface& bitset_aux,
+        DefMap<DefUint>* const ptr_map_interface_layer);
+#endif
 };
 /**
 * @class TrackingGridInfoInterface
@@ -81,18 +93,18 @@ class InterfaceLayerInfo {
 */
 class TrackingGridInfoInterface {
  public:
-    DefUint computational_cost_ = 1;
+    DefTypeUint computational_cost_ = 1;
     std::string node_type_;
     EGridExtendType grid_extend_type_ = EGridExtendType::kSameInAllDirections;
 
     // number of extended based on the tracking grid
-    std::vector<DefLUint> k0ExtendOuterNeg, k0ExtendOuterPos;
+    std::vector<DefUint> k0ExtendOuterNeg, k0ExtendOuterPos;
     ///< number of extened layers outside the geometry
-    std::vector<DefLUint> k0ExtendInnerNeg, k0ExtendInnerPos;
+    std::vector<DefUint> k0ExtendInnerNeg, k0ExtendInnerPos;
     ///< number of extened layers inside the geometry
 
     // index of creators in corresponding vector
-    unsigned int k0IndexCreator = 0;
+    DefUint k0IndexCreator = 0;
 
     // information of TrackingNode
     DefMap<TrackingNode> map_tracking_node_{};
@@ -104,6 +116,10 @@ class TrackingGridInfoInterface {
     virtual int SizeOfEachNodeForMpi() {
         return sizeof(DefSFBitset);
     }
+    virtual int SerializeTrackingNode(const std::set<DefSFCodeToUint>& set_nodes,
+        std::unique_ptr<char[]>& buffer) const;
+    virtual void DeserializeTrackingNode(
+        const std::unique_ptr<char[]>& buffer);
 #endif
 };
 /**
@@ -127,7 +143,7 @@ class GhostGridInfoInterface {
     // information of grid at each level of refinement
     DefSizet i_level_ = 0;
     const DefUint kCountIndex_ = 1;
-    DefUint computational_cost_ = 1;
+    DefTypeUint computational_cost_ = 1;
     std::string node_type_;
 
     // information of GhostNode
@@ -161,7 +177,7 @@ class GridInfoInterface {
     // information of grid at each level of refinement
     DefSizet i_level_ = 0;
 
-    DefUint computational_cost_ = 1;
+    DefTypeUint computational_cost_ = 1;
     std::string node_type_;
     std::vector<DefReal> grid_space_;
     std::shared_ptr<SolverInterface> ptr_solver_ = nullptr;
@@ -184,7 +200,7 @@ class GridInfoInterface {
     DefMap<DefUint> map_grid_count_exist_{};
     DefSizet k0NumIntForEachNode_ = 0;
     DefSizet k0NumRealForEachNode_ = 0;
-    virtual void set_number_of_vec_elements() = 0;
+    virtual void SetNumberOfVecElements() = 0;
 
     GridNode k0GridNodeInstance_;
     ///< instance for insert node with preset vector sizes
@@ -195,18 +211,14 @@ class GridInfoInterface {
 #ifdef ENABLE_MPI
 
  public:
-    virtual void IniSendNReceiveInterface(const std::vector<DefSFBitset>& bitset_max,
-        const MpiManager&  mpi_manager);
-    virtual void IniSendNReceiveTracking(const std::vector<DefSFBitset>& bitset_max,
-        const MpiManager& mpi_manager, const SFBitsetAuxInterface& bistset_aux,
+    virtual void IniSendNReceiveInterface(const DefUint dims, const std::vector<DefSFBitset>& bitset_max,
+        const MpiManager&  mpi_manager, const SFBitsetAuxInterface& bitset_aux);
+    virtual void IniSendNReceiveTracking(const DefUint dims, const std::vector<DefSFBitset>& bitset_max,
+        const MpiManager& mpi_manager, const SFBitsetAuxInterface& bitset_aux,
         const std::vector<std::unique_ptr<TrackingGridInfoCreatorInterface>>& vec_tracking_info_creator);
 
  protected:
-    int CreateAndCommitTrackingIndexType(MPI_Datatype *ptr_mpi_pair_type);
-    virtual int SerializeTrackingNode(const std::set<DefSFCodeToUint>& set_nodes,
-        std::unique_ptr<char[]>& buffer) const;
-    virtual void DeserializeTrackingNode(const ECriterionType& criterion_type, DefSizet index_criterion,
-    const std::unique_ptr<char[]>& buffer) const;
+    int CreateAndCommitCriterionIndexType(MPI_Datatype *ptr_mpi_pair_type);
 
 
 #endif  // ENABLE_MPI
