@@ -5,7 +5,7 @@
 * @file def_libs.h
 * @author Zhengliang Liu
 * @date  2022-5-16
-* @brief contain definations and libaries will be used in all modules.
+* @brief contain definations and libraries will be used in all modules.
 */
 
 #ifndef ROOTPROJECT_SOURCE_AMR_PROJECT_GRID_GRID_MANAGER_H_
@@ -25,9 +25,6 @@
 #ifdef DEBUG_UNIT_TEST
 #include "../../googletest-main/googletest/include/gtest/gtest_prod.h"
 #endif  // DEBUG_UNIT_TEST
-#ifdef ENABLE_MPI
-#include "mpi/mpi_manager.h"
-#endif  // ENABLE_MPI
 namespace rootproject {
 namespace amrproject {
 template<typename InterfaceInfo>
@@ -45,36 +42,42 @@ class GridManagerInterface{
  public:
     /**<Constant: index corresponding to x, y, and z in vectors */
     // 2 or 3
-    DefUint  k0GridDims_ = 0;  ///< dimension
+    DefAmrIndexUint  k0GridDims_ = 0;  ///< dimension
     // 9 for 2D, 27 for 3D
-    DefUint  k0NumNeighbours_ = 0;  ///< number of neighbouring nodes
+    DefAmrIndexUint  k0NumNeighbors_ = 0;  ///< number of neighboring nodes
     // 0 refers to uniform mesh
-    DefSizet  k0MaxLevel_ = 0;  ///< maximum levels of refinement
+    DefAmrIndexUint  k0MaxLevel_ = 0;  ///< maximum levels of refinement
 
     /* this setup is used to avoid issues caused by rapid change of
     refinement level in a small region. Number of layers is counted
     at the lower refinement level.*/
-    DefUint k0IntExtendMin_ = 3;  ///< a minimum number of extending layers
-    DefUint k0IntExtendRemoved_ = 1;
+    DefAmrIndexUint k0IntExtendMin_ = 3;  ///< a minimum number of extending layers
+    DefAmrIndexUint k0IntExtendRemoved_ = 1;
     ///< a number of extending layers when inside nodes will be removed
     /* number of nodes extended from position of given criterion,
     e.g. solid boundary and free surface*/
 
     // overlapping region between different refinement levels
-    const DefUint kOverlappingOutmostM1_ = 1;
+    const DefAmrIndexUint kOverlappingOutmostM1_ = 1;
     ///< index of the outmost layer of the overlapping region
-    const DefUint kOverlappingOutmostM2_ = 2;
+    const DefAmrIndexUint kOverlappingOutmostM2_ = 2;
     ///< index of the second outmost layer of the overlapping region
 
     // grid status
-    const DefUint kFlagExist_ = 1 << 2;
-    const DefUint kFlagCoarse2Fine0_ = 1 << 4;
-    const DefUint kFlagCoarse2FineM1_ = 1 << 6;
-    const DefUint kFlagFine2Coarse0_ = 1 << 7;
-    const DefUint kFlagFine2CoarseM1_ = 1 << 8;
+    const DefAmrUint kNodeStatusExist_ = 1;
+    const DefAmrUint kNodeStatusCoarse2Fine0_ = 1 << 1;
+    const DefAmrUint kNodeStatusCoarse2FineM1_ = 1 << 2;
+    const DefAmrUint kNodeStatusFine2Coarse0_ = 1 << 3;
+    const DefAmrUint kNodeStatusFine2CoarseM1_ = 1 << 4;
+    const DefAmrUint kNodeStatusGhostCommunication_ = 1 << 5;
+    const DefAmrIndexUint kFlagSize0_ = 0;  // flag initialize size as 0
+
+    // computational domain related information
+    DefSFBitset k0SFBitsetDomainMin_ = 0;
+    DefSFBitset k0SFBitsetDomainMax_ = ~0;
 
     // list of creators to construct classes
-    std::vector<std::unique_ptr<TrackingGridInfoCreatorInterface>> vec_ptr_tracking_info_creator;
+    std::vector<std::unique_ptr<TrackingGridInfoCreatorInterface>> vec_ptr_tracking_info_creator_;
 
     /*the method is used to create grid instance for all refinement levels.
       Give different methods for each grid is possible by using other functions
@@ -84,7 +87,7 @@ class GridManagerInterface{
     void CreateSameGridInstanceForAllLevel(
         GridInfoCreatorInterface* ptr_grid_creator);
 
-    void DefaultInitialization(const DefSizet max_level);
+    void DefaultInitialization(const DefAmrIndexUint max_level);
     int CheckIfPointOutsideDomain(
         const std::array<DefReal, 2>& coordinate_min,
         const std::array<DefReal, 2>& coordinate_max,
@@ -95,12 +98,12 @@ class GridManagerInterface{
         const std::array<DefReal, 3>& coordinate_max,
         const std::array<DefReal, 3>& domain_min,
         const std::array<DefReal, 3>& domain_max) const;
-    void SetNumberOfExtendLayerForGrid(const DefSizet i_level,
+    void SetNumberOfExtendLayerForGrid(const DefAmrIndexUint i_level,
         const GeometryInfoInterface& geo_info,
-        std::vector<DefLUint>* const num_extend_inner_layer_neg,
-        std::vector<DefLUint>* const num_extend_inner_layer_pos,
-        std::vector<DefLUint>* const num_extend_outer_layer_neg,
-        std::vector<DefLUint>* const num_extend_outer_layer_pos);
+        std::vector<DefAmrIndexLUint>* const num_extend_inner_layer_neg,
+        std::vector<DefAmrIndexLUint>* const num_extend_inner_layer_pos,
+        std::vector<DefAmrIndexLUint>* const num_extend_outer_layer_neg,
+        std::vector<DefAmrIndexLUint>* const num_extend_outer_layer_pos);
 
     virtual void PrintGridInfo(void) const = 0;
     virtual void SetGridParameters(void) = 0;
@@ -109,40 +112,32 @@ class GridManagerInterface{
     virtual std::vector<DefReal> GetDomainDxArrAsVec() const = 0;
 
     virtual bool NodesBelongToOneCell(const DefSFBitset bitset_in,
-        const DefMap<DefUint>& node_exist,
+        const DefMap<DefAmrIndexUint>& node_exist,
         std::vector<DefSFBitset>* const ptr_bitsets) = 0;
 
     // node related functions
-    virtual void FindAllNeighboursSFBitset(const DefSFBitset& bitset_in,
-        std::vector<DefSFBitset>* const ptr_vec_neighbours) const = 0;
+    virtual void FindAllNeighborsSFBitset(const DefSFBitset& bitset_in,
+        std::vector<DefSFBitset>* const ptr_vec_neighbors) const = 0;
     virtual void FindAllNodesInACellAtLowerLevel(
         const std::vector<DefSFBitset> bitset_cell,
         std::vector<DefSFBitset>* const ptr_bitset_all) const = 0;
     virtual DefSFBitset NodeAtNLowerLevel(
-        const DefSizet n_level, const DefSFBitset& bitset_in) const = 0;
-    virtual DefLUint CalNumOfBackgroundNode() const = 0;
+        const DefAmrIndexUint n_level, const DefSFBitset& bitset_in) const = 0;
+    virtual DefAmrIndexLUint CalNumOfBackgroundNode() const = 0;
     virtual bool CheckBackgroundOffset(const DefSFBitset& bitset_in) const = 0;
-    virtual void TraverseBackgroundForPartition(
-        const std::vector<DefLUint>& rank_load,
-        const DefMap<DefUint>& background_occupied,
-        std::vector<DefSFBitset>* const ptr_bitset_min,
-        std::vector<DefSFBitset>* const ptr_bitset_max) const = 0;
 
     // generate grid
-    void GenerateInitialMeshBasedOnGeoSerial(
-        const std::vector<std::shared_ptr<GeometryInfoInterface>>&
-        vec_geo_info);
     void GenerateGridFromHighToLowLevelSerial(const std::vector<std::shared_ptr
         <GeometryInfoInterface>>&vec_geo_info,
-        std::vector<DefMap<DefUint>>* const ptr_sfbitset_one_lower_level);
-    void InstantiateGridNodeAllLevel(
-        const std::vector<DefMap<DefUint>>& sfbitset_one_lower_level);
+        std::vector<DefMap<DefAmrIndexUint>>* const ptr_sfbitset_one_lower_level);
+    void InstantiateGridNodeAllLevel(const DefSFBitset sfbitset_min, const DefSFBitset sfbitset_max,
+        const DefMap<DefAmrIndexUint>& partitioned_interface_background,
+        const std::vector<DefMap<DefAmrIndexUint>>& sfbitset_one_lower_level);
 
     template<InterfaceInfoHasType InterfaceInfo>
     DefSizet CheckExistenceOfTypeAtGivenLevel(
-        const DefSizet i_level, const std::string& type,
-        const std::vector<std::shared_ptr<InterfaceInfo>>&
-        vec_ptr_interface) const;
+        const DefAmrIndexUint i_level, const std::string& type,
+        const std::vector<std::shared_ptr<InterfaceInfo>>& vec_ptr_interface) const;
 
     virtual ~GridManagerInterface() {}
     GridManagerInterface() {
@@ -152,116 +147,109 @@ class GridManagerInterface{
 
  protected:
     //// Generate grid
-    const DefUint kFlag0_ = 0;  // flag to initialize status of a node
-    const DefUint kFlagTrackingCell_ = 1;  // flag to initialize status of a node
-    // node on the outmost interface
-    const DefUint kFlagGridInterfaceOutermost_ = 1 << 2;
+    const DefAmrUint kFlag0_ = 0;  // flag to initialize status of a node
 
-    const DefUint imax_reset_icode = 1000;
-    ///<  maximum iteration for reseting indices
+    // functions to generate grid
+    void InstantiateOverlapLayerOfRefinementInterface(
+        const std::vector<DefMap<DefAmrIndexUint>>& sfbitset_one_lower_level);
 
-    // functions to generate grid (Serial)
-    int FloodFillForInAndOut(const DefSFBitset& sfbitset_start,
-        const DefMap<DefUint>& map_nodes_exist,
-        DefMap<DefUint>* const ptr_map_nodes_outside,
-        DefMap<DefUint>* const ptr_map_nodes_inside) const;
     virtual void OverlapLayerFromHighToLow(
-        const DefMap<DefUint>& layer_high_level,
-        DefMap<DefUint>* const ptr_layer_low_level) = 0;
-    virtual int ResetIndicesExceedingDomain(
-        DefSFCodeToUint* const ptr_i_code, DefSFBitset* ptr_bitset_tmp) const = 0;
-    virtual void GenerateBackgroundGrid(const DefSFBitset bitset_min,
-        const DefSFBitset bitset_max, const DefMap<DefUint>& map_occupied) = 0;
-
-    virtual bool CheckCoincideBackground(const DefSizet i_level,
+        const DefMap<DefAmrUint>& layer_high_level,
+        DefMap<DefAmrUint>* const ptr_layer_low_level) = 0;
+    virtual void InstantiateBackgroundGrid(const DefSFBitset bitset_min,
+        const DefSFBitset bitset_max, const DefMap<DefAmrIndexUint>& map_occupied) = 0;
+    virtual bool CheckCoincideBackground(const DefAmrIndexUint i_level,
         const DefSFBitset& bitset_higher,
         DefSFBitset* const ptr_bitset) const = 0;
+    // only run on rank 0
+    int FloodFillForInAndOut(const DefSFBitset& sfbitset_start,
+        const DefMap<DefAmrUint>& map_nodes_exist,
+        DefMap<DefAmrUint>* const ptr_map_nodes_outside,
+        DefMap<DefAmrUint>* const ptr_map_nodes_inside) const;
 
  private:
-    const DefUint imax_flood_fill = 90000;
+    const DefAmrUint K0IMaxFloodFill_ = 90000;
     ///<  maximum iteration for flood fill
 
-    void ExtendGivenNumbOfLayer(DefSizet i_level,
-        const std::vector<DefLUint> num_extend_neg,
-        const std::vector<DefLUint> num_extend_pos,
-        const DefMap<DefUint>& map_start_layer,
-        DefMap<DefUint>* const ptr_map_exist,
-        DefMap<DefUint>* const ptr_map_outmost) const;
+    void ExtendGivenNumbOfLayer(DefAmrIndexUint i_level,
+        const std::vector<DefAmrIndexLUint> num_extend_neg,
+        const std::vector<DefAmrIndexLUint> num_extend_pos,
+        const DefMap<DefAmrUint>& map_start_layer,
+        DefMap<DefAmrIndexUint>* const ptr_map_exist,
+        DefMap<DefAmrUint>* const ptr_map_outmost) const;
     void FindOverlappingLayersBasedOnOutermostCoarse(
-        const DefMap<DefUint>& layer_coarse_0,
-        const DefMap<DefUint>& sfbitset_exist,
-        DefMap<DefUint>* const ptr_layer_coarse_m1,
-        DefMap<DefUint>* const ptr_layer_fine_0,
-        DefMap<DefUint>* const ptr_layer_fine_m1,
-        DefMap<DefUint>* const ptr_layer_fine_m2);
+        const DefMap<DefAmrUint>& layer_coarse_0,
+        const DefMap<DefAmrIndexUint>& sfbitset_exist,
+        DefMap<DefAmrUint>* const ptr_layer_coarse_m1,
+        DefMap<DefAmrUint>* const ptr_layer_fine_0,
+        DefMap<DefAmrUint>* const ptr_layer_fine_m1,
+        DefMap<DefAmrUint>* const ptr_layer_fine_m2);
 
     virtual void ResetExtendLayerBasedOnDomainSize(
-        const DefSizet i_level, const DefSFBitset& sfbitset_in,
-        std::vector<DefLUint>* const ptr_vec_extend_neg,
-        std::vector<DefLUint>* const ptr_vec_extend_pos) const = 0;
-    virtual void ComputeSFBitsetOnBoundaryAtGivenLevel(const DefSizet i_level,
+        const DefAmrIndexUint i_level, const DefSFBitset& sfbitset_in,
+        std::vector<DefAmrIndexLUint>* const ptr_vec_extend_neg,
+        std::vector<DefAmrIndexLUint>* const ptr_vec_extend_pos) const = 0;
+    virtual void ComputeSFBitsetOnBoundaryAtGivenLevel(const DefAmrIndexUint i_level,
         std::vector<DefSFBitset>* const ptr_vec_bitset_min,
         std::vector<DefSFBitset>* const ptr_vec_bitset_max) const = 0;
     virtual void FindCornersForNeighbourCells(const DefSFBitset bitset_in,
         std::vector<DefSFBitset>* const ptr_bitsets) const = 0;
-    virtual void IdentifyInterfaceForACell(const DefUint flag_interface,
-        const DefSFBitset bitset_in, const DefMap<DefUint>& node_exist,
-        DefMap<DefUint>* const ptr_inner_layer,
-        DefMap<DefUint>* const ptr_mid_layer,
-        DefMap<DefUint>* const ptr_outer_layer) = 0;
+    virtual void IdentifyInterfaceForACell(const DefSFBitset bitset_in,
+        const DefMap<DefAmrUint>& node_coarse_outmost, const DefMap<DefAmrIndexUint>& node_exist,
+        DefMap<DefAmrUint>* const ptr_inner_layer,
+        DefMap<DefAmrUint>* const ptr_mid_layer,
+        DefMap<DefAmrUint>* const ptr_outer_layer) = 0;
 
     // functions to generate grid (Serial)
-    virtual void GenerateGridNodeNearTrackingNode(const DefSizet i_level,
-        const std::pair<ECriterionType, DefSizet>& tracking_grid_key,
-        DefMap<DefUint>* const ptr_map_node_temp) const = 0;
+    virtual void GenerateGridNodeNearTrackingNode(const DefAmrIndexUint i_level,
+        const std::pair<ECriterionType, DefAmrIndexUint>& tracking_grid_key,
+        DefMap<DefAmrUint>* const ptr_map_node_temp) const = 0;
     virtual void IdentifyTypeOfLayerByFloodFill(
-        const DefSizet i_level, const DefSizet i_geo,
+        const DefAmrIndexUint i_level, const DefAmrIndexUint i_geo,
         const std::vector<DefReal> flood_fill_start_point,
-        const DefMap<DefUint>& map_nodes_exist,
-        DefMap<DefUint>* const ptr_map_nodes_outside,
-        DefMap<DefUint>* const ptr_map_nodes_inside) const = 0;
+        const DefMap<DefAmrUint>& map_nodes_exist,
+        DefMap<DefAmrUint>* const ptr_map_nodes_outside,
+        DefMap<DefAmrUint>* const ptr_map_nodes_inside) const = 0;
     virtual void PushBackSFBitsetInFloodFill(const DefSFBitset& bitset_in,
         std::vector<DefSFBitset>* const ptr_vec_code_stk) const = 0;
     virtual void ExtendOneLayerGrid(
-        const DefMap<DefUint>& map_start_layer,
+        const DefMap<DefAmrUint>& map_start_layer,
         const std::vector<DefSFBitset>& vec_bitset_min,
         const std::vector<DefSFBitset>& vec_bitset_max,
         const std::vector<bool>& bool_extend_neg,
         const std::vector<bool>& bool_extend_pos,
-        DefMap<DefUint>* const ptr_map_output_layer,
-        DefMap<DefUint>* const ptr_map_exist,
-        DefMap<DefUint>* const ptr_outmost_layer,
-        std::vector<DefMap<DefUint>>* const ptr_vector_boundary_min,
-        std::vector<DefMap<DefUint>>* const ptr_vector_boundary_max) const = 0;
+        DefMap<DefAmrUint>* const ptr_map_output_layer,
+        DefMap<DefAmrIndexUint>* const ptr_map_exist,
+        DefMap<DefAmrUint>* const ptr_outmost_layer,
+        std::vector<DefMap<DefAmrUint>>* const ptr_vector_boundary_min,
+        std::vector<DefMap<DefAmrUint>>* const ptr_vector_boundary_max) const = 0;
     virtual void FindInterfaceBetweenGrid(
-        const DefSizet i_level, const DefMap<DefUint>& map_outmost_layer,
-        DefMap<DefUint>* const map_exist,
-        DefMap<DefUint>* const ptr_interface_outmost,
-        DefMap<DefUint>* const ptr_layer_lower_level,
-        DefMap<DefUint>* const ptr_layer_lower_level_outer) = 0;
+        const DefAmrIndexUint i_level, const DefMap<DefAmrUint>& map_outmost_layer,
+        DefMap<DefAmrIndexUint>* const map_exist,
+        DefMap<DefAmrUint>* const ptr_interface_outmost,
+        DefMap<DefAmrIndexUint>* const ptr_layer_lower_level,
+        DefMap<DefAmrUint>* const ptr_layer_lower_level_outer) = 0;
 
 #ifdef ENABLE_MPI
 
  public:
-    int SerializeNode(const DefMap<DefUint>& map_nodes,
-        std::unique_ptr<char[]>& buffer) const;
-    void DeserializeNode(const std::unique_ptr<char[]>& buffer,
-        DefMap<DefUint>* const map_nodes) const;
-    void IniPartiteGridBySpaceFillingCurves(
-        const std::vector<DefMap<DefUint>>& vec_sfbitset,
-        const MpiManager& mpi_manager,
-        std::vector<DefSFBitset>* const ptr_bitset_min,
-        std::vector<DefSFBitset>* const ptr_bitset_max);
-    void IniSendNReceivePartitionedGrid(
-        const std::vector<DefSFBitset>& bitset_max,
-        const std::vector<DefMap<DefUint>>& sfbitset_all_one_lower_level,
-        const MpiManager& mpi_manager,
-        std::vector<DefMap<DefUint>>* const ptr_sfbitset_each_one_lower_level) const;
-    void InstantiateGridNodeForEachRankAllLevel(const SFBitsetAuxInterface& bitset_aux, const MpiManager& mpi_manager,
-        std::vector<DefMap<DefUint>>* const ptr_sfbitset_one_lower_level);
-    virtual void FindBlockInterfaceForPartitionFromMinNMax(const DefSFBitset& bitset_min,
-        const DefSFBitset& bitset_max, const std::vector<DefUint>& code_domain_min,
-        const std::vector<DefUint>& code_domain_max, DefMap<DefUint>* const ptr_partition_interface_background) = 0;
+    virtual void GetNLevelCorrespondingOnes(
+        const DefAmrIndexUint i_level, std::vector<DefSFBitset>* const ptr_last_ones) const = 0;
+    virtual bool CheckNodeOnOuterBoundaryOfBackgroundCell(DefAmrIndexUint i_level,
+        const DefSFCodeToUint code_min, const DefSFCodeToUint code_max, const DefSFBitset bitset_in,
+        const std::vector<DefSFBitset>& domain_min_m1_n_level,
+        const std::vector<DefSFBitset>& domain_max_p1_n_level,
+        const std::vector<DefSFBitset>& bitset_level_ones,
+        const DefMap<DefAmrIndexUint>& partitioned_interface_background) const = 0;
+    virtual void GetMinM1AtGivenLevel(const DefAmrIndexUint i_level,
+        std::vector<DefSFBitset>* const ptr_min_m1_bitsets) const = 0;
+    virtual void GetMaxP1AtGivenLevel(const DefAmrIndexUint i_level,
+        std::vector<DefSFBitset>* const ptr_max_p1_bitsets) const = 0;
+    virtual void SearchForGhostLayerForMinNMax(const DefSFBitset bitset_in,
+        const DefAmrIndexUint num_of_ghost_layers, const DefSFCodeToUint code_min, const DefSFCodeToUint code_max,
+        const std::vector<DefSFBitset>& domain_min_m1_n_level,
+        const std::vector<DefSFBitset>& domain_max_p1_n_level,
+        std::vector<DefSFBitset>* const ptr_vec_ghost_layer) const = 0;
 #endif  // ENABLE_MPI
 
 #ifdef DEBUG_UNIT_TEST
@@ -285,15 +273,15 @@ class GridManagerInterface{
 */
 class GridManager2D :public  GridManagerInterface, public SFBitsetAux2D {
  public:
-    std::array<DefLUint, 2> k0IntOffset_ = {1, 1};
+    std::array<DefAmrIndexLUint, 2> k0IntOffset_ = {1, 1};
     ///< number of offset background node
     std::array<DefReal, 2> k0DomainSize_{};  ///< domain size
     std::array<DefReal, 2> k0DomainDx_{};  ///< grid space
     /* offset to avoid exceeding the boundary limits when searching nodes.
-    The offset distance is (kXintOffset * kDomainDx),
+    The offset distance is (k0IntOffset_ * kDomainDx),
     and the default value is 1. */
-    std::array<DefReal, 2> k0RealOffset_{};  ///< kXintOffset * kDomainDx
-    std::array<DefLUint, 2> k0MaxIndexOfBackgroundNode_{};
+    std::array<DefReal, 2> k0RealOffset_{};  ///< k0IntOffset_ * kDomainDx
+    std::array<DefAmrIndexLUint, 2> k0MaxIndexOfBackgroundNode_{};
     ///< the maximum index of background nodes in each direction*/
     // k0IntOffset_ is included in k0MaxIndexOfBackgroundNode_
 
@@ -305,111 +293,117 @@ class GridManager2D :public  GridManagerInterface, public SFBitsetAux2D {
     std::vector<DefReal> GetDomainDxArrAsVec() const final {
         return { k0DomainDx_[kXIndex], k0DomainDx_[kYIndex] };
     };
-
     // node related function
-    void FindAllNeighboursSFBitset(const DefSFBitset& bitset_in,
-        std::vector<DefSFBitset>* const ptr_vec_neighbours) const override;
+    void FindAllNeighborsSFBitset(const DefSFBitset& bitset_in,
+        std::vector<DefSFBitset>* const ptr_vec_neighbors) const override;
     void FindAllNodesInACellAtLowerLevel(
         const std::vector<DefSFBitset> bitset_cell,
         std::vector<DefSFBitset>* const ptr_bitset_all) const override;
     DefSFBitset NodeAtNLowerLevel(
-        const DefSizet n_level, const DefSFBitset& biset_in) const override;
-    DefLUint CalNumOfBackgroundNode() const override {
+        const DefAmrIndexUint n_level, const DefSFBitset& biset_in) const override;
+    DefAmrIndexLUint CalNumOfBackgroundNode() const override {
         return (k0MaxIndexOfBackgroundNode_[0] - k0IntOffset_[0] + 1) *
             (k0MaxIndexOfBackgroundNode_[1] - k0IntOffset_[1] + 1);
     }
     bool CheckBackgroundOffset(const DefSFBitset& bitset_in) const override;
-    void TraverseBackgroundForPartition(
-        const std::vector<DefLUint>& rank_load,
-        const DefMap<DefUint>& background_occupied,
-        std::vector<DefSFBitset>* const ptr_bitset_min,
-        std::vector<DefSFBitset>* const ptr_bitset_max) const override;
 
     GridManager2D() {
         k0GridDims_ = 2;
-        k0NumNeighbours_ = 9;
+        k0NumNeighbors_ = 9;
     }
 
  protected:
-    int ResetIndicesExceedingDomain(
-        DefSFCodeToUint* const ptr_i_code, DefSFBitset* ptr_bitset_tmp) const override;
-    void GenerateBackgroundGrid(const DefSFBitset bitset_min,
-        const DefSFBitset bitset_max, const DefMap<DefUint>& map_occupied) override;
+    void InstantiateBackgroundGrid(const DefSFBitset bitset_min,
+        const DefSFBitset bitset_max, const DefMap<DefAmrIndexUint>& map_occupied) override;
     void OverlapLayerFromHighToLow(
-        const DefMap<DefUint>& layer_high_level,
-        DefMap<DefUint>* const ptr_layer_low_level) override;
+        const DefMap<DefAmrUint>& layer_high_level,
+        DefMap<DefAmrUint>* const ptr_layer_low_level) override;
 
-    bool CheckCoincideBackground(const DefSizet i_level,
+    bool CheckCoincideBackground(const DefAmrIndexUint i_level,
         const DefSFBitset& bitset_higher,
         DefSFBitset* const ptr_bitset) const override;
-    void ComputeSFBitsetOnBoundaryAtGivenLevel(const DefSizet i_level,
+    void ComputeSFBitsetOnBoundaryAtGivenLevel(const DefAmrIndexUint i_level,
         std::vector<DefSFBitset>* const ptr_vec_bitset_min,
         std::vector<DefSFBitset>* const ptr_vec_bitset_max) const override;
     void ResetExtendLayerBasedOnDomainSize(
-        const DefSizet i_level, const DefSFBitset& sfbitset_in,
-        std::vector<DefLUint>* const ptr_vec_extend_neg,
-        std::vector<DefLUint>* const ptr_vec_extend_pos) const override;
+        const DefAmrIndexUint i_level, const DefSFBitset& sfbitset_in,
+        std::vector<DefAmrIndexLUint>* const ptr_vec_extend_neg,
+        std::vector<DefAmrIndexLUint>* const ptr_vec_extend_pos) const override;
     void FindCornersForNeighbourCells(const DefSFBitset bitset_in,
        std::vector<DefSFBitset>* const ptr_bitsets)  const override;
-    void IdentifyInterfaceForACell(const DefUint flag_interface,
-        const DefSFBitset bitset_in, const DefMap<DefUint>& node_exist,
-        DefMap<DefUint>* const ptr_inner_layer,
-        DefMap<DefUint>* const ptr_mid_layer,
-        DefMap<DefUint>* const ptr_outer_layer) override;
+    void IdentifyInterfaceForACell(const DefSFBitset bitset_in,
+        const DefMap<DefAmrUint>& node_coarse_outmost, const DefMap<DefAmrIndexUint>& node_exist,
+        DefMap<DefAmrUint>* const ptr_inner_layer,
+        DefMap<DefAmrUint>* const ptr_mid_layer,
+        DefMap<DefAmrUint>* const ptr_outer_layer) override;
     bool NodesBelongToOneCell(const DefSFBitset bitset_in,
-        const DefMap<DefUint>& node_exist,
+        const DefMap<DefAmrIndexUint>& node_exist,
         std::vector<DefSFBitset>* const ptr_bitsets)override;
     // functions to generate grid (Serial)
-    void GenerateGridNodeNearTrackingNode(const DefSizet i_level,
-        const std::pair<ECriterionType, DefSizet>& tracking_grid_key,
-        DefMap<DefUint>* const ptr_map_node_temp) const override;
+    void GenerateGridNodeNearTrackingNode(const DefAmrIndexUint i_level,
+        const std::pair<ECriterionType, DefAmrIndexUint>& tracking_grid_key,
+        DefMap<DefAmrUint>* const ptr_map_node_temp) const override;
     void IdentifyTypeOfLayerByFloodFill(
-        const DefSizet i_level, const DefSizet i_geo,
+        const DefAmrIndexUint i_level, const DefAmrIndexUint i_geo,
         const std::vector<DefReal> flood_fill_start_point,
-        const DefMap<DefUint>& map_nodes_exist,
-        DefMap<DefUint>* const ptr_map_nodes_outside,
-        DefMap<DefUint>* const ptr_map_nodes_inside) const override;
+        const DefMap<DefAmrUint>& map_nodes_exist,
+        DefMap<DefAmrUint>* const ptr_map_nodes_outside,
+        DefMap<DefAmrUint>* const ptr_map_nodes_inside) const override;
     void PushBackSFBitsetInFloodFill(const DefSFBitset& bitset_in,
         std::vector<DefSFBitset>* const ptr_vec_code_stk) const override;
     void ExtendOneLayerGrid(
-        const DefMap<DefUint>& map_start_layer,
+        const DefMap<DefAmrUint>& map_start_layer,
         const std::vector<DefSFBitset>& vec_bitset_min,
         const std::vector<DefSFBitset>& vec_bitset_max,
         const std::vector<bool>& bool_extend_neg,
         const std::vector<bool>& bool_extend_pos,
-        DefMap<DefUint>* const ptr_map_output_layer,
-        DefMap<DefUint>* const ptr_map_exist,
-        DefMap<DefUint>* const ptr_outmost_layer,
-        std::vector<DefMap<DefUint>>* const ptr_vector_boundary_min,
-        std::vector<DefMap<DefUint>>* const ptr_vector_boundary_max)
+        DefMap<DefAmrUint>* const ptr_map_output_layer,
+        DefMap<DefAmrIndexUint>* const ptr_map_exist,
+        DefMap<DefAmrUint>* const ptr_outmost_layer,
+        std::vector<DefMap<DefAmrUint>>* const ptr_vector_boundary_min,
+        std::vector<DefMap<DefAmrUint>>* const ptr_vector_boundary_max)
         const override;
     void FindInterfaceBetweenGrid(
-        const DefSizet i_level, const DefMap<DefUint>& map_outmost_layer,
-        DefMap<DefUint>* const map_exist,
-        DefMap<DefUint>* const ptr_interface_outmost,
-        DefMap<DefUint>* const ptr_layer_lower_level,
-        DefMap<DefUint>* const ptr_layer_lower_level_outer) override;
+        const DefAmrIndexUint i_level, const DefMap<DefAmrUint>& map_outmost_layer,
+        DefMap<DefAmrIndexUint>* const map_exist,
+        DefMap<DefAmrUint>* const ptr_interface_outmost,
+        DefMap<DefAmrIndexUint>* const ptr_layer_lower_level,
+        DefMap<DefAmrUint>* const ptr_layer_lower_level_outer) override;
 
  private:
-    DefUint kFlagCurrentNodeXNeg_ = 1, kFlagCurrentNodeXPos_ = 1 << 1,
+    DefAmrUint kFlagCurrentNodeXNeg_ = 1, kFlagCurrentNodeXPos_ = 1 << 1,
         kFlagCurrentNodeYNeg_ = 1 << 2, kFlagCurrentNodeYPos_ = 1 << 3;
-    DefUint FindAllNeighboursWithSpecifiedDirection(const DefSFBitset bitset_in,
+    DefAmrUint FindAllNeighborsWithSpecifiedDirection(const DefSFBitset bitset_in,
         const std::array<bool, 2>& bool_neg, const std::array<bool, 2>& bool_pos,
-        std::vector <DefSFBitset>* const ptr_vec_neighbours) const;
-    void IdentifyInterfaceNodeOnEdge(const DefUint flag_interface,
+        std::vector <DefSFBitset>* const ptr_vec_neighbors) const;
+    void IdentifyInterfaceNodeOnEdge(
         const std::array<DefSFBitset, 2>& arr_bitset_lower,
         const DefSFBitset bitset_mid_higher,
-        const DefMap<DefUint>& node_exist,
-        const std::array<DefMap<DefUint>* const, 3>& arr_ptr_layer);
+        const DefMap<DefAmrUint>& node_outmost,
+        const std::array<DefMap<DefAmrUint>* const, 3>& arr_ptr_layer);
 
 #ifdef ENABLE_MPI
 
  public:
-    void FindBlockInterfaceForPartitionFromMinNMax(const DefSFBitset& bitset_min,
-        const DefSFBitset& bitset_max, const std::vector<DefUint>& code_domain_min,
-        const std::vector<DefUint>& code_domain_max,
-        DefMap<DefUint>* const ptr_partition_interface_background) override;
+    void GetNLevelCorrespondingOnes(
+        const DefAmrIndexUint i_level, std::vector<DefSFBitset>* const ptr_last_ones) const final;
+    bool CheckNodeOnOuterBoundaryOfBackgroundCell(DefAmrIndexUint i_level,
+        const DefSFCodeToUint code_min, const DefSFCodeToUint code_max, const DefSFBitset bitset_in,
+        const std::vector<DefSFBitset>& domain_min_m1_n_level,
+        const std::vector<DefSFBitset>& domain_max_p1_n_level,
+        const std::vector<DefSFBitset>& bitset_level_ones,
+        const DefMap<DefAmrIndexUint>& partitioned_interface_background) const final;
+    void GetMinM1AtGivenLevel(const DefAmrIndexUint i_level,
+        std::vector<DefSFBitset>* const ptr_min_m1_bitsets) const final;
+    void GetMaxP1AtGivenLevel(const DefAmrIndexUint i_level,
+        std::vector<DefSFBitset>* const ptr_max_p1_bitsets) const final;
+    void SearchForGhostLayerForMinNMax(const DefSFBitset bitset_in,
+        const DefAmrIndexUint num_of_ghost_layers, const DefSFCodeToUint code_min, const DefSFCodeToUint code_max,
+        const std::vector<DefSFBitset>& domain_min_m1_n_level,
+        const std::vector<DefSFBitset>& domain_max_p1_n_level,
+        std::vector<DefSFBitset>* const ptr_vec_ghost_layer) const final;
 #endif  // ENABLE_MPI
+
 #ifdef DEBUG_UNIT_TEST
 
  private:
@@ -425,15 +419,15 @@ class GridManager2D :public  GridManagerInterface, public SFBitsetAux2D {
 #ifndef  DEBUG_DISABLE_3D_FUNCTIONS
 class GridManager3D :public  GridManagerInterface, public SFBitsetAux3D {
  public:
-    std::array<DefLUint, 3> k0IntOffset_ = { 1, 1, 1};
+    std::array<DefAmrIndexLUint, 3> k0IntOffset_ = { 1, 1, 1};
     ///< number of offset background node
     std::array<DefReal, 3> k0DomainSize_{};  ///< domain size
     std::array<DefReal, 3> k0DomainDx_{};  ///< grid space
     /* offset to avoid exceeding the boundary limits when searching nodes.
-    The offset distance is (kXintOffset * kDomainDx),
+    The offset distance is (k0IntOffset_ * kDomainDx),
     and the default value is 1. */
-    std::array<DefReal, 3> k0RealOffset_{};  ///< kXintOffset * kDomainDx
-    std::array<DefLUint, 3> k0MaxIndexOfBackgroundNode_{};
+    std::array<DefReal, 3> k0RealOffset_{};  ///< k0IntOffset_ * kDomainDx
+    std::array<DefAmrIndexLUint, 3> k0MaxIndexOfBackgroundNode_{};
     ///< the maximum index of background nodes in each direction*/
     // k0IntOffset_ is included in k0MaxIndexOfBackgroundNode_
 
@@ -448,116 +442,121 @@ class GridManager3D :public  GridManagerInterface, public SFBitsetAux3D {
     };
 
     // node related function
-    void FindAllNeighboursSFBitset(const DefSFBitset& bitset_in,
-        std::vector<DefSFBitset>* const ptr_vec_neighbours) const override;
+    void FindAllNeighborsSFBitset(const DefSFBitset& bitset_in,
+        std::vector<DefSFBitset>* const ptr_vec_neighbors) const override;
     void FindAllNodesInACellAtLowerLevel(
         const std::vector<DefSFBitset> bitset_cell,
         std::vector<DefSFBitset>* const ptr_bitset_all) const override;
     DefSFBitset NodeAtNLowerLevel(
-        const DefSizet n_level, const DefSFBitset& biset_in) const override;
-    DefLUint CalNumOfBackgroundNode() const override {
-        return (k0MaxIndexOfBackgroundNode_[0] - k0IntOffset_[0] + 1) *
-            (k0MaxIndexOfBackgroundNode_[1] - k0IntOffset_[1] + 1)*
-            (k0MaxIndexOfBackgroundNode_[2] - k0IntOffset_[2] + 1);
+        const DefAmrIndexUint n_level, const DefSFBitset& biset_in) const override;
+    DefAmrIndexLUint CalNumOfBackgroundNode() const override {
+        return (k0MaxIndexOfBackgroundNode_[0] - k0IntOffset_[0] + 1)
+         * (k0MaxIndexOfBackgroundNode_[1] - k0IntOffset_[1] + 1)
+         * (k0MaxIndexOfBackgroundNode_[2] - k0IntOffset_[2] + 1);
     }
     bool CheckBackgroundOffset(const DefSFBitset& bitset_in) const override;
-    void TraverseBackgroundForPartition(
-        const std::vector<DefLUint>& rank_load,
-        const DefMap<DefUint>& background_occupied,
-        std::vector<DefSFBitset>* const ptr_bitset_min,
-        std::vector<DefSFBitset>* const ptr_bitset_max) const override;
 
     GridManager3D() {
         k0GridDims_ = 3;
-        k0NumNeighbours_ = 27;
+        k0NumNeighbors_ = 27;
     }
 
-
  protected:
-    int ResetIndicesExceedingDomain(
-        DefSFCodeToUint* const ptr_i_code, DefSFBitset* ptr_bitset_tmp)const override;
-    void GenerateBackgroundGrid(const DefSFBitset bitset_min,
-        const DefSFBitset bitset_max, const DefMap<DefUint>& map_occupied) override;
+    void InstantiateBackgroundGrid(const DefSFBitset bitset_min,
+        const DefSFBitset bitset_max, const DefMap<DefAmrIndexUint>& map_occupied) override;
     void OverlapLayerFromHighToLow(
-        const DefMap<DefUint>& layer_high_level,
-        DefMap<DefUint>* const ptr_layer_low_level) override;
+        const DefMap<DefAmrUint>& layer_high_level,
+        DefMap<DefAmrUint>* const ptr_layer_low_level) override;
 
-    bool CheckCoincideBackground(const DefSizet i_level,
+    bool CheckCoincideBackground(const DefAmrIndexUint i_level,
          const DefSFBitset& bitset_higher,
          DefSFBitset* const ptr_bitset) const override;
-    void ComputeSFBitsetOnBoundaryAtGivenLevel(const DefSizet i_level,
+    void ComputeSFBitsetOnBoundaryAtGivenLevel(const DefAmrIndexUint i_level,
         std::vector<DefSFBitset>* const ptr_vec_bitset_min,
         std::vector<DefSFBitset>* const ptr_vec_bitset_max) const override;
     void ResetExtendLayerBasedOnDomainSize(
-        const DefSizet i_level, const DefSFBitset& sfbitset_in,
-        std::vector<DefLUint>* const ptr_vec_extend_neg,
-        std::vector<DefLUint>* const ptr_vec_extend_pos) const override;
+        const DefAmrIndexUint i_level, const DefSFBitset& sfbitset_in,
+        std::vector<DefAmrIndexLUint>* const ptr_vec_extend_neg,
+        std::vector<DefAmrIndexLUint>* const ptr_vec_extend_pos) const override;
     void FindCornersForNeighbourCells(const DefSFBitset bitset_in,
         std::vector<DefSFBitset>* const ptr_bitsets)  const override;
-    void IdentifyInterfaceForACell(const DefUint flag_interface,
-        const DefSFBitset bitset_in, const DefMap<DefUint>& node_exist,
-        DefMap<DefUint>* const ptr_inner_layer,
-        DefMap<DefUint>* const ptr_mid_layer,
-        DefMap<DefUint>* const ptr_outer_layer) override;
+    void IdentifyInterfaceForACell(const DefSFBitset bitset_in,
+        const DefMap<DefAmrUint>& node_coarse_outmost, const DefMap<DefAmrIndexUint>& node_exist,
+        DefMap<DefAmrUint>* const ptr_inner_layer,
+        DefMap<DefAmrUint>* const ptr_mid_layer,
+        DefMap<DefAmrUint>* const ptr_outer_layer) override;
     bool NodesBelongToOneCell(const DefSFBitset bitset_in,
-        const DefMap<DefUint>& node_exist,
+        const DefMap<DefAmrIndexUint>& node_exist,
         std::vector<DefSFBitset>* const ptr_bitsets) override;
     // functions to generate grid (Serial)
-    void GenerateGridNodeNearTrackingNode(const DefSizet i_level,
-        const std::pair<ECriterionType, DefSizet>& tracking_grid_key,
-        DefMap<DefUint>* const ptr_map_node_temp) const override;
+    void GenerateGridNodeNearTrackingNode(const DefAmrIndexUint i_level,
+        const std::pair<ECriterionType, DefAmrIndexUint>& tracking_grid_key,
+        DefMap<DefAmrUint>* const ptr_map_node_temp) const override;
     void IdentifyTypeOfLayerByFloodFill(
-        const DefSizet i_level, const DefSizet i_geo,
+        const DefAmrIndexUint i_level, const DefAmrIndexUint i_geo,
         const std::vector<DefReal> flood_fill_start_point,
-        const DefMap<DefUint>& map_nodes_exist,
-        DefMap<DefUint>* const ptr_map_nodes_outside,
-        DefMap<DefUint>* const ptr_map_nodes_inside) const override;
+        const DefMap<DefAmrUint>& map_nodes_exist,
+        DefMap<DefAmrUint>* const ptr_map_nodes_outside,
+        DefMap<DefAmrUint>* const ptr_map_nodes_inside) const override;
     void PushBackSFBitsetInFloodFill(const DefSFBitset& bitset_in,
         std::vector<DefSFBitset>* const ptr_vec_code_stk)const  override;
     void ExtendOneLayerGrid(
-        const DefMap<DefUint>& map_start_layer,
+        const DefMap<DefAmrUint>& map_start_layer,
         const std::vector<DefSFBitset>& vec_bitset_min,
         const std::vector<DefSFBitset>& vec_bitset_max,
         const std::vector<bool>& bool_extend_neg,
         const std::vector<bool>& bool_extend_pos,
-        DefMap<DefUint>* const ptr_map_output_layer,
-        DefMap<DefUint>* const ptr_map_exist,
-        DefMap<DefUint>* const ptr_outmost_layer,
-        std::vector<DefMap<DefUint>>* const ptr_vector_boundary_min,
-        std::vector<DefMap<DefUint>>* const ptr_vector_boundary_max)
+        DefMap<DefAmrUint>* const ptr_map_output_layer,
+        DefMap<DefAmrIndexUint>* const ptr_map_exist,
+        DefMap<DefAmrUint>* const ptr_outmost_layer,
+        std::vector<DefMap<DefAmrUint>>* const ptr_vector_boundary_min,
+        std::vector<DefMap<DefAmrUint>>* const ptr_vector_boundary_max)
         const override;
     void FindInterfaceBetweenGrid(
-        const DefSizet i_level, const DefMap<DefUint>& map_outmost_layer,
-        DefMap<DefUint>* const map_exist,
-        DefMap<DefUint>* const ptr_interface_outmost,
-        DefMap<DefUint>* const ptr_layer_lower_level,
-        DefMap<DefUint>* const ptr_layer_lower_level_outer) override;
+        const DefAmrIndexUint i_level, const DefMap<DefAmrUint>& map_outmost_layer,
+        DefMap<DefAmrIndexUint>* const map_exist,
+        DefMap<DefAmrUint>* const ptr_interface_outmost,
+        DefMap<DefAmrIndexUint>* const ptr_layer_lower_level,
+        DefMap<DefAmrUint>* const ptr_layer_lower_level_outer) override;
 
  private:
-     DefUint kFlagCurrentNodeXNeg_ = 1, kFlagCurrentNodeXPos_ = 1 << 1,
-         kFlagCurrentNodeYNeg_ = 1 << 2, kFlagCurrentNodeYPos_ = 1 << 3,
-         kFlagCurrentNodeZNeg_ = 1 << 4, kFlagCurrentNodeZPos_ = 1 << 5;
-     DefUint FindAllNeighboursWithSpecifiedDirection(const DefSFBitset bitset_in,
-         const std::array<bool, 3>& bool_neg, const std::array<bool, 3>& bool_pos,
-         std::vector <DefSFBitset>* const ptr_vec_neigbours) const;
-     void IdentifyInterfaceNodeOnEdge(const DefUint flag_interface,
-         const std::array<DefSFBitset, 2>& arr_bitset_lower,
-         const DefSFBitset bitset_mid_higher,
-         const DefMap<DefUint>& node_exist,
-         const std::array<DefMap<DefUint>* const, 3>& arr_ptr_layer);
-     void IdentifyInterfaceNodeDiagonal(const DefUint flag_interface,
-         const std::array<DefSFBitset, 4>& arr_bitset_lower,
-         const DefSFBitset bitset_center_higher,
-         const DefMap<DefUint>& node_exist,
-         const std::array<DefMap<DefUint>* const, 3>& arr_ptr_layer);
+    DefAmrUint kFlagCurrentNodeXNeg_ = 1, kFlagCurrentNodeXPos_ = 1 << 1,
+     kFlagCurrentNodeYNeg_ = 1 << 2, kFlagCurrentNodeYPos_ = 1 << 3,
+     kFlagCurrentNodeZNeg_ = 1 << 4, kFlagCurrentNodeZPos_ = 1 << 5;
+    DefAmrUint FindAllNeighborsWithSpecifiedDirection(const DefSFBitset bitset_in,
+        const std::array<bool, 3>& bool_neg, const std::array<bool, 3>& bool_pos,
+        std::vector <DefSFBitset>* const ptr_vec_neigbours) const;
+    void IdentifyInterfaceNodeOnEdge(
+        const std::array<DefSFBitset, 2>& arr_bitset_lower,
+        const DefSFBitset bitset_mid_higher,
+        const DefMap<DefAmrUint>& node_outmost,
+        const std::array<DefMap<DefAmrUint>* const, 3>& arr_ptr_layer);
+    void IdentifyInterfaceNodeDiagonal(
+        const std::array<DefSFBitset, 4>& arr_bitset_lower,
+        const DefSFBitset bitset_center_higher,
+        const DefMap<DefAmrUint>& node_outmost,
+        const std::array<DefMap<DefAmrUint>* const, 3>& arr_ptr_layer);
 
 #ifdef ENABLE_MPI
 
  public:
-    void FindBlockInterfaceForPartitionFromMinNMax(const DefSFBitset& bitset_min,
-        const DefSFBitset& bitset_max, const std::vector<DefUint>& code_domain_min,
-        const std::vector<DefUint>& code_domain_max,
-        DefMap<DefUint>* const ptr_partition_interface_background) override;
+    void GetNLevelCorrespondingOnes(
+        const DefAmrIndexUint i_level, std::vector<DefSFBitset>* const ptr_last_ones) const final;
+    bool CheckNodeOnOuterBoundaryOfBackgroundCell(DefAmrIndexUint i_level,
+        const DefSFCodeToUint code_min, const DefSFCodeToUint code_max, const DefSFBitset bitset_in,
+        const std::vector<DefSFBitset>& domain_min_m1_n_level,
+        const std::vector<DefSFBitset>& domain_max_p1_n_level,
+        const std::vector<DefSFBitset>& bitset_level_ones,
+        const DefMap<DefAmrIndexUint>& partitioned_interface_background) const final;
+    void GetMinM1AtGivenLevel(const DefAmrIndexUint i_level,
+        std::vector<DefSFBitset>* const ptr_min_m1_bitsets) const final;
+    void GetMaxP1AtGivenLevel(const DefAmrIndexUint i_level,
+        std::vector<DefSFBitset>* const ptr_max_p1_bitsets) const final;
+    void SearchForGhostLayerForMinNMax(const DefSFBitset bitset_in,
+        const DefAmrIndexUint num_of_ghost_layers, const DefSFCodeToUint code_min, const DefSFCodeToUint code_max,
+        const std::vector<DefSFBitset>& domain_min_m1_n_level,
+        const std::vector<DefSFBitset>& domain_max_p1_n_level,
+        std::vector<DefSFBitset>* const ptr_vec_ghost_layer) const final;
 #endif  // ENABLE_MPI
 #ifdef DEBUG_UNIT_TEST
 
@@ -583,7 +582,7 @@ class GridManager3D :public  GridManagerInterface, public SFBitsetAux3D {
 */
 template<InterfaceInfoHasType InterfaceInfo>
 DefSizet GridManagerInterface::CheckExistenceOfTypeAtGivenLevel(
-    const DefSizet i_level, const std::string& type,
+    const DefAmrIndexUint i_level, const std::string& type,
     const std::vector<std::shared_ptr<InterfaceInfo>>&
     vec_ptr_interface) const {
     DefSizet iter_count = 0;
@@ -592,8 +591,7 @@ DefSizet GridManagerInterface::CheckExistenceOfTypeAtGivenLevel(
     } else {
         for (const auto& iter : vec_ptr_interface) {
             ++iter_count;
-            if ((iter->i_level_ == i_level)
-                && (iter->node_type_ == type)) {
+            if ((iter->i_level_ == i_level) && (iter->node_type_ == type)) {
                 return iter_count;
             }
         }

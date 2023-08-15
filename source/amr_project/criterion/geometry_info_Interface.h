@@ -17,10 +17,7 @@
 #include <string>
 #include "../defs_libs.h"
 #include "criterion/criterion_numerates.h"
-#ifdef ENABLE_MPI
-#include "mpi/mpi_manager.h"
-#include "grid/sfbitset_aux.h"
-#endif  // ENABLE_MPI
+#include "criterion/geometry_coordi.h"
 namespace rootproject {
 namespace amrproject {
 class TrackingGridInfoCreatorInterface;
@@ -35,6 +32,7 @@ struct GeometryVertexInfo {
     std::vector<DefInt> vec_int{};
     std::vector<DefReal> vec_real{};
 };
+class DefaultGeoManager;
 /**
 * @class GeometryInfoInterface
 * @brief class used to store information of a geometry
@@ -42,45 +40,42 @@ struct GeometryVertexInfo {
 class GeometryInfoInterface {
  public:
     // information of geometry itself
-    DefTypeUint computational_cost_ = 1;
+    DefAmrUint computational_cost_ = 1;
     DefReal decompose_factor_ = 1.;
-    DefSizet i_level_ = 0;
-    DefSizet i_geo_ = ~0;
-    EGeometryCellType geometry_cell_type_ =
-        EGeometryCellType::kUndefined;
-    EGridExtendType grid_extend_type_ =
-        EGridExtendType::kSameInAllDirections;
+    DefAmrIndexUint i_level_ = 0;
+    DefAmrIndexUint i_geo_ = ~0;
+    EGeometryCellType geometry_cell_type_ = EGeometryCellType::kUndefined;
+    EGridExtendType grid_extend_type_ = EGridExtendType::kSameInAllDirections;
     std::string node_type_;
 
     // information stored on each vertex
-    DefSizet k0NumIntForEachVertex_ = 0;
-    DefSizet k0NumRealForEachVertex_ = 0;
+    DefAmrIndexUint k0NumIntForEachVertex_ = 0;
+    DefAmrIndexUint k0NumRealForEachVertex_ = 0;
     std::vector<GeometryVertexInfo> vec_vertices_info_{};
 
-    TrackingGridInfoCreatorInterface*
-        ptr_tracking_grid_info_creator_ = nullptr;
-    GhostGridInfoCreatorInterface*
-        ptr_ghost_grid_info_creator_ = nullptr;
+    TrackingGridInfoCreatorInterface* ptr_tracking_grid_info_creator_ = nullptr;
+    GhostGridInfoCreatorInterface* ptr_ghost_grid_info_creator_ = nullptr;
 
     // type of default geometry shape
-    DefaultGeoShapeType k0DefaultGeoShapeType_ =
-        DefaultGeoShapeType::kUndefined;
+    DefaultGeoShapeType k0DefaultGeoShapeType_ = DefaultGeoShapeType::kUndefined;
 
     // number of extended layer based on geometry
-    std::vector<DefUint>
-        k0XIntExtendPositive_, k0XIntExtendNegative_,
-        k0YIntExtendPositive_, k0YIntExtendNegative_,
-        k0ZIntExtendPositive_, k0ZIntExtendNegative_;
-        ///< number of extened layers
+    std::vector<DefAmrIndexUint> k0XIntExtendPositive_, k0XIntExtendNegative_,
+     k0YIntExtendPositive_, k0YIntExtendNegative_, k0ZIntExtendPositive_, k0ZIntExtendNegative_;
+     ///< number of extened layers
 
     /* number of layer extended inside the geometry
      at (i_level - 1) refinement level*/
-    std::vector<DefUint>  k0IntInnerExtend_;
+    std::vector<DefAmrIndexUint>  k0IntInnerExtend_;
     ///< number of extened layers inside the geometry
 
+    virtual void SetIndex() = 0;
+    virtual bool SetCenter(const std::vector<DefReal>& vec_offset) = 0;
+    virtual int InitialGeometry(const DefReal dx,
+     const DefaultGeoShapeType shape_type, const DefaultGeoManager& default_geo_manager) = 0;
+    virtual int UpdateGeometry(const DefaultGeoManager& default_geo_manager) = 0;  
     virtual void FindTrackingNodeBasedOnGeo(
-        const SFBitsetAuxInterface* ptr_sfbitset_aux,
-        GridInfoInterface* const ptr_grid_info) = 0;
+     const SFBitsetAuxInterface* ptr_sfbitset_aux, GridInfoInterface* const ptr_grid_info) = 0;
     virtual std::vector<DefReal> GetFloodFillOriginArrAsVec() const = 0;
     virtual DefSizet GetNumOfGeometryPoints() const = 0;
     virtual ~GeometryInfoInterface() {}
@@ -95,42 +90,14 @@ class GeometryInfoInterface {
 */
 class GeometryInfoCreatorInterface {
  public:
-    virtual std::shared_ptr<GeometryInfoInterface>
-        CreateGeometryInfo() = 0;
+    virtual std::shared_ptr<GeometryInfoInterface> CreateGeometryInfo() = 0;
 };
-class DefaultGeoManager;
 #ifndef  DEBUG_DISABLE_2D_FUNCTIONS
 /**
-* @struct GeometryCoordinate2D
-* @brief struct used to store information of a geometry vertex
-*/
-struct GeometryCoordinate2D {
-    std::array<DefReal, 2> coordinate{};
-
-    //GeometryCoordinate2D& operator=(const GeometryCoordinate2D& coordi_r) {
-    //    this->coordinate.at(0) = coordi_r.coordinate.at(0);
-    //    this->coordinate.at(1) = coordi_r.coordinate.at(1);
-    //    return *this;
-    //}
-    //GeometryCoordinate2D operator+(const GeometryCoordinate2D& coordi_r) {
-    //    GeometryCoordinate2D coordi_return;
-    //    coordi_return.coordinate.at(0) = this->coordinate.at(0)
-    //        + coordi_r.coordinate.at(0);
-    //    coordi_return.coordinate.at(1) = this->coordinate.at(1)
-    //        + coordi_r.coordinate.at(1);
-    //    return coordi_return;
-    //}
-    //GeometryCoordinate2D operator/(DefReal real_r) {
-    //    GeometryCoordinate2D coordi_return;
-    //    coordi_return.coordinate.at(0) = this->coordinate.at(0) / real_r;
-    //    coordi_return.coordinate.at(1) = this->coordinate.at(1) / real_r;
-    //}
-};
-/**
-* @class Geometry2DInterface
+* @class GeometryInfo2DInterface
 * @brief interface class used to store 2D information of a geometry
 */
-class Geometry2DInterface{
+class GeometryInfo2DInterface: virtual public GeometryInfoInterface {
  public:
     // information of geometry itself
     std::array<DefReal, 2> geometry_center_{};
@@ -138,42 +105,27 @@ class Geometry2DInterface{
     std::array<DefReal, 2> k0RealOffset_{};
     std::vector<GeometryCoordinate2D> coordinate_origin_{};
 
-    virtual int InitialGeometry(const DefReal dx,
-        const DefaultGeoShapeType shape_type,
-        const DefaultGeoManager& default_geo_manager);
-    virtual int UpdateGeometry(
-        const DefaultGeoManager& default_geo_manager);
-#ifdef ENABLE_MPI
-    int SerializeCoordiOrigin(const std::vector<GeometryCoordinate2D>& vec_points,
-        std::unique_ptr<char[]>& buffer) const;
-    void DeserializeCoordiOrigin(const std::unique_ptr<char[]>& buffer,
-        std::vector<GeometryCoordinate2D>* const vec_points) const;
-    virtual void IniSendNReceivePartitionedGeo(const std::array<DefReal, 2>& background_space,
-        const SFBitsetAux2D& sfbitset_aux, const MpiManager& mpi_manager,
-        const std::vector<DefSFBitset>& bitset_max);
-#endif  // ENABLE_MPI
+    bool SetCenter(const std::vector<DefReal>& vec_offset) final {
+        if (vec_offset.size() != 2) {
+            return false;
+        }
+        k0RealOffset_[kXIndex] = vec_offset.at(kXIndex);
+        k0RealOffset_[kYIndex] = vec_offset.at(kYIndex);
+        return true;
+    }
+    int InitialGeometry(const DefReal dx, const DefaultGeoShapeType shape_type,
+     const DefaultGeoManager& default_geo_manager) override;
+    int UpdateGeometry(const DefaultGeoManager& default_geo_manager) override;
 
-    virtual void SetIndex() = 0;
-    virtual void DecomposeNHigherLevel(const DefSizet i_level_grid,
-        const DefReal decompose_length,
-        const std::unordered_map<DefSizet, bool>& map_indices_base,
-        std::unordered_map<DefSizet, bool>* const ptr_map_indices_remain) = 0;
-    virtual ~Geometry2DInterface() {}
+    virtual ~GeometryInfo2DInterface() {}
 };
 #endif  // DEBUG_DISABLE_2D_FUNCTIONS
 #ifndef  DEBUG_DISABLE_3D_FUNCTIONS
 /**
-* @struct GeometryCoordinate3D
-* @brief struct used to store information of a geometry vertex
-*/
-struct GeometryCoordinate3D {
-    std::array<DefReal, 3> coordinate{};
-};
-/**
-* @class Geometry3DInterface
+* @class GeometryInfo3DInterface
 * @brief interface class used to store 3D information of a geometry
 */
-class Geometry3DInterface {
+class GeometryInfo3DInterface: virtual public GeometryInfoInterface {
  public:
     // information of geometry itself
     std::array<DefReal, 3> geometry_center_{};
@@ -181,41 +133,34 @@ class Geometry3DInterface {
     std::array<DefReal, 3> k0RealOffset_{};
     std::vector<GeometryCoordinate3D> coordinate_origin_{};
 
-    virtual void SetIndex() = 0;
-    virtual int InitialGeometry(const DefReal dx,
-        const DefaultGeoShapeType shape_type,
-        const DefaultGeoManager& default_geo_manager);
-    virtual int UpdateGeometry(
-        const DefaultGeoManager& default_geo_manager);
-#ifndef  DEBUG_DISABLE_3D_FUNCTIONS
-    int SerializeCoordiOrigin(const std::vector<GeometryCoordinate3D>& vec_points,
-        std::unique_ptr<char[]>& buffer) const;
-    void DeserializeCoordiOrigin(const std::unique_ptr<char[]>& buffer,
-        std::vector<GeometryCoordinate3D>* const vec_points) const;
-    virtual void IniSendNReceivePartitionedGeo(const std::array<DefReal, 3>& background_space,
-       const SFBitsetAux3D& sfbitset_aux, const MpiManager& mpi_manager,
-       const std::vector<DefSFBitset>& bitset_max);
-#endif  // DEBUG_DISABLE_3D_FUNCTIONS
+    bool SetCenter(const std::vector<DefReal>& vec_offset) final {
+        if (vec_offset.size() != 3) {
+            return false;
+        }
+        k0RealOffset_[kXIndex] = vec_offset.at(kXIndex);
+        k0RealOffset_[kYIndex] = vec_offset.at(kYIndex);
+        k0RealOffset_[kZIndex] = vec_offset.at(kZIndex);
+        return true;
+    }
+    int InitialGeometry(const DefReal dx, const DefaultGeoShapeType shape_type,
+     const DefaultGeoManager& default_geo_manager) override;
+    int UpdateGeometry(const DefaultGeoManager& default_geo_manager) override;
 
-    virtual void DecomposeNHigherLevel(const DefSizet i_level_grid,
-        const DefReal decompose_length,
-        const std::unordered_map<DefSizet, bool>& map_indices_base,
-        std::unordered_map<DefSizet, bool>* const ptr_map_indices_remain) = 0;
-    virtual ~Geometry3DInterface() {}
+    virtual ~GeometryInfo3DInterface() {}
 };
 #endif  // DEBUG_DISABLE_3D_FUNCTIONS
 class DefaultGeoManager {
  public:
 #ifndef  DEBUG_DISABLE_2D_FUNCTIONS
-    void circle_initial(Geometry2DInterface* const ptr_geo) const;
+    void circle_initial(GeometryInfo2DInterface* const ptr_geo) const;
     void circle_update(DefReal sum_t,
-        Geometry2DInterface* const ptr_geo) const;
+        GeometryInfo2DInterface* const ptr_geo) const;
 #endif  // DEBUG_DISABLE_2D_FUNCTIONS
 #ifndef  DEBUG_DISABLE_3D_FUNCTIONS
     void cube_initial(const DefReal dx,
-        Geometry3DInterface* const ptr_geo) const;
+        GeometryInfo3DInterface* const ptr_geo) const;
     void cube_update(const DefReal sum_t,
-        Geometry3DInterface* const ptr_geo) const;
+        GeometryInfo3DInterface* const ptr_geo) const;
 #endif  // DEBUG_DISABLE_3D_FUNCTIONS
 };
 }  // end namespace amrproject

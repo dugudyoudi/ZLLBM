@@ -6,7 +6,6 @@
 * @author Zhengliang Liu
 * @brief functions used to manipulate morton codes.
 * @date  2022-5-16
-* @note  functions from other managers will be called.
 */
 #include <string>
 #include <array>
@@ -16,7 +15,7 @@ namespace rootproject {
 namespace amrproject {
 #ifndef  DEBUG_DISABLE_2D_FUNCTIONS
 /**
-* @brief initialize morton code related varialbes.
+* @brief initialize morton code related variables.
 */
 void SFBitsetAux2D::SFBitsetInitial() {
     // reference morton code used to take digitals at a given direction
@@ -39,10 +38,9 @@ void SFBitsetAux2D::SFBitsetInitial() {
 *        higher level 0(the background level).
 * @param[in] i_level level of refinement
 */
-DefSFBitset SFBitsetAux2D::SFBitsetBitsForRefinement(
-    const DefSizet i_level) const {
+DefSFBitset SFBitsetAux2D::SFBitsetBitsForRefinement(const DefAmrIndexUint i_level) const {
     DefSFBitset bitset = 0;
-    for (DefSizet i = 0; i < 2 * i_level; ++i) {
+    for (DefAmrIndexUint i = 0; i < 2 * i_level; ++i) {
         bitset.set(i, true);
     }
     return bitset;
@@ -53,13 +51,13 @@ DefSFBitset SFBitsetAux2D::SFBitsetBitsForRefinement(
 * @return  morton code.
 */
 DefSFBitset SFBitsetAux2D::SFBitsetEncoding(
-    const std::array<DefLUint, 2>& coordi_index) const {
+    const std::array<DefAmrIndexLUint, 2>& coordi_index) const {
     DefSFBitset sfbitset_code = 0;
     for (DefSizet i = 0; i < (kSFBitsetBit / 2); ++i) {
         sfbitset_code |= ((coordi_index.at(kXIndex) &
-            ((static_cast<DefLUint>(1)) << i)) << i)
+            ((static_cast<DefAmrIndexLUint>(1)) << i)) << i)
             | ((coordi_index.at(kYIndex) &
-                ((static_cast<DefLUint>(1)) << i)) << (i + 1));
+                ((static_cast<DefAmrIndexLUint>(1)) << i)) << (i + 1));
     }
     return sfbitset_code;
 }
@@ -73,10 +71,10 @@ DefSFBitset SFBitsetAux2D::SFBitsetEncoding(
 DefSFBitset SFBitsetAux2D::SFBitsetEncodingCoordi(
     const std::vector<DefReal>& grid_space,
     const std::vector<DefReal>& coordi) const {
-    std::array<DefLUint, 2> coorid_index =
-    { static_cast<DefLUint>(coordi.at(kXIndex) / grid_space[kXIndex] + kEps),
-      static_cast<DefLUint>(coordi.at(kYIndex) / grid_space[kYIndex] + kEps)};
-    return this->SFBitsetEncoding(coorid_index);
+    std::array<DefAmrIndexLUint, 2> coordi_index =
+    { static_cast<DefAmrIndexLUint>(coordi.at(kXIndex) / grid_space[kXIndex] + kEps),
+      static_cast<DefAmrIndexLUint>(coordi.at(kYIndex) / grid_space[kYIndex] + kEps)};
+    return this->SFBitsetEncoding(coordi_index);
 }
 /**
 * @brief function to compute the 2D coordinates from morton code.
@@ -107,21 +105,95 @@ void SFBitsetAux2D::SFBitsetComputeCoordinate(const DefSFBitset& bitset_in,
 */
 void SFBitsetAux2D::SFBitsetComputeIndices(
     const DefSFBitset& bitset_in,
-    std::array<DefLUint, 2>* const ptr_indices) const {
+    std::array<DefAmrIndexLUint, 2>* const ptr_indices) const {
     *ptr_indices = { 0, 0 };
     for (DefSizet i = 0; i < kSFBitsetBit / 2; ++i) {
         if (bitset_in.test(i * 2)) {
-            ptr_indices->at(kXIndex) +=
-                TwoPowerN(static_cast<DefLUint>(i));
+            ptr_indices->at(kXIndex) += static_cast<DefAmrIndexLUint>(TwoPowerN(i));
         }
         if (bitset_in.test(i * 2 + 1)) {
-            ptr_indices->at(kYIndex) +=
-                TwoPowerN(static_cast<DefLUint>(i));
+            ptr_indices->at(kYIndex) += static_cast<DefAmrIndexLUint>(TwoPowerN(i));
         }
     }
 }
+/**
+ * @brief function to reset the indices exceeding the computational domain.
+ * @param[in] domain_min_indices minimum indices of the computational domain.
+ * @param[in] domain_max_indices maximum indices of the computational domain.   
+ * @param[out] ptr_i_code pointer to a number to record increment of the space filling code
+ * @param[out] ptr_bitset_tmp pointer to space filling code
+ * @return an integer indicating the success of the operation
+ */
+int SFBitsetAux2D::ResetIndicesExceedingDomain(std::array<DefAmrIndexLUint, 2> domain_min_indices,
+    std::array<DefAmrIndexLUint, 2> domain_max_indices,
+    DefSFCodeToUint* const ptr_i_code, DefSFBitset* ptr_bitset_tmp) const {
+    std::array<DefAmrIndexLUint, 2> indices;
+    DefSFCodeToUint& i_code = *ptr_i_code;
+    DefSFBitset& bitset_temp = *ptr_bitset_tmp;
+    bitset_temp = static_cast<DefSFBitset>(i_code);
+    DefAmrUint iter_count;
+    DefAmrUint sfcode_block;  // block size of space filling code
+    bool bool_exceed_x, bool_exceed_y;
+    SFBitsetComputeIndices(bitset_temp, &indices);
+    bool_exceed_x =
+        indices[kXIndex] > domain_max_indices[kXIndex];
+    bool_exceed_y =
+        indices[kYIndex] > domain_max_indices[kYIndex];
+    iter_count = 0;
+    while ((bool_exceed_x || bool_exceed_y)
+        && iter_count < max_reset_code_) {
+        if (bool_exceed_x) {
+            sfcode_block = 4;
+            while ((i_code % sfcode_block) == 0) {
+                sfcode_block *= 4;
+            }
+            i_code += sfcode_block / 4;
+            bitset_temp = static_cast<DefSFBitset>(i_code);
+            SFBitsetComputeIndices(bitset_temp, &indices);
+            bool_exceed_x =
+                indices[kXIndex] > domain_max_indices[kXIndex];
+            bool_exceed_y =
+                indices[kYIndex] > domain_max_indices[kYIndex];
+        }
+        if (bool_exceed_y) {
+            sfcode_block = 4;
+            while ((i_code % sfcode_block) == 0) {
+                sfcode_block *= 4;
+            }
+            i_code += sfcode_block / 4 * 2;
+            bitset_temp = static_cast<DefSFBitset>(i_code);
+            SFBitsetComputeIndices(bitset_temp, &indices);
+            bool_exceed_x =
+                indices[kXIndex] > domain_max_indices[kXIndex];
+            bool_exceed_y =
+                indices[kYIndex] > domain_max_indices[kYIndex];
+        }
+        ++iter_count;
+    }
+#ifdef DEBUG_CHECK_GRID
+    if (iter_count > max_reset_code_) {
+        return 1;
+    }
+#endif
+    if (indices[kXIndex] < domain_min_indices[kXIndex]) {
+        bitset_temp = SFBitsetEncoding(
+            { domain_min_indices[kXIndex], indices[kYIndex] });
+        i_code = bitset_temp.to_ullong();
+        SFBitsetComputeIndices(bitset_temp, &indices);
+    }
+    if (indices[kYIndex] < domain_min_indices[kYIndex]) {
+        bitset_temp = SFBitsetEncoding(
+            { indices[kXIndex] , domain_min_indices[kYIndex] });
+        i_code = bitset_temp.to_ullong();
+        SFBitsetComputeIndices(bitset_temp, &indices);
+    }
+    return 0;
+}
 #endif  // DEBUG_DISABLE_2D_FUNCTIONS
 #ifndef  DEBUG_DISABLE_3D_FUNCTIONS
+/**
+* @brief initialize morton code related variables.
+*/
 void SFBitsetAux3D::SFBitsetInitial() {
     k0SFBitsetTakeXRef_.at(kRefCurrent_) = 0;
     k0SFBitsetTakeYRef_.at(kRefCurrent_) = 0;
@@ -146,10 +218,9 @@ void SFBitsetAux3D::SFBitsetInitial() {
 *        higher level 0(the background level).
 * @param[in] i_level level of refinement
 */
-DefSFBitset SFBitsetAux3D::SFBitsetBitsForRefinement(
-    const DefSizet max_level) const {
+DefSFBitset SFBitsetAux3D::SFBitsetBitsForRefinement(const DefAmrIndexUint max_level) const {
     DefSFBitset bitset = 0;
-    for (DefSizet i = 0; i < 3 * max_level; ++i) {
+    for (DefAmrIndexUint i = 0; i < 3 * max_level; ++i) {
         bitset.set(i, true);
     }
     return bitset;
@@ -160,15 +231,15 @@ DefSFBitset SFBitsetAux3D::SFBitsetBitsForRefinement(
 * @return  morton code.
 */
 DefSFBitset SFBitsetAux3D::SFBitsetEncoding(
-    const std::array<DefLUint, 3>& coordi_index)  const {
+    const std::array<DefAmrIndexLUint, 3>& coordi_index)  const {
     DefSFBitset sfbitset_code = 0;
     for (DefSizet i = 0; i < (kSFBitsetBit / 3); ++i) {
         sfbitset_code |= ((coordi_index.at(kXIndex) &
-            ((static_cast<DefLUint>(1)) << i)) << (2 * i)) |
+            ((static_cast<DefAmrIndexLUint>(1)) << i)) << (2 * i)) |
             ((coordi_index.at(kYIndex) &
-                ((static_cast<DefLUint>(1)) << i)) << (2 * i + 1)) |
+                ((static_cast<DefAmrIndexLUint>(1)) << i)) << (2 * i + 1)) |
             ((coordi_index.at(kZIndex) &
-                ((static_cast<DefLUint>(1)) << i)) << (2 * i + 2));
+                ((static_cast<DefAmrIndexLUint>(1)) << i)) << (2 * i + 2));
     }
     return sfbitset_code;
 }
@@ -182,10 +253,10 @@ DefSFBitset SFBitsetAux3D::SFBitsetEncoding(
 DefSFBitset SFBitsetAux3D::SFBitsetEncodingCoordi(
     const std::vector<DefReal>& grid_space,
     const std::vector<DefReal>& coordi) const {
-    std::array<DefLUint, 3> coordi_index =
-    { static_cast<DefLUint>(coordi.at(kXIndex) / grid_space[kXIndex] + kEps),
-      static_cast<DefLUint>(coordi.at(kYIndex) / grid_space[kYIndex] + kEps),
-      static_cast<DefLUint>(coordi.at(kZIndex) / grid_space[kZIndex] + kEps) };
+    std::array<DefAmrIndexLUint, 3> coordi_index =
+    { static_cast<DefAmrIndexLUint>(coordi.at(kXIndex) / grid_space[kXIndex] + kEps),
+      static_cast<DefAmrIndexLUint>(coordi.at(kYIndex) / grid_space[kYIndex] + kEps),
+      static_cast<DefAmrIndexLUint>(coordi.at(kZIndex) / grid_space[kZIndex] + kEps) };
     return this->SFBitsetEncoding(coordi_index);
 }
 /**
@@ -221,22 +292,119 @@ void SFBitsetAux3D::SFBitsetComputeCoordinate(const DefSFBitset& bitset_in,
 */
 void SFBitsetAux3D::SFBitsetComputeIndices(
     const DefSFBitset& bitset_in,
-    std::array<DefLUint, 3>* const ptr_indices) const {
+    std::array<DefAmrIndexLUint, 3>* const ptr_indices) const {
     *ptr_indices = { 0, 0, 0 };
     for (DefSizet i = 0; i < kSFBitsetBit / 3; ++i) {
         if (bitset_in.test(i * 3)) {
-            ptr_indices->at(kXIndex) +=
-                TwoPowerN(static_cast<DefLUint>(i));
+            ptr_indices->at(kXIndex) += static_cast<DefAmrIndexLUint>(TwoPowerN(i));
         }
         if (bitset_in.test(i * 3 + 1)) {
-            ptr_indices->at(kYIndex) +=
-                TwoPowerN(static_cast<DefLUint>(i));
+            ptr_indices->at(kYIndex) += static_cast<DefAmrIndexLUint>(TwoPowerN(i));
         }
         if (bitset_in.test(i * 3 + 2)) {
-            ptr_indices->at(kZIndex) +=
-                TwoPowerN(static_cast<DefLUint>(i));
+            ptr_indices->at(kZIndex) += static_cast<DefAmrIndexLUint>(TwoPowerN(i));
         }
     }
+}
+/**
+ * @brief function to reset the indices exceeding the computational domain.
+* @param[in] domain_min_indices minimum indices of the computational domain.
+ * @param[in] domain_max_indices maximum indices of the computational domain.  
+ * @param ptr_i_code pointer to a number to record increment of the space filling code
+ * @param ptr_bitset_tmp pointer to space filling code
+ * @return an integer indicating the success of the operation
+ */
+int SFBitsetAux3D::ResetIndicesExceedingDomain(std::array<DefAmrIndexLUint, 3> domain_min_indices,
+    std::array<DefAmrIndexLUint, 3> domain_max_indices,
+    DefSFCodeToUint* const ptr_i_code, DefSFBitset* ptr_bitset_tmp) const {
+    std::array<DefAmrIndexLUint, 3> indices;
+    DefSFCodeToUint& i_code = *ptr_i_code;
+    DefSFBitset& bitset_temp = *ptr_bitset_tmp;
+    bitset_temp = static_cast<DefSFBitset>(i_code);
+    DefAmrUint iter_count;
+    DefAmrUint sfcode_block;  // block size of space filling code
+    bool bool_exceed_x, bool_exceed_y, bool_exceed_z;
+    SFBitsetComputeIndices(bitset_temp, &indices);
+    bool_exceed_x =
+        indices[kXIndex] > domain_max_indices[kXIndex];
+    bool_exceed_y =
+        indices[kYIndex] > domain_max_indices[kYIndex];
+    bool_exceed_z =
+        indices[kZIndex] > domain_max_indices[kZIndex];
+    iter_count = 0;
+    while ((bool_exceed_x || bool_exceed_y || bool_exceed_z)
+        && iter_count < max_reset_code_) {
+        if (bool_exceed_x) {
+            sfcode_block = 8;
+            while ((i_code % sfcode_block) == 0) {
+                sfcode_block *= 8;
+            }
+            i_code += sfcode_block / 8;
+            bitset_temp = static_cast<DefSFBitset>(i_code);
+            SFBitsetComputeIndices(bitset_temp, &indices);
+            bool_exceed_x =
+                indices[kXIndex] > domain_max_indices[kXIndex];
+            bool_exceed_y =
+                indices[kYIndex] > domain_max_indices[kYIndex];
+            bool_exceed_z =
+                indices[kZIndex] > domain_max_indices[kZIndex];
+        }
+        if (bool_exceed_y) {
+            sfcode_block = 8;
+            while ((i_code % sfcode_block) == 0) {
+                sfcode_block *= 8;
+            }
+            i_code += sfcode_block / 8 * 2;
+            bitset_temp = static_cast<DefSFBitset>(i_code);
+            SFBitsetComputeIndices(bitset_temp, &indices);
+            bool_exceed_x =
+                indices[kXIndex] > domain_max_indices[kXIndex];
+            bool_exceed_y =
+                indices[kYIndex] > domain_max_indices[kYIndex];
+            bool_exceed_z =
+                indices[kZIndex] > domain_max_indices[kZIndex];
+        }
+        if (bool_exceed_z) {
+            sfcode_block = 8;
+            while ((i_code % sfcode_block) == 0) {
+                sfcode_block *= 8;
+            }
+            i_code += sfcode_block / 8 * 4;
+            bitset_temp = static_cast<DefSFBitset>(i_code);
+            SFBitsetComputeIndices(bitset_temp, &indices);
+            bool_exceed_x =
+                indices[kXIndex] > domain_max_indices[kXIndex];
+            bool_exceed_y =
+                indices[kYIndex] > domain_max_indices[kYIndex];
+            bool_exceed_z =
+                indices[kZIndex] > domain_max_indices[kZIndex];
+        }
+        ++iter_count;
+    }
+#ifdef DEBUG_CHECK_GRID
+    if (iter_count > max_reset_code_) {
+        return 1;
+    }
+#endif
+    if (indices[kXIndex] < domain_min_indices[kXIndex]) {
+        bitset_temp = SFBitsetEncoding(
+            { domain_min_indices[kXIndex], indices[kYIndex], indices[kZIndex] });
+        i_code = bitset_temp.to_ullong();
+        SFBitsetComputeIndices(bitset_temp, &indices);
+    }
+    if (indices[kYIndex] < domain_min_indices[kYIndex]) {
+        bitset_temp = SFBitsetEncoding(
+            { indices[kXIndex], domain_min_indices[kYIndex], indices[kZIndex] });
+        i_code = bitset_temp.to_ullong();
+        SFBitsetComputeIndices(bitset_temp, &indices);
+    }
+    if (indices[kZIndex] < domain_min_indices[kZIndex]) {
+        bitset_temp = SFBitsetEncoding(
+            { indices[kXIndex], indices[kYIndex], domain_min_indices[kZIndex] });
+        i_code = bitset_temp.to_ullong();
+        SFBitsetComputeIndices(bitset_temp, &indices);
+    }
+    return 0;
 }
 #endif  // DEBUG_DISABLE_3D_FUNCTIONS
 }  // end namespace amrproject

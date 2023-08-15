@@ -29,7 +29,7 @@ int GeometryInfoOrigin2D::InitialGeometry(const DefReal dx,
     int return_status = 0;
     this->SetIndex();
     this->k0DefaultGeoShapeType_ = shape_type;
-    return_status = this->Geometry2DInterface::InitialGeometry(
+    return_status = this->GeometryInfo2DInterface::InitialGeometry(
         dx, shape_type, default_geo_manager);
     return return_status;
 }
@@ -40,19 +40,14 @@ int GeometryInfoOrigin2D::UpdateGeometry(
 void GeometryInfoOrigin2D::FindTrackingNodeBasedOnGeo(
     const SFBitsetAuxInterface* ptr_sfbitset_aux,
     GridInfoInterface* const ptr_grid_info) {
-    std::pair<ECriterionType, DefSizet> key_tracking_grid =
-    { ECriterionType::kGeometry, i_geo_ };
-    if (ptr_grid_info->map_ptr_tracking_grid_info_
-        .find(key_tracking_grid)
-        == ptr_grid_info->map_ptr_tracking_grid_info_.end()) {
-        ptr_grid_info->map_ptr_tracking_grid_info_
-            .insert({ key_tracking_grid,
-            ptr_tracking_grid_info_creator_
-                ->CreateTrackingGridInfo() });
+    std::pair<ECriterionType, DefAmrIndexUint> key_tracking_grid = { ECriterionType::kGeometry, i_geo_ };
+    if (ptr_grid_info->map_ptr_tracking_grid_info_.find(key_tracking_grid)
+     == ptr_grid_info->map_ptr_tracking_grid_info_.end()) {
+        ptr_grid_info->map_ptr_tracking_grid_info_.insert(
+         { key_tracking_grid, ptr_tracking_grid_info_creator_->CreateTrackingGridInfo() });
     }
     DefMap<TrackingNode>* ptr_tracking_node = &(ptr_grid_info
-        ->map_ptr_tracking_grid_info_.at(key_tracking_grid).get()
-        ->map_tracking_node_);
+     ->map_ptr_tracking_grid_info_.at(key_tracking_grid).get()->map_tracking_node_);
 
     DefSFBitset bitset_temp;
     std::vector<DefReal> coordi(2, 0.);
@@ -60,16 +55,12 @@ void GeometryInfoOrigin2D::FindTrackingNodeBasedOnGeo(
     for (const auto& iter : coordinate_origin_) {
         coordi[kXIndex] = iter.coordinate[kXIndex];
         coordi[kYIndex] = iter.coordinate[kYIndex];
-        bitset_temp = ptr_sfbitset_aux->SFBitsetEncodingCoordi(
-            ptr_grid_info->grid_space_, coordi);
-        if (ptr_tracking_node->find(bitset_temp)
-            == ptr_tracking_node->end()) {
+        bitset_temp = ptr_sfbitset_aux->SFBitsetEncodingCoordi(ptr_grid_info->grid_space_, coordi);
+        if (ptr_tracking_node->find(bitset_temp) == ptr_tracking_node->end()) {
             ptr_tracking_node->insert({ bitset_temp, (ptr_grid_info
-            ->map_ptr_tracking_grid_info_.at(key_tracking_grid).get())
-            ->k0TrackNodeInstance_ });
+             ->map_ptr_tracking_grid_info_.at(key_tracking_grid).get())->k0TrackNodeInstance_ });
         }
-        ptr_tracking_node->at(bitset_temp).set_point_index
-            .insert({0, ipoint });
+        ptr_tracking_node->at(bitset_temp).set_point_index.insert({0, ipoint });
         ++ipoint;
     }
 }
@@ -88,7 +79,7 @@ int GeometryInfoOrigin3D::InitialGeometry(const DefReal dx,
     int return_status = 0;
     this->SetIndex();
     this->k0DefaultGeoShapeType_ = shape_type;
-    return_status = this->Geometry3DInterface::InitialGeometry(
+    return_status = this->GeometryInfo3DInterface::InitialGeometry(
         dx, shape_type, default_geo_manager);
     return return_status;
 }
@@ -99,19 +90,16 @@ int GeometryInfoOrigin3D::UpdateGeometry(
 void GeometryInfoOrigin3D::FindTrackingNodeBasedOnGeo(
     const SFBitsetAuxInterface* ptr_sfbitset_aux,
     GridInfoInterface* const ptr_grid_info) {
-    std::pair<ECriterionType, DefSizet> key_tracking_grid =
+    std::pair<ECriterionType, DefAmrIndexUint> key_tracking_grid =
     { ECriterionType::kGeometry, i_geo_ };
-    if (ptr_grid_info->map_ptr_tracking_grid_info_
-        .find(key_tracking_grid)
-        == ptr_grid_info->map_ptr_tracking_grid_info_.end()) {
+    if (ptr_grid_info->map_ptr_tracking_grid_info_.find(key_tracking_grid)
+     == ptr_grid_info->map_ptr_tracking_grid_info_.end()) {
         ptr_grid_info->map_ptr_tracking_grid_info_
-            .insert({ key_tracking_grid,
-            ptr_tracking_grid_info_creator_
-                ->CreateTrackingGridInfo() });
+         .insert({ key_tracking_grid,
+         ptr_tracking_grid_info_creator_->CreateTrackingGridInfo() });
     }
     DefMap<TrackingNode>* ptr_tracking_node = &(ptr_grid_info
-        ->map_ptr_tracking_grid_info_.at(key_tracking_grid).get()
-        ->map_tracking_node_);
+     ->map_ptr_tracking_grid_info_.at(key_tracking_grid).get()->map_tracking_node_);
 
     DefSFBitset bitset_temp;
     std::vector<DefReal> coordi(3, 0.);
@@ -122,11 +110,10 @@ void GeometryInfoOrigin3D::FindTrackingNodeBasedOnGeo(
         coordi[kZIndex] = iter.coordinate[kZIndex];
         bitset_temp = ptr_sfbitset_aux->SFBitsetEncodingCoordi(
             ptr_grid_info->grid_space_, coordi);
-        if (ptr_tracking_node->find(bitset_temp)
-            == ptr_tracking_node->end()) {
+        if (ptr_tracking_node->find(bitset_temp) == ptr_tracking_node->end()) {
             ptr_tracking_node->insert({ bitset_temp, (ptr_grid_info
-            ->map_ptr_tracking_grid_info_.at(key_tracking_grid).get())
-            ->k0TrackNodeInstance_ });
+             ->map_ptr_tracking_grid_info_.at(key_tracking_grid).get())
+             ->k0TrackNodeInstance_ });
         }
         ptr_tracking_node->at(bitset_temp).set_point_index
             .insert({ 0, ipoint });

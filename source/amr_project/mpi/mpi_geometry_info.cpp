@@ -2,16 +2,14 @@
 //  All rights reserved
 
 /**
-* @file geometry_info_interface.cpp
+* @file mpi_geometry_info.cpp
 * @author Zhengliang Liu
-* @brief functions to initialize and update geometry information
+* @brief functions to communicate geometry information trough MPI
 * @date  2022-8-5
 */
 #include <limits>
-#include "../defs_libs.h"
+#include "mpi/mpi_manager.h"
 #ifdef ENABLE_MPI
-#include "io/log_write.h"
-#include "criterion/geometry_info_interface.h"
 namespace rootproject {
 namespace amrproject {
 #ifndef  DEBUG_DISABLE_2D_FUNCTIONS
@@ -21,7 +19,7 @@ namespace amrproject {
  * @param buffer unique pointer to a char array to store the serialized data.
  * @return size of the buffer in bytes.
 */
-int Geometry2DInterface::SerializeCoordiOrigin(const std::vector<GeometryCoordinate2D>& vec_points,
+int MpiManager::SerializeCoordiOrigin(const std::vector<GeometryCoordinate2D>& vec_points,
     std::unique_ptr<char[]>& buffer) const {
     int num_points;
     int real_size = sizeof(DefReal);
@@ -49,9 +47,9 @@ int Geometry2DInterface::SerializeCoordiOrigin(const std::vector<GeometryCoordin
 /**
  * @brief function to deserializes data from a buffer into a vector of 2D geometry coordinates.
  * @param[in] buffer unique pointer to a char array holding the serialized data.
- * @param[out] vec_points pointer to a vector of GeometryCoordinate2D objects where the deserialized data will be stored.
+ * @param[out] vec_points pointer to a vector store 2D geometry coordinates.
  */
-void Geometry2DInterface::DeserializeCoordiOrigin(const std::unique_ptr<char[]>& buffer,
+void MpiManager::DeserializeCoordiOrigin(const std::unique_ptr<char[]>& buffer,
         std::vector<GeometryCoordinate2D>* const vec_points) const {
     char* ptr_buffer = buffer.get();
     int real_size = sizeof(DefReal);
@@ -69,17 +67,18 @@ void Geometry2DInterface::DeserializeCoordiOrigin(const std::unique_ptr<char[]>&
     }
 }
 /**
- * @brief function to initializes the sending and receiving of partitioned geometry coordinates.
- * @param[in] grid_manager2d reference to the GridManager2D object.
- * @param[in] mpi_manager reference to MpiManager object.
+ * @brief function to initializes the sending partitioned 2D geometry coordinates from rank 0 to others.
+ * @param[in] background_space background grid space.
+ * @param[in] bitset_aux class to handle functions for space filling curves.
  * @param[in] bitset_max maximum space filling code for each partition.
- */ 
-void Geometry2DInterface::IniSendNReceivePartitionedGeo(const std::array<DefReal, 2>& background_space,
-        const SFBitsetAux2D& sfbitset_aux, const MpiManager& mpi_manager,
-        const std::vector<DefSFBitset>& bitset_max) {
+ * @param[out] ptr_vec_coordinate  pointer to a vector store 2D geometry coordinates.
+ */
+void MpiManager::IniSendNReceivePartitionedGeo(const std::array<DefReal, 2>& background_space,
+    const SFBitsetAux2D& bitset_aux, const std::vector<DefSFBitset>& bitset_max,
+    std::vector<GeometryCoordinate2D>* ptr_vec_coordinate) {
     DefSFBitset bitset_temp;
-    std::array<DefLUint, 2> coordi_index;
-    int rank_id = mpi_manager.rank_id_, num_ranks = mpi_manager.num_of_ranks_;
+    std::array<DefAmrIndexLUint, 2> coordinate_index;
+    const int rank_id = rank_id_, num_ranks = num_of_ranks_;
     int max_buffer = (std::numeric_limits<int>::max)() / sizeof(DefReal) / 2;
     std::vector<DefSFCodeToUint> ull_max(bitset_max.size());
     if (rank_id == 0) {
@@ -94,18 +93,18 @@ void Geometry2DInterface::IniSendNReceivePartitionedGeo(const std::array<DefReal
         std::vector<std::vector<std::vector<GeometryCoordinate2D>>> vec_points_ranks(num_ranks);
         int index;
         std::vector<int> i_chunk_each_rank(num_ranks, -1), i_counts(num_ranks, 0);
-        for (const auto& i_point : coordinate_origin_) {
-            coordi_index =
-            { static_cast<DefLUint>(i_point.coordinate.at(kXIndex) / background_space[kXIndex] + kEps),
-              static_cast<DefLUint>(i_point.coordinate.at(kYIndex) / background_space[kYIndex] + kEps)};
-            bitset_temp = sfbitset_aux.SFBitsetEncoding(coordi_index);
+        for (const auto& i_point : *ptr_vec_coordinate) {
+            coordinate_index =
+            { static_cast<DefAmrIndexLUint>(i_point.coordinate.at(kXIndex) / background_space[kXIndex] + kEps),
+              static_cast<DefAmrIndexLUint>(i_point.coordinate.at(kYIndex) / background_space[kYIndex] + kEps)};
+            bitset_temp = bitset_aux.SFBitsetEncoding(coordinate_index);
             auto iter_index = std::lower_bound(ull_max.begin(),
             ull_max.end(), bitset_temp.to_ullong());
             index = static_cast<int>(iter_index - ull_max.begin());
 #ifdef DEBUG_CHECK_GRID
             if (index == num_max) {
                 LogError("geometry point is out of computational "
-                     "domain in Geometry2DInterface::IniSendNReceivePartitionedGeoCoordi");
+                     "domain in GeometryInfo2DInterface::IniSendNReceivePartitionedGeoCoordi");
             }
 #endif  // DEBUG_CHECK_GRID
             if (index > 0) {
@@ -143,8 +142,8 @@ void Geometry2DInterface::IniSendNReceivePartitionedGeo(const std::array<DefReal
                 MPI_Waitall(num_chunks, reqs_send.data(), MPI_STATUS_IGNORE);
             }
             // delete coordinate_origin_ and initialize with partition one
-            coordinate_origin_.clear();
-            coordinate_origin_ = coordinate_origin_rank0;
+            ptr_vec_coordinate->clear();
+            *ptr_vec_coordinate = coordinate_origin_rank0;
         }
     } else {
         int num_chunks;
@@ -155,7 +154,7 @@ void Geometry2DInterface::IniSendNReceivePartitionedGeo(const std::array<DefReal
             std::unique_ptr<char[]> ptr_buffer = std::make_unique<char[]>(buffer_size_receive);
             MPI_Recv(ptr_buffer.get(), buffer_size_receive, MPI_BYTE, 0,
                 i_chunk, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
-            DeserializeCoordiOrigin(ptr_buffer, &coordinate_origin_);
+            DeserializeCoordiOrigin(ptr_buffer, ptr_vec_coordinate);
         }
     }
 }
@@ -167,7 +166,7 @@ void Geometry2DInterface::IniSendNReceivePartitionedGeo(const std::array<DefReal
  * @param buffer unique pointer to a char array to store the serialized data.
  * @return size of the buffer in bytes.
 */
-int Geometry3DInterface::SerializeCoordiOrigin(const std::vector<GeometryCoordinate3D>& vec_points,
+int MpiManager::SerializeCoordiOrigin(const std::vector<GeometryCoordinate3D>& vec_points,
     std::unique_ptr<char[]>& buffer) const {
     int num_points;
     int real_size = sizeof(DefReal);
@@ -199,7 +198,7 @@ int Geometry3DInterface::SerializeCoordiOrigin(const std::vector<GeometryCoordin
  * @param[in] buffer unique pointer to a char array holding the serialized data.
  * @param[out] vec_points pointer to a vector of GeometryCoordinate2D objects where the deserialized data will be stored.
  */
-void Geometry3DInterface::DeserializeCoordiOrigin(const std::unique_ptr<char[]>& buffer,
+void MpiManager::DeserializeCoordiOrigin(const std::unique_ptr<char[]>& buffer,
         std::vector<GeometryCoordinate3D>* const vec_points) const {
     char* ptr_buffer = buffer.get();
     int real_size = sizeof(DefReal);
@@ -219,17 +218,18 @@ void Geometry3DInterface::DeserializeCoordiOrigin(const std::unique_ptr<char[]>&
     }
 }
 /**
- * @brief function to initializes the sending and receiving of partitioned geometry coordinates.
- * @param[in] grid_manager2d reference to the GridManager2D object.
+ * @brief function to initializes the sending partitioned 2D geometry coordinates from rank 0 to others.
+ * @param[in] background_space background grid space.
+ * @param[in] bitset_aux class to handle functions for space filling curves.
  * @param[in] bitset_max maximum space filling code for each partition.
- * @param[out] ptr_geo2d pointer to the Geometry2DInterface object.
- */ 
-void Geometry3DInterface::IniSendNReceivePartitionedGeo(const std::array<DefReal, 3>& background_space,
-    const SFBitsetAux3D& sfbitset_aux, const MpiManager& mpi_manager,
-    const std::vector<DefSFBitset>& bitset_max) {
+ * @param[out] ptr_vec_coordinate  pointer to a vector store 2D geometry coordinates.
+ */
+void MpiManager::IniSendNReceivePartitionedGeo(const std::array<DefReal, 3>& background_space,
+    const SFBitsetAux3D& sfbitset_aux, const std::vector<DefSFBitset>& bitset_max,
+    std::vector<GeometryCoordinate3D>* ptr_vec_coordinate) {
     DefSFBitset bitset_temp;
-    std::array<DefLUint, 3> coordi_index;
-    int rank_id = mpi_manager.rank_id_, num_ranks = mpi_manager.num_of_ranks_;
+    std::array<DefAmrIndexLUint, 3> coordinate_index;
+    int rank_id = rank_id_, num_ranks = num_of_ranks_;
     int max_buffer = (std::numeric_limits<int>::max)() / sizeof(DefReal) / 3;
     std::vector<DefSFCodeToUint> ull_max(bitset_max.size());
     if (rank_id == 0) {
@@ -244,12 +244,12 @@ void Geometry3DInterface::IniSendNReceivePartitionedGeo(const std::array<DefReal
         std::vector<std::vector<std::vector<GeometryCoordinate3D>>> vec_points_ranks(num_ranks);
         int index;
         std::vector<int> i_chunk_each_rank(num_ranks, -1), i_counts(num_ranks, 0);
-        for (const auto& i_point : coordinate_origin_) {
-            coordi_index =
-            { static_cast<DefLUint>(i_point.coordinate.at(kXIndex) / background_space[kXIndex] + kEps),
-              static_cast<DefLUint>(i_point.coordinate.at(kYIndex) / background_space[kYIndex] + kEps),
-              static_cast<DefLUint>(i_point.coordinate.at(kZIndex) / background_space[kZIndex] + kEps)};
-            bitset_temp = sfbitset_aux.SFBitsetEncoding(coordi_index);
+        for (const auto& i_point : *ptr_vec_coordinate) {
+            coordinate_index =
+            { static_cast<DefAmrIndexLUint>(i_point.coordinate.at(kXIndex) / background_space[kXIndex] + kEps),
+              static_cast<DefAmrIndexLUint>(i_point.coordinate.at(kYIndex) / background_space[kYIndex] + kEps),
+              static_cast<DefAmrIndexLUint>(i_point.coordinate.at(kZIndex) / background_space[kZIndex] + kEps)};
+            bitset_temp = sfbitset_aux.SFBitsetEncoding(coordinate_index);
             auto iter_index = std::lower_bound(ull_max.begin(),
             ull_max.end(), bitset_temp.to_ullong());
             index = static_cast<int>(iter_index - ull_max.begin());
@@ -295,8 +295,8 @@ void Geometry3DInterface::IniSendNReceivePartitionedGeo(const std::array<DefReal
                 MPI_Waitall(num_chunks, reqs_send.data(), MPI_STATUS_IGNORE);
             }
             // delete coordinate_origin_ and initialize with partition one
-            coordinate_origin_.clear();
-            coordinate_origin_ = coordinate_origin_rank0;
+            ptr_vec_coordinate->clear();
+            *ptr_vec_coordinate = coordinate_origin_rank0;
         }
     } else {
         int num_chunks;
@@ -307,7 +307,7 @@ void Geometry3DInterface::IniSendNReceivePartitionedGeo(const std::array<DefReal
             std::unique_ptr<char[]> ptr_buffer = std::make_unique<char[]>(buffer_size_receive);
             MPI_Recv(ptr_buffer.get(), buffer_size_receive, MPI_BYTE, 0,
                 i_chunk, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
-            DeserializeCoordiOrigin(ptr_buffer, &coordinate_origin_);
+            DeserializeCoordiOrigin(ptr_buffer, ptr_vec_coordinate);
         }
     }
 }

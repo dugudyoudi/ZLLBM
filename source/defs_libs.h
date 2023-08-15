@@ -19,21 +19,24 @@
 namespace rootproject {
 using DefReal = double;
 using DefInt = int;
-using DefLInt = int;
-using DefUint = unsigned int;
-using DefLUint = unsigned int;
-using DefTypeUint = unsigned int;
+// unsigned integer for indices will be short like refinement level, index of geometries, searching directions
+using DefAmrIndexUint = int8_t;
+// unsigned integer for indices will be long like indices of nodes and vertices
+using DefAmrIndexLUint = unsigned int;
+// unsigned integer to store information for amr, like flags
+using DefAmrUint = unsigned int;
+using DefAmrTypeUint = unsigned int;
 using DefSFCodeToUint = uint64_t;
 using DefSizet = size_t;
 
 // data type for mpi communication
 #define MPI_REAL_DATA_TYPE MPI_DOUBLE
 #define MPI_INT_DATA_TYPE MPI_INT
-#define MPI_LINT_DATA_TYPE MPI_INT
-#define MPI_UINT_DATA_TYPE MPI_UNSIGNED
-#define MPI_LUINT_DATA_TYPE MPI_UNSIGNED
-#define MPI_TYPEUINT_DATA_TYPE MPI_UNSIGNED
-#define MPI_CODEUINT_DATA_TYPE MPI_UINT64_T
+#define MPI_AMR_INDEX_UINT_TYPE MPI_INT8_T
+#define MPI_AMR_INDEX_LUINT_TYPE MPI_UNSIGNED
+#define MPI_AMR_UINT_TYPE MPI_UNSIGNED
+#define MPI_AMR_TYPE_UINT_TYPE MPI_UNSIGNED
+#define MPI_CODE_UINT_TYPE MPI_UINT64_T
 #if SIZE_MAX == UCHAR_MAX
 #define MPI_SIZET_DATA_TYPE MPI_UNSIGNED_CHAR
 #elif SIZE_MAX == USHRT_MAX
@@ -49,7 +52,7 @@ using DefSizet = size_t;
 #endif
 
 // bitset to store code for space filling curves
-static constexpr DefUint kSFBitsetBit = 64;
+static constexpr DefAmrIndexUint kSFBitsetBit = 64;
 using DefSFBitset = std::bitset<kSFBitsetBit>;
 class HashFunc {
  public:
@@ -66,8 +69,8 @@ const DefReal kEps = 1.e-10;
 /**< Constant: a small number for comparing floats*/
 const DefReal kPi = 4. * atan(1.);  /**< Constant: pi*/
 
-// globle constants
-static constexpr DefUint kXIndex = 0, kYIndex = 1, kZIndex = 2;
-/**< indices of vectors for x, y, z diretions*/
+// global constants
+static constexpr DefAmrIndexUint kXIndex = 0, kYIndex = 1, kZIndex = 2;
+/**< indices of vectors for x, y, z directions*/
 }  // end namespace rootproject
 #endif  // ROOTPROJECT_SOURCE_DEF_LIB_H_

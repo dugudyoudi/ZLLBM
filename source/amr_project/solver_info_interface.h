@@ -20,7 +20,7 @@ class GridInfoCreatorInterface;
 */
 class SolverInterface {
 public:
-    DefUint k0SolverDims_ = 0;  ///< dimension
+    DefAmrIndexUint k0SolverDims_ = 0;  ///< dimension
     std::string node_type_;
     std::unique_ptr<GridInfoCreatorInterface>
         ptr_grid_info_creator_;

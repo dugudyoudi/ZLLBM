@@ -26,25 +26,15 @@ class  SFBitsetAux2D;
 class  SFBitsetAux3D;
 #endif  // DEBUG_DISABLE_3D_FUNCTIONS
 #ifndef  DEBUG_DISABLE_2D_FUNCTIONS
-class GeometryInfoOrigin2D :public  Geometry2DInterface,
-    public  GeometryInfoInterface {
+class GeometryInfoOrigin2D : public GeometryInfo2DInterface {
     void SetIndex() override;
-    int InitialGeometry(
-        const DefReal dx,
-        const DefaultGeoShapeType shape_type,
-        const DefaultGeoManager& default_geo_manager) override;
-    int UpdateGeometry(
-        const DefaultGeoManager& default_geo_manager) override;
-    void DecomposeNHigherLevel(const DefSizet i_level_grid,
-        const DefReal decompose_length,
-        const std::unordered_map<DefSizet, bool>& map_indices_base,
-        std::unordered_map<DefSizet, bool>* const ptr_map_indices_remain)
-        override {}
+    int InitialGeometry(const DefReal dx, const DefaultGeoShapeType shape_type,
+     const DefaultGeoManager& default_geo_manager) override;
+    int UpdateGeometry(const DefaultGeoManager& default_geo_manager) override;
     void FindTrackingNodeBasedOnGeo(
-        const SFBitsetAuxInterface* ptr_sfbitset_aux,
-        GridInfoInterface* const ptr_grid_info) override;
+     const SFBitsetAuxInterface* ptr_sfbitset_aux, GridInfoInterface* const ptr_grid_info) override;
     std::vector<DefReal> GetFloodFillOriginArrAsVec() const final {
-        return { flood_fill_origin_[kXIndex], flood_fill_origin_[kYIndex]};
+        return {flood_fill_origin_[kXIndex], flood_fill_origin_[kYIndex]};
     }
 
  public:
@@ -52,30 +42,20 @@ class GeometryInfoOrigin2D :public  Geometry2DInterface,
         this->node_type_ = "GeometryInfoOrigin2D";
     }
     DefSizet GetNumOfGeometryPoints() const final {
-            return coordinate_origin_.size();
+        return coordinate_origin_.size();
     }
 };
 #endif  // DEBUG_DISABLE_2D_FUNCTIONS
 #ifndef  DEBUG_DISABLE_3D_FUNCTIONS
-class GeometryInfoOrigin3D :public  Geometry3DInterface,
-    public  GeometryInfoInterface {
+class GeometryInfoOrigin3D : public GeometryInfo3DInterface {
     void SetIndex() override;
-    int InitialGeometry(
-        const DefReal dx,
-        const DefaultGeoShapeType shape_type,
-        const DefaultGeoManager& default_geo_manager) override;
-    int UpdateGeometry(
-        const DefaultGeoManager& default_geo_manager) override;
-    void DecomposeNHigherLevel(const DefSizet i_level_grid,
-        const DefReal decompose_length,
-        const std::unordered_map<DefSizet, bool>& map_indices_base,
-        std::unordered_map<DefSizet, bool>* const ptr_map_indices_remain)
-        override {}
+    int InitialGeometry(const DefReal dx, const DefaultGeoShapeType shape_type,
+     const DefaultGeoManager& default_geo_manager) override;
+    int UpdateGeometry(const DefaultGeoManager& default_geo_manager) override;
     void FindTrackingNodeBasedOnGeo(
-        const SFBitsetAuxInterface* ptr_sfbitset_aux,
-        GridInfoInterface* const ptr_grid_info) override;
+     const SFBitsetAuxInterface* ptr_sfbitset_aux, GridInfoInterface* const ptr_grid_info) override;
     std::vector<DefReal> GetFloodFillOriginArrAsVec() const final {
-        return { flood_fill_origin_[kXIndex], flood_fill_origin_[kYIndex]};
+        return {flood_fill_origin_[kXIndex], flood_fill_origin_[kYIndex], flood_fill_origin_[kZIndex]};
     }
 
  public:
@@ -83,7 +63,7 @@ class GeometryInfoOrigin3D :public  Geometry3DInterface,
         this->node_type_ = "GeometryInfoOrigin3D";
     }
     DefSizet GetNumOfGeometryPoints() const final {
-            return coordinate_origin_.size();
+        return coordinate_origin_.size();
     }
 };
 #endif  // DEBUG_DISABLE_3D_FUNCTIONS

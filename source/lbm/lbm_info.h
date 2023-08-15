@@ -36,29 +36,30 @@ class GridInfoLBM final :public grid::GridInfoInterface {
 class SolverLbmDnQn:public SolverInterface {
     friend class GridInfoLBM;
  public:
-     DefUint k0NumQ_ = 0;
+     DefAmrIndexUint k0NumQ_ = 0;
      ELbmCollisionOperatorType collision_type_ =
          ELbmCollisionOperatorType::kUndefined;
-    std::string GetSolverMethod() final override {
-        return  "Svoler LBM D" + std::to_string(k0SolverDims_)
+    std::string GetSolverMethod() final {
+        return  "Solver LBM D" + std::to_string(k0SolverDims_)
             + "Q" + std::to_string(k0NumQ_) + " Model is active.";
     }
     void SolverInitial() override;
     void RunSolver()override {};
-    void StremAndCollid();
+    void StreamAndCollid();
+
  protected:
     bool bool_vec_forces_ = false;
     // parameter to set indices for std::vector vec_real in grid::GridNode.
     // The default value is 2, indicating the 0 to (kNumQ - 1) elements are
     // distribution functions after collision (f^{\tilt}), while the kNumQ
     // to (2*kNumQ - 1) elements are distribution functions after stream (f).
-     DefUint num_distribution_func_set_ = 2; /** the mutiple of k0NumQ_
-        distribution functions need to be stored at each node.*/
-     std::vector<DefReal> k0Cx_, k0Cy_, k0Cz_;
-     ///< directions  of particle velocity
-     std::vector<DefReal> k0Weights_;
-     DefUint k0RhoIndex_ = 0, k0UxIndex_ = 0, k0UyIndex_ = 0, k0UzIndex_ = 0;
-     DefUint k0FxIndex_ = 0, k0FyIndex_ = 0, k0FzIndex_ = 0;
+    DefAmrIndexUint num_distribution_func_set_ = 2;
+    ///< the mutiple of k0NumQ distribution functions need to be stored at each node.*/
+    std::vector<DefReal> k0Cx_, k0Cy_, k0Cz_;
+    ///< directions  of particle velocity
+    std::vector<DefReal> k0Weights_;
+    DefAmrIndexUint k0RhoIndex_ = 0, k0UxIndex_ = 0, k0UyIndex_ = 0, k0UzIndex_ = 0;
+    DefAmrIndexUint k0FxIndex_ = 0, k0FyIndex_ = 0, k0FzIndex_ = 0;
 };
 class SolverLbmD2Q9 final :public SolverLbmDnQn {
     void SolverInitial() override;

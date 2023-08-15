@@ -14,7 +14,7 @@
 namespace rootproject {
 namespace lbm {
 void GridInfoLBM::SetNumberOfVecElements() {
-    k0NumRealForEachNode_ = static_cast<DefSizet>(
+    k0NumRealForEachNode_ = static_cast<DefAmrIndexUint>(
         std::dynamic_pointer_cast<SolverLbmDnQn>(ptr_solver_)->k0FzIndex_) + 1;
 }
 void GridInfoLBM::initial_grid_node(const DefSFBitset& bit_set_in) {
@@ -39,13 +39,12 @@ void SolverLbmD2Q9::SolverInitial() {
     k0UxIndex_ = k0RhoIndex_ + 1;
     k0UyIndex_ = k0UxIndex_ + 1;
     k0UzIndex_ = k0UyIndex_;
-    DefUint k0FxIndex, k0FyIndex, k0FzIndex;
+    DefAmrIndexUint k0FxIndex, k0FyIndex, k0FzIndex;
     if (bool_vec_forces_) {
         k0FxIndex = k0UzIndex_ + 1;
         k0FyIndex = k0FxIndex_ + 1;
         k0FzIndex = k0FyIndex_;
-    }
-    else {
+    } else {
         k0FxIndex = k0UzIndex_;
         k0FyIndex = k0UzIndex_;
         k0FzIndex = k0UzIndex_;

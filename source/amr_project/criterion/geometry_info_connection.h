@@ -33,10 +33,10 @@ class  SFBitsetAux3D;
 struct GeometryConnectionSurface {
     DefSizet parent_surface = ~0;
     std::vector<DefSizet> child_surface;
-    std::vector<std::pair<DefSizet, DefSizet>> vertex_connection;
+    std::vector<std::pair<DefAmrIndexUint, DefSizet>> vertex_connection;
 };
 struct GeometryConnectionSurfaceLevel {
-    DefSizet level_diff;
+    DefAmrIndexUint level_diff;
     std::vector<GeometryConnectionSurface>
         vec_surface_connection;
 };
@@ -49,26 +49,24 @@ struct GeometryConnectionEdge {
 };
 
 struct GeometryConnectionEdgeLevel {
-    DefSizet level_diff;
-    // the first pair<DefSizet, DefSizet> is the vertex whose index is larger
-    std::map<std::pair<std::pair<DefSizet, DefSizet>,
-        std::pair<DefSizet, DefSizet>>, GeometryConnectionEdge>
-        map_edge_connection;
+    DefAmrIndexUint level_diff;
+    // the first pair<DefAmrIndexUint, DefSizet> is the vertex whose index is larger
+    std::map<std::pair<std::pair<DefAmrIndexUint, DefSizet>,
+     std::pair<DefAmrIndexUint, DefSizet>>, GeometryConnectionEdge> map_edge_connection;
 };
 /**
 * @struct GeometryConnectionCoordinate
 * @brief structure to store vertex formation
 */
 struct GeometryConnectionCoordinate {
-    std::map<DefSizet,
-        std::set<std::pair<DefSizet, DefSizet>>> map_linked_vertices_level;
+    std::map<DefAmrIndexUint, std::set<std::pair<DefAmrIndexUint, DefSizet>>> map_linked_vertices_level;
     ///< indices of vertices at current or different levels linked to this vertex
-    std::array<std::pair<DefSizet, DefSizet>, 2> parent_vertices;
-    std::set<std::pair<DefSizet, DefSizet>> child_vertices;
+    std::array<std::pair<DefAmrIndexUint, DefSizet>, 2> parent_vertices;
+    std::set<std::pair<DefAmrIndexUint, DefSizet>> child_vertices;
     GeometryVertexInfo vertex_info;
     std::vector<DefReal> coordinates;
-    std::map<DefSizet, DefSFBitset> map_bitset_ref;  ///< spacing filing code of vertices
-    DefSizet highest_grid_level = 0;
+    std::map<DefAmrIndexUint, DefSFBitset> map_bitset_ref;  ///< spacing filing code of vertices
+    DefAmrIndexUint highest_grid_level = 0;
 };
 /**
 * @struct GeometryConnectionCoordinateLevel
@@ -81,7 +79,7 @@ struct GeometryConnectionCoordinateLevel {
 * @class GeometryConnectionInterface
 * @brief class for geometries described by connection relations
 */
-class GeometryConnectionInterface : virtual public GeometryInfoInterface {
+class GeometryConnectionInterface {
     // index of parameters in GeometryCoordinate::vec_real
     // k0 indicates those parameters are optional
  public:
@@ -97,9 +95,7 @@ class GeometryConnectionInterface : virtual public GeometryInfoInterface {
     // vertex_given_level_ remain the same all the time
     bool bool_change_vertices_from_geo_ = false;
     bool bool_vertex_info_stored_for_connection_ = false;
-    DefSizet k0NumIntForEachVertex_ = 0;
-    DefSizet k0NumRealForEachVertex_ = 0;
-    DefSizet k0NumEdgeForSurface_ = 3;
+    DefAmrIndexUint k0NumEdgeForSurface_ = 3;
 
     std::vector<std::vector<DefSizet>> connection_relation_;
 
@@ -112,94 +108,84 @@ class GeometryConnectionInterface : virtual public GeometryInfoInterface {
     // connection_vertex_given_level_ records the vertices at a given level since vertices may exist simultaneously
     // at lower and higher levels, while vertex_given_level_ only store vertices at the lowest levels to
     // to reduce memory cost
-    std::vector<std::set<std::pair<DefSizet, DefSizet>>>
+    std::vector<std::set<std::pair<DefAmrIndexUint, DefSizet>>>
         connection_vertex_given_level_{};
     ///<  vertices at the current and higher geometry levels exist simultaneously at the given level (the ith element)
 
     virtual void InitialCoordinateGivenLevel(
-        std::vector<DefReal>* const ptr_coordi_min,
-        std::vector<DefReal>* const ptr_coordi_max) = 0;
+     std::vector<DefReal>* const ptr_coordi_min, std::vector<DefReal>* const ptr_coordi_max) = 0;
     virtual DefReal ComputeDistanceFromCoordinates(
-        const std::pair<DefSizet, DefSizet>& vertex0,
-        const std::pair<DefSizet, DefSizet>& vertex1) = 0;
-    virtual void ComputeMidCoordinates(
-        const std::pair<DefSizet, DefSizet>& vertex0,
-        const std::pair<DefSizet, DefSizet>& vertex1,
-        std::vector<DefReal>* const ptr_coordinates) = 0;
+     const std::pair<DefAmrIndexUint, DefSizet>& vertex0, const std::pair<DefAmrIndexUint, DefSizet>& vertex1) = 0;
+    virtual void ComputeMidCoordinates(const std::pair<DefAmrIndexUint, DefSizet>& vertex0,
+     const std::pair<DefAmrIndexUint, DefSizet>& vertex1, std::vector<DefReal>* const ptr_coordinates) = 0;
     virtual ~GeometryConnectionInterface() {}
 
     void SetupConnectionParameters(EGeometryCellType cell_type);
     void InitialConnection(std::vector<DefReal>* const ptr_coordi_min,
         std::vector<DefReal>* const ptr_coordi_max);
-    void MergeEdgeOnce(const DefSizet i_input_level, const DefReal ds_min,
-        const std::shared_ptr<SFBitsetAuxInterface> ptr_sfbitset_aux,
-        const std::set<std::pair<std::pair<DefSizet, DefSizet>,
-        std::pair<DefSizet, DefSizet>>>& edge_for_merge,
-        std::set<std::pair<std::pair<DefSizet, DefSizet>,
-        std::pair<DefSizet, DefSizet>>>* const  ptr_surface_remain_for_merge,
-        DefMap<DefUint>* const ptr_sfbitset_ref_removed);
-    void BisectEdgeOnce(const DefSizet i_input_level, const DefReal ds_max,
-        const std::shared_ptr<SFBitsetAuxInterface> ptr_sfbitset_aux,
-        const std::set<std::pair<std::pair<DefSizet, DefSizet>,
-        std::pair<DefSizet, DefSizet>>>& edge_for_bisect,
-        std::set<std::pair<std::pair<DefSizet, DefSizet>,
-        std::pair<DefSizet, DefSizet>>>* const  ptr_surface_remain_for_biset,
-        DefMap<DefUint>* const ptr_sfbitset_ref_added);
+    void MergeEdgeOnce(const DefAmrIndexUint i_level, const DefAmrIndexUint i_input_level, const DefReal ds_min,
+     const std::shared_ptr<SFBitsetAuxInterface> ptr_sfbitset_aux,
+     const std::set<std::pair<std::pair<DefAmrIndexUint, DefSizet>,
+      std::pair<DefAmrIndexUint, DefSizet>>>& edge_for_merge,
+     std::set<std::pair<std::pair<DefAmrIndexUint, DefSizet>, std::pair<DefAmrIndexUint, DefSizet>>>*
+     const ptr_edhe_remain_for_merge, DefMap<DefAmrUint>* const ptr_sfbitset_ref_removed);
+    void BisectEdgeOnce(const DefAmrIndexUint i_level, const DefAmrIndexUint i_input_level, const DefReal ds_max,
+     const std::shared_ptr<SFBitsetAuxInterface> ptr_sfbitset_aux,
+     const std::set<std::pair<std::pair<DefAmrIndexUint, DefSizet>,
+      std::pair<DefAmrIndexUint, DefSizet>>>& edge_for_bisect,
+     std::set<std::pair<std::pair<DefAmrIndexUint, DefSizet>, std::pair<DefAmrIndexUint, DefSizet>>>*
+     const ptr_surface_remain_for_bisect, DefMap<DefAmrUint>* const ptr_sfbitset_ref_added);
 
-    // virtual function from GeometryInfoInterface
-    void FindTrackingNodeBasedOnGeo(
-        const SFBitsetAuxInterface* ptr_sfbitset_aux,
-        GridInfoInterface* const ptr_grid_info) final;
+    void FindTrackingNodeBasedOnGeo(DefAmrIndexUint i_geo, DefAmrIndexUint i_level,
+     const EGridExtendType grid_extend_type, const TrackingGridInfoCreatorInterface& ptr_tracking_creator,
+     const SFBitsetAuxInterface& sfbitset_aux, GridInfoInterface* const ptr_grid_info);
 
  protected:
     GeometryConnectionCoordinate vertex_instance_;
-    void RemoveVertex(const DefSizet i_input_level,
+    void RemoveVertex(const DefAmrIndexUint i_input_level,
         const std::vector<DefReal>& grid_space,
         const std::shared_ptr<SFBitsetAuxInterface> ptr_sfbitset_aux,
-        const std::set<std::pair<DefSizet, DefSizet>>& set_vertex_remove,
-        DefMap<DefUint>* const ptr_sfbitset_ref_removed);
-    void AddNewLinkage(const DefSizet i_input_level,
-        const std::pair<DefSizet, DefSizet>& vertex_new,
-        const std::pair<DefSizet, DefSizet>& vertex_origin);
-    void FindSurfaceForReconstruction(const DefSizet i_input_level,
+        const std::set<std::pair<DefAmrIndexUint, DefSizet>>& set_vertex_remove,
+        DefMap<DefAmrUint>* const ptr_sfbitset_ref_removed);
+    void AddNewLinkage(const DefAmrIndexUint i_input_level,
+        const std::pair<DefAmrIndexUint, DefSizet>& vertex_new,
+        const std::pair<DefAmrIndexUint, DefSizet>& vertex_origin);
+    void FindSurfaceForReconstruction(const DefAmrIndexUint i_input_level,
         const std::set<DefSizet>& surface_process,
-        const std::set<std::pair<DefSizet, DefSizet>>& set_vertex_remove,
+        const std::set<std::pair<DefAmrIndexUint, DefSizet>>& set_vertex_remove,
         std::set<DefSizet>* const ptr_surface_reconstruct);
-    void ReconstructSurfaceBasedOnExistingVertex(const DefSizet i_input_level,
+    void ReconstructSurfaceBasedOnExistingVertex(const DefAmrIndexUint i_input_level,
         const std::set<DefSizet>& surface_reconstruct,
-        const std::set<std::pair<DefSizet, DefSizet>>& set_vertex_remove,
+        const std::set<std::pair<DefAmrIndexUint, DefSizet>>& set_vertex_remove,
         std::set<DefSizet>* const ptr_surface_remove);
 };
 #ifndef  DEBUG_DISABLE_2D_FUNCTIONS
-class GeometryInfoConnection2D:public Geometry2DInterface,
-    public GeometryConnectionInterface {
+class GeometryInfoConnection2D : public GeometryInfo2DInterface, public GeometryConnectionInterface {
  public:
-    DefSizet k0UxIndex_ = 0, k0UyIndex_ = 0;
-    DefSizet k0FxIndex_ = 0, k0FyIndex_ = 0;
+    DefAmrIndexUint k0UxIndex_ = 0, k0UyIndex_ = 0;
+    DefAmrIndexUint k0FxIndex_ = 0, k0FyIndex_ = 0;
 
-    // virtual functions for Geometry2DInterface
+    // virtual functions for GeometryInfo2DInterface
     void SetIndex() override;
-    int InitialGeometry(const DefReal dx,
-        const DefaultGeoShapeType shape_type,
-        const DefaultGeoManager& default_geo_managerr) override;
-    int UpdateGeometry(
-        const DefaultGeoManager& default_geo_manager) override;
-    void DecomposeNHigherLevel(const DefSizet i_level_grid,
-        const DefReal decompose_length,
-        const std::unordered_map<DefSizet, bool>& map_indices_base,
-        std::unordered_map<DefSizet, bool>* const ptr_map_indices_remain)
-        override;
+    int InitialGeometry(const DefReal dx, const DefaultGeoShapeType shape_type,
+     const DefaultGeoManager& default_geo_managerr) override;
+    int UpdateGeometry(const DefaultGeoManager& default_geo_manager) override;
+    void FindTrackingNodeBasedOnGeo(const SFBitsetAuxInterface* ptr_sfbitset_aux,
+      GridInfoInterface* const ptr_grid_info) override {
+        GeometryConnectionInterface::FindTrackingNodeBasedOnGeo(i_geo_, i_level_,
+         grid_extend_type_, *ptr_tracking_grid_info_creator_, *ptr_sfbitset_aux, ptr_grid_info);
+    }
 
     // virtual functions for GeometryInfoConnectionInterface
     void InitialCoordinateGivenLevel(
         std::vector<DefReal>* const ptr_coordi_min,
         std::vector<DefReal>* const ptr_coordi_max) override;
     DefReal ComputeDistanceFromCoordinates(
-        const std::pair<DefSizet, DefSizet>& vertex0,
-        const std::pair<DefSizet, DefSizet>& vertex1) override;
+        const std::pair<DefAmrIndexUint, DefSizet>& vertex0,
+        const std::pair<DefAmrIndexUint, DefSizet>& vertex1) override;
     void ComputeMidCoordinates(
-        const std::pair<DefSizet, DefSizet>& vertex0,
-        const std::pair<DefSizet, DefSizet>& vertex1,
+        const std::pair<DefAmrIndexUint, DefSizet>& vertex0,
+        const std::pair<DefAmrIndexUint, DefSizet>& vertex1,
         std::vector<DefReal>* const ptr_coordinates) override;
     std::vector<DefReal> GetFloodFillOriginArrAsVec() const final {
         return { flood_fill_origin_[kXIndex], flood_fill_origin_[kYIndex] };
@@ -210,10 +196,9 @@ class GeometryInfoConnection2D:public Geometry2DInterface,
 };
 class GeometryInfoConnection2DCreator :public GeometryInfoCreatorInterface {
  public:
-    std::shared_ptr<GeometryInfoInterface>
-        CreateGeometryInfo() override {
+    std::shared_ptr<GeometryInfoInterface> CreateGeometryInfo() override {
         std::shared_ptr<GeometryInfoConnection2D> ptr_temp =
-            std::make_shared<GeometryInfoConnection2D>();
+         std::make_shared<GeometryInfoConnection2D>();
         ptr_temp->node_type_ = "Connection2D";
         ptr_temp->geometry_cell_type_ = EGeometryCellType::kPolyLine;
         return ptr_temp;
@@ -221,35 +206,34 @@ class GeometryInfoConnection2DCreator :public GeometryInfoCreatorInterface {
 };
 #endif  // DEBUG_DISABLE_2D_FUNCTIONS
 #ifndef  DEBUG_DISABLE_3D_FUNCTIONS
-class GeometryInfoConnection3D :public Geometry3DInterface,
-    public GeometryConnectionInterface {
+class GeometryInfoConnection3D : public GeometryInfo3DInterface, public GeometryConnectionInterface {
  public:
-    DefSizet k0UxIndex_ = 0, k0UyIndex_ = 0, k0UzIndex_ = 0;
-    DefSizet k0FxIndex_ = 0, k0FyIndex_ = 0, k0FzIndex_ = 0;
+    DefAmrIndexUint k0UxIndex_ = 0, k0UyIndex_ = 0, k0UzIndex_ = 0;
+    DefAmrIndexUint k0FxIndex_ = 0, k0FyIndex_ = 0, k0FzIndex_ = 0;
 
-    // virtual functions for Geometry3DInterface
+    // virtual functions for GeometryInfo3DInterface
     void SetIndex() override;
     int InitialGeometry(const DefReal dx,
         const DefaultGeoShapeType shape_type,
         const DefaultGeoManager& default_geo_manager) override;
     int UpdateGeometry(
         const DefaultGeoManager& default_geo_manager) override;
-    void DecomposeNHigherLevel(const DefSizet i_level_grid,
-        const DefReal decompose_length,
-        const std::unordered_map<DefSizet, bool>& map_indices_base,
-        std::unordered_map<DefSizet, bool>* const ptr_map_indices_remain)
-        override;
+    void FindTrackingNodeBasedOnGeo(const SFBitsetAuxInterface* ptr_sfbitset_aux,
+      GridInfoInterface* const ptr_grid_info) override {
+        GeometryConnectionInterface::FindTrackingNodeBasedOnGeo(i_geo_, i_level_,
+         grid_extend_type_, *ptr_tracking_grid_info_creator_, *ptr_sfbitset_aux, ptr_grid_info);
+    }
 
     // virtual functions for GeometryInfoConnectionInterface
     void InitialCoordinateGivenLevel(
         std::vector<DefReal>* const ptr_coordi_min,
         std::vector<DefReal>* const ptr_coordi_max) override;
     DefReal ComputeDistanceFromCoordinates(
-        const std::pair<DefSizet, DefSizet>& vertex0,
-        const std::pair<DefSizet, DefSizet>& vertex1) override;
+        const std::pair<DefAmrIndexUint, DefSizet>& vertex0,
+        const std::pair<DefAmrIndexUint, DefSizet>& vertex1) override;
     void ComputeMidCoordinates(
-        const std::pair<DefSizet, DefSizet>& vertex0,
-        const std::pair<DefSizet, DefSizet>& vertex1,
+        const std::pair<DefAmrIndexUint, DefSizet>& vertex0,
+        const std::pair<DefAmrIndexUint, DefSizet>& vertex1,
         std::vector<DefReal>* const ptr_coordinates) override;
     std::vector<DefReal> GetFloodFillOriginArrAsVec() const final {
         return { flood_fill_origin_[kXIndex], flood_fill_origin_[kYIndex],
@@ -261,10 +245,9 @@ class GeometryInfoConnection3D :public Geometry3DInterface,
 };
 class GeometryInfoConnection3DCreator :public GeometryInfoCreatorInterface {
  public:
-    std::shared_ptr<GeometryInfoInterface>
-        CreateGeometryInfo() override {
+    std::shared_ptr<GeometryInfoInterface> CreateGeometryInfo() override {
         std::shared_ptr<GeometryInfoConnection3D> ptr_temp =
-            std::make_shared<GeometryInfoConnection3D>();
+         std::make_shared<GeometryInfoConnection3D>();
         ptr_temp->node_type_ = "Connection3D";
         ptr_temp->geometry_cell_type_ = EGeometryCellType::kPolyLine;
         return ptr_temp;

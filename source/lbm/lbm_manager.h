@@ -19,7 +19,7 @@ namespace rootproject {
 namespace lbm {
 class LbmManager {
 public:
-   DefUint  k0LbmDims_;  ///< dimension
+   DefAmrIndexUint  k0LbmDims_;  ///< dimension
 };
 }  // end namespace lbm
 }  // end namespace rootproject

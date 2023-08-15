@@ -40,12 +40,11 @@ class AmrManager {
     std::unique_ptr<IoManager> ptr_io_manager_;
     std::unique_ptr<CriterionManager> ptr_criterion_manager_;
 
-    void LoadModules(DefUint dims);
+    void LoadModules(DefAmrIndexUint dims);
 
-    void DefaultInitialization(DefUint dim, DefSizet level,
-        int argc, char* argv[]);
+    void DefaultInitialization(DefAmrIndexUint dim, DefAmrIndexUint level, int argc, char* argv[]);
     void SetupParameters();
-    void InitializeSimulation();
+    void InitializeMesh();
     void FinalizeSimulation();
 
     void SetTheSameLevelDependentInfoForAllLevels(

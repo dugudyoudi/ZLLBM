@@ -20,12 +20,16 @@ namespace amrproject {
 /**
 * @brief function to find tracking near the geometry described
 *               by connection relations.
-* @param[in]  ptr_sfbitset_aux   pointer to class manage space filling curves.
+* @param[in]  i_geo   the ith geometry.
+* @param[in]  i_level   level of geometry.
+* @param[in]  grid_extend_type type of extension.
+* @param[in]  ptracking_creator   creator for tracking grid.
+* @param[in]  sfbitset_aux   class manage space filling curves.
 * @param[out]  ptr_grid_info grid with updated tracking node information.
 */
-void GeometryConnectionInterface::FindTrackingNodeBasedOnGeo(
-    const SFBitsetAuxInterface* ptr_sfbitset_aux,
-    GridInfoInterface* const ptr_grid_info) {
+void GeometryConnectionInterface::FindTrackingNodeBasedOnGeo(DefAmrIndexUint i_geo, DefAmrIndexUint i_level,
+    const EGridExtendType grid_extend_type, const TrackingGridInfoCreatorInterface& tracking_creator,
+    const SFBitsetAuxInterface& sfbitset_aux, GridInfoInterface* const ptr_grid_info) {
     if (ptr_grid_info->grid_space_.size() != vertex_given_level_.at(0)
         .vec_vertex_coordinate.at(0).coordinates.size()) {
         LogError("Size of grid_space ("
@@ -34,26 +38,24 @@ void GeometryConnectionInterface::FindTrackingNodeBasedOnGeo(
         + std::to_string(vertex_given_level_.at(0).vec_vertex_coordinate
             .at(0).coordinates.size()) + ") in vertex_given_level_.");
     }
-    DefSizet level_diff = ptr_grid_info->i_level_ - i_level_;
+    DefAmrIndexUint level_diff = ptr_grid_info->i_level_ - i_level;
 
     // create instance of tracking grid for the given geometry
-    std::pair<ECriterionType, DefSizet> key_tracking_grid =
-    { ECriterionType::kGeometry, i_geo_ };
+    std::pair<ECriterionType, DefAmrIndexUint> key_tracking_grid = { ECriterionType::kGeometry, i_geo };
     if (ptr_grid_info->map_ptr_tracking_grid_info_.find(key_tracking_grid)
-        == ptr_grid_info->map_ptr_tracking_grid_info_.end()) {
+     == ptr_grid_info->map_ptr_tracking_grid_info_.end()) {
         ptr_grid_info->map_ptr_tracking_grid_info_.insert({ key_tracking_grid,
-            ptr_tracking_grid_info_creator_->CreateTrackingGridInfo() });
+         tracking_creator.CreateTrackingGridInfo() });
     }
     ptr_grid_info->map_ptr_tracking_grid_info_
-        .at(key_tracking_grid).get()->grid_extend_type_ =
-        grid_extend_type_;
+        .at(key_tracking_grid).get()->grid_extend_type_ = grid_extend_type;
     DefMap<TrackingNode>* ptr_tracking_node = &(ptr_grid_info
         ->map_ptr_tracking_grid_info_.at(key_tracking_grid).get()
         ->map_tracking_node_);
 
     DefSFBitset bitset_temp;
     for (auto& iter : connection_vertex_given_level_.at(level_diff)) {
-        bitset_temp = ptr_sfbitset_aux->SFBitsetEncodingCoordi(
+        bitset_temp = sfbitset_aux.SFBitsetEncodingCoordi(
             ptr_grid_info->grid_space_, vertex_given_level_.at(iter.first)
             .vec_vertex_coordinate.at(iter.second).coordinates);
         vertex_given_level_.at(iter.first).vec_vertex_coordinate

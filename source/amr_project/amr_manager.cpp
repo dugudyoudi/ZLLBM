@@ -10,13 +10,14 @@
 */
 #include <memory>
 #include <filesystem>
+#include <vector>
 #include "io/log_write.h"
 #include "auxiliary_inline_func.h"
 #include "amr_manager.h"
 #include "mpi/mpi_manager.h"
 namespace rootproject {
 namespace amrproject {
-void AmrManager::LoadModules(DefUint dims) {
+void AmrManager::LoadModules(DefAmrIndexUint dims) {
 #ifdef ENABLE_MPI
     ptr_mpi_manager_ = std::make_unique<MpiManager>();
 #endif
@@ -30,12 +31,13 @@ void AmrManager::LoadModules(DefUint dims) {
 }
 /**
 * @brief      function to set default parameters for all modules.
+* @param[in]  dims    dimension of the mesh.
+* @param[in]  max_level    maxim refinement level.
 * @param[in]  argc    number of inputs from command line.
 * @param[in]  argv    inputs from command line.
 */
-void AmrManager::DefaultInitialization(DefUint dims, DefSizet max_level,
-    int argc, char* argv[]) {
-    //name of the current executable
+void AmrManager::DefaultInitialization(DefAmrIndexUint dims, DefAmrIndexUint max_level, int argc, char* argv[]) {
+    //  name of the current executable
     std::filesystem::path file_name =
         std::filesystem::path(argv[0]).filename();
     file_name.replace_extension();
@@ -55,11 +57,11 @@ void AmrManager::DefaultInitialization(DefUint dims, DefSizet max_level,
 * @brief   function to set parameters according to inputs for all modules
 */
 void AmrManager::SetupParameters() {
-    // setup grid parametres
+    // setup grid parameters
     ptr_grid_manager_->SetGridParameters();
 
 #ifdef ENABLE_MPI
-    // setup mpi parametres
+    // setup mpi parameters
     ptr_mpi_manager_->SetMpiParameters();
 #endif
 
@@ -68,18 +70,67 @@ void AmrManager::SetupParameters() {
 /**
 * @brief   function to initialize simulation
 */
-void AmrManager::InitializeSimulation() {
+void AmrManager::InitializeMesh() {
     int rank_id = 0;
 #ifdef ENABLE_MPI
-    MPI_Comm_rank(MPI_COMM_WORLD, &rank_id);
+    rank_id = ptr_mpi_manager_->rank_id_;
 #endif  // ENABLE_MPI
 
+    std::array<DefSFBitset, 2> sfbitset_bound_current;
+    DefMap<DefAmrIndexUint> partition_interface_background;
+    std::vector<DefMap<DefAmrIndexUint>> sfbitset_one_lower_level;
+    std::vector<DefReal> real_offset(ptr_grid_manager_->k0GridDims_);
     if (rank_id == 0) {
-        /*ptr_criterion_manager_->InitialGeometrySerial(
-            ptr_grid_manager_->k0RealOffset_);*/
-        ptr_grid_manager_->GenerateInitialMeshBasedOnGeoSerial(
-            ptr_criterion_manager_->vec_ptr_geometries_);
+        ptr_criterion_manager_->InitialAllGeometrySerial(ptr_grid_manager_->k0GridDims_, real_offset);
+        ptr_grid_manager_->GenerateGridFromHighToLowLevelSerial(
+         ptr_criterion_manager_->vec_ptr_geometries_, &sfbitset_one_lower_level);
+        sfbitset_bound_current = {ptr_grid_manager_->k0SFBitsetDomainMin_, ptr_grid_manager_->k0SFBitsetDomainMax_};
     }
+
+#ifdef ENABLE_MPI
+    // mpi partition sending and receiving nodes
+    std::vector<DefAmrIndexLUint> vec_cost;
+    for (auto iter_grid : ptr_grid_manager_->vec_ptr_grid_info_) {
+        vec_cost.push_back(iter_grid->computational_cost_);
+    }
+    std::vector<DefMap<DefAmrIndexUint>> sfbitset_one_lower_level_current_rank;
+    ptr_mpi_manager_->sfbitset_min_current_rank_ = sfbitset_bound_current.at(0);
+    ptr_mpi_manager_->sfbitset_max_current_rank_ = sfbitset_bound_current.at(1);
+    if (ptr_grid_manager_->k0GridDims_ == 2) {
+        GridManager2D* ptr_grid_manager_2d = dynamic_cast<GridManager2D*>(ptr_grid_manager_.get());
+        ptr_mpi_manager_->SendNReceiveGridInfoAtGivenLevels(ptr_grid_manager_->kFlagSize0_,
+         ptr_grid_manager_->k0GridDims_, ptr_grid_manager_->k0MaxLevel_,
+         ptr_grid_manager_->k0SFBitsetDomainMin_, ptr_grid_manager_->k0SFBitsetDomainMax_,
+         vec_cost, *ptr_grid_manager_2d, sfbitset_one_lower_level, ptr_grid_manager_->vec_ptr_tracking_info_creator_,
+         &sfbitset_bound_current, &sfbitset_one_lower_level_current_rank, &(ptr_grid_manager_->vec_ptr_grid_info_));
+        ptr_mpi_manager_->FindInterfaceForPartitionFromMinNMax(
+         sfbitset_bound_current.at(0), sfbitset_bound_current.at(1),
+         ptr_grid_manager_2d->k0IntOffset_, ptr_grid_manager_2d->k0MaxIndexOfBackgroundNode_,
+         *ptr_grid_manager_2d, &partition_interface_background);
+    } else {
+        GridManager3D* ptr_grid_manager_3d = dynamic_cast<GridManager3D*>(ptr_grid_manager_.get());
+        ptr_mpi_manager_->SendNReceiveGridInfoAtGivenLevels(ptr_grid_manager_->kFlagSize0_,
+         ptr_grid_manager_->k0GridDims_, ptr_grid_manager_->k0MaxLevel_,
+         ptr_grid_manager_->k0SFBitsetDomainMin_, ptr_grid_manager_->k0SFBitsetDomainMax_,
+         vec_cost, *ptr_grid_manager_3d, sfbitset_one_lower_level, ptr_grid_manager_->vec_ptr_tracking_info_creator_,
+         &sfbitset_bound_current, &sfbitset_one_lower_level_current_rank, &(ptr_grid_manager_->vec_ptr_grid_info_));
+        ptr_mpi_manager_->FindInterfaceForPartitionFromMinNMax(
+            sfbitset_bound_current.at(0), sfbitset_bound_current.at(1),
+         ptr_grid_manager_3d->k0IntOffset_, ptr_grid_manager_3d->k0MaxIndexOfBackgroundNode_,
+         *ptr_grid_manager_3d, &partition_interface_background);
+    }
+    if (rank_id == 0) {
+        sfbitset_one_lower_level.clear();
+    }
+    ptr_grid_manager_->InstantiateGridNodeAllLevel(
+     sfbitset_bound_current.at(0), sfbitset_bound_current.at(1),
+     partition_interface_background, sfbitset_one_lower_level_current_rank);
+#else  // run serially mesh on rank 0 is the only one
+    ptr_grid_manager_->InstantiateGridNodeAllLevel(
+     sfbitset_bound_current.at(0), sfbitset_bound_current.at(1),
+     partition_interface_background, sfbitset_one_lower_level);
+#endif  // ENABLE_MPI
+
 }
 /**
 * @brief   function to create the same type of grid
@@ -98,9 +149,7 @@ void AmrManager::SetTheSameLevelDependentInfoForAllLevels(
 * @brief   function to finalize simulation
 */
 void AmrManager::FinalizeSimulation() {
-    //ptr_io_manager_->OutputFlowfield(
-    //    program_name_, ptr_grid_manager_.get(),
-    //    ptr_criterion_manager_.get());
+    ptr_io_manager_->OutputFlowfield(program_name_, ptr_grid_manager_.get(), ptr_criterion_manager_.get());
 #ifdef ENABLE_MPI
     ptr_mpi_manager_->FinalizeMpi();
 #endif  // ENABLE_MPI

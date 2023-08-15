@@ -33,6 +33,11 @@ void GeometryInfoConnection3D::SetIndex() {
     }
     vertex_instance_.coordinates = { 0., 0., 0.};
     geo_vertex_info_instance_.vec_real.resize(k0NumRealForEachVertex_);
+
+    if (bool_vertex_info_stored_for_connection_) {
+        vertex_instance_.vertex_info.vec_int.resize(k0NumIntForEachVertex_);
+        vertex_instance_.vertex_info.vec_real.resize(k0NumRealForEachVertex_);
+    }
 }
 /**
 * @brief   function to initialize status of geometries
@@ -46,7 +51,7 @@ int GeometryInfoConnection3D::InitialGeometry(
     this->SetIndex();
     this->SetupConnectionParameters(this->geometry_cell_type_);
     this->k0DefaultGeoShapeType_ = shape_type;
-    return_status = this->Geometry3DInterface::InitialGeometry(
+    return_status = this->GeometryInfo3DInterface::InitialGeometry(
         dx, shape_type, default_geo_manager);
     return return_status;
 }
@@ -126,8 +131,8 @@ void GeometryInfoConnection3D::InitialCoordinateGivenLevel(
 * @return  distance.
 */
 DefReal GeometryInfoConnection3D::ComputeDistanceFromCoordinates(
-    const std::pair<DefSizet, DefSizet>& vertex0,
-    const std::pair<DefSizet, DefSizet>& vertex1) {
+    const std::pair<DefAmrIndexUint, DefSizet>& vertex0,
+    const std::pair<DefAmrIndexUint, DefSizet>& vertex1) {
     DefReal x_dis = std::fabs(vertex_given_level_.at(vertex0.first)
         .vec_vertex_coordinate.at(vertex0.second).coordinates.at(kXIndex)
         - vertex_given_level_.at(vertex1.first)
@@ -149,8 +154,8 @@ DefReal GeometryInfoConnection3D::ComputeDistanceFromCoordinates(
 * @param[out]  ptr_coordinates mid point coordinates.
 */
 void GeometryInfoConnection3D::ComputeMidCoordinates(
-    const std::pair<DefSizet, DefSizet>& vertex0,
-    const std::pair<DefSizet, DefSizet>& vertex1,
+    const std::pair<DefAmrIndexUint, DefSizet>& vertex0,
+    const std::pair<DefAmrIndexUint, DefSizet>& vertex1,
     std::vector<DefReal>* const ptr_coordinates) {
     ptr_coordinates->at(kXIndex) = (vertex_given_level_.at(vertex0.first)
         .vec_vertex_coordinate.at(vertex0.second).coordinates.at(kXIndex)
@@ -164,12 +169,6 @@ void GeometryInfoConnection3D::ComputeMidCoordinates(
         .vec_vertex_coordinate.at(vertex0.second).coordinates.at(kZIndex)
         + vertex_given_level_.at(vertex1.first).vec_vertex_coordinate
         .at(vertex1.second).coordinates.at(kZIndex)) / 2.;
-}
-void GeometryInfoConnection3D::DecomposeNHigherLevel(const DefSizet i_level_grid,
-    const DefReal decompose_length,
-    const std::unordered_map<DefSizet, bool>& map_indices_base,
-    std::unordered_map<DefSizet, bool>* const ptr_map_indices_remain){
-
 }
 }  // end namespace amrproject
 }  // end namespace rootproject

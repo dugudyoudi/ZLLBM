@@ -37,7 +37,7 @@ class TrackingGridInfoTestCreator :
     public TrackingGridInfoCreatorInterface {
  public:
     std::shared_ptr<TrackingGridInfoInterface>
-        CreateTrackingGridInfo()override {
+        CreateTrackingGridInfo() const override {
         return std::make_shared<TrackingGridInfoTest>();
     };
 };
@@ -60,8 +60,8 @@ class SolverCreatorTest :public SolverCreatorInterface {
     }
 };
 int main(int argc, char* argv[]) {
-    DefUint dims = 2;   // dimension
-    DefSizet max_refinement_level = 2;  // maximum refinement level
+    DefAmrIndexUint dims = 2;   // dimension
+    DefAmrIndexUint max_refinement_level = 2;  // maximum refinement level
 
     // instantiate modules will be used
     AmrManager* amr_instance = AmrManager::GetInstance();
@@ -78,7 +78,7 @@ int main(int argc, char* argv[]) {
     // grid related parameters //
     GridManager2D* grid_manager = dynamic_cast<GridManager2D*>(
         amr_instance->ptr_grid_manager_.get());
-    grid_manager->vec_ptr_tracking_info_creator.push_back(
+    grid_manager->vec_ptr_tracking_info_creator_.push_back(
         std::make_unique<TrackingGridInfoTestCreator>());
     // domain size
     grid_manager->k0DomainSize_.at(kXIndex) = 2.;
@@ -95,11 +95,10 @@ int main(int argc, char* argv[]) {
     GeometryInfoConnection2D* ptr_geo_temp =
         dynamic_cast<GeometryInfoConnection2D*>(amr_instance->
         ptr_criterion_manager_->vec_ptr_geometries_.at(0).get());
-    ptr_geo_temp->ptr_tracking_grid_info_creator_ = grid_manager->vec_ptr_tracking_info_creator.at(0).get();
+    ptr_geo_temp->ptr_tracking_grid_info_creator_ = grid_manager->vec_ptr_tracking_info_creator_.at(0).get();
     ptr_geo_temp->geometry_center_ = { 1, 1 };
     ptr_geo_temp->k0XIntExtendPositive_ = {3, 6 };
-    ptr_geo_temp->k0XIntExtendNegative_ =
-        std::vector<DefUint>(max_refinement_level + 1 , 2);
+    ptr_geo_temp->k0XIntExtendNegative_ = {max_refinement_level + 1 , 2};
     ptr_geo_temp->k0YIntExtendPositive_ = { 2, 4 };
     ptr_geo_temp->k0YIntExtendNegative_ = { 2, 4 };
     ptr_geo_temp->k0IntInnerExtend_ = { 2, 2 };
@@ -127,7 +126,7 @@ int main(int argc, char* argv[]) {
     amr_instance->SetTheSameLevelDependentInfoForAllLevels(
         ptr_solver_creator.get());
 
-    amr_instance->InitializeSimulation();
+    amr_instance->InitializeMesh();
 
 #ifdef ENABLE_MPI
     int myid, numprocs, namelen;
