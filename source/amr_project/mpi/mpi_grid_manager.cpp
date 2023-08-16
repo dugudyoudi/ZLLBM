@@ -24,7 +24,7 @@ int MpiManager::SerializeNodeStoreUint(const DefMap<DefAmrUint>& map_nodes,
     int key_size = sizeof(DefSFBitset), node_size = sizeof(DefAmrUint);
     int num_nodes = 1;
     if  (sizeof(int) + map_nodes.size() *(key_size + node_size) > 0x7FFFFFFF) {
-        LogError("size of the buffer is greater than the maximum of int in MpiManager::SerializeData(DefMap<DefAmrUint>)");
+        LogManager::LogError("size of the buffer is greater than the maximum of int in MpiManager::SerializeData(DefMap<DefAmrUint>)");
     } else {
         num_nodes = static_cast<int>(map_nodes.size());
     }
@@ -86,7 +86,7 @@ int MpiManager::SerializeNodeSFBitset(const DefMap<DefAmrIndexUint>& map_nodes,
     int key_size = sizeof(DefSFBitset);
     int num_nodes = 1;
     if  (sizeof(int) + map_nodes.size() *(key_size) > 0x7FFFFFFF) {
-        LogError("size of the buffer is greater than the maximum of int in MpiManager::SerializeData(DefMap<DefAmrUint>)");
+        LogManager::LogError("size of the buffer is greater than the maximum of int in MpiManager::SerializeData(DefMap<DefAmrUint>)");
     } else {
         num_nodes = static_cast<int>(map_nodes.size());
     }
@@ -146,14 +146,14 @@ void MpiManager::IniSendNReceivePartitionedGrid(const DefAmrIndexUint flag_size0
     const SFBitsetAuxInterface& bitset_aux,
     std::vector<DefMap<DefAmrIndexUint>>* const ptr_sfbitset_each) const {
     if (vec_sfbitset.size() - 1 > INT_MAX) {
-        LogError("size of vector vec_sfbitset is larger than INT_MAX");
+        LogManager::LogError("size of vector vec_sfbitset is larger than INT_MAX");
     }
     int max_level = static_cast<int>(vec_sfbitset.size() - 1);
     int rank_id = rank_id_, num_ranks = num_of_ranks_;
     std::vector<DefSFCodeToUint> ull_max(bitset_max.size());
     if (rank_id == 0) {
         if (vec_sfbitset.size() != ptr_sfbitset_each->size()) {
-            LogError("size of the input vector (vec_sfbitset) is different from the"
+            LogManager::LogError("size of the input vector (vec_sfbitset) is different from the"
                 " size of the output vector (ptr_sfbitset_each) in MpiManager::IniSendNReceivePartitionedGrid");
         }
         for (auto i = 0; i < bitset_max.size(); ++i) {
@@ -180,7 +180,7 @@ void MpiManager::IniSendNReceivePartitionedGrid(const DefAmrIndexUint flag_size0
                     if (index == num_max) {
                         // lower_bound returns the next element of last in ull_max if not found the desired one,
                         // which means that the space filling code of the node exceeds the maximum given by ull_max
-                        LogError("nodes is out of computational domain"
+                        LogManager::LogError("nodes is out of computational domain"
                             " in MpiManager::IniSendNReceivePartitionedGrid");
                     }
 #endif  // DEBUG_CHECK_GRID
@@ -255,7 +255,7 @@ void MpiManager::SendNReceiveGridInfoAtGivenLevels(const DefAmrIndexUint flag_si
     if (rank_id_ == 0) {
         DefSizet vec_size = vec_cost.size();
         if (ini_sfbitset_one_lower_level_rank0.size() != vec_size) {
-            LogError("size of the input vector (vec_cost) is different from the size of the input vector "
+            LogManager::LogError("size of the input vector (vec_cost) is different from the size of the input vector "
                 "(ini_sfbitset_one_lower_level_rank0) in MpiManager::SendNReceiveGridInfoAtGivenLevels");
         }
         if (dims == 2) {
@@ -283,7 +283,7 @@ void MpiManager::SendNReceiveGridInfoAtGivenLevels(const DefAmrIndexUint flag_si
         GridInfoInterface& grid_info = *(ptr_vec_grid_info->at(i_level));
         IniSendNReceiveTracking(dims, i_level, bitset_max, sfbitset_aux,
            vec_tracking_creator, &grid_info.map_ptr_tracking_grid_info_);
-        IniSendNReceiveRefinementInterface(dims, i_level, grid_info.k0NumFine2CoarseLayer_,
+        IniSendNReceiveRefinementInterface(dims, i_level, grid_info.k0NumCoarse2FineLayer_,
            bitset_max, sfbitset_aux, &grid_info.map_ptr_interface_layer_info_);
     }
 }

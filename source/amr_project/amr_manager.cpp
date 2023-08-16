@@ -50,6 +50,8 @@ void AmrManager::DefaultInitialization(DefAmrIndexUint dims, DefAmrIndexUint max
     ptr_mpi_manager_->StartupMpi(argc, argv);
 #endif  // ENABLE_MPI
 
+    LogManager::LogStartTime();
+
     ptr_io_manager_->DefaultInitialization();
     ptr_grid_manager_->DefaultInitialization(max_level);
 }
@@ -78,7 +80,7 @@ void AmrManager::InitializeMesh() {
 
     std::array<DefSFBitset, 2> sfbitset_bound_current;
     DefMap<DefAmrIndexUint> partition_interface_background;
-    std::vector<DefMap<DefAmrIndexUint>> sfbitset_one_lower_level;
+    std::vector<DefMap<DefAmrIndexUint>> sfbitset_one_lower_level(ptr_grid_manager_->k0MaxLevel_ + 1);
     std::vector<DefReal> real_offset(ptr_grid_manager_->k0GridDims_);
     if (rank_id == 0) {
         ptr_criterion_manager_->InitialAllGeometrySerial(ptr_grid_manager_->k0GridDims_, real_offset);
@@ -86,14 +88,14 @@ void AmrManager::InitializeMesh() {
          ptr_criterion_manager_->vec_ptr_geometries_, &sfbitset_one_lower_level);
         sfbitset_bound_current = {ptr_grid_manager_->k0SFBitsetDomainMin_, ptr_grid_manager_->k0SFBitsetDomainMax_};
     }
-
+    
 #ifdef ENABLE_MPI
     // mpi partition sending and receiving nodes
     std::vector<DefAmrIndexLUint> vec_cost;
     for (auto iter_grid : ptr_grid_manager_->vec_ptr_grid_info_) {
         vec_cost.push_back(iter_grid->computational_cost_);
     }
-    std::vector<DefMap<DefAmrIndexUint>> sfbitset_one_lower_level_current_rank;
+    std::vector<DefMap<DefAmrIndexUint>> sfbitset_one_lower_level_current_rank(ptr_grid_manager_->k0MaxLevel_ + 1);
     ptr_mpi_manager_->sfbitset_min_current_rank_ = sfbitset_bound_current.at(0);
     ptr_mpi_manager_->sfbitset_max_current_rank_ = sfbitset_bound_current.at(1);
     if (ptr_grid_manager_->k0GridDims_ == 2) {
@@ -115,7 +117,7 @@ void AmrManager::InitializeMesh() {
          vec_cost, *ptr_grid_manager_3d, sfbitset_one_lower_level, ptr_grid_manager_->vec_ptr_tracking_info_creator_,
          &sfbitset_bound_current, &sfbitset_one_lower_level_current_rank, &(ptr_grid_manager_->vec_ptr_grid_info_));
         ptr_mpi_manager_->FindInterfaceForPartitionFromMinNMax(
-            sfbitset_bound_current.at(0), sfbitset_bound_current.at(1),
+         sfbitset_bound_current.at(0), sfbitset_bound_current.at(1),
          ptr_grid_manager_3d->k0IntOffset_, ptr_grid_manager_3d->k0MaxIndexOfBackgroundNode_,
          *ptr_grid_manager_3d, &partition_interface_background);
     }
@@ -130,7 +132,7 @@ void AmrManager::InitializeMesh() {
      sfbitset_bound_current.at(0), sfbitset_bound_current.at(1),
      partition_interface_background, sfbitset_one_lower_level);
 #endif  // ENABLE_MPI
-
+    
 }
 /**
 * @brief   function to create the same type of grid
@@ -140,10 +142,8 @@ void AmrManager::InitializeMesh() {
 */
 void AmrManager::SetTheSameLevelDependentInfoForAllLevels(
     SolverCreatorInterface* const ptr_solver_creator) {
-    std::shared_ptr<SolverInterface> ptr_solver =
-        ptr_solver_creator->CreateSolver();
-    ptr_grid_manager_->CreateSameGridInstanceForAllLevel(
-        ptr_solver->ptr_grid_info_creator_.get());
+    std::shared_ptr<SolverInterface> ptr_solver = ptr_solver_creator->CreateSolver();
+    ptr_grid_manager_->CreateSameGridInstanceForAllLevel(ptr_solver->ptr_grid_info_creator_.get());
 }
 /**
 * @brief   function to finalize simulation

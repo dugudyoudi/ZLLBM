@@ -286,7 +286,7 @@ class MpiManager{
 #ifndef  DEBUG_DISABLE_2D_FUNCTION
     void TraverseBackgroundForPartitionRank0(
         const DefSFBitset bitset_domain_min, const DefSFBitset bitset_domain_max,
-        const std::vector<DefAmrUint>& vec_cost, const std::vector<DefMap<DefAmrIndexUint>>& vec_sfbitset,
+        const std::vector<DefAmrIndexLUint>& vec_cost, const std::vector<DefMap<DefAmrIndexUint>>& vec_sfbitset,
         const SFBitsetAux2D& bitset_aux2d, std::vector<DefSFBitset>* const ptr_bitset_min,
         std::vector<DefSFBitset>* const ptr_bitset_max) const;
     void FindInterfaceForPartitionFromMinNMax(const DefSFBitset& bitset_min,
@@ -297,7 +297,7 @@ class MpiManager{
 #ifndef  DEBUG_DISABLE_3D_FUNCTION
     void TraverseBackgroundForPartitionRank0(
         const DefSFBitset bitset_domain_min, const DefSFBitset bitset_domain_max,
-        const std::vector<DefAmrUint>& vec_cost, const std::vector<DefMap<DefAmrIndexUint>>& vec_sfbitset,
+        const std::vector<DefAmrIndexLUint>& vec_cost, const std::vector<DefMap<DefAmrIndexUint>>& vec_sfbitset,
         const SFBitsetAux3D& bitset_aux3d, std::vector<DefSFBitset>* const ptr_bitset_min,
         std::vector<DefSFBitset>* const ptr_bitset_max) const;
     void FindInterfaceForPartitionFromMinNMax(const DefSFBitset& bitset_min,

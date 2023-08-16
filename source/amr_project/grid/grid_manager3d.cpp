@@ -23,13 +23,13 @@ namespace amrproject {
 void GridManager3D::SetGridParameters() {
     // check if length of computational domain is given
     if (k0DomainSize_.at(kXIndex) < kEps) {
-        LogError("Domain length in x direction (k0DomainSize_[0])"
+        LogManager::LogError("Domain length in x direction (k0DomainSize_[0])"
             " should be a positive value");
     } else if (k0DomainSize_.at(kYIndex) < kEps) {
-        LogError("Domain length in y direction (k0DomainSize_[1])"
+        LogManager::LogError("Domain length in y direction (k0DomainSize_[1])"
             " should be a positive value");
     } else if (k0DomainSize_.at(kZIndex) < kEps) {
-        LogError("Domain length in z direction (k0DomainSize_[2])"
+        LogManager::LogError("Domain length in z direction (k0DomainSize_[2])"
             " should be a positive value");
     }
 
@@ -37,7 +37,7 @@ void GridManager3D::SetGridParameters() {
     if (k0DomainDx_.at(kXIndex) < kEps
         && k0DomainDx_.at(kYIndex) < kEps
         && k0DomainDx_.at(kZIndex < kEps)) {
-        LogError("Grid space of x, y, or z (k0DomainDx_)"
+        LogManager::LogError("Grid space of x, y, or z (k0DomainDx_)"
             " should be positive values");
     }
 
@@ -103,17 +103,17 @@ void GridManager3D::SetGridParameters() {
     DefSizet index_max = TwoPowerN(bit_max);
     DefAmrIndexLUint scale_i_level = static_cast<DefAmrIndexLUint>(TwoPowerN(k0MaxLevel_));
     if (k0MaxIndexOfBackgroundNode_.at(kXIndex) > index_max) {
-        LogError("Domain size exceeds the limits of space filling code in"
+        LogManager::LogError("Domain size exceeds the limits of space filling code in"
             " x direction, try to increase number of bits for "
             " storing space filling code (kSFBitsetBit) in defs_libs.h");
     }
     if (k0MaxIndexOfBackgroundNode_.at(kYIndex) > index_max) {
-        LogError("Domain size exceeds the limits of space filling code  in"
+        LogManager::LogError("Domain size exceeds the limits of space filling code  in"
             " y direction, try to increase number of bits for "
             " storing space filling code (kSFBitsetBit) in defs_libs.h");
     }
     if (k0MaxIndexOfBackgroundNode_.at(kZIndex) > index_max) {
-        LogError("Domain size exceeds the limits of space filling code  in"
+        LogManager::LogError("Domain size exceeds the limits of space filling code  in"
             " z direction, try to increase number of bits for "
             " storing space filling code (kSFBitsetBit) in defs_libs.h");
     }
@@ -122,22 +122,22 @@ void GridManager3D::SetGridParameters() {
 * @brief   function to write grid information in log file.
 */
 void GridManager3D::PrintGridInfo(void) const {
-    LogInfo("Dimension is: " + std::to_string(k0GridDims_));
-    LogInfo("Maximum refinement level is: "
+    LogManager::LogInfo("Dimension is: " + std::to_string(k0GridDims_));
+    LogManager::LogInfo("Maximum refinement level is: "
         + std::to_string(k0MaxLevel_));
     if (k0GridDims_ == 2) {
-        LogInfo("Domain size is: "
+        LogManager::LogInfo("Domain size is: "
             + std::to_string(k0DomainSize_.at(kXIndex)) + " X "
             + std::to_string(k0DomainSize_.at(kYIndex)));
-        LogInfo("Grid space dx is: "
+        LogManager::LogInfo("Grid space dx is: "
             + std::to_string(k0DomainDx_.at(kXIndex)) + ", and dy is: "
             + std::to_string(k0DomainDx_.at(kYIndex)));
     } else if (k0GridDims_ == 3) {
-        LogInfo("Domain size is: "
+        LogManager::LogInfo("Domain size is: "
             + std::to_string(k0DomainSize_.at(kXIndex)) + " X "
             + std::to_string(k0DomainSize_.at(kYIndex)) + " X "
             + std::to_string(k0DomainSize_.at(kZIndex)));
-        LogInfo("Grid space dx is: "
+        LogManager::LogInfo("Grid space dx is: "
             + std::to_string(k0DomainDx_.at(kXIndex)) + " , dy is: "
             + std::to_string(k0DomainDx_.at(kYIndex)) + " , and dz is: "
             + std::to_string(k0DomainDx_.at(kZIndex)));

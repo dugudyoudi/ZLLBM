@@ -57,7 +57,7 @@ void GridManager2D::IdentifyTypeOfLayerByFloodFill(
     DefMap<DefAmrUint>* const ptr_map_nodes_inside) const {
     // step 1: find start point for flood fill
     if (flood_fill_start_point.size() != k0GridDims_) {
-        LogWarning("Dimension of flood_fill_start_point is different from k0GridDims_.");
+        LogManager::LogWarning("Dimension of flood_fill_start_point is different from k0GridDims_.");
     }
     std::array<DefReal, 2> flood_fill_origin =
     { flood_fill_start_point[kXIndex], flood_fill_start_point[kYIndex] };
@@ -140,7 +140,7 @@ void GridManager2D::IdentifyTypeOfLayerByFloodFill(
     count_sum += i_count;
     if (map_nodes_exist.find(sfbitset_origin_vertex) != map_nodes_exist.end()) {
         sfbitset_start_vertex = sfbitset_origin_vertex;
-        LogInfo("input node for flood fill coincideS with existing nodes near geometry("
+        LogManager::LogInfo("input node for flood fill coincideS with existing nodes near geometry("
          + std::to_string(i_geo) + "), may not distinguish inside and outside");
     }
 
@@ -149,11 +149,11 @@ void GridManager2D::IdentifyTypeOfLayerByFloodFill(
         flag_floodfill = FloodFillForInAndOut(sfbitset_start_vertex,
             map_nodes_exist, ptr_map_nodes_outside, ptr_map_nodes_inside);
         if (flag_floodfill == 2) {
-            LogWarning("Iteration of flood fill exceed preset limits for."
+            LogManager::LogWarning("Iteration of flood fill exceed preset limits for."
                 " geometry (" + std::to_string(i_geo) + ").");
         }
     } else {
-        LogError("Can't find starting node for food fill in geometry: "
+        LogManager::LogError("Can't find starting node for food fill in geometry: "
             + std::to_string(i_geo) + " in IdentifyTypeOfLayerByFloodFill(2D)"
             + " after " + std::to_string(count_sum) + " iterations.");
     }
@@ -391,11 +391,11 @@ void  GridManager2D::FindInterfaceBetweenGrid(
     DefMap<DefAmrUint>* const ptr_layer_lower_level_outer) {
 #ifdef DEBUG_CHECK_GRID
     if (&map_outmost_layer == ptr_interface_outmost) {
-        LogError("input (map_outmost_layer)"
+        LogManager::LogError("input (map_outmost_layer)"
             " should not be the same as output (ptr_interface_outmost)");
     }
     if (&map_outmost_layer == ptr_layer_lower_level_outer) {
-        LogError("input (map_outmost_layer)"
+        LogManager::LogError("input (map_outmost_layer)"
             " should not be the same as output (ptr_layer_lower_level_outer)");
     }
 #endif  // DEBUG_CHECK_GRID
@@ -439,7 +439,7 @@ void  GridManager2D::FindInterfaceBetweenGrid(
                 bitset_lower_level = SFBitsetToOneLowerLevel(iter.first);
                 if (ptr_layer_lower_level->find(bitset_lower_level)
                     == ptr_layer_lower_level->end()) {
-                    ptr_layer_lower_level->insert({ bitset_lower_level, kFlag0_ });
+                    ptr_layer_lower_level->insert({ bitset_lower_level, kFlagSize0_ });
                 }
                 bool_neg_not_boundary[kXIndex]
                     = !((bitset_lower_level
@@ -468,7 +468,7 @@ void  GridManager2D::FindInterfaceBetweenGrid(
                         bitset_neighbor = SFBitsetToOneHigherLevel(iter_lower);
                         if (map_exist->find(bitset_neighbor)
                             != map_exist->end()) {
-                            ptr_layer_lower_level->insert({ iter_lower, kFlag0_ });
+                            ptr_layer_lower_level->insert({ iter_lower, kFlagSize0_ });
                         }
                     }
                 } else {
@@ -476,7 +476,7 @@ void  GridManager2D::FindInterfaceBetweenGrid(
                         bitset_neighbor = SFBitsetToOneHigherLevel(iter_lower);
                         if (map_exist->find(bitset_neighbor)
                             == map_exist->end()) {
-                            ptr_layer_lower_level->insert({ iter_lower, kFlag0_ });
+                            ptr_layer_lower_level->insert({ iter_lower, kFlagSize0_ });
                             ptr_layer_lower_level_outer->insert({ iter_lower, kFlag0_ });
                         }
                     }

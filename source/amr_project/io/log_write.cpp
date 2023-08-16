@@ -12,13 +12,10 @@
 #include <mpi.h>
 #endif  // ENABLE_MPI
 #include "io/log_write.h"
-#include "io/io_manager.h"
 namespace rootproject {
 namespace amrproject {
 // static member
-std::string IoManager::logfile_name;
-
-void LogStartTime() {
+void LogManager::LogStartTime() {
     auto current_time = std::chrono::system_clock::to_time_t
     (std::chrono::system_clock::now());
 
@@ -32,7 +29,7 @@ void LogStartTime() {
 
     FILE* fp = nullptr;
     errno_t err = fopen_s(&fp,
-        (IoManager::logfile_name + std::to_string(rank_id)).c_str(), "w");
+        (logfile_name_ + std::to_string(rank_id)).c_str(), "w");
     if (!fp) {
         printf_s("The file was not opened for writing log\n");
     } else {
@@ -44,9 +41,9 @@ void LogStartTime() {
         int numprocs;
         MPI_Comm_size(MPI_COMM_WORLD, &numprocs);
         if (rank_id == 0) {
-            printf_s("number of nodes is: %d\n", numprocs);
+            printf_s("number of MPI ranks is: %d\n", numprocs);
         }
-        fprintf_s(fp, "number of nodes is: %d; current node is: %d \n",
+        fprintf_s(fp, "number of MPI ranks is: %d; current node is: %d \n",
             numprocs, rank_id);
 #endif  // ENABLE_MPI
         fclose(fp);
@@ -56,14 +53,14 @@ void LogStartTime() {
 * @brief function to write normal information to the logfile.
 * @param[in]  msg        information write to the logfile.
 */
-void LogInfo(const std::string& msg) {
+void LogManager::LogInfo(const std::string& msg) {
     int rank_id = 0;
 #ifdef ENABLE_MPI
     MPI_Comm_rank(MPI_COMM_WORLD, &rank_id);
 #endif  // ENABLE_MPI
     FILE* fp = nullptr;
     errno_t err = fopen_s(&fp,
-        (IoManager::logfile_name + std::to_string(rank_id)).c_str(), "a");
+        (logfile_name_ + std::to_string(rank_id)).c_str(), "a");
     if (!fp) {
         printf_s("The log file was not opened\n");
     } else {
@@ -72,37 +69,20 @@ void LogInfo(const std::string& msg) {
     }
     printf("%s \n", msg.c_str());
 }
-/**
-* @brief function to write normal information to the logfile.
-* @param[in]  mpi_id        id of the mpi node.
-* @param[in]  msg        information write to the logfile.
-*/
-void LogInfo(const int mpi_id, const std::string& msg) {
-    FILE* fp = nullptr;
-    errno_t err = fopen_s(&fp,
-        (IoManager::logfile_name + std::to_string(mpi_id)).c_str(), "a");
-    if (!fp) {
-        printf_s("The log file was not opened\n");
-    } else {
-        fprintf(fp, "Infor: %s \n", msg.c_str());
-        fclose(fp);
-    }
-    printf("Infor of rank %d: %s \n", mpi_id, msg.c_str());
-}
 
 /**
 * @brief function to write warning information to the logfile.
 * @param[in]  mpi_id        id of the mpi node.
 * @param[in]  msg        information write to the logfile.
 */
-void LogWarning(const std::string& msg) {
+void LogManager::LogWarning(const std::string& msg) {
     int rank_id = 0;
 #ifdef ENABLE_MPI
     MPI_Comm_rank(MPI_COMM_WORLD, &rank_id);
 #endif  // ENABLE_MPI
     FILE* fp = nullptr;
     errno_t err = fopen_s(&fp,
-        (IoManager::logfile_name + std::to_string(rank_id)).c_str(), "a");
+        (logfile_name_ + std::to_string(rank_id)).c_str(), "a");
     if (!fp) {
         printf_s("The log file was not opened\n");
     } else {
@@ -126,14 +106,14 @@ void LogWarning(const std::string& msg) {
 * @param[in]  mpi_id        id of the mpi node.
 * @param[in]  msg        information write to the logfile.
 */
-void LogError(const std::string& msg) {
+void LogManager::LogError(const std::string& msg) {
     int rank_id = 0;
 #ifdef ENABLE_MPI
     MPI_Comm_rank(MPI_COMM_WORLD, &rank_id);
 #endif  // ENABLE_MPI
     FILE* fp = nullptr;
     errno_t err = fopen_s(&fp,
-        (IoManager::logfile_name + std::to_string(rank_id)).c_str(), "a");
+        (logfile_name_ + std::to_string(rank_id)).c_str(), "a");
     if (!fp) {
         printf_s("The log file was not opened\n");
     } else {

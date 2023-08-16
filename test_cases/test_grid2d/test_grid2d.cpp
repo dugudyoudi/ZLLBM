@@ -73,7 +73,6 @@ int main(int argc, char* argv[]) {
     amr_instance->ptr_io_manager_->bool_binary_ = false;
     amr_instance->ptr_io_manager_->vtk_instance_.vtk_ghost_cell_option_ =
         amrproject::EVtkWriterGhostCellOption::kPartitionMultiBlock;
-    //amr_instance->ptr_io_manager_->bool_binary_ = true;
 
     // grid related parameters //
     GridManager2D* grid_manager = dynamic_cast<GridManager2D*>(
@@ -81,10 +80,10 @@ int main(int argc, char* argv[]) {
     grid_manager->vec_ptr_tracking_info_creator_.push_back(
         std::make_unique<TrackingGridInfoTestCreator>());
     // domain size
-    grid_manager->k0DomainSize_.at(kXIndex) = 2.;
-    grid_manager->k0DomainSize_.at(kYIndex) = 2.;
+    grid_manager->k0DomainSize_.at(kXIndex) = DefReal(2.);
+    grid_manager->k0DomainSize_.at(kYIndex) = DefReal(2.);
     // grid space
-    grid_manager->k0DomainDx_.at(kXIndex) = 0.02;
+    grid_manager->k0DomainDx_.at(kXIndex) = DefReal(0.02);
     // end grid related parameters //
 
     // geometry related parameters //
@@ -98,7 +97,7 @@ int main(int argc, char* argv[]) {
     ptr_geo_temp->ptr_tracking_grid_info_creator_ = grid_manager->vec_ptr_tracking_info_creator_.at(0).get();
     ptr_geo_temp->geometry_center_ = { 1, 1 };
     ptr_geo_temp->k0XIntExtendPositive_ = {3, 6 };
-    ptr_geo_temp->k0XIntExtendNegative_ = {max_refinement_level + 1 , 2};
+    ptr_geo_temp->k0XIntExtendNegative_ = {3 , 2};
     ptr_geo_temp->k0YIntExtendPositive_ = { 2, 4 };
     ptr_geo_temp->k0YIntExtendNegative_ = { 2, 4 };
     ptr_geo_temp->k0IntInnerExtend_ = { 2, 2 };
@@ -111,7 +110,7 @@ int main(int argc, char* argv[]) {
     /* used for generating predefined geometries, number of input parameters
     is based on the type of geometry_shape_*/
     DefReal dx = grid_manager->k0DomainDx_.at(kXIndex)
-        / std::pow(2, max_refinement_level);
+        / DefReal(std::pow(2, max_refinement_level));
     ptr_geo_temp->InitialGeometry(dx, DefaultGeoShapeType::kCircle,
         *(amr_instance->ptr_criterion_manager_->ptr_default_geo_manager_));
     std::vector<DefReal> coordi_min, coordi_max;
@@ -128,20 +127,7 @@ int main(int argc, char* argv[]) {
 
     amr_instance->InitializeMesh();
 
-#ifdef ENABLE_MPI
-    int myid, numprocs, namelen;
-    char processor_name[MPI_MAX_PROCESSOR_NAME];
-
-    MPI_Comm_rank(MPI_COMM_WORLD, &myid);
-    MPI_Comm_size(MPI_COMM_WORLD, &numprocs);
-    MPI_Get_processor_name(processor_name, &namelen);
-
-    // if (myid == 0) printf("number of processes: %d\n", numprocs);
-    printf("Mpi test (test_grid.cpp) finished on %s: node %d \n",
-        processor_name, myid);
-#else
-    printf("Serial test (test_grid2d.cpp) finished");
-#endif
+    amr_instance->InitializeMesh();
 
     amr_instance->FinalizeSimulation();
 

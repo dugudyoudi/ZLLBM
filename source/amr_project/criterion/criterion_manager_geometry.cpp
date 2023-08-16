@@ -18,7 +18,8 @@ namespace amrproject {
 * @param[in]  dims dimension of the grid
 * @param[in]  vec_real_offset offsets of the mesh
 */
-void CriterionManager::InitialAllGeometrySerial(const DefAmrIndexUint dims, std::vector<DefReal> vec_real_offset) {
+void CriterionManager::InitialAllGeometrySerial(
+  const DefAmrIndexUint dims, std::vector<DefReal> vec_real_offset) {
     numb_of_geometry_ = static_cast<DefAmrIndexUint>(vec_ptr_geometries_.size());
     for (auto i_geo = 0; i_geo < numb_of_geometry_; ++i_geo) {
        // assign offset distance
@@ -26,7 +27,7 @@ void CriterionManager::InitialAllGeometrySerial(const DefAmrIndexUint dims, std:
        if (!bool_dims) {
         std::string msg = "dimension of center for geometry " + std::to_string(i_geo) + "is "
          + std::to_string(vec_real_offset.size()) + " but it should be " + std::to_string(dims);
-         LogError(msg);
+         LogManager::LogError(msg);
        }
 
        // initial geometry vertex

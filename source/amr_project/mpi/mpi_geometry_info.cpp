@@ -24,7 +24,7 @@ int MpiManager::SerializeCoordiOrigin(const std::vector<GeometryCoordinate2D>& v
     int num_points;
     int real_size = sizeof(DefReal);
     if  (vec_points.size() * real_size* 2 > 0x7FFFFFFF) {
-        LogError("size of the buffer is greater than the maximum of int"
+        LogManager::LogError("size of the buffer is greater than the maximum of int"
             " in MpiManager::SerializeData(std::vector<GeometryCoordinate2D>)");
     } else {
         num_points = static_cast<int>(vec_points.size());
@@ -103,7 +103,7 @@ void MpiManager::IniSendNReceivePartitionedGeo(const std::array<DefReal, 2>& bac
             index = static_cast<int>(iter_index - ull_max.begin());
 #ifdef DEBUG_CHECK_GRID
             if (index == num_max) {
-                LogError("geometry point is out of computational "
+                LogManager::LogError("geometry point is out of computational "
                      "domain in GeometryInfo2DInterface::IniSendNReceivePartitionedGeoCoordi");
             }
 #endif  // DEBUG_CHECK_GRID
@@ -171,7 +171,7 @@ int MpiManager::SerializeCoordiOrigin(const std::vector<GeometryCoordinate3D>& v
     int num_points;
     int real_size = sizeof(DefReal);
     if  (vec_points.size() * real_size* 2 > 0x7FFFFFFF) {
-        LogError("size of the buffer is greater than the maximum of int"
+        LogManager::LogError("size of the buffer is greater than the maximum of int"
             " in MpiManager::SerializeData(std::vector<GeometryCoordinate3D>)");
     } else {
         num_points = static_cast<int>(vec_points.size());
@@ -255,7 +255,7 @@ void MpiManager::IniSendNReceivePartitionedGeo(const std::array<DefReal, 3>& bac
             index = static_cast<int>(iter_index - ull_max.begin());
 #ifdef DEBUG_CHECK_GRID
             if (index == num_max) {
-                LogError("geometry point is out of computational "
+                LogManager::LogError("geometry point is out of computational "
                      "domain in MpiManager::IniSendNReceivePartitionedGeoCoordi");
             }
 #endif  // DEBUG_CHECK_GRID

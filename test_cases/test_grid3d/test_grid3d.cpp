@@ -82,11 +82,11 @@ int main(int argc, char* argv[]) {
     grid_manager->vec_ptr_tracking_info_creator_.push_back(
         std::make_unique<TrackingGridInfoTestCreator>());
     // domain size
-    grid_manager->k0DomainSize_.at(kXIndex) = 2.;
-    grid_manager->k0DomainSize_.at(kYIndex) = 2.;
-    grid_manager->k0DomainSize_.at(kZIndex) = 2.;
+    grid_manager->k0DomainSize_.at(kXIndex) = DefReal(2.);
+    grid_manager->k0DomainSize_.at(kYIndex) = DefReal(2.);
+    grid_manager->k0DomainSize_.at(kZIndex) = DefReal(2.);
     // grid space
-    grid_manager->k0DomainDx_.at(kXIndex) = 0.2;
+    grid_manager->k0DomainDx_.at(kXIndex) = DefReal(0.2);
     // end grid related parameters //
 
     // geometry related parameters //
@@ -100,7 +100,7 @@ int main(int argc, char* argv[]) {
     ptr_geo_temp->ptr_tracking_grid_info_creator_ = grid_manager->vec_ptr_tracking_info_creator_.at(0).get();
     ptr_geo_temp->geometry_center_ = { 1, 1, 1 };
     ptr_geo_temp->k0XIntExtendPositive_ = {3, 6 };
-    ptr_geo_temp->k0XIntExtendNegative_ = {max_refinement_level + 1 , 2};
+    ptr_geo_temp->k0XIntExtendNegative_ = {3 , 2};
     ptr_geo_temp->k0YIntExtendPositive_ = { 2, 4 };
     ptr_geo_temp->k0YIntExtendNegative_ = { 2, 4 };
     ptr_geo_temp->k0IntInnerExtend_ = { 2, 2 };
@@ -110,10 +110,10 @@ int main(int argc, char* argv[]) {
         EGridExtendType::kInAndOut;
     ptr_geo_temp->bool_vec_forces_ = false;
     ptr_geo_temp->i_level_ = max_refinement_level;
-    /* used for generating predefined geometries, number of input paramters
+    /* used for generating predefined geometries, number of input parameters
     is based on the type of geometry_shape_*/
     DefReal dx = grid_manager->k0DomainDx_.at(kXIndex)
-        / std::pow(2, max_refinement_level);
+        / DefReal(std::pow(2, max_refinement_level));
     ptr_geo_temp->InitialGeometry(dx, DefaultGeoShapeType::kCube,
         *(amr_instance->ptr_criterion_manager_->ptr_default_geo_manager_));
     std::vector<DefReal> coordi_min, coordi_max;

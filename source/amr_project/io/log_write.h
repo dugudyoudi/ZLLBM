@@ -16,10 +16,14 @@
 #include <cstdint>
 namespace rootproject {
 namespace amrproject {
-void LogInfo(const std::string& msg);
-void LogWarning(const std::string& msg);
-void LogError(const std::string& msg);
-void LogStartTime();
-}  // end amrproject
+class LogManager {
+ public:
+    inline static std::string logfile_name_{"log_of_node"};
+    static void LogInfo(const std::string& msg);
+    static void LogWarning(const std::string& msg);
+    static void LogError(const std::string& msg);
+    static void LogStartTime();
+};
+}  // end namespace amrproject
 }  // end namespace rootproject
 #endif  // ROOTPROJECT_SOURCE_AMR_PROJECT_IO_LOG_WRITE_H_

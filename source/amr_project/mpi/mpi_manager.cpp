@@ -22,22 +22,38 @@ void MpiManager::StartupMpi(int argc, char* argv[]) {
     MPI_Comm_rank(MPI_COMM_WORLD, &rank_id_);
     MPI_Comm_size(MPI_COMM_WORLD, &num_of_ranks_);
 
-    if (sizeof(DefReal) != sizeof(MPI_REAL_DATA_TYPE)) {
-        LogError("size of DefReal is not equal to size of MPI_REAL_DATA_TYPE)");
-    } else if (sizeof(DefInt) != sizeof(MPI_INT_DATA_TYPE)) {
-        LogError("size of DefAmrIndexUint is not equal to size of MPI_INT_DATA_TYPE)");
-    } else if (sizeof(DefAmrIndexUint) != sizeof(MPI_AMR_INDEX_UINT_TYPE)) {
-        LogError("size of DefInt is not equal to size of MPI_AMR_INDEX_UINT_TYPE)");
-    } else if (sizeof(DefAmrUint) != sizeof(MPI_AMR_UINT_TYPE)) {
-        LogError("size of DefAmrUint is not equal to size of MPI_AMR_UINT_TYPE)");
-    } else if (sizeof(DefAmrIndexLUint) != sizeof(MPI_AMR_INDEX_LUINT_TYPE)) {
-        LogError("size of DefAmrIndexLUint is not equal to size of MPI_AMR_INDEX_LUINT_TYPE)");
-    } else if (sizeof(DefAmrTypeUint) != sizeof(MPI_AMR_TYPE_UINT_TYPE)) {
-        LogError("size of DefAmrTypeUint is not equal to size of MPI_AMR_TYPE_UINT_TYPE)");
-    } else if (sizeof(DefSFCodeToUint) != sizeof(MPI_CODE_UINT_TYPE)) {
-        LogError("size of DefSFCodeToUint is not equal to size of MPI_CODE_UINT_TYPE)");
-    } else if (sizeof(DefSizet) != sizeof(MPI_SIZET_DATA_TYPE)) {
-        LogError("size of DefSizet is not equal to size of MPI_SIZET_DATA_TYPE)");
+    int data_size;
+    MPI_Type_size(MPI_REAL_DATA_TYPE, &data_size);
+    if (sizeof(DefReal) != data_size) {
+        LogManager::LogError("size of DefReal is not equal to size of MPI_REAL_DATA_TYPE)");
+    }
+    MPI_Type_size(MPI_INT_DATA_TYPE, &data_size);
+    if (sizeof(DefInt) != data_size) {
+        LogManager::LogError("size of DefInt is not equal to size of MPI_INT_DATA_TYPE)");
+    }
+    MPI_Type_size(MPI_AMR_INDEX_UINT_TYPE, &data_size);
+    if (sizeof(DefAmrIndexUint) != data_size) {
+        LogManager::LogError("size of DefAmrIndexUint is not equal to size of MPI_AMR_INDEX_UINT_TYPE)");
+    }
+    MPI_Type_size(MPI_AMR_UINT_TYPE, &data_size);
+    if (sizeof(DefAmrUint) != data_size) {
+        LogManager::LogError("size of DefAmrUint is not equal to size of MPI_AMR_UINT_TYPE)");
+    }
+    MPI_Type_size(MPI_AMR_INDEX_LUINT_TYPE, &data_size);
+    if (sizeof(DefAmrIndexLUint) != data_size) {
+        LogManager::LogError("size of DefAmrIndexLUint is not equal to size of MPI_AMR_INDEX_LUINT_TYPE)");
+    }
+    MPI_Type_size(MPI_AMR_TYPE_UINT_TYPE, &data_size);
+    if (sizeof(DefAmrTypeUint) != data_size) {
+        LogManager::LogError("size of DefAmrTypeUint is not equal to size of MPI_AMR_TYPE_UINT_TYPE)");
+    }
+    MPI_Type_size(MPI_CODE_UINT_TYPE, &data_size);
+    if (sizeof(DefSFCodeToUint) != data_size) {
+        LogManager::LogError("size of DefSFCodeToUint is not equal to size of MPI_CODE_UINT_TYPE)");
+    }
+    MPI_Type_size(MPI_SIZET_DATA_TYPE, &data_size);
+    if (sizeof(DefSizet) != data_size) {
+        LogManager::LogError("size of DefSizet is not equal to size of MPI_SIZET_DATA_TYPE)");
     }
 }
 void MpiManager::FinalizeMpi() {

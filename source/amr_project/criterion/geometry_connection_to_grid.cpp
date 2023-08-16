@@ -32,7 +32,7 @@ void GeometryConnectionInterface::FindTrackingNodeBasedOnGeo(DefAmrIndexUint i_g
     const SFBitsetAuxInterface& sfbitset_aux, GridInfoInterface* const ptr_grid_info) {
     if (ptr_grid_info->grid_space_.size() != vertex_given_level_.at(0)
         .vec_vertex_coordinate.at(0).coordinates.size()) {
-        LogError("Size of grid_space ("
+        LogManager::LogError("Size of grid_space ("
             + std::to_string(ptr_grid_info->grid_space_.size()) +
             ") is not equal to size of coordinates("
         + std::to_string(vertex_given_level_.at(0).vec_vertex_coordinate

@@ -68,7 +68,7 @@ inline DefSFBitset SFBitsetAux2D::FindXNeg(
         .at(SFBitsetAux2D::kRefCurrent_)).to_ullong();
 #ifdef DEBUG_CHECK_GRID
     if (x_ull == 0) {
-        LogError("x coordinate in FindXNeg is 0.");
+        LogManager::LogError("x coordinate in FindXNeg is 0.");
         return bitset_in;
     } else {
 #endif  // DEBUG_CHECK_GRID

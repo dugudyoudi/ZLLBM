@@ -225,7 +225,7 @@ void GridManagerInterface::FindOverlappingLayersBasedOnOutermostCoarse(
     DefMap<DefAmrUint>* const ptr_layer_fine_m1, DefMap<DefAmrUint>* const ptr_layer_fine_m2) {
 #ifdef DEBUG_CHECK_GRID
     if (&layer_coarse_0 == ptr_layer_coarse_m1) {
-        LogError("input (layer_coarse_0)"
+        LogManager::LogError("input (layer_coarse_0)"
          " should not be the same as output (ptr_layer_coarse_m1)");
     }
 #endif  // DEBUG_CHECK_GRID
@@ -242,7 +242,7 @@ void GridManagerInterface::FindOverlappingLayersBasedOnOutermostCoarse(
     // layer0 layer at one level higher
 #ifdef DEBUG_CHECK_GRID
     if (ptr_layer_fine_0 == ptr_layer_coarse_m1) {
-        LogError("input (ptr_layer_fine_0)"
+        LogManager::LogError("input (ptr_layer_fine_0)"
          " should not be the same as output (ptr_layer_coarse_m1)");
     }
 #endif  // DEBUG_CHECK_GRID
@@ -267,11 +267,11 @@ void GridManagerInterface::InstantiateOverlapLayerOfRefinementInterface(
         GridNode node_instance(grid_info.k0GridNodeInstance_);
 #ifdef DEBUG_CHECK_GRID
         if (grid_info_lower.k0NumCoarse2FineLayer_ < 2) {
-            LogError("number of coarse to fine layers at level "
+            LogManager::LogError("number of coarse to fine layers at level "
                 + std::to_string(i_level - 1) + " is at least 1");
         }
         if (grid_info.k0NumFine2CoarseLayer_ < 3) {
-            LogError("number of fine to coarse layers at level "
+            LogManager::LogError("number of fine to coarse layers at level "
                 + std::to_string(i_level) + " is at least 3");
         }
 #endif  // DEBUG_CHECK_GRID

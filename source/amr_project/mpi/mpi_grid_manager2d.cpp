@@ -22,7 +22,7 @@ namespace amrproject {
 void GridManager2D::GetNLevelCorrespondingOnes(
     const DefAmrIndexUint i_level, std::vector<DefSFBitset>* const ptr_last_ones) const {
     if (ptr_last_ones->size() != 2) {
-        LogError("size of ptr_last_ones should be 2 in SFBitsetAux2D::GetNLevelCorrespondingOnes");
+        LogManager::LogError("size of ptr_last_ones should be 2 in SFBitsetAux2D::GetNLevelCorrespondingOnes");
     }
     ptr_last_ones->at(kXIndex) =
         k0SFBitsetTakeXRef_.at(kRefCurrent_)>>(kSFBitsetBit - i_level * 2);
@@ -38,7 +38,7 @@ void GridManager2D::GetNLevelCorrespondingOnes(
 void GridManager2D::GetMinM1AtGivenLevel(const DefAmrIndexUint i_level,
     std::vector<DefSFBitset>* const ptr_min_m1_bitsets) const {
     if (ptr_min_m1_bitsets->size() != 2) {
-        LogError("size of ptr_min_m1_bitsets should be 2 in GridManager2D::GetMinM1AtGivenLevel");
+        LogManager::LogError("size of ptr_min_m1_bitsets should be 2 in GridManager2D::GetMinM1AtGivenLevel");
     }
     DefSFBitset bitset_tmp = SFBitsetToNHigherLevel(i_level, SFBitsetEncoding({k0IntOffset_[kXIndex], 0}));
     ptr_min_m1_bitsets->at(kXIndex) = FindXNeg(bitset_tmp);
@@ -54,7 +54,7 @@ void GridManager2D::GetMinM1AtGivenLevel(const DefAmrIndexUint i_level,
 void GridManager2D::GetMaxP1AtGivenLevel(const DefAmrIndexUint i_level,
     std::vector<DefSFBitset>* const ptr_max_p1_bitsets) const {
     if (ptr_max_p1_bitsets->size() != 2) {
-        LogError("size of ptr_max_p1_bitsets should be 2 in GridManager2D::GetMaxP1AtGivenLevel");
+        LogManager::LogError("size of ptr_max_p1_bitsets should be 2 in GridManager2D::GetMaxP1AtGivenLevel");
     }
     DefSFBitset bitset_tmp = SFBitsetToNHigherLevel(i_level,
        SFBitsetEncoding({k0MaxIndexOfBackgroundNode_[kXIndex], 0}));
@@ -203,7 +203,7 @@ void GridManager2D::SearchForGhostLayerForMinNMax(const DefSFBitset sfbitset_in,
 */
 void MpiManager::TraverseBackgroundForPartitionRank0(
     const DefSFBitset bitset_domain_min, const DefSFBitset bitset_domain_max,
-    const std::vector<DefAmrUint>& vec_cost, const std::vector<DefMap<DefAmrIndexUint>>& vec_sfbitset,
+    const std::vector<DefAmrIndexLUint>& vec_cost, const std::vector<DefMap<DefAmrIndexUint>>& vec_sfbitset,
     const SFBitsetAux2D& bitset_aux2d, std::vector<DefSFBitset>* const ptr_bitset_min,
     std::vector<DefSFBitset>* const ptr_bitset_max) const {
     DefMap<DefAmrUint> background_occupied;
@@ -233,7 +233,7 @@ void MpiManager::TraverseBackgroundForPartitionRank0(
         }
     }
     // calculate loads on each rank
-    const int num_ranks = num_of_ranks_;
+    int num_ranks = num_of_ranks_;
     DefAmrIndexLUint ave_load = static_cast<DefAmrIndexLUint>(sum_load / num_ranks) + 1;
     DefAmrIndexLUint load_rank0 = sum_load - (num_ranks - 1) * ave_load;
     std::vector<DefAmrIndexLUint> rank_load(num_ranks, ave_load);
@@ -271,7 +271,7 @@ void MpiManager::TraverseBackgroundForPartitionRank0(
         status = bitset_aux2d.ResetIndicesExceedingDomain(indices_min, indices_max, &i_code, &bitset_temp);
 #ifdef DEBUG_CHECK_GRID
         if (status) {
-            LogError("iterations exceed the maximum when space filling code exceed domain boundary"
+            LogManager::LogError("iterations exceed the maximum when space filling code exceed domain boundary"
                 " in ResetIndicesExceedingDomain in MpiManager::TraverseBackgroundForPartition");
         }
 #endif
@@ -297,7 +297,7 @@ void MpiManager::FindInterfaceForPartitionFromMinNMax(const DefSFBitset& bitset_
 
     DefSFCodeToUint code_max_criterion, code_remain;
     DefSFCodeToUint code_min_current, code_max_current;
-    while (code_cri >= code_min) {
+    while (code_cri >= code_min && code_cri > 0) {
         code_max_criterion = code_tmp;
         code_min_current = code_max/ block_length/ block_length;
         // though using FindPartitionRemainMax standalone gives the same result,
@@ -325,6 +325,8 @@ void MpiManager::FindInterfaceForPartitionFromMinNMax(const DefSFBitset& bitset_
         code_tmp = code_max_criterion - code_max_criterion%4;
     }
     code_max_criterion = code_tmp * block_length * block_length / 4;
+
+
 
     block_length = 1;
     code_tmp = code_min;

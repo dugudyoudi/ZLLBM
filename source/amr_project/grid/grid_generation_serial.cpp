@@ -22,11 +22,9 @@ namespace amrproject {
 void GridManagerInterface::GenerateGridFromHighToLowLevelSerial(
     const std::vector<std::shared_ptr<GeometryInfoInterface>>&vec_geo_info,
     std::vector<DefMap<DefAmrIndexUint>>* const ptr_sfbitset_one_lower_level) {
-    ptr_sfbitset_one_lower_level->resize(k0MaxLevel_ + 1);
     SFBitsetAuxInterface* sfbitset_aux_ptr = this->GetSFBitsetAuxPtr();
-
     if (vec_ptr_grid_info_.size() != k0MaxLevel_ + 1) {
-        LogError("Number of grid refinement level " + std::to_string(
+        LogManager::LogError("Number of grid refinement level " + std::to_string(
             vec_ptr_grid_info_.size() - 1) + " is different from k0MaxLevel_ "
             + std::to_string(k0MaxLevel_) + ", need to create grid instance "
             + "before calling the function: GenerateGridFromHighToLowLevelSerial.");
@@ -266,13 +264,13 @@ void GridManagerInterface::ExtendGivenNumbOfLayer(
         i_level - 1, &vec_bitset_min, &vec_bitset_max);
     // calculate layers need to be extended in each direction
     if (num_extend_neg.size() != k0GridDims_) {
-        LogError("Dimension of num_extend_neg at" + std::to_string(i_level)
+        LogManager::LogError("Dimension of num_extend_neg at" + std::to_string(i_level)
             + " should be " + std::to_string(k0GridDims_)
             + " rather than " + std::to_string(num_extend_neg.size())
             + "in GridManagerInterface::ExtendGivenNumbOfLayer.");
     }
     if (num_extend_pos.size() != k0GridDims_) {
-        LogError("Dimension of num_extend_pos at" + std::to_string(i_level)
+        LogManager::LogError("Dimension of num_extend_pos at" + std::to_string(i_level)
             + " should be " + std::to_string(k0GridDims_)
             + " rather than " + std::to_string(num_extend_pos.size())
             + "in GridManagerInterface::ExtendGivenNumbOfLayer.");

@@ -18,7 +18,7 @@
 namespace rootproject {
 namespace amrproject {
 /**
-* @brief  funciton to convert data to base64
+* @brief  function to convert data to base64
          (split three bytes into four six-bit values)
 * @param[in]  ptr_vec_uint8 input data
 * @param[in]  ptr_vec_base64 converted base64 data
@@ -73,8 +73,8 @@ void Base64Utility::Encode(std::vector<uint8_t>* ptr_vec_uint8,
     }
 }
 /**
-* @brief  funciton to initialize vtk related options
-* @param[in]  bool_binary write data in bindary or ascii format
+* @brief  function to initialize vtk related options
+* @param[in]  bool_binary write data in binary or ascii format
 */
 void VtkWriterManager::OptionInitial(const bool bool_binary) {
     // machine dependent option
@@ -168,7 +168,7 @@ void VtkWriterManager::WriteVtuAll(const std::string& folder_name,
         FILE* fp = nullptr;
         errno_t err = fopen_s(&fp, (folder_name + ".pvtu").c_str(), "w");
         if (!fp) {
-            LogError("File was not opened for writing"
+            LogManager::LogError("File was not opened for writing"
                 " pvtu file in WriteVtuAll.");
         } else {
             WritePvtu(fp, vec_vtu_file_name, output_data_format);
@@ -191,12 +191,12 @@ void VtkWriterManager::WriteVtuAll(const std::string& folder_name,
         output_data_format, criterion_manager);
 }
 /**
-* @brief   function to write xml formatted unstructed mesh (.vtu)
-* @param[in]  bool_binary write data in bindary or ascii format.
+* @brief   function to write xml formatted unstructured mesh (.vtu)
+* @param[in]  bool_binary write data in binary or ascii format.
 * @param[in]  bool_overlap write overlapping region or not.
 * @param[in]  overlap_flag flag indicates nodes in the overlapping region.
-* @param[in]  dims dimesion of mesh.
-* @param[in]  vec_level_in_one_vtu idices of geometries write in this vtu file.
+* @param[in]  dims dimension of mesh.
+* @param[in]  vec_level_in_one_vtu indices of geometries write in this vtu file.
 * @param[in]  grid_offset offset coordinates of the mesh.
 * @param[in]  output_data_format output data (real or integer) format.
 * @param[in]  grid_manager class to manage grid information.
@@ -217,7 +217,7 @@ void VtkWriterManager::WriteVtuGeo(const std::string& datafile_name,
 #ifdef ENABLE_MPI
         MPI_Comm_rank(MPI_COMM_WORLD, &rank_id);
 #endif  // ENABLE_MPI
-        LogError("File on node " + std::to_string(rank_id)
+        LogManager::LogError("File on node " + std::to_string(rank_id)
             + " was not opened for writing vtu data in WriteVtuGeo.");
     } else {
         fprintf_s(fp, "<?xml version=\"1.0\"?>\n");
@@ -238,9 +238,9 @@ void VtkWriterManager::WriteVtuGeo(const std::string& datafile_name,
     }
 }
 /**
-* @brief   function to write xml formatted unstructed mesh (.vtu)
+* @brief   function to write xml formatted unstructured mesh (.vtu)
 * @param[in]  program_name name of the program
-* @param[in]  bool_binary write data in bindary or ascii format
+* @param[in]  bool_binary write data in binary or ascii format
 * @param[in]  bool_overlap write overlapping region or not
 * @param[in]  overlap_flag flag indicates nodes in the overlapping region
 * @param[in]  vec_level_in_one_vtu levels of grid write in this vtu file
@@ -261,7 +261,7 @@ void VtkWriterManager::WriteVtuGrid(const std::string& datafile_name,
 #ifdef ENABLE_MPI
         MPI_Comm_rank(MPI_COMM_WORLD, &rank_id);
 #endif  // ENABLE_MPI
-        LogError("File on node " + std::to_string(rank_id)
+        LogManager::LogError("File on node " + std::to_string(rank_id)
             + " was not opened for writing vtu data in WriteVtuGrid.");
     } else {
         fprintf_s(fp, "<?xml version=\"1.0\"?>\n");
@@ -358,7 +358,7 @@ void VtkWriterManager::WritePvtu(FILE* const fp,
 /**
 * @brief   function to write pieces of grids in vtu
 * @param[in]  fp   pointer to output file
-* @param[in]  bool_binary write data in bindary or ascii format
+* @param[in]  bool_binary write data in binary or ascii format
 * @param[in]  bool_overlap write overlapping region or not
 * @param[in]  overlap_flag flag indicates nodes in the overlapping region
 * @param[in]  output_data_format output data (real or integer) format
@@ -476,7 +476,7 @@ void VtkWriterManager::WriteGridPieces(FILE* const fp, const bool bool_binary,
 /**
 * @brief   function to write offset for each cell
 * @param[in]  fp   pointer to output file.
-* @param[in]  bool_binary write data in bindary or ascii format.
+* @param[in]  bool_binary write data in binary or ascii format.
 * @param[in]  dims dimension of mesh.
 * @param[in]  num_cell   number of cells.
 * @param[in]  output_data_format output data (real or integer) format.
@@ -743,7 +743,7 @@ DefSizet VtkWriterManager::CalculateNumOfGeometryCells(
         num_cell = geo_info.GetNumOfGeometryPoints() - 1;
         break;
     default:
-        LogError("GeometryOutputType is undefined for calculing cell"
+        LogManager::LogError("GeometryOutputType is undefined for calculing cell"
             " numbers in CalculateGemetryCells.");
         break;
     }

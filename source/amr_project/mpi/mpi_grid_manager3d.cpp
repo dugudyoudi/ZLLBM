@@ -22,7 +22,7 @@ namespace amrproject {
 void GridManager3D::GetNLevelCorrespondingOnes(
     const DefAmrIndexUint i_level, std::vector<DefSFBitset>* const ptr_last_ones) const {
     if (ptr_last_ones->size() != 3) {
-        LogError("size of ptr_last_ones should be 3 in SFBitsetAux3D::GetNLevelCorrespondingOnes");
+        LogManager::LogError("size of ptr_last_ones should be 3 in SFBitsetAux3D::GetNLevelCorrespondingOnes");
     }
     ptr_last_ones->at(kXIndex) =
         k0SFBitsetTakeXRef_.at(kRefCurrent_)>>(kSFBitsetBit - i_level * 3);
@@ -40,7 +40,7 @@ void GridManager3D::GetNLevelCorrespondingOnes(
 void GridManager3D::GetMinM1AtGivenLevel(const DefAmrIndexUint i_level,
     std::vector<DefSFBitset>* const ptr_min_m1_bitsets) const {
     if (ptr_min_m1_bitsets->size() != 3) {
-        LogError("size of ptr_min_m1_bitsets should be 3 in GridManager3D::GetMinM1AtGivenLevel");
+        LogManager::LogError("size of ptr_min_m1_bitsets should be 3 in GridManager3D::GetMinM1AtGivenLevel");
     }
     DefSFBitset bitset_tmp = SFBitsetToNHigherLevel(i_level, SFBitsetEncoding({k0IntOffset_[kXIndex], 0, 0}));
     ptr_min_m1_bitsets->at(kXIndex) = FindXNeg(bitset_tmp);
@@ -58,7 +58,7 @@ void GridManager3D::GetMinM1AtGivenLevel(const DefAmrIndexUint i_level,
 void GridManager3D::GetMaxP1AtGivenLevel(const DefAmrIndexUint i_level,
     std::vector<DefSFBitset>* const ptr_max_p1_bitsets) const {
     if (ptr_max_p1_bitsets->size() != 3) {
-        LogError("size of ptr_max_p1_bitsets should be 3 in GridManager3D::GetMaxP1AtGivenLevel");
+        LogManager::LogError("size of ptr_max_p1_bitsets should be 3 in GridManager3D::GetMaxP1AtGivenLevel");
     }
     DefSFBitset bitset_tmp = SFBitsetToNHigherLevel(i_level,
        SFBitsetEncoding({k0MaxIndexOfBackgroundNode_[kXIndex], 0, 0}));
@@ -305,7 +305,7 @@ void GridManager3D::SearchForGhostLayerForMinNMax(const DefSFBitset sfbitset_in,
 */
 void MpiManager::TraverseBackgroundForPartitionRank0(
     const DefSFBitset bitset_domain_min, const DefSFBitset bitset_domain_max,
-    const std::vector<DefAmrUint>& vec_cost, const std::vector<DefMap<DefAmrIndexUint>>& vec_sfbitset,
+    const std::vector<DefAmrIndexLUint>& vec_cost, const std::vector<DefMap<DefAmrIndexUint>>& vec_sfbitset,
     const SFBitsetAux3D& bitset_aux3d, std::vector<DefSFBitset>* const ptr_bitset_min,
     std::vector<DefSFBitset>* const ptr_bitset_max) const {
     DefMap<DefAmrUint> background_occupied;
@@ -371,7 +371,7 @@ void MpiManager::TraverseBackgroundForPartitionRank0(
         status = bitset_aux3d.ResetIndicesExceedingDomain(indices_min, indices_max, &i_code, &bitset_temp);
 #ifdef DEBUG_CHECK_GRID
         if (status) {
-            LogError("iterations exceed the maximum when space filling code exceed domain boundary "
+            LogManager::LogError("iterations exceed the maximum when space filling code exceed domain boundary "
                 "in ResetIndicesExceedingDomain in MpiManager::TraverseBackgroundForPartition");
         }
 #endif

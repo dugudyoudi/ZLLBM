@@ -53,7 +53,7 @@ int MpiManager::IniSerializeTrackingNode(const std::set<DefSFCodeToUint>& set_no
     int key_size = sizeof(DefSFBitset);
     int num_nodes;
     if  (sizeof(int) + set_nodes.size() *key_size > 0x7FFFFFFF) {
-        LogError("size of the buffer is greater than the maximum of int in MpiManager::IniSerializeTrackingNode");
+        LogManager::LogError("size of the buffer is greater than the maximum of int in MpiManager::IniSerializeTrackingNode");
     } else {
         num_nodes = static_cast<int>(set_nodes.size());
     }
@@ -142,22 +142,22 @@ void MpiManager::IniSendNReceiveTracking(const DefAmrIndexUint dims, const DefAm
                 ptr_map_tracking_info->at(vec_tracking_indices.at(i_tracking))->k0IndexCreator;
 #ifdef DEBUG_CHECK_GRID
         if (ptr_map_tracking_info->at(vec_tracking_indices.at(i_tracking))->k0ExtendOuterNeg_.size() != dims) {
-            LogError("size of k0ExtendOuterNeg_ " + std::to_string(
+            LogManager::LogError("size of k0ExtendOuterNeg_ " + std::to_string(
             ptr_map_tracking_info->at(vec_tracking_indices.at(i_tracking))->k0ExtendOuterNeg_.size())
             + " is not equal to the dimension " + std::to_string(dims) + " in IniSendNReceiveTracking");
         }
         if (ptr_map_tracking_info->at(vec_tracking_indices.at(i_tracking))->k0ExtendOuterPos_.size() != dims) {
-            LogError("size of k0ExtendOuterPos_ " + std::to_string(
+            LogManager::LogError("size of k0ExtendOuterPos_ " + std::to_string(
             ptr_map_tracking_info->at(vec_tracking_indices.at(i_tracking))->k0ExtendOuterPos_.size())
             + " is not equal to the dimension " + std::to_string(dims) + " in IniSendNReceiveTracking");
         }
         if (ptr_map_tracking_info->at(vec_tracking_indices.at(i_tracking))->k0ExtendInnerNeg_.size() != dims) {
-            LogError("size of k0ExtendInnerNeg_ " + std::to_string(
+            LogManager::LogError("size of k0ExtendInnerNeg_ " + std::to_string(
             ptr_map_tracking_info->at(vec_tracking_indices.at(i_tracking))->k0ExtendInnerNeg_.size())
             + " is not equal to the dimension " + std::to_string(dims) + " in IniSendNReceiveTracking");
         }
         if (ptr_map_tracking_info->at(vec_tracking_indices.at(i_tracking))->k0ExtendInnerPos_.size() != dims) {
-            LogError("size of k0ExtendInnerPos_ " + std::to_string(
+            LogManager::LogError("size of k0ExtendInnerPos_ " + std::to_string(
             ptr_map_tracking_info->at(vec_tracking_indices.at(i_tracking))->k0ExtendInnerPos_.size())
             + " is not equal to the dimension " + std::to_string(dims) + " in IniSendNReceiveTracking");
         }
@@ -222,7 +222,7 @@ void MpiManager::IniSendNReceiveTracking(const DefAmrIndexUint dims, const DefAm
                     if (index == num_max) {
                         // lower_bound returns the next element of last in ull_max if not found the desired one,
                         // which means that the space filling code of the node exceeds the maximum given by ull_max
-                        LogError("nodes is out of computational domain in MpiManager::IniSendNReceiveTracking");
+                        LogManager::LogError("nodes is out of computational domain in MpiManager::IniSendNReceiveTracking");
                     }
 #endif  // DEBUG_CHECK_GRID
                     if (i_counts.at(index) == 0) {
@@ -286,7 +286,7 @@ int MpiManager::IniSerializeRefinementInterfaceNode(const std::set<DefSFCodeToUi
     int key_size = sizeof(DefSFBitset);
     int num_nodes;
     if  (sizeof(int) + set_nodes.size() *key_size > 0x7FFFFFFF) {
-        LogError("size of the buffer is greater than the maximum of int in GridInfoInterface::SerializeTrackingNode");
+        LogManager::LogError("size of the buffer is greater than the maximum of int in GridInfoInterface::SerializeTrackingNode");
     } else {
         num_nodes = static_cast<int>(set_nodes.size());
     }
@@ -359,7 +359,7 @@ void MpiManager::IniSendNReiveOneLayerRefinementInterface(const DefAmrIndexUint 
                 if (index == num_max) {
                     // lower_bound returns the next element of last in ull_max if not found the desired one,
                     // which means that the space filling code of the node exceeds the maximum
-                    LogError("node is out of computational domain in InterfaceLayerInfo::SendNReiveOneLayer");
+                    LogManager::LogError("node is out of computational domain in InterfaceLayerInfo::SendNReiveOneLayer");
                 }
 #endif  // DEBUG_CHECK_GRID
                 if (i_counts.at(index) == 0) {
@@ -464,38 +464,38 @@ void MpiManager::IniSendNReceiveRefinementInterface(const DefAmrIndexUint dims,
         } else {
 #ifdef DEBUG_CHECK_GRID
         if (ptr_map_interface_info->at(pair_interface)->k0ExtendOuterNeg_.size() != dims) {
-            LogError("size of k0ExtendOuterNeg_ " + std::to_string(
+            LogManager::LogError("size of k0ExtendOuterNeg_ " + std::to_string(
             ptr_map_interface_info->at(pair_interface)->k0ExtendOuterNeg_.size())
             + "is not equal to the dimension " + std::to_string(dims) + "in IniSendNReceiveRefinementInterface");
         }
         if (ptr_map_interface_info->at(pair_interface)->k0ExtendOuterPos_.size() != dims) {
-            LogError("size of k0ExtendOuterPos_ " + std::to_string(
+            LogManager::LogError("size of k0ExtendOuterPos_ " + std::to_string(
             ptr_map_interface_info->at(pair_interface)->k0ExtendOuterPos_.size())
             + "is not equal to the dimension " + std::to_string(dims) + "in IniSendNReceiveRefinementInterface");
         }
         if (ptr_map_interface_info->at(pair_interface)->k0ExtendInnerNeg_.size() != dims) {
-            LogError("size of k0ExtendInnerNeg_ " + std::to_string(
+            LogManager::LogError("size of k0ExtendInnerNeg_ " + std::to_string(
             ptr_map_interface_info->at(pair_interface)->k0ExtendInnerNeg_.size())
             + "is not equal to the dimension " + std::to_string(dims) + "in IniSendNReceiveRefinementInterface");
         }
         if (ptr_map_interface_info->at(pair_interface)->k0ExtendInnerPos_.size() != dims) {
-            LogError("size of k0ExtendInnerPos_ " + std::to_string(
+            LogManager::LogError("size of k0ExtendInnerPos_ " + std::to_string(
             ptr_map_interface_info->at(pair_interface)->k0ExtendInnerPos_.size())
             + "is not equal to the dimension " + std::to_string(dims) + "in IniSendNReceiveRefinementInterface");
         }
         if (ptr_map_interface_info->at(pair_interface)->vec_outer_coarse2fine_.size()
            != num_of_layers_coarse2fine) {
-            LogError("size of vec_outer_coarse2fine_ " + std::to_string(
+            LogManager::LogError("size of vec_outer_coarse2fine_ " + std::to_string(
             ptr_map_interface_info->at(pair_interface)->vec_outer_coarse2fine_.size())
-            + "is not equal to the number of layers " + std::to_string(num_of_layers_coarse2fine)
-            + "in IniSendNReceiveRefinementInterface");
+            + " is not equal to the number of layers " + std::to_string(num_of_layers_coarse2fine)
+            + " in IniSendNReceiveRefinementInterface");
         }
         if (ptr_map_interface_info->at(pair_interface)->vec_inner_coarse2fine_.size()
            != num_of_layers_coarse2fine) {
-            LogError("size of vec_outer_coarse2fine_ " + std::to_string(
+            LogManager::LogError("size of vec_inner_coarse2fine_ " + std::to_string(
             ptr_map_interface_info->at(pair_interface)->vec_inner_coarse2fine_.size())
-            + "is not equal to the number of layers " + std::to_string(num_of_layers_coarse2fine)
-            + "in IniSendNReceiveRefinementInterface");
+            + " is not equal to the number of layers " + std::to_string(num_of_layers_coarse2fine)
+            + " in IniSendNReceiveRefinementInterface");
         }
 #endif  // DEBUG_CHECK_GRID
         }

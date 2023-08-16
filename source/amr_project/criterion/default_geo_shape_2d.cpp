@@ -21,11 +21,11 @@ void DefaultGeoManager::circle_initial(
     ptr_geo->coordinate_origin_ = std::vector<GeometryCoordinate2D>(num_points);
     for (DefSizet i = 0; i < num_points; ++i) {
         ptr_geo->coordinate_origin_.at(i).coordinate[kXIndex] = radius
-            * cos(2. * kPi * (static_cast<DefReal>(i) / static_cast<DefReal>(num_points)))
+            * cos(2.f * kPi * (static_cast<DefReal>(i) / static_cast<DefReal>(num_points)))
             + ptr_geo->geometry_center_[kXIndex] + ptr_geo->k0RealOffset_[kXIndex];
         ptr_geo->coordinate_origin_.at(i).coordinate[kYIndex] = radius
-            * sin(2. * kPi * (static_cast<DefReal>(i) / static_cast<DefReal>(num_points)))
-            + ptr_geo->geometry_center_[kYIndex]+ ptr_geo->k0RealOffset_[kYIndex];
+            * sin(2.f * kPi * (static_cast<DefReal>(i) / static_cast<DefReal>(num_points)))
+            + ptr_geo->geometry_center_[kYIndex] + ptr_geo->k0RealOffset_[kYIndex];
     }
 }
 void DefaultGeoManager::circle_update(DefReal sum_t,

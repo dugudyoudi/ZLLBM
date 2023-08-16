@@ -20,8 +20,6 @@ namespace amrproject{
 */
 void IoManager::DefaultInitialization() {
     // set header of the log file (start time)
-    logfile_name = "log_of_node";
-    LogStartTime();
 
     // set format for writing output data
     if (typeid(k0OutputDataFormat_.output_real_.CastType(1.))
@@ -33,7 +31,7 @@ void IoManager::DefaultInitialization() {
         k0OutputDataFormat_.output_real_.printf_format_ = "%lf";
         k0OutputDataFormat_.output_real_.format_name_ = "Float64";
     } else {
-        LogWarning("Output format for real type was not found.");
+        LogManager::LogWarning("Output format for real type was not found.");
     }
 
     if (typeid(k0OutputDataFormat_.output_uint_.CastType(1))
@@ -49,7 +47,7 @@ void IoManager::DefaultInitialization() {
         k0OutputDataFormat_.output_uint_.printf_format_ = "%llu";
         k0OutputDataFormat_.output_uint_.format_name_ = "UInt64";
     } else {
-        LogWarning("Output format for uint type was not found.");
+        LogManager::LogWarning("Output format for uint type was not found.");
     }
 
     if (typeid(k0OutputDataFormat_.output_int_.CastType(1))
@@ -65,7 +63,7 @@ void IoManager::DefaultInitialization() {
         k0OutputDataFormat_.output_int_.printf_format_ = "%lld";
         k0OutputDataFormat_.output_int_.format_name_ = "UInt64";
     } else {
-        LogWarning("Output format for int type was not found.");
+        LogManager::LogWarning("Output format for int type was not found.");
     }
 }
 /**

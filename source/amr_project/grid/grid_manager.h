@@ -168,7 +168,7 @@ class GridManagerInterface{
         DefMap<DefAmrUint>* const ptr_map_nodes_inside) const;
 
  private:
-    const DefAmrUint K0IMaxFloodFill_ = 90000;
+    const DefAmrUint K0IMaxFloodFill_ = static_cast<DefAmrUint>(90000);
     ///<  maximum iteration for flood fill
 
     void ExtendGivenNumbOfLayer(DefAmrIndexUint i_level,

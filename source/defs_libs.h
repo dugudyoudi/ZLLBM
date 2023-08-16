@@ -17,25 +17,26 @@
 #include <iostream>
 #include "./config.h"  // configuration file generated
 namespace rootproject {
-using DefReal = double;
-using DefInt = int;
+using DefReal = double_t;
+using DefInt = int32_t;
 // unsigned integer for indices will be short like refinement level, index of geometries, searching directions
-using DefAmrIndexUint = int8_t;
+using DefAmrIndexUint = uint16_t;
 // unsigned integer for indices will be long like indices of nodes and vertices
-using DefAmrIndexLUint = unsigned int;
+using DefAmrIndexLUint = uint32_t;
 // unsigned integer to store information for amr, like flags
-using DefAmrUint = unsigned int;
-using DefAmrTypeUint = unsigned int;
+using DefAmrUint = uint32_t;
+using DefAmrTypeUint = uint16_t;
 using DefSFCodeToUint = uint64_t;
 using DefSizet = size_t;
 
+#ifdef ENABLE_MPI
 // data type for mpi communication
 #define MPI_REAL_DATA_TYPE MPI_DOUBLE
-#define MPI_INT_DATA_TYPE MPI_INT
-#define MPI_AMR_INDEX_UINT_TYPE MPI_INT8_T
-#define MPI_AMR_INDEX_LUINT_TYPE MPI_UNSIGNED
-#define MPI_AMR_UINT_TYPE MPI_UNSIGNED
-#define MPI_AMR_TYPE_UINT_TYPE MPI_UNSIGNED
+#define MPI_INT_DATA_TYPE MPI_INT32_T
+#define MPI_AMR_INDEX_UINT_TYPE MPI_UINT16_T
+#define MPI_AMR_INDEX_LUINT_TYPE MPI_INT32_T
+#define MPI_AMR_UINT_TYPE MPI_INT32_T
+#define MPI_AMR_TYPE_UINT_TYPE MPI_INT16_T
 #define MPI_CODE_UINT_TYPE MPI_UINT64_T
 #if SIZE_MAX == UCHAR_MAX
 #define MPI_SIZET_DATA_TYPE MPI_UNSIGNED_CHAR
@@ -49,6 +50,7 @@ using DefSizet = size_t;
 #define MPI_SIZET_DATA_TYPE MPI_UNSIGNED_LONG_LONG
 #else
 #error "MPI_SIZET_DATA_TYPE is undefined"
+#endif
 #endif
 
 // bitset to store code for space filling curves
@@ -65,9 +67,9 @@ template <typename value>
 using DefMap = std::unordered_map<DefSFBitset, value, HashFunc>;
 
 // numerical parameters
-const DefReal kEps = 1.e-10;
+const DefReal kEps = DefReal(1.e-6);
 /**< Constant: a small number for comparing floats*/
-const DefReal kPi = 4. * atan(1.);  /**< Constant: pi*/
+const DefReal kPi = DefReal(4.) * atan(DefReal(1.));  /**< Constant: pi*/
 
 // global constants
 static constexpr DefAmrIndexUint kXIndex = 0, kYIndex = 1, kZIndex = 2;

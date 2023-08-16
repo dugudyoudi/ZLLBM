@@ -32,7 +32,7 @@ void GeometryConnectionInterface::SetupConnectionParameters(
         bool_periodic_connection_ = true;
         break;
     default:
-        LogWarning("Undefined cell type.");
+        LogManager::LogWarning("Undefined cell type.");
         break;
     }
 }
@@ -168,7 +168,7 @@ void GeometryConnectionInterface::BisectEdgeOnce(
                 + std::to_string(iter_edge.second.first) + ", "
                 + std::to_string(iter_edge.second.second) + ") at level "
                 + std::to_string(i_input_level) + " for bisecting.";
-            LogWarning(msg);
+            LogManager::LogWarning(msg);
             continue;
         }
         dis = ComputeDistanceFromCoordinates(iter_edge.first, iter_edge.second);
@@ -470,7 +470,7 @@ void GeometryConnectionInterface::BisectEdgeOnce(
 //                 + std::to_string(iter_edge.second.first) + ", "
 //                 + std::to_string(iter_edge.second.second) + ") at level "
 //                 + std::to_string(i_input_level) + " for merging.";
-//             LogWarning(msg);
+//             LogManager::LogWarning(msg);
 //             continue;
 //         }
 //         level_vertex0 = iter_edge.first.first;
@@ -607,7 +607,7 @@ void GeometryConnectionInterface::BisectEdgeOnce(
 //         }
 //     }
 //     if (iter_count == iter_max) {
-//         LogWarning("iteration exceeds the maximum in MergeOnceLine");
+//         LogManager::LogWarning("iteration exceeds the maximum in MergeOnceLine");
 //     }
 
 //     // find surface of which vertices need to be removed
@@ -745,7 +745,7 @@ void GeometryConnectionInterface::MergeEdgeOnce(
                 + std::to_string(iter_edge.second.first) + ", "
                 + std::to_string(iter_edge.second.second) + ") at level "
                 + std::to_string(i_input_level) + " for merging.";
-            LogWarning(msg);
+            LogManager::LogWarning(msg);
             continue;
         }
         level_vertex0 = iter_edge.first.first;
@@ -869,7 +869,7 @@ void GeometryConnectionInterface::MergeEdgeOnce(
         }
     }
     if (iter_count == iter_max) {
-        LogWarning("iteration exceeds the maximum in MergeOnceLine");
+        LogManager::LogWarning("iteration exceeds the maximum in MergeOnceLine");
     }
 
     // find surface of which vertices need to be removed
