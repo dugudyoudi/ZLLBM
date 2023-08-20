@@ -393,7 +393,7 @@ void GridManager2D::InstantiateBackgroundGrid(const DefSFBitset bitset_min,
 
     GridNode node_instance(grid_info.k0GridNodeInstance_);
     DefSFCodeToUint i_code = bitset_min.to_ullong(), code_max = bitset_max.to_ullong();
-    while (i_code < code_max) {
+    while (i_code <= code_max) {
         ResetIndicesExceedingDomain(k0IntOffset_, k0MaxIndexOfBackgroundNode_, &i_code, &bitset_temp);
         if (map_occupied.find(bitset_temp) == map_occupied.end()) {
                 grid_info.map_grid_node_.insert({ bitset_temp, node_instance});

@@ -124,15 +124,15 @@ bool GridManager3D::CheckNodeOnOuterBoundaryOfBackgroundCell(DefAmrIndexUint i_l
  * @param[in] code_max the maximum space fill codes.
  * @param[in] domain_min_m1_n_level minimum indicies of current refinement level minus 1.
  * @param[in] domain_max_p1_n_level maximum indicies of current refinement level plus 1.
- * @param[out] ptr_vec_ghost_layer pointer to nodes on ghost layers near the given node.
+ * @param[out] ptr_map_ghost_layer pointer to nodes on ghost layers near the given node.
  * @throws None
  */
 void GridManager3D::SearchForGhostLayerForMinNMax(const DefSFBitset sfbitset_in,
     const DefAmrIndexUint num_of_ghost_layers, const DefSFCodeToUint code_min, const DefSFCodeToUint code_max,
     const std::vector<DefSFBitset>& domain_min_m1_n_level,
     const std::vector<DefSFBitset>& domain_max_p1_n_level,
-    std::vector<DefSFBitset>* const ptr_vec_ghost_layer) const {
-    ptr_vec_ghost_layer->clear();
+    DefMap<DefAmrIndexUint>* const ptr_map_ghost_layer) const {
+    ptr_map_ghost_layer->clear();
     DefSFCodeToUint code_tmp;
     DefSFBitset sfbitset_tmp_y, sfbitset_tmp_x, sfbitset_tmp_z = sfbitset_in;
     // negative z direction
@@ -148,7 +148,7 @@ void GridManager3D::SearchForGhostLayerForMinNMax(const DefSFBitset sfbitset_in,
                          != domain_min_m1_n_level.at(kXIndex)) {
                             code_tmp = sfbitset_tmp_x.to_ullong();
                             if (code_tmp > code_max || code_tmp < code_min) {
-                                ptr_vec_ghost_layer->push_back(sfbitset_tmp_x);
+                                ptr_map_ghost_layer->insert({sfbitset_tmp_x, kFlagSize0_});
                             }
                         } else {
                             break;
@@ -162,7 +162,7 @@ void GridManager3D::SearchForGhostLayerForMinNMax(const DefSFBitset sfbitset_in,
                          != domain_max_p1_n_level.at(kXIndex)) {
                             code_tmp = sfbitset_tmp_x.to_ullong();
                             if (code_tmp > code_max || code_tmp < code_min) {
-                                ptr_vec_ghost_layer->push_back(sfbitset_tmp_x);
+                                ptr_map_ghost_layer->insert({sfbitset_tmp_x, kFlagSize0_});
                             }
                         } else {
                             break;
@@ -184,7 +184,7 @@ void GridManager3D::SearchForGhostLayerForMinNMax(const DefSFBitset sfbitset_in,
                          != domain_min_m1_n_level.at(kXIndex)) {
                             code_tmp = sfbitset_tmp_x.to_ullong();
                             if (code_tmp > code_max || code_tmp < code_min) {
-                                ptr_vec_ghost_layer->push_back(sfbitset_tmp_x);
+                                ptr_map_ghost_layer->insert({sfbitset_tmp_x, kFlagSize0_});
                             }
                         } else {
                             break;
@@ -198,7 +198,7 @@ void GridManager3D::SearchForGhostLayerForMinNMax(const DefSFBitset sfbitset_in,
                          != domain_max_p1_n_level.at(kXIndex)) {
                             code_tmp = sfbitset_tmp_x.to_ullong();
                             if (code_tmp > code_max || code_tmp < code_min) {
-                                ptr_vec_ghost_layer->push_back(sfbitset_tmp_x);
+                                ptr_map_ghost_layer->insert({sfbitset_tmp_x, kFlagSize0_});
                             }
                         } else {
                             break;
@@ -228,7 +228,7 @@ void GridManager3D::SearchForGhostLayerForMinNMax(const DefSFBitset sfbitset_in,
                          != domain_min_m1_n_level.at(kXIndex)) {
                             code_tmp = sfbitset_tmp_x.to_ullong();
                             if (code_tmp > code_max || code_tmp < code_min) {
-                                ptr_vec_ghost_layer->push_back(sfbitset_tmp_x);
+                                ptr_map_ghost_layer->insert({sfbitset_tmp_x, kFlagSize0_});
                             }
                         } else {
                             break;
@@ -242,7 +242,7 @@ void GridManager3D::SearchForGhostLayerForMinNMax(const DefSFBitset sfbitset_in,
                          != domain_max_p1_n_level.at(kXIndex)) {
                             code_tmp = sfbitset_tmp_x.to_ullong();
                             if (code_tmp > code_max || code_tmp < code_min) {
-                                ptr_vec_ghost_layer->push_back(sfbitset_tmp_x);
+                                ptr_map_ghost_layer->insert({sfbitset_tmp_x, kFlagSize0_});
                             }
                         } else {
                             break;
@@ -264,7 +264,7 @@ void GridManager3D::SearchForGhostLayerForMinNMax(const DefSFBitset sfbitset_in,
                          != domain_min_m1_n_level.at(kXIndex)) {
                             code_tmp = sfbitset_tmp_x.to_ullong();
                             if (code_tmp > code_max || code_tmp < code_min) {
-                                ptr_vec_ghost_layer->push_back(sfbitset_tmp_x);
+                                ptr_map_ghost_layer->insert({sfbitset_tmp_x, kFlagSize0_});
                             }
                         } else {
                             break;
@@ -278,7 +278,7 @@ void GridManager3D::SearchForGhostLayerForMinNMax(const DefSFBitset sfbitset_in,
                          != domain_max_p1_n_level.at(kXIndex)) {
                             code_tmp = sfbitset_tmp_x.to_ullong();
                             if (code_tmp > code_max || code_tmp < code_min) {
-                                ptr_vec_ghost_layer->push_back(sfbitset_tmp_x);
+                                ptr_map_ghost_layer->insert({sfbitset_tmp_x, kFlagSize0_});
                             }
                         } else {
                             break;

@@ -213,17 +213,21 @@ void SFBitsetAux2D::SFBitsetHigherLevelInACell(
 void SFBitsetAux2D::SFBitsetFindAllNeighbors(
     const DefSFBitset& sfbitset_center,
     std::array<DefSFBitset, 9>* const  ptr_bitset_neighbors) const {
-
+    bool bool_x_gt0 = (sfbitset_center & k0SFBitsetTakeXRef_[kRefCurrent_]) != 0;
+    bool bool_y_gt0 = (sfbitset_center & k0SFBitsetTakeYRef_[kRefCurrent_]) != 0;
     DefSFBitset sfbitset_temp0, sfbitset_temp1;
 
-    ptr_bitset_neighbors->at(kNodeIndexX0Y0_)
-        = sfbitset_center;
+    ptr_bitset_neighbors->at(kNodeIndexX0Y0_) = sfbitset_center;
     // node at (-x, 0, 0)
-    sfbitset_temp0 = FindXNeg(sfbitset_center);
+    if (bool_x_gt0) {
+        sfbitset_temp0 = FindXNeg(sfbitset_center);
+    }
     ptr_bitset_neighbors->at(kNodeIndexXnY0_)
         = sfbitset_temp0;
     // node at (-x, -y, 0)
-    sfbitset_temp1 = FindYNeg(sfbitset_temp0);
+    if (bool_y_gt0) {
+        sfbitset_temp1 = FindYNeg(sfbitset_temp0);
+    }
     ptr_bitset_neighbors->at(kNodeIndexXnYn_)
         = sfbitset_temp1;
     // node at (-x, +y, 0)
@@ -235,7 +239,9 @@ void SFBitsetAux2D::SFBitsetFindAllNeighbors(
     ptr_bitset_neighbors->at(kNodeIndexXpY0_)
         = sfbitset_temp0;
     // node at (+x, -y, 0)
-    sfbitset_temp1 = FindYNeg(sfbitset_temp0);
+    if (bool_y_gt0) {
+        sfbitset_temp1 = FindYNeg(sfbitset_temp0);
+    }
     ptr_bitset_neighbors->at(kNodeIndexXpYn_)
         = sfbitset_temp1;
     // node at (+x, +y, 0)
@@ -243,7 +249,9 @@ void SFBitsetAux2D::SFBitsetFindAllNeighbors(
     ptr_bitset_neighbors->at(kNodeIndexXpYp_)
         = sfbitset_temp1;
     // node at (0, -y, 0)
-    sfbitset_temp0 = FindYNeg(sfbitset_center);
+    if (bool_y_gt0) {
+        sfbitset_temp0 = FindYNeg(sfbitset_center);
+    }
     ptr_bitset_neighbors->at(kNodeIndexX0Yn_)
         = sfbitset_temp0;
     // node at (0, +y, 0)

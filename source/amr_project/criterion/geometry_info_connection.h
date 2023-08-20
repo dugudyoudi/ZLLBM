@@ -137,8 +137,8 @@ class GeometryConnectionInterface {
      const ptr_surface_remain_for_bisect, DefMap<DefAmrUint>* const ptr_sfbitset_ref_added);
 
     void FindTrackingNodeBasedOnGeo(DefAmrIndexUint i_geo, DefAmrIndexUint i_level,
-     const EGridExtendType grid_extend_type, const TrackingGridInfoCreatorInterface& ptr_tracking_creator,
-     const SFBitsetAuxInterface& sfbitset_aux, GridInfoInterface* const ptr_grid_info);
+     const EGridExtendType grid_extend_type, const SFBitsetAuxInterface& sfbitset_aux,
+     GridInfoInterface* const ptr_grid_info);
 
  protected:
     GeometryConnectionCoordinate vertex_instance_;
@@ -170,10 +170,10 @@ class GeometryInfoConnection2D : public GeometryInfo2DInterface, public Geometry
     int InitialGeometry(const DefReal dx, const DefaultGeoShapeType shape_type,
      const DefaultGeoManager& default_geo_managerr) override;
     int UpdateGeometry(const DefaultGeoManager& default_geo_manager) override;
-    void FindTrackingNodeBasedOnGeo(const SFBitsetAuxInterface* ptr_sfbitset_aux,
+    void FindTrackingNodeBasedOnGeo(const SFBitsetAuxInterface& sfbitset_aux,
       GridInfoInterface* const ptr_grid_info) override {
         GeometryConnectionInterface::FindTrackingNodeBasedOnGeo(i_geo_, i_level_,
-         grid_extend_type_, *ptr_tracking_grid_info_creator_, *ptr_sfbitset_aux, ptr_grid_info);
+         grid_extend_type_, sfbitset_aux, ptr_grid_info);
     }
 
     // virtual functions for GeometryInfoConnectionInterface
@@ -218,10 +218,10 @@ class GeometryInfoConnection3D : public GeometryInfo3DInterface, public Geometry
         const DefaultGeoManager& default_geo_manager) override;
     int UpdateGeometry(
         const DefaultGeoManager& default_geo_manager) override;
-    void FindTrackingNodeBasedOnGeo(const SFBitsetAuxInterface* ptr_sfbitset_aux,
+    void FindTrackingNodeBasedOnGeo(const SFBitsetAuxInterface& sfbitset_aux,
       GridInfoInterface* const ptr_grid_info) override {
         GeometryConnectionInterface::FindTrackingNodeBasedOnGeo(i_geo_, i_level_,
-         grid_extend_type_, *ptr_tracking_grid_info_creator_, *ptr_sfbitset_aux, ptr_grid_info);
+         grid_extend_type_, sfbitset_aux, ptr_grid_info);
     }
 
     // virtual functions for GeometryInfoConnectionInterface

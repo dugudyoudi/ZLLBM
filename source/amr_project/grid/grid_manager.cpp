@@ -15,6 +15,20 @@
 namespace rootproject {
 namespace amrproject {
 /**
+* @brief   function tp create a tracking grid instance for a given geometry.
+* @param i_geo  index of the geometry.
+* @param geo_info object containing the geometry information.
+*/ 
+void GridManagerInterface::CreateTrackingGridInstanceForAGeo(const DefAmrIndexUint i_geo,
+    const GeometryInfoInterface& geo_info) {
+    std::pair<ECriterionType, DefAmrIndexUint> key_tracking_grid = { ECriterionType::kGeometry, i_geo };
+    if (vec_ptr_grid_info_.at(geo_info.i_level_)->map_ptr_tracking_grid_info_.find(key_tracking_grid)
+        == vec_ptr_grid_info_.at(geo_info.i_level_)->map_ptr_tracking_grid_info_.end()) {
+        vec_ptr_grid_info_.at(geo_info.i_level_)->map_ptr_tracking_grid_info_.insert(
+        { key_tracking_grid, geo_info.ptr_tracking_grid_info_creator_->CreateTrackingGridInfo() });
+    }
+}
+/**
 * @brief   function to create instance based on the type of solver.
 */
 void GridManagerInterface::CreateSameGridInstanceForAllLevel(
@@ -38,6 +52,7 @@ void GridManagerInterface::CreateSameGridInstanceForAllLevel(
 }
 /**
 * @brief function to setup default grid related parameters.
+* @param[in]  max_level  maximum refinement level.
 */
 void GridManagerInterface::DefaultInitialization(const DefAmrIndexUint max_level) {
     k0MaxLevel_ = max_level;
@@ -61,15 +76,13 @@ int GridManagerInterface::CheckIfPointOutsideDomain(
     if (coordinate_min[kXIndex] < domain_offset[kXIndex]) {
         status |= 1;
     }
-    if (coordinate_max[kXIndex] > domain_size[kXIndex]
-        + domain_offset[kXIndex]) {
+    if (coordinate_max[kXIndex] > domain_size[kXIndex] + domain_offset[kXIndex]) {
         status |= 2;
     }
     if (coordinate_min[kYIndex] < domain_offset[kYIndex]) {
         status |= 4;
     }
-    if (coordinate_max[kYIndex] > domain_size[kYIndex]
-        + domain_offset[kYIndex]) {
+    if (coordinate_max[kYIndex] > domain_size[kYIndex] + domain_offset[kYIndex]) {
         status |= 8;
     }
     return status;
@@ -93,22 +106,19 @@ int GridManagerInterface::CheckIfPointOutsideDomain(
     if (coordinate_min[kXIndex] < domain_offset[kXIndex]) {
         status |= 1;
     }
-    if (coordinate_max[kXIndex] > domain_size[kXIndex]
-        + domain_offset[kXIndex]) {
+    if (coordinate_max[kXIndex] > domain_size[kXIndex] + domain_offset[kXIndex]) {
         status |= 2;
     }
     if (coordinate_min[kYIndex] < domain_offset[kYIndex]) {
         status |= 4;
     }
-    if (coordinate_max[kYIndex] > domain_size[kYIndex]
-        + domain_offset[kYIndex]) {
+    if (coordinate_max[kYIndex] > domain_size[kYIndex] + domain_offset[kYIndex]) {
         status |= 8;
     }
     if (coordinate_min[kZIndex] < domain_offset[kZIndex]) {
         status |= 16;
     }
-    if (coordinate_max[kZIndex] > domain_size[kZIndex]
-        + domain_offset[kZIndex]) {
+    if (coordinate_max[kZIndex] > domain_size[kZIndex] + domain_offset[kZIndex]) {
         status |= 32;
     }
     return status;
@@ -426,13 +436,15 @@ void GridManagerInterface::InstantiateGridNodeAllLevel(const DefSFBitset sfbitse
     InstantiateOverlapLayerOfRefinementInterface(sfbitset_one_lower_level);
     DefSFCodeToUint code_min = sfbitset_min.to_ullong(), code_max = sfbitset_max.to_ullong();
     for (DefAmrIndexUint i_level = k0MaxLevel_; i_level > 0; --i_level) {
+        DefAmrIndexUint i_level_lower = i_level - 1;
 #ifdef ENABLE_MPI
+        std::vector<DefSFBitset> bitset_cell_lower_ghost, bitset_all_ghost;
         std::vector<DefSFBitset> corresponding_ones(k0GridDims_),
             domain_min_m1_n_level(k0GridDims_), domain_max_p1_n_level(k0GridDims_);
-        std::vector<DefSFBitset> vec_ghost_for_mpi_communication;
-        GetNLevelCorrespondingOnes(i_level, &corresponding_ones);
-        GetMinM1AtGivenLevel(i_level, &domain_min_m1_n_level);
-        GetMaxP1AtGivenLevel(i_level, &domain_max_p1_n_level);
+        DefMap<DefAmrIndexUint> map_ghost_for_mpi_communication;
+        GetNLevelCorrespondingOnes(i_level_lower, &corresponding_ones);
+        GetMinM1AtGivenLevel(i_level_lower, &domain_min_m1_n_level);
+        GetMaxP1AtGivenLevel(i_level_lower, &domain_max_p1_n_level);
 #endif  // ENABLE_MPI
         GridInfoInterface& grid_info = *(vec_ptr_grid_info_.at(i_level));
         DefMap<GridNode>& map_grid = grid_info.map_grid_node_;
@@ -441,8 +453,7 @@ void GridManagerInterface::InstantiateGridNodeAllLevel(const DefSFBitset sfbitse
         std::vector<DefSFBitset> bitset_cell_lower, bitset_all;
         DefSFBitset bitset_background;
         for (const auto& iter_low : sfbitset_one_lower_level.at(i_level)) {
-            if (CheckCoincideBackground(i_level - 1,
-                iter_low.first, &bitset_background)) {
+            if (CheckCoincideBackground(i_level_lower, iter_low.first, &bitset_background)) {
                 if (background_occupied.find(bitset_background)
                  == background_occupied.end()) {
                     background_occupied.insert({ bitset_background, kFlagSize0_ });
@@ -457,17 +468,31 @@ void GridManagerInterface::InstantiateGridNodeAllLevel(const DefSFBitset sfbitse
                     }
 #ifdef ENABLE_MPI
                     // node is on the partitioned interface
-                    if (CheckNodeOnOuterBoundaryOfBackgroundCell(i_level, code_min, code_max,
-                     iter_node, domain_min_m1_n_level, domain_max_p1_n_level,
-                     corresponding_ones, partitioned_interface_background)) {
-                        SearchForGhostLayerForMinNMax(iter_node, grid_info.num_of_ghost_layer_,
-                         code_min, code_max, domain_min_m1_n_level, domain_max_p1_n_level,
-                         &vec_ghost_for_mpi_communication);
-                        for (const auto& iter_ghost : vec_ghost_for_mpi_communication) {
-                            map_grid.insert({ iter_ghost, node_instance });
-                            map_grid.at(iter_ghost).flag_status_ |= kNodeStatusGhostCommunication_;
-                        }
-                    }
+                    // if (CheckNodeOnOuterBoundaryOfBackgroundCell(i_level, code_min, code_max,
+                    //  iter_node, domain_min_m1_n_level, domain_max_p1_n_level,
+                    //  corresponding_ones, partitioned_interface_background)) {
+                    //     SearchForGhostLayerForMinNMax(iter_node, grid_info.num_of_ghost_layer_,
+                    //      code_min, code_max, domain_min_m1_n_level, domain_max_p1_n_level,
+                    //      &map_ghost_for_mpi_communication);
+                    //     for (const auto& iter_lower_ghost : map_ghost_for_mpi_communication) {
+                    //         if (CheckCoincideBackground(i_level_lower, iter_lower_ghost.first, &bitset_background)) {
+                    //             if (background_occupied.find(bitset_background)
+                    //              == background_occupied.end()) {
+                    //                 background_occupied.insert({ bitset_background, kFlagSize0_ });
+                    //             }
+                    //         }
+                    //         NodesBelongToOneCell(iter_lower_ghost.first,
+                    //          sfbitset_one_lower_level.at(i_level), &bitset_cell_lower_ghost);
+                    //         FindAllNodesInACellAtLowerLevel(bitset_cell_lower_ghost, &bitset_all_ghost);
+                    //         for (const auto& iter_node_ghost : bitset_all_ghost) {
+                    //             if (map_grid.find(iter_node_ghost) == map_grid.end()) {
+                    //                 map_grid.insert({ iter_node_ghost, node_instance });
+                    //             }
+                    //             map_grid.at(iter_node_ghost).flag_status_ |= kNodeStatusGhostCommunication_;
+                    //         }
+    
+                    //     }
+                    // }
 #endif  // ENABLE_MPI
                 }
             }

@@ -14,10 +14,8 @@ namespace rootproject {
 namespace amrproject {
 /**
 * @brief   function to generate grid for all levels of refinement.
-* @param[in]  vec_geo_info vector containing vertices
-*             to instance storing geometry information.
-* @param[out]  ptr_sfbitset_one_lower_level   maps to store 
-*            nodes at each refinement level
+* @param[in]  vec_geo_info vector containing vertices to instance storing geometry information.
+* @param[out]  ptr_sfbitset_one_lower_level   maps to store nodes at each refinement level
 */
 void GridManagerInterface::GenerateGridFromHighToLowLevelSerial(
     const std::vector<std::shared_ptr<GeometryInfoInterface>>&vec_geo_info,
@@ -34,8 +32,7 @@ void GridManagerInterface::GenerateGridFromHighToLowLevelSerial(
     DefAmrIndexUint i_geo = 0;
     for (auto& iter : vec_geo_info) {
         iter->i_geo_ = i_geo;
-        iter->FindTrackingNodeBasedOnGeo(sfbitset_aux_ptr,
-            vec_ptr_grid_info_.at(iter->i_level_).get());
+        iter->FindTrackingNodeBasedOnGeo(*sfbitset_aux_ptr, vec_ptr_grid_info_.at(iter->i_level_).get());
         ++i_geo;
     }
 
@@ -82,10 +79,11 @@ void GridManagerInterface::GenerateGridFromHighToLowLevelSerial(
             map_num_extend_outer_layer.insert(
                 { iter_tracking_grid_info.first, num_extend_layer });
             // tracking nodes need to identify inside and outside
+
+            GenerateGridNodeNearTrackingNode(
+                    i_level, iter_tracking_grid_info.first, &node_near_tracking);
             if (iter_tracking_grid_info.second->grid_extend_type_
                 == EGridExtendType::kInAndOut) {
-                GenerateGridNodeNearTrackingNode(
-                    i_level, iter_tracking_grid_info.first, &node_near_tracking);
                 for (DefAmrIndexUint idims = 0; idims < k0GridDims_; ++idims) {
                     num_extend_layer.neg[idims] = iter_tracking_grid_info.second->
                         k0ExtendInnerNeg_[idims] - 1;
@@ -198,6 +196,7 @@ void GridManagerInterface::GenerateGridFromHighToLowLevelSerial(
                 outermost_layer_current.clear();
             }
         }
+
         // find interface between different grids
         DefInt level_low = i_level - 1;
         for (auto& iter_inner : innermost_layer_current) {
@@ -211,6 +210,8 @@ void GridManagerInterface::GenerateGridFromHighToLowLevelSerial(
             ptr_interface_info = vec_ptr_grid_info_.at(level_low)
                 ->map_ptr_interface_layer_info_.at(iter_inner.first).get();
             ptr_interface_info->vec_inner_coarse2fine_.resize(
+                vec_ptr_grid_info_.at(level_low)->k0NumCoarse2FineLayer_);
+            ptr_interface_info->vec_outer_coarse2fine_.resize(
                 vec_ptr_grid_info_.at(level_low)->k0NumCoarse2FineLayer_);
             FindInterfaceBetweenGrid(i_level, iter_inner.second,
                 &ptr_sfbitset_one_lower_level->at(i_level),
@@ -228,6 +229,8 @@ void GridManagerInterface::GenerateGridFromHighToLowLevelSerial(
             }
             ptr_interface_info = vec_ptr_grid_info_.at(level_low)
                 ->map_ptr_interface_layer_info_.at(iter_outer.first).get();
+            ptr_interface_info->vec_inner_coarse2fine_.resize(
+                vec_ptr_grid_info_.at(level_low)->k0NumCoarse2FineLayer_);
             ptr_interface_info->vec_outer_coarse2fine_.resize(
                 vec_ptr_grid_info_.at(level_low)->k0NumCoarse2FineLayer_);
             FindInterfaceBetweenGrid(i_level, iter_outer.second,

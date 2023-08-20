@@ -217,7 +217,7 @@ class MpiManager{
         std::unique_ptr<char[]>& buffer) const;
     void DeserializeCoordiOrigin(const std::unique_ptr<char[]>& buffer,
         std::vector<GeometryCoordinate2D>* const vec_points) const;
-    void IniSendNReceivePartitionedGeo(const std::array<DefReal, 2>& background_space,
+    void IniSendNReceivePartitionedGeoCoordi(const std::array<DefReal, 2>& background_space,
         const SFBitsetAux2D& bitset_aux, const std::vector<DefSFBitset>& bitset_max,
         std::vector<GeometryCoordinate2D>* ptr_vec_coordinate);
 #endif  // DEBUG_DISABLE_2D_FUNCTIONS
@@ -226,7 +226,7 @@ class MpiManager{
         std::unique_ptr<char[]>& buffer) const;
     void DeserializeCoordiOrigin(const std::unique_ptr<char[]>& buffer,
         std::vector<GeometryCoordinate3D>* const vec_points) const;
-    void IniSendNReceivePartitionedGeo(const std::array<DefReal, 3>& background_space,
+    void IniSendNReceivePartitionedGeoCoordi(const std::array<DefReal, 3>& background_space,
         const SFBitsetAux3D& bitset_aux, const std::vector<DefSFBitset>& bitset_max,
         std::vector<GeometryCoordinate3D>* ptr_vec_coordinate);
 #endif  // DEBUG_DISABLE_3D_FUNCTIONS

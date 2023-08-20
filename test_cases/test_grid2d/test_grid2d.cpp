@@ -8,7 +8,7 @@
 * @brief  test grid generation and related MPI functions
 */
 #include "amr_manager.h"
-#include "criterion/geometry_info_connection.h"
+#include "criterion/geometry_info_origin.h"
 using namespace rootproject;
 using namespace rootproject::amrproject;
 class GridInfoTest :public GridInfoInterface {
@@ -67,9 +67,7 @@ int main(int argc, char* argv[]) {
     AmrManager* amr_instance = AmrManager::GetInstance();
 
     // must call DefaultInitialize first for mpi initialization
-    amr_instance->DefaultInitialization(
-        dims, max_refinement_level, argc, argv);
-
+    amr_instance->DefaultInitialization(dims, max_refinement_level, argc, argv);
     amr_instance->ptr_io_manager_->bool_binary_ = false;
     amr_instance->ptr_io_manager_->vtk_instance_.vtk_ghost_cell_option_ =
         amrproject::EVtkWriterGhostCellOption::kPartitionMultiBlock;
@@ -87,12 +85,12 @@ int main(int argc, char* argv[]) {
     // end grid related parameters //
 
     // geometry related parameters //
-    GeometryInfoConnection2DCreator geo_creator;
+    GeometryInfoOrigin2DCreator geo_creator;
     amr_instance->ptr_criterion_manager_->vec_ptr_geometries_.push_back(
         geo_creator.CreateGeometryInfo());
     // convert base ptr to derived ptr for visiting members in derived class
-    GeometryInfoConnection2D* ptr_geo_temp =
-        dynamic_cast<GeometryInfoConnection2D*>(amr_instance->
+    GeometryInfoOrigin2D* ptr_geo_temp =
+        dynamic_cast<GeometryInfoOrigin2D*>(amr_instance->
         ptr_criterion_manager_->vec_ptr_geometries_.at(0).get());
     ptr_geo_temp->ptr_tracking_grid_info_creator_ = grid_manager->vec_ptr_tracking_info_creator_.at(0).get();
     ptr_geo_temp->geometry_center_ = { 1, 1 };
@@ -103,18 +101,16 @@ int main(int argc, char* argv[]) {
     ptr_geo_temp->k0IntInnerExtend_ = { 2, 2 };
     ///< number of extened layers
 
-    ptr_geo_temp->grid_extend_type_ =
-        EGridExtendType::kInAndOut;
-    ptr_geo_temp->bool_vec_forces_ = false;
+    ptr_geo_temp->grid_extend_type_ = EGridExtendType::kInAndOut;
     ptr_geo_temp->i_level_ = max_refinement_level;
     /* used for generating predefined geometries, number of input parameters
     is based on the type of geometry_shape_*/
     DefReal dx = grid_manager->k0DomainDx_.at(kXIndex)
         / DefReal(std::pow(2, max_refinement_level));
     ptr_geo_temp->InitialGeometry(dx, DefaultGeoShapeType::kCircle,
-        *(amr_instance->ptr_criterion_manager_->ptr_default_geo_manager_));
-    std::vector<DefReal> coordi_min, coordi_max;
-    ptr_geo_temp->InitialConnection(&coordi_min, &coordi_max);
+            *(amr_instance->ptr_criterion_manager_->ptr_default_geo_manager_));
+    //std::vector<DefReal> coordi_min, coordi_max;
+    //ptr_geo_temp->InitialConnection(&coordi_min, &coordi_max);
     // end geometry related parameters //
 
     amr_instance->SetupParameters();
@@ -122,10 +118,7 @@ int main(int argc, char* argv[]) {
     // set grid node type and solver at all levels the same
     std::shared_ptr<SolverCreatorTest> ptr_solver_creator =
         std::make_shared<SolverCreatorTest>();
-    amr_instance->SetTheSameLevelDependentInfoForAllLevels(
-        ptr_solver_creator.get());
-
-    amr_instance->InitializeMesh();
+    amr_instance->SetTheSameLevelDependentInfoForAllLevels(ptr_solver_creator.get());
 
     amr_instance->InitializeMesh();
 

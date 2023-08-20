@@ -24,7 +24,8 @@ int MpiManager::SerializeNodeStoreUint(const DefMap<DefAmrUint>& map_nodes,
     int key_size = sizeof(DefSFBitset), node_size = sizeof(DefAmrUint);
     int num_nodes = 1;
     if  (sizeof(int) + map_nodes.size() *(key_size + node_size) > 0x7FFFFFFF) {
-        LogManager::LogError("size of the buffer is greater than the maximum of int in MpiManager::SerializeData(DefMap<DefAmrUint>)");
+        LogManager::LogError("size of the buffer is greater"
+         " than the maximum of int in MpiManager::SerializeData(DefMap<DefAmrUint>)");
     } else {
         num_nodes = static_cast<int>(map_nodes.size());
     }
@@ -86,7 +87,8 @@ int MpiManager::SerializeNodeSFBitset(const DefMap<DefAmrIndexUint>& map_nodes,
     int key_size = sizeof(DefSFBitset);
     int num_nodes = 1;
     if  (sizeof(int) + map_nodes.size() *(key_size) > 0x7FFFFFFF) {
-        LogManager::LogError("size of the buffer is greater than the maximum of int in MpiManager::SerializeData(DefMap<DefAmrUint>)");
+        LogManager::LogError("size of the buffer is greater than the"
+         " maximum of int in MpiManager::SerializeData(DefMap<DefAmrUint>)");
     } else {
         num_nodes = static_cast<int>(map_nodes.size());
     }
@@ -151,6 +153,7 @@ void MpiManager::IniSendNReceivePartitionedGrid(const DefAmrIndexUint flag_size0
     int max_level = static_cast<int>(vec_sfbitset.size() - 1);
     int rank_id = rank_id_, num_ranks = num_of_ranks_;
     std::vector<DefSFCodeToUint> ull_max(bitset_max.size());
+
     if (rank_id == 0) {
         if (vec_sfbitset.size() != ptr_sfbitset_each->size()) {
             LogManager::LogError("size of the input vector (vec_sfbitset) is different from the"
@@ -251,7 +254,7 @@ void MpiManager::SendNReceiveGridInfoAtGivenLevels(const DefAmrIndexUint flag_si
     std::array<DefSFBitset, 2>* const ptr_sfbitset_bound_current,
     std::vector<DefMap<DefAmrIndexUint>>* const  ptr_sfbitset_one_lower_level_current_rank,
     std::vector<std::shared_ptr<GridInfoInterface>>* const ptr_vec_grid_info) const {
-    std::vector<DefSFBitset> bitset_min, bitset_max;
+    std::vector<DefSFBitset> bitset_min(num_of_ranks_), bitset_max(num_of_ranks_);
     if (rank_id_ == 0) {
         DefSizet vec_size = vec_cost.size();
         if (ini_sfbitset_one_lower_level_rank0.size() != vec_size) {
@@ -269,12 +272,15 @@ void MpiManager::SendNReceiveGridInfoAtGivenLevels(const DefAmrIndexUint flag_si
             TraverseBackgroundForPartitionRank0(bitset_domain_min, bitset_domain_max,
                 vec_cost, ini_sfbitset_one_lower_level_rank0,
                 dynamic_cast<const SFBitsetAux3D&>(sfbitset_aux), &bitset_min, &bitset_max);
+
 #endif  // DEBUG_DISABLE_3D_FUNCTION
         }
     }
+    MPI_Bcast(&bitset_min[0], static_cast<int>(dims), MPI_CODE_UINT_TYPE, 0, MPI_COMM_WORLD);
+    MPI_Bcast(&bitset_max[0], static_cast<int>(dims), MPI_CODE_UINT_TYPE, 0, MPI_COMM_WORLD);
+
     ptr_sfbitset_bound_current->at(0) = bitset_min.at(rank_id_);
     ptr_sfbitset_bound_current->at(1) = bitset_max.at(rank_id_);
-
     IniSendNReceivePartitionedGrid(flag_size0, bitset_max, ini_sfbitset_one_lower_level_rank0,
      sfbitset_aux, ptr_sfbitset_one_lower_level_current_rank);
 

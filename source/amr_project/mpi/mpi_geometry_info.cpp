@@ -73,7 +73,7 @@ void MpiManager::DeserializeCoordiOrigin(const std::unique_ptr<char[]>& buffer,
  * @param[in] bitset_max maximum space filling code for each partition.
  * @param[out] ptr_vec_coordinate  pointer to a vector store 2D geometry coordinates.
  */
-void MpiManager::IniSendNReceivePartitionedGeo(const std::array<DefReal, 2>& background_space,
+void MpiManager::IniSendNReceivePartitionedGeoCoordi(const std::array<DefReal, 2>& background_space,
     const SFBitsetAux2D& bitset_aux, const std::vector<DefSFBitset>& bitset_max,
     std::vector<GeometryCoordinate2D>* ptr_vec_coordinate) {
     DefSFBitset bitset_temp;
@@ -104,7 +104,7 @@ void MpiManager::IniSendNReceivePartitionedGeo(const std::array<DefReal, 2>& bac
 #ifdef DEBUG_CHECK_GRID
             if (index == num_max) {
                 LogManager::LogError("geometry point is out of computational "
-                     "domain in GeometryInfo2DInterface::IniSendNReceivePartitionedGeoCoordi");
+                     "domain in GeometryInfo2DInterface::IniSendNReceivePartitionedGeoCoordiCoordi");
             }
 #endif  // DEBUG_CHECK_GRID
             if (index > 0) {
@@ -224,7 +224,7 @@ void MpiManager::DeserializeCoordiOrigin(const std::unique_ptr<char[]>& buffer,
  * @param[in] bitset_max maximum space filling code for each partition.
  * @param[out] ptr_vec_coordinate  pointer to a vector store 2D geometry coordinates.
  */
-void MpiManager::IniSendNReceivePartitionedGeo(const std::array<DefReal, 3>& background_space,
+void MpiManager::IniSendNReceivePartitionedGeoCoordi(const std::array<DefReal, 3>& background_space,
     const SFBitsetAux3D& sfbitset_aux, const std::vector<DefSFBitset>& bitset_max,
     std::vector<GeometryCoordinate3D>* ptr_vec_coordinate) {
     DefSFBitset bitset_temp;

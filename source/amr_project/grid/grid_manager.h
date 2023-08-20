@@ -84,8 +84,8 @@ class GridManagerInterface{
       instead of SetGridInfoInterfaceAllLevels(EGridNodeType node_type) during
       initialization in function SetGridParameters(). */
     std::vector<std::shared_ptr<GridInfoInterface>> vec_ptr_grid_info_;
-    void CreateSameGridInstanceForAllLevel(
-        GridInfoCreatorInterface* ptr_grid_creator);
+    void CreateSameGridInstanceForAllLevel(GridInfoCreatorInterface* ptr_grid_creator);
+    void CreateTrackingGridInstanceForAGeo(const DefAmrIndexUint i_geo, const GeometryInfoInterface& geo_info);
 
     void DefaultInitialization(const DefAmrIndexUint max_level);
     int CheckIfPointOutsideDomain(
@@ -249,7 +249,7 @@ class GridManagerInterface{
         const DefAmrIndexUint num_of_ghost_layers, const DefSFCodeToUint code_min, const DefSFCodeToUint code_max,
         const std::vector<DefSFBitset>& domain_min_m1_n_level,
         const std::vector<DefSFBitset>& domain_max_p1_n_level,
-        std::vector<DefSFBitset>* const ptr_vec_ghost_layer) const = 0;
+        DefMap<DefAmrIndexUint>* const ptr_map_ghost_layer) const = 0;
 #endif  // ENABLE_MPI
 
 #ifdef DEBUG_UNIT_TEST
@@ -401,7 +401,7 @@ class GridManager2D :public  GridManagerInterface, public SFBitsetAux2D {
         const DefAmrIndexUint num_of_ghost_layers, const DefSFCodeToUint code_min, const DefSFCodeToUint code_max,
         const std::vector<DefSFBitset>& domain_min_m1_n_level,
         const std::vector<DefSFBitset>& domain_max_p1_n_level,
-        std::vector<DefSFBitset>* const ptr_vec_ghost_layer) const final;
+        DefMap<DefAmrIndexUint>* const ptr_map_ghost_layer) const final;
 #endif  // ENABLE_MPI
 
 #ifdef DEBUG_UNIT_TEST
@@ -556,7 +556,7 @@ class GridManager3D :public  GridManagerInterface, public SFBitsetAux3D {
         const DefAmrIndexUint num_of_ghost_layers, const DefSFCodeToUint code_min, const DefSFCodeToUint code_max,
         const std::vector<DefSFBitset>& domain_min_m1_n_level,
         const std::vector<DefSFBitset>& domain_max_p1_n_level,
-        std::vector<DefSFBitset>* const ptr_vec_ghost_layer) const final;
+        DefMap<DefAmrIndexUint>* const ptr_map_ghost_layer) const final;
 #endif  // ENABLE_MPI
 #ifdef DEBUG_UNIT_TEST
 

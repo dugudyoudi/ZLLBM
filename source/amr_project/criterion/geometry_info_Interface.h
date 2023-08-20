@@ -73,9 +73,9 @@ class GeometryInfoInterface {
     virtual bool SetCenter(const std::vector<DefReal>& vec_offset) = 0;
     virtual int InitialGeometry(const DefReal dx,
      const DefaultGeoShapeType shape_type, const DefaultGeoManager& default_geo_manager) = 0;
-    virtual int UpdateGeometry(const DefaultGeoManager& default_geo_manager) = 0;  
+    virtual int UpdateGeometry(const DefaultGeoManager& default_geo_manager) = 0;
     virtual void FindTrackingNodeBasedOnGeo(
-     const SFBitsetAuxInterface* ptr_sfbitset_aux, GridInfoInterface* const ptr_grid_info) = 0;
+     const SFBitsetAuxInterface& sfbitset_aux, GridInfoInterface* const ptr_grid_info) = 0;
     virtual std::vector<DefReal> GetFloodFillOriginArrAsVec() const = 0;
     virtual DefSizet GetNumOfGeometryPoints() const = 0;
     virtual ~GeometryInfoInterface() {}

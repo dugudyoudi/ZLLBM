@@ -82,13 +82,21 @@ void AmrManager::InitializeMesh() {
     DefMap<DefAmrIndexUint> partition_interface_background;
     std::vector<DefMap<DefAmrIndexUint>> sfbitset_one_lower_level(ptr_grid_manager_->k0MaxLevel_ + 1);
     std::vector<DefReal> real_offset(ptr_grid_manager_->k0GridDims_);
+    DefAmrIndexUint i_geo = 0;
     if (rank_id == 0) {
         ptr_criterion_manager_->InitialAllGeometrySerial(ptr_grid_manager_->k0GridDims_, real_offset);
+    }
+    for (const auto& iter_geo_info : ptr_criterion_manager_->vec_ptr_geometries_) {
+        ptr_grid_manager_->CreateTrackingGridInstanceForAGeo(i_geo, *iter_geo_info);
+        ++i_geo;
+    }
+    if (rank_id == 0) {
         ptr_grid_manager_->GenerateGridFromHighToLowLevelSerial(
          ptr_criterion_manager_->vec_ptr_geometries_, &sfbitset_one_lower_level);
         sfbitset_bound_current = {ptr_grid_manager_->k0SFBitsetDomainMin_, ptr_grid_manager_->k0SFBitsetDomainMax_};
     }
-    
+
+
 #ifdef ENABLE_MPI
     // mpi partition sending and receiving nodes
     std::vector<DefAmrIndexLUint> vec_cost;
@@ -132,7 +140,6 @@ void AmrManager::InitializeMesh() {
      sfbitset_bound_current.at(0), sfbitset_bound_current.at(1),
      partition_interface_background, sfbitset_one_lower_level);
 #endif  // ENABLE_MPI
-    
 }
 /**
 * @brief   function to create the same type of grid

@@ -63,7 +63,7 @@ void GridManager2D::GetMaxP1AtGivenLevel(const DefAmrIndexUint i_level,
     ptr_max_p1_bitsets->at(kYIndex) = FindYPos(bitset_tmp);
 }
 /**
- * @brief function to find interface of partitioned blocks by one block 
+ * @brief function to find interface of partitioned blocks
  * @param[in] i_level refinement level of input node.
  * @param[in] code_min minimum space fill code of the partitioned blocks of the current rank.
  * @param[in] code_max maximum space fill code of the partitioned blocks of the current rank.
@@ -114,15 +114,15 @@ bool GridManager2D::CheckNodeOnOuterBoundaryOfBackgroundCell(DefAmrIndexUint i_l
  * @param[in] code_max the maximum space fill codes.
  * @param[in] domain_min_m1_n_level minimum indicies of current refinement level minus 1.
  * @param[in] domain_max_p1_n_level maximum indicies of current refinement level plus 1.
- * @param[out] ptr_vec_ghost_layer pointer to nodes on ghost layers near the given node.
+ * @param[out] ptr_map_ghost_layer pointer to nodes on ghost layers near the given node.
  * @throws None
  */
 void GridManager2D::SearchForGhostLayerForMinNMax(const DefSFBitset sfbitset_in,
     const DefAmrIndexUint num_of_ghost_layers, const DefSFCodeToUint code_min, const DefSFCodeToUint code_max,
     const std::vector<DefSFBitset>& domain_min_m1_n_level,
     const std::vector<DefSFBitset>& domain_max_p1_n_level,
-    std::vector<DefSFBitset>* const ptr_vec_ghost_layer) const {
-    ptr_vec_ghost_layer->clear();
+    DefMap<DefAmrIndexUint>* const ptr_map_ghost_layer) const {
+    ptr_map_ghost_layer->clear();
     DefSFCodeToUint code_tmp;
     DefSFBitset sfbitset_tmp_y = sfbitset_in, sfbitset_tmp_x;
     // negative y direction
@@ -133,7 +133,7 @@ void GridManager2D::SearchForGhostLayerForMinNMax(const DefSFBitset sfbitset_in,
                 if ((sfbitset_tmp_x&k0SFBitsetTakeXRef_.at(kRefCurrent_)) != domain_min_m1_n_level.at(kXIndex)) {
                     code_tmp = sfbitset_tmp_x.to_ullong();
                     if (code_tmp > code_max || code_tmp < code_min) {
-                        ptr_vec_ghost_layer->push_back(sfbitset_tmp_x);
+                        ptr_map_ghost_layer->insert({sfbitset_tmp_x, kFlagSize0_});
                     }
                 } else {
                     break;
@@ -146,7 +146,7 @@ void GridManager2D::SearchForGhostLayerForMinNMax(const DefSFBitset sfbitset_in,
                 if ((sfbitset_tmp_x&k0SFBitsetTakeXRef_.at(kRefCurrent_)) != domain_max_p1_n_level.at(kXIndex)) {
                     code_tmp = sfbitset_tmp_x.to_ullong();
                     if (code_tmp > code_max || code_tmp < code_min) {
-                        ptr_vec_ghost_layer->push_back(sfbitset_tmp_x);
+                        ptr_map_ghost_layer->insert({sfbitset_tmp_x, kFlagSize0_});
                     }
                 } else {
                     break;
@@ -167,7 +167,7 @@ void GridManager2D::SearchForGhostLayerForMinNMax(const DefSFBitset sfbitset_in,
                 if ((sfbitset_tmp_x&k0SFBitsetTakeXRef_.at(kRefCurrent_)) != domain_min_m1_n_level.at(kXIndex)) {
                     code_tmp = sfbitset_tmp_x.to_ullong();
                     if (code_tmp > code_max || code_tmp < code_min) {
-                        ptr_vec_ghost_layer->push_back(sfbitset_tmp_x);
+                        ptr_map_ghost_layer->insert({sfbitset_tmp_x, kFlagSize0_});
                     }
                 } else {
                     break;
@@ -180,7 +180,7 @@ void GridManager2D::SearchForGhostLayerForMinNMax(const DefSFBitset sfbitset_in,
                 if ((sfbitset_tmp_x&k0SFBitsetTakeXRef_.at(kRefCurrent_)) != domain_max_p1_n_level.at(kXIndex)) {
                     code_tmp = sfbitset_tmp_x.to_ullong();
                     if (code_tmp > code_max || code_tmp < code_min) {
-                        ptr_vec_ghost_layer->push_back(sfbitset_tmp_x);
+                        ptr_map_ghost_layer->insert({sfbitset_tmp_x, kFlagSize0_});
                     }
                 } else {
                     break;
