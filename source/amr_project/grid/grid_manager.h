@@ -131,7 +131,6 @@ class GridManagerInterface{
         <GeometryInfoInterface>>&vec_geo_info,
         std::vector<DefMap<DefAmrIndexUint>>* const ptr_sfbitset_one_lower_level);
     void InstantiateGridNodeAllLevel(const DefSFBitset sfbitset_min, const DefSFBitset sfbitset_max,
-        const DefMap<DefAmrIndexUint>& partitioned_interface_background,
         const std::vector<DefMap<DefAmrIndexUint>>& sfbitset_one_lower_level);
 
     template<InterfaceInfoHasType InterfaceInfo>
@@ -229,28 +228,6 @@ class GridManagerInterface{
         DefMap<DefAmrUint>* const ptr_interface_outmost,
         DefMap<DefAmrIndexUint>* const ptr_layer_lower_level,
         DefMap<DefAmrUint>* const ptr_layer_lower_level_outer) = 0;
-
-#ifdef ENABLE_MPI
-
- public:
-    virtual void GetNLevelCorrespondingOnes(
-        const DefAmrIndexUint i_level, std::vector<DefSFBitset>* const ptr_last_ones) const = 0;
-    virtual bool CheckNodeOnOuterBoundaryOfBackgroundCell(DefAmrIndexUint i_level,
-        const DefSFCodeToUint code_min, const DefSFCodeToUint code_max, const DefSFBitset bitset_in,
-        const std::vector<DefSFBitset>& domain_min_m1_n_level,
-        const std::vector<DefSFBitset>& domain_max_p1_n_level,
-        const std::vector<DefSFBitset>& bitset_level_ones,
-        const DefMap<DefAmrIndexUint>& partitioned_interface_background) const = 0;
-    virtual void GetMinM1AtGivenLevel(const DefAmrIndexUint i_level,
-        std::vector<DefSFBitset>* const ptr_min_m1_bitsets) const = 0;
-    virtual void GetMaxP1AtGivenLevel(const DefAmrIndexUint i_level,
-        std::vector<DefSFBitset>* const ptr_max_p1_bitsets) const = 0;
-    virtual void SearchForGhostLayerForMinNMax(const DefSFBitset bitset_in,
-        const DefAmrIndexUint num_of_ghost_layers, const DefSFCodeToUint code_min, const DefSFCodeToUint code_max,
-        const std::vector<DefSFBitset>& domain_min_m1_n_level,
-        const std::vector<DefSFBitset>& domain_max_p1_n_level,
-        DefMap<DefAmrIndexUint>* const ptr_map_ghost_layer) const = 0;
-#endif  // ENABLE_MPI
 
 #ifdef DEBUG_UNIT_TEST
 
@@ -381,28 +358,6 @@ class GridManager2D :public  GridManagerInterface, public SFBitsetAux2D {
         const DefSFBitset bitset_mid_higher,
         const DefMap<DefAmrUint>& node_outmost,
         const std::array<DefMap<DefAmrUint>* const, 3>& arr_ptr_layer);
-
-#ifdef ENABLE_MPI
-
- public:
-    void GetNLevelCorrespondingOnes(
-        const DefAmrIndexUint i_level, std::vector<DefSFBitset>* const ptr_last_ones) const final;
-    bool CheckNodeOnOuterBoundaryOfBackgroundCell(DefAmrIndexUint i_level,
-        const DefSFCodeToUint code_min, const DefSFCodeToUint code_max, const DefSFBitset bitset_in,
-        const std::vector<DefSFBitset>& domain_min_m1_n_level,
-        const std::vector<DefSFBitset>& domain_max_p1_n_level,
-        const std::vector<DefSFBitset>& bitset_level_ones,
-        const DefMap<DefAmrIndexUint>& partitioned_interface_background) const final;
-    void GetMinM1AtGivenLevel(const DefAmrIndexUint i_level,
-        std::vector<DefSFBitset>* const ptr_min_m1_bitsets) const final;
-    void GetMaxP1AtGivenLevel(const DefAmrIndexUint i_level,
-        std::vector<DefSFBitset>* const ptr_max_p1_bitsets) const final;
-    void SearchForGhostLayerForMinNMax(const DefSFBitset bitset_in,
-        const DefAmrIndexUint num_of_ghost_layers, const DefSFCodeToUint code_min, const DefSFCodeToUint code_max,
-        const std::vector<DefSFBitset>& domain_min_m1_n_level,
-        const std::vector<DefSFBitset>& domain_max_p1_n_level,
-        DefMap<DefAmrIndexUint>* const ptr_map_ghost_layer) const final;
-#endif  // ENABLE_MPI
 
 #ifdef DEBUG_UNIT_TEST
 
@@ -537,27 +492,6 @@ class GridManager3D :public  GridManagerInterface, public SFBitsetAux3D {
         const DefMap<DefAmrUint>& node_outmost,
         const std::array<DefMap<DefAmrUint>* const, 3>& arr_ptr_layer);
 
-#ifdef ENABLE_MPI
-
- public:
-    void GetNLevelCorrespondingOnes(
-        const DefAmrIndexUint i_level, std::vector<DefSFBitset>* const ptr_last_ones) const final;
-    bool CheckNodeOnOuterBoundaryOfBackgroundCell(DefAmrIndexUint i_level,
-        const DefSFCodeToUint code_min, const DefSFCodeToUint code_max, const DefSFBitset bitset_in,
-        const std::vector<DefSFBitset>& domain_min_m1_n_level,
-        const std::vector<DefSFBitset>& domain_max_p1_n_level,
-        const std::vector<DefSFBitset>& bitset_level_ones,
-        const DefMap<DefAmrIndexUint>& partitioned_interface_background) const final;
-    void GetMinM1AtGivenLevel(const DefAmrIndexUint i_level,
-        std::vector<DefSFBitset>* const ptr_min_m1_bitsets) const final;
-    void GetMaxP1AtGivenLevel(const DefAmrIndexUint i_level,
-        std::vector<DefSFBitset>* const ptr_max_p1_bitsets) const final;
-    void SearchForGhostLayerForMinNMax(const DefSFBitset bitset_in,
-        const DefAmrIndexUint num_of_ghost_layers, const DefSFCodeToUint code_min, const DefSFCodeToUint code_max,
-        const std::vector<DefSFBitset>& domain_min_m1_n_level,
-        const std::vector<DefSFBitset>& domain_max_p1_n_level,
-        DefMap<DefAmrIndexUint>* const ptr_map_ghost_layer) const final;
-#endif  // ENABLE_MPI
 #ifdef DEBUG_UNIT_TEST
 
  private:

@@ -79,7 +79,6 @@ void AmrManager::InitializeMesh() {
 #endif  // ENABLE_MPI
 
     std::array<DefSFBitset, 2> sfbitset_bound_current;
-    DefMap<DefAmrIndexUint> partition_interface_background;
     std::vector<DefMap<DefAmrIndexUint>> sfbitset_one_lower_level(ptr_grid_manager_->k0MaxLevel_ + 1);
     std::vector<DefReal> real_offset(ptr_grid_manager_->k0GridDims_);
     DefAmrIndexUint i_geo = 0;
@@ -104,41 +103,48 @@ void AmrManager::InitializeMesh() {
         vec_cost.push_back(iter_grid->computational_cost_);
     }
     std::vector<DefMap<DefAmrIndexUint>> sfbitset_one_lower_level_current_rank(ptr_grid_manager_->k0MaxLevel_ + 1);
+    std::vector<DefMap<DefAmrIndexUint>> sfbitset_one_lower_partition_interface(ptr_grid_manager_->k0MaxLevel_ + 1);
     ptr_mpi_manager_->sfbitset_min_current_rank_ = sfbitset_bound_current.at(0);
     ptr_mpi_manager_->sfbitset_max_current_rank_ = sfbitset_bound_current.at(1);
     if (ptr_grid_manager_->k0GridDims_ == 2) {
+#ifndef  DEBUG_DISABLE_2D_FUNCTIONS
         GridManager2D* ptr_grid_manager_2d = dynamic_cast<GridManager2D*>(ptr_grid_manager_.get());
         ptr_mpi_manager_->SendNReceiveGridInfoAtGivenLevels(ptr_grid_manager_->kFlagSize0_,
          ptr_grid_manager_->k0GridDims_, ptr_grid_manager_->k0MaxLevel_,
          ptr_grid_manager_->k0SFBitsetDomainMin_, ptr_grid_manager_->k0SFBitsetDomainMax_,
+         {ptr_grid_manager_2d->k0IntOffset_[kXIndex], ptr_grid_manager_2d->k0IntOffset_[kYIndex]},
+         {ptr_grid_manager_2d->k0MaxIndexOfBackgroundNode_[kXIndex],
+          ptr_grid_manager_2d->k0MaxIndexOfBackgroundNode_[kYIndex]},
          vec_cost, *ptr_grid_manager_2d, sfbitset_one_lower_level, ptr_grid_manager_->vec_ptr_tracking_info_creator_,
-         &sfbitset_bound_current, &sfbitset_one_lower_level_current_rank, &(ptr_grid_manager_->vec_ptr_grid_info_));
-        ptr_mpi_manager_->FindInterfaceForPartitionFromMinNMax(
-         sfbitset_bound_current.at(0), sfbitset_bound_current.at(1),
-         ptr_grid_manager_2d->k0IntOffset_, ptr_grid_manager_2d->k0MaxIndexOfBackgroundNode_,
-         *ptr_grid_manager_2d, &partition_interface_background);
+         &sfbitset_bound_current, &sfbitset_one_lower_level_current_rank,
+         &sfbitset_one_lower_partition_interface, &(ptr_grid_manager_->vec_ptr_grid_info_));
+#endif  // DEBUG_DISABLE_3D_FUNCTIONS
     } else {
+#ifndef  DEBUG_DISABLE_3D_FUNCTIONS
         GridManager3D* ptr_grid_manager_3d = dynamic_cast<GridManager3D*>(ptr_grid_manager_.get());
         ptr_mpi_manager_->SendNReceiveGridInfoAtGivenLevels(ptr_grid_manager_->kFlagSize0_,
          ptr_grid_manager_->k0GridDims_, ptr_grid_manager_->k0MaxLevel_,
          ptr_grid_manager_->k0SFBitsetDomainMin_, ptr_grid_manager_->k0SFBitsetDomainMax_,
+         {ptr_grid_manager_3d->k0IntOffset_[kXIndex], ptr_grid_manager_3d->k0IntOffset_[kYIndex],
+          ptr_grid_manager_3d->k0IntOffset_[kZIndex]},
+         {ptr_grid_manager_3d->k0MaxIndexOfBackgroundNode_[kXIndex],
+          ptr_grid_manager_3d->k0MaxIndexOfBackgroundNode_[kYIndex],
+          ptr_grid_manager_3d->k0MaxIndexOfBackgroundNode_[kZIndex]},
          vec_cost, *ptr_grid_manager_3d, sfbitset_one_lower_level, ptr_grid_manager_->vec_ptr_tracking_info_creator_,
-         &sfbitset_bound_current, &sfbitset_one_lower_level_current_rank, &(ptr_grid_manager_->vec_ptr_grid_info_));
-        ptr_mpi_manager_->FindInterfaceForPartitionFromMinNMax(
-         sfbitset_bound_current.at(0), sfbitset_bound_current.at(1),
-         ptr_grid_manager_3d->k0IntOffset_, ptr_grid_manager_3d->k0MaxIndexOfBackgroundNode_,
-         *ptr_grid_manager_3d, &partition_interface_background);
+         &sfbitset_bound_current, &sfbitset_one_lower_level_current_rank,
+         &sfbitset_one_lower_partition_interface, &(ptr_grid_manager_->vec_ptr_grid_info_));
+#endif  // DEBUG_DISABLE_3D_FUNCTIONS
     }
     if (rank_id == 0) {
         sfbitset_one_lower_level.clear();
     }
     ptr_grid_manager_->InstantiateGridNodeAllLevel(
      sfbitset_bound_current.at(0), sfbitset_bound_current.at(1),
-     partition_interface_background, sfbitset_one_lower_level_current_rank);
+     sfbitset_one_lower_level_current_rank);
 #else  // run serially mesh on rank 0 is the only one
     ptr_grid_manager_->InstantiateGridNodeAllLevel(
      sfbitset_bound_current.at(0), sfbitset_bound_current.at(1),
-     partition_interface_background, sfbitset_one_lower_level);
+    sfbitset_one_lower_level);
 #endif  // ENABLE_MPI
 }
 /**

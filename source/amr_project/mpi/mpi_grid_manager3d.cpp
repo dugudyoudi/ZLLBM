@@ -19,280 +19,280 @@ namespace amrproject {
  * @param ptr_last_ones pointer to spacing fill codes
  * @throws ErrorType if the size of last_ones is not 3
  */
-void GridManager3D::GetNLevelCorrespondingOnes(
-    const DefAmrIndexUint i_level, std::vector<DefSFBitset>* const ptr_last_ones) const {
-    if (ptr_last_ones->size() != 3) {
-        LogManager::LogError("size of ptr_last_ones should be 3 in SFBitsetAux3D::GetNLevelCorrespondingOnes");
-    }
-    ptr_last_ones->at(kXIndex) =
-        k0SFBitsetTakeXRef_.at(kRefCurrent_)>>(kSFBitsetBit - i_level * 3);
-    ptr_last_ones->at(kYIndex) =
-        k0SFBitsetTakeYRef_.at(kRefCurrent_)>>(kSFBitsetBit - i_level * 3);
-    ptr_last_ones->at(kZIndex) =
-        k0SFBitsetTakeZRef_.at(kRefCurrent_)>>(kSFBitsetBit - i_level * 3);
-}
-/**
- * @brief function to calculate spacing fill code of minimum indices minus 1 at a given level.
- * @param[in] i_level the given refinement level
- * @param[out] ptr_min_m1_bitsets a pointer to minimum indices minus 1
- * @throws ErrorType if the size of min_m1_bitsets is not 3
- */
-void GridManager3D::GetMinM1AtGivenLevel(const DefAmrIndexUint i_level,
-    std::vector<DefSFBitset>* const ptr_min_m1_bitsets) const {
-    if (ptr_min_m1_bitsets->size() != 3) {
-        LogManager::LogError("size of ptr_min_m1_bitsets should be 3 in GridManager3D::GetMinM1AtGivenLevel");
-    }
-    DefSFBitset bitset_tmp = SFBitsetToNHigherLevel(i_level, SFBitsetEncoding({k0IntOffset_[kXIndex], 0, 0}));
-    ptr_min_m1_bitsets->at(kXIndex) = FindXNeg(bitset_tmp);
-    bitset_tmp = SFBitsetToNHigherLevel(i_level, SFBitsetEncoding({0,  k0IntOffset_[kYIndex], 0}));
-    ptr_min_m1_bitsets->at(kYIndex) = FindYNeg(bitset_tmp);
-    bitset_tmp = SFBitsetToNHigherLevel(i_level, SFBitsetEncoding({0, 0, k0IntOffset_[kZIndex]}));
-    ptr_min_m1_bitsets->at(kZIndex) = FindZNeg(bitset_tmp);
-}
-/**
- * @brief function to calculate spacing fill code of maximum indices plus 1 at a given level.
- * @param[in] i_level the given refinement level
- * @param[out] ptr_max_p1_bitsets a pointer to maximum indices plus
- * @throws ErrorType if the size of max_p1_bitsets is not 3
- */
-void GridManager3D::GetMaxP1AtGivenLevel(const DefAmrIndexUint i_level,
-    std::vector<DefSFBitset>* const ptr_max_p1_bitsets) const {
-    if (ptr_max_p1_bitsets->size() != 3) {
-        LogManager::LogError("size of ptr_max_p1_bitsets should be 3 in GridManager3D::GetMaxP1AtGivenLevel");
-    }
-    DefSFBitset bitset_tmp = SFBitsetToNHigherLevel(i_level,
-       SFBitsetEncoding({k0MaxIndexOfBackgroundNode_[kXIndex], 0, 0}));
-    ptr_max_p1_bitsets->at(kXIndex) = FindXPos(bitset_tmp);
-    bitset_tmp = SFBitsetToNHigherLevel(i_level, SFBitsetEncoding({0, k0MaxIndexOfBackgroundNode_[kYIndex], 0}));
-    ptr_max_p1_bitsets->at(kYIndex) = FindYPos(bitset_tmp);
-    bitset_tmp = SFBitsetToNHigherLevel(i_level, SFBitsetEncoding({0, 0, k0MaxIndexOfBackgroundNode_[kZIndex]}));
-    ptr_max_p1_bitsets->at(kZIndex) = FindZPos(bitset_tmp);
-}
-/**
- * @brief function to find interface of partitioned blocks by one block 
- * @param[in] i_level refinement level of input node.
- * @param[in] code_min minimum space fill code of the partitioned blocks of the current rank.
- * @param[in] code_max maximum space fill code of the partitioned blocks of the current rank.
- * @param[in] domain_min_m1_n_level minimum indicies of current refinement level minus 1.
- * @param[in] domain_max_p1_n_level maximum indicies of current refinement level plus 1.
- * @param[in] bitset_level_ones bitsets of current refinement level excluding background space filling code.
- * @param[out] partitioned_interface_background  background nodes on the partitioned interface.
- */
-bool GridManager3D::CheckNodeOnOuterBoundaryOfBackgroundCell(DefAmrIndexUint i_level,
-    const DefSFCodeToUint code_min, const DefSFCodeToUint code_max, const DefSFBitset bitset_in,
-    const std::vector<DefSFBitset>& domain_min_m1_n_level, const std::vector<DefSFBitset>& domain_max_p1_n_level,
-    const std::vector<DefSFBitset>& bitset_level_ones,
-    const DefMap<DefAmrIndexUint>& partitioned_interface_background) const {
-    if ((bitset_in & bitset_level_ones.at(kXIndex)) == 0
-        || (bitset_in & bitset_level_ones.at(kXIndex)) == bitset_level_ones.at(kXIndex)
-        || (bitset_in & bitset_level_ones.at(kYIndex)) == 0
-        || (bitset_in & bitset_level_ones.at(kYIndex)) == bitset_level_ones.at(kYIndex)
-        || (bitset_in & bitset_level_ones.at(kZIndex)) == 0
-        || (bitset_in & bitset_level_ones.at(kZIndex)) == bitset_level_ones.at(kZIndex)) {
-        DefSFBitset bitset_background = SFBitsetToNLowerLevel(i_level, bitset_in), bitset_tmp;
-        if (partitioned_interface_background.find(bitset_background) != partitioned_interface_background.end()) {
-            std::array<DefSFBitset, 27> array_neighbors;
-            SFBitsetFindAllNeighbors(bitset_in, &array_neighbors);
-            DefSFCodeToUint code;
-            for (unsigned int i = 1; i < 27; ++i) {
-                code = array_neighbors.at(i).to_ullong();
-                if ((code < code_min || code > code_max)
-                    && ((array_neighbors.at(i) & k0SFBitsetTakeXRef_.at(kRefCurrent_))
-                    != domain_min_m1_n_level.at(kXIndex))  // node is not x_min - 1
-                    && ((array_neighbors.at(i) & k0SFBitsetTakeXRef_.at(kRefCurrent_))
-                    != domain_max_p1_n_level.at(kXIndex))
-                    && ((array_neighbors.at(i) & k0SFBitsetTakeYRef_.at(kRefCurrent_))
-                    != domain_min_m1_n_level.at(kYIndex))
-                    && ((array_neighbors.at(i) & k0SFBitsetTakeYRef_.at(kRefCurrent_))
-                    != domain_max_p1_n_level.at(kYIndex))
-                    && ((array_neighbors.at(i) & k0SFBitsetTakeZRef_.at(kRefCurrent_))
-                    != domain_min_m1_n_level.at(kZIndex))
-                    && ((array_neighbors.at(i) & k0SFBitsetTakeZRef_.at(kRefCurrent_))
-                    != domain_max_p1_n_level.at(kZIndex))) {
-                    return true;
-                }
-            }
-        }
-    }
-    return false;
-}
-/**
- * @brief function to search for the ghost layers near a given node based on min and max space fill codes.
- * @param[in] sfbitset_in space fill code of the given node
- * @param[in] num_of_ghost_layers number of ghost layers
- * @param[in] code_min the minimum space fill codes.
- * @param[in] code_max the maximum space fill codes.
- * @param[in] domain_min_m1_n_level minimum indicies of current refinement level minus 1.
- * @param[in] domain_max_p1_n_level maximum indicies of current refinement level plus 1.
- * @param[out] ptr_map_ghost_layer pointer to nodes on ghost layers near the given node.
- * @throws None
- */
-void GridManager3D::SearchForGhostLayerForMinNMax(const DefSFBitset sfbitset_in,
-    const DefAmrIndexUint num_of_ghost_layers, const DefSFCodeToUint code_min, const DefSFCodeToUint code_max,
-    const std::vector<DefSFBitset>& domain_min_m1_n_level,
-    const std::vector<DefSFBitset>& domain_max_p1_n_level,
-    DefMap<DefAmrIndexUint>* const ptr_map_ghost_layer) const {
-    ptr_map_ghost_layer->clear();
-    DefSFCodeToUint code_tmp;
-    DefSFBitset sfbitset_tmp_y, sfbitset_tmp_x, sfbitset_tmp_z = sfbitset_in;
-    // negative z direction
-    for (DefAmrIndexUint iz = 0; iz <= num_of_ghost_layers; ++iz) {
-        if ((sfbitset_tmp_z&k0SFBitsetTakeZRef_.at(kRefCurrent_)) != domain_min_m1_n_level.at(kZIndex)) {
-            sfbitset_tmp_y = sfbitset_tmp_z;
-            // negative y direction
-            for (DefAmrIndexUint iy = 0; iy <= num_of_ghost_layers; ++iy) {
-                if ((sfbitset_tmp_y&k0SFBitsetTakeYRef_.at(kRefCurrent_)) != domain_min_m1_n_level.at(kYIndex)) {
-                    sfbitset_tmp_x = sfbitset_tmp_y;
-                    for (DefAmrIndexUint ix = 0; ix <= num_of_ghost_layers; ++ix) {
-                        if ((sfbitset_tmp_x&k0SFBitsetTakeXRef_.at(kRefCurrent_))
-                         != domain_min_m1_n_level.at(kXIndex)) {
-                            code_tmp = sfbitset_tmp_x.to_ullong();
-                            if (code_tmp > code_max || code_tmp < code_min) {
-                                ptr_map_ghost_layer->insert({sfbitset_tmp_x, kFlagSize0_});
-                            }
-                        } else {
-                            break;
-                        }
-                        sfbitset_tmp_x = FindXNeg(sfbitset_tmp_x);
-                    }
-                    sfbitset_tmp_x = sfbitset_tmp_y;
-                    for (DefAmrIndexUint ix = 0; ix < num_of_ghost_layers; ++ix) {
-                        sfbitset_tmp_x = FindXPos(sfbitset_tmp_x);
-                        if ((sfbitset_tmp_x&k0SFBitsetTakeXRef_.at(kRefCurrent_))
-                         != domain_max_p1_n_level.at(kXIndex)) {
-                            code_tmp = sfbitset_tmp_x.to_ullong();
-                            if (code_tmp > code_max || code_tmp < code_min) {
-                                ptr_map_ghost_layer->insert({sfbitset_tmp_x, kFlagSize0_});
-                            }
-                        } else {
-                            break;
-                        }
-                    }
-                } else {
-                    break;
-                }
-                sfbitset_tmp_y = FindYNeg(sfbitset_tmp_y);
-            }
-            // positive y direction
-            sfbitset_tmp_y = sfbitset_tmp_z;
-            for (DefAmrIndexUint iy = 0; iy < num_of_ghost_layers; ++iy) {
-                sfbitset_tmp_y = FindYPos(sfbitset_tmp_y);
-                if ((sfbitset_tmp_y&k0SFBitsetTakeYRef_.at(kRefCurrent_)) != domain_max_p1_n_level.at(kYIndex)) {
-                    sfbitset_tmp_x = sfbitset_tmp_y;
-                    for (DefAmrIndexUint ix = 0; ix <= num_of_ghost_layers; ++ix) {
-                        if ((sfbitset_tmp_x&k0SFBitsetTakeXRef_.at(kRefCurrent_))
-                         != domain_min_m1_n_level.at(kXIndex)) {
-                            code_tmp = sfbitset_tmp_x.to_ullong();
-                            if (code_tmp > code_max || code_tmp < code_min) {
-                                ptr_map_ghost_layer->insert({sfbitset_tmp_x, kFlagSize0_});
-                            }
-                        } else {
-                            break;
-                        }
-                        sfbitset_tmp_x = FindXNeg(sfbitset_tmp_x);
-                    }
-                    sfbitset_tmp_x = sfbitset_tmp_y;
-                    for (DefAmrIndexUint ix = 0; ix < num_of_ghost_layers; ++ix) {
-                        sfbitset_tmp_x = FindXPos(sfbitset_tmp_x);
-                        if ((sfbitset_tmp_x&k0SFBitsetTakeXRef_.at(kRefCurrent_))
-                         != domain_max_p1_n_level.at(kXIndex)) {
-                            code_tmp = sfbitset_tmp_x.to_ullong();
-                            if (code_tmp > code_max || code_tmp < code_min) {
-                                ptr_map_ghost_layer->insert({sfbitset_tmp_x, kFlagSize0_});
-                            }
-                        } else {
-                            break;
-                        }
-                    }
-                } else {
-                    break;
-                }
-            }
-        } else {
-            break;
-        }
-        sfbitset_tmp_z = FindZNeg(sfbitset_tmp_z);
-    }
-    // positive z direction
-    sfbitset_tmp_z = sfbitset_in;
-    for (DefAmrIndexUint iz = 0; iz < num_of_ghost_layers; ++iz) {
-        sfbitset_tmp_z = FindZPos(sfbitset_tmp_z);
-        if ((sfbitset_tmp_z&k0SFBitsetTakeZRef_.at(kRefCurrent_)) != domain_max_p1_n_level.at(kZIndex)) {
-            sfbitset_tmp_y = sfbitset_tmp_z;
-            // negative y direction
-            for (DefAmrIndexUint iy = 0; iy <= num_of_ghost_layers; ++iy) {
-                if ((sfbitset_tmp_y&k0SFBitsetTakeYRef_.at(kRefCurrent_)) != domain_min_m1_n_level.at(kYIndex)) {
-                    sfbitset_tmp_x = sfbitset_tmp_y;
-                    for (DefAmrIndexUint ix = 0; ix <= num_of_ghost_layers; ++ix) {
-                        if ((sfbitset_tmp_x&k0SFBitsetTakeXRef_.at(kRefCurrent_))
-                         != domain_min_m1_n_level.at(kXIndex)) {
-                            code_tmp = sfbitset_tmp_x.to_ullong();
-                            if (code_tmp > code_max || code_tmp < code_min) {
-                                ptr_map_ghost_layer->insert({sfbitset_tmp_x, kFlagSize0_});
-                            }
-                        } else {
-                            break;
-                        }
-                        sfbitset_tmp_x = FindXNeg(sfbitset_tmp_x);
-                    }
-                    sfbitset_tmp_x = sfbitset_tmp_y;
-                    for (DefAmrIndexUint ix = 0; ix < num_of_ghost_layers; ++ix) {
-                        sfbitset_tmp_x = FindXPos(sfbitset_tmp_x);
-                        if ((sfbitset_tmp_x&k0SFBitsetTakeXRef_.at(kRefCurrent_))
-                         != domain_max_p1_n_level.at(kXIndex)) {
-                            code_tmp = sfbitset_tmp_x.to_ullong();
-                            if (code_tmp > code_max || code_tmp < code_min) {
-                                ptr_map_ghost_layer->insert({sfbitset_tmp_x, kFlagSize0_});
-                            }
-                        } else {
-                            break;
-                        }
-                    }
-                } else {
-                    break;
-                }
-                sfbitset_tmp_y = FindYNeg(sfbitset_tmp_y);
-            }
-            // positive y direction
-            sfbitset_tmp_y = sfbitset_tmp_z;
-            for (DefAmrIndexUint iy = 0; iy < num_of_ghost_layers; ++iy) {
-                sfbitset_tmp_y = FindYPos(sfbitset_tmp_y);
-                if ((sfbitset_tmp_y&k0SFBitsetTakeYRef_.at(kRefCurrent_)) != domain_max_p1_n_level.at(kYIndex)) {
-                    sfbitset_tmp_x = sfbitset_tmp_y;
-                    for (DefAmrIndexUint ix = 0; ix <= num_of_ghost_layers; ++ix) {
-                        if ((sfbitset_tmp_x&k0SFBitsetTakeXRef_.at(kRefCurrent_))
-                         != domain_min_m1_n_level.at(kXIndex)) {
-                            code_tmp = sfbitset_tmp_x.to_ullong();
-                            if (code_tmp > code_max || code_tmp < code_min) {
-                                ptr_map_ghost_layer->insert({sfbitset_tmp_x, kFlagSize0_});
-                            }
-                        } else {
-                            break;
-                        }
-                        sfbitset_tmp_x = FindXNeg(sfbitset_tmp_x);
-                    }
-                    sfbitset_tmp_x = sfbitset_tmp_y;
-                    for (DefAmrIndexUint ix = 0; ix < num_of_ghost_layers; ++ix) {
-                        sfbitset_tmp_x = FindXPos(sfbitset_tmp_x);
-                        if ((sfbitset_tmp_x&k0SFBitsetTakeXRef_.at(kRefCurrent_))
-                         != domain_max_p1_n_level.at(kXIndex)) {
-                            code_tmp = sfbitset_tmp_x.to_ullong();
-                            if (code_tmp > code_max || code_tmp < code_min) {
-                                ptr_map_ghost_layer->insert({sfbitset_tmp_x, kFlagSize0_});
-                            }
-                        } else {
-                            break;
-                        }
-                    }
-                } else {
-                    break;
-                }
-            }
-        } else {
-            break;
-        }
-    }
-}
+// void GridManager3D::GetNLevelCorrespondingOnes(
+//     const DefAmrIndexUint i_level, std::vector<DefSFBitset>* const ptr_last_ones) const {
+//     if (ptr_last_ones->size() != 3) {
+//         LogManager::LogError("size of ptr_last_ones should be 3 in SFBitsetAux3D::GetNLevelCorrespondingOnes");
+//     }
+//     ptr_last_ones->at(kXIndex) =
+//         k0SFBitsetTakeXRef_.at(kRefCurrent_)>>(kSFBitsetBit - i_level * 3);
+//     ptr_last_ones->at(kYIndex) =
+//         k0SFBitsetTakeYRef_.at(kRefCurrent_)>>(kSFBitsetBit - i_level * 3);
+//     ptr_last_ones->at(kZIndex) =
+//         k0SFBitsetTakeZRef_.at(kRefCurrent_)>>(kSFBitsetBit - i_level * 3);
+// }
+// /**
+//  * @brief function to calculate spacing fill code of minimum indices minus 1 at a given level.
+//  * @param[in] i_level the given refinement level
+//  * @param[out] ptr_min_m1_bitsets a pointer to minimum indices minus 1
+//  * @throws ErrorType if the size of min_m1_bitsets is not 3
+//  */
+// void GridManager3D::GetMinM1AtGivenLevel(const DefAmrIndexUint i_level,
+//     std::vector<DefSFBitset>* const ptr_min_m1_bitsets) const {
+//     if (ptr_min_m1_bitsets->size() != 3) {
+//         LogManager::LogError("size of ptr_min_m1_bitsets should be 3 in GridManager3D::GetMinM1AtGivenLevel");
+//     }
+//     DefSFBitset bitset_tmp = SFBitsetToNHigherLevel(i_level, SFBitsetEncoding({k0IntOffset_[kXIndex], 0, 0}));
+//     ptr_min_m1_bitsets->at(kXIndex) = FindXNeg(bitset_tmp);
+//     bitset_tmp = SFBitsetToNHigherLevel(i_level, SFBitsetEncoding({0,  k0IntOffset_[kYIndex], 0}));
+//     ptr_min_m1_bitsets->at(kYIndex) = FindYNeg(bitset_tmp);
+//     bitset_tmp = SFBitsetToNHigherLevel(i_level, SFBitsetEncoding({0, 0, k0IntOffset_[kZIndex]}));
+//     ptr_min_m1_bitsets->at(kZIndex) = FindZNeg(bitset_tmp);
+// }
+// /**
+//  * @brief function to calculate spacing fill code of maximum indices plus 1 at a given level.
+//  * @param[in] i_level the given refinement level
+//  * @param[out] ptr_max_p1_bitsets a pointer to maximum indices plus
+//  * @throws ErrorType if the size of max_p1_bitsets is not 3
+//  */
+// void GridManager3D::GetMaxP1AtGivenLevel(const DefAmrIndexUint i_level,
+//     std::vector<DefSFBitset>* const ptr_max_p1_bitsets) const {
+//     if (ptr_max_p1_bitsets->size() != 3) {
+//         LogManager::LogError("size of ptr_max_p1_bitsets should be 3 in GridManager3D::GetMaxP1AtGivenLevel");
+//     }
+//     DefSFBitset bitset_tmp = SFBitsetToNHigherLevel(i_level,
+//        SFBitsetEncoding({k0MaxIndexOfBackgroundNode_[kXIndex], 0, 0}));
+//     ptr_max_p1_bitsets->at(kXIndex) = FindXPos(bitset_tmp);
+//     bitset_tmp = SFBitsetToNHigherLevel(i_level, SFBitsetEncoding({0, k0MaxIndexOfBackgroundNode_[kYIndex], 0}));
+//     ptr_max_p1_bitsets->at(kYIndex) = FindYPos(bitset_tmp);
+//     bitset_tmp = SFBitsetToNHigherLevel(i_level, SFBitsetEncoding({0, 0, k0MaxIndexOfBackgroundNode_[kZIndex]}));
+//     ptr_max_p1_bitsets->at(kZIndex) = FindZPos(bitset_tmp);
+// }
+// /**
+//  * @brief function to find interface of partitioned blocks by one block 
+//  * @param[in] i_level refinement level of input node.
+//  * @param[in] code_min minimum space fill code of the partitioned blocks of the current rank.
+//  * @param[in] code_max maximum space fill code of the partitioned blocks of the current rank.
+//  * @param[in] domain_min_m1_n_level minimum indicies of current refinement level minus 1.
+//  * @param[in] domain_max_p1_n_level maximum indicies of current refinement level plus 1.
+//  * @param[in] bitset_level_ones bitsets of current refinement level excluding background space filling code.
+//  * @param[out] partitioned_interface_background  background nodes on the partitioned interface.
+//  */
+// bool GridManager3D::CheckNodeOnOuterBoundaryOfBackgroundCell(DefAmrIndexUint i_level,
+//     const DefSFCodeToUint code_min, const DefSFCodeToUint code_max, const DefSFBitset bitset_in,
+//     const std::vector<DefSFBitset>& domain_min_m1_n_level, const std::vector<DefSFBitset>& domain_max_p1_n_level,
+//     const std::vector<DefSFBitset>& bitset_level_ones,
+//     const DefMap<DefAmrIndexUint>& partitioned_interface_background) const {
+//     if ((bitset_in & bitset_level_ones.at(kXIndex)) == 0
+//         || (bitset_in & bitset_level_ones.at(kXIndex)) == bitset_level_ones.at(kXIndex)
+//         || (bitset_in & bitset_level_ones.at(kYIndex)) == 0
+//         || (bitset_in & bitset_level_ones.at(kYIndex)) == bitset_level_ones.at(kYIndex)
+//         || (bitset_in & bitset_level_ones.at(kZIndex)) == 0
+//         || (bitset_in & bitset_level_ones.at(kZIndex)) == bitset_level_ones.at(kZIndex)) {
+//         DefSFBitset bitset_background = SFBitsetToNLowerLevel(i_level, bitset_in), bitset_tmp;
+//         if (partitioned_interface_background.find(bitset_background) != partitioned_interface_background.end()) {
+//             std::array<DefSFBitset, 27> array_neighbors;
+//             SFBitsetFindAllNeighbors(bitset_in, &array_neighbors);
+//             DefSFCodeToUint code;
+//             for (unsigned int i = 1; i < 27; ++i) {
+//                 code = array_neighbors.at(i).to_ullong();
+//                 if ((code < code_min || code > code_max)
+//                     && ((array_neighbors.at(i) & k0SFBitsetTakeXRef_.at(kRefCurrent_))
+//                     != domain_min_m1_n_level.at(kXIndex))  // node is not x_min - 1
+//                     && ((array_neighbors.at(i) & k0SFBitsetTakeXRef_.at(kRefCurrent_))
+//                     != domain_max_p1_n_level.at(kXIndex))
+//                     && ((array_neighbors.at(i) & k0SFBitsetTakeYRef_.at(kRefCurrent_))
+//                     != domain_min_m1_n_level.at(kYIndex))
+//                     && ((array_neighbors.at(i) & k0SFBitsetTakeYRef_.at(kRefCurrent_))
+//                     != domain_max_p1_n_level.at(kYIndex))
+//                     && ((array_neighbors.at(i) & k0SFBitsetTakeZRef_.at(kRefCurrent_))
+//                     != domain_min_m1_n_level.at(kZIndex))
+//                     && ((array_neighbors.at(i) & k0SFBitsetTakeZRef_.at(kRefCurrent_))
+//                     != domain_max_p1_n_level.at(kZIndex))) {
+//                     return true;
+//                 }
+//             }
+//         }
+//     }
+//     return false;
+// }
+// /**
+//  * @brief function to search for the ghost layers near a given node based on min and max space fill codes.
+//  * @param[in] sfbitset_in space fill code of the given node
+//  * @param[in] num_of_ghost_layers number of ghost layers
+//  * @param[in] code_min the minimum space fill codes.
+//  * @param[in] code_max the maximum space fill codes.
+//  * @param[in] domain_min_m1_n_level minimum indicies of current refinement level minus 1.
+//  * @param[in] domain_max_p1_n_level maximum indicies of current refinement level plus 1.
+//  * @param[out] ptr_map_ghost_layer pointer to nodes on ghost layers near the given node.
+//  * @throws None
+//  */
+// void GridManager3D::SearchForGhostLayerForMinNMax(const DefSFBitset sfbitset_in,
+//     const DefAmrIndexUint num_of_ghost_layers, const DefSFCodeToUint code_min, const DefSFCodeToUint code_max,
+//     const std::vector<DefSFBitset>& domain_min_m1_n_level,
+//     const std::vector<DefSFBitset>& domain_max_p1_n_level,
+//     DefMap<DefAmrIndexUint>* const ptr_map_ghost_layer) const {
+//     ptr_map_ghost_layer->clear();
+//     DefSFCodeToUint code_tmp;
+//     DefSFBitset sfbitset_tmp_y, sfbitset_tmp_x, sfbitset_tmp_z = sfbitset_in;
+//     // negative z direction
+//     for (DefAmrIndexUint iz = 0; iz <= num_of_ghost_layers; ++iz) {
+//         if ((sfbitset_tmp_z&k0SFBitsetTakeZRef_.at(kRefCurrent_)) != domain_min_m1_n_level.at(kZIndex)) {
+//             sfbitset_tmp_y = sfbitset_tmp_z;
+//             // negative y direction
+//             for (DefAmrIndexUint iy = 0; iy <= num_of_ghost_layers; ++iy) {
+//                 if ((sfbitset_tmp_y&k0SFBitsetTakeYRef_.at(kRefCurrent_)) != domain_min_m1_n_level.at(kYIndex)) {
+//                     sfbitset_tmp_x = sfbitset_tmp_y;
+//                     for (DefAmrIndexUint ix = 0; ix <= num_of_ghost_layers; ++ix) {
+//                         if ((sfbitset_tmp_x&k0SFBitsetTakeXRef_.at(kRefCurrent_))
+//                          != domain_min_m1_n_level.at(kXIndex)) {
+//                             code_tmp = sfbitset_tmp_x.to_ullong();
+//                             if (code_tmp > code_max || code_tmp < code_min) {
+//                                 ptr_map_ghost_layer->insert({sfbitset_tmp_x, kFlagSize0_});
+//                             }
+//                         } else {
+//                             break;
+//                         }
+//                         sfbitset_tmp_x = FindXNeg(sfbitset_tmp_x);
+//                     }
+//                     sfbitset_tmp_x = sfbitset_tmp_y;
+//                     for (DefAmrIndexUint ix = 0; ix < num_of_ghost_layers; ++ix) {
+//                         sfbitset_tmp_x = FindXPos(sfbitset_tmp_x);
+//                         if ((sfbitset_tmp_x&k0SFBitsetTakeXRef_.at(kRefCurrent_))
+//                          != domain_max_p1_n_level.at(kXIndex)) {
+//                             code_tmp = sfbitset_tmp_x.to_ullong();
+//                             if (code_tmp > code_max || code_tmp < code_min) {
+//                                 ptr_map_ghost_layer->insert({sfbitset_tmp_x, kFlagSize0_});
+//                             }
+//                         } else {
+//                             break;
+//                         }
+//                     }
+//                 } else {
+//                     break;
+//                 }
+//                 sfbitset_tmp_y = FindYNeg(sfbitset_tmp_y);
+//             }
+//             // positive y direction
+//             sfbitset_tmp_y = sfbitset_tmp_z;
+//             for (DefAmrIndexUint iy = 0; iy < num_of_ghost_layers; ++iy) {
+//                 sfbitset_tmp_y = FindYPos(sfbitset_tmp_y);
+//                 if ((sfbitset_tmp_y&k0SFBitsetTakeYRef_.at(kRefCurrent_)) != domain_max_p1_n_level.at(kYIndex)) {
+//                     sfbitset_tmp_x = sfbitset_tmp_y;
+//                     for (DefAmrIndexUint ix = 0; ix <= num_of_ghost_layers; ++ix) {
+//                         if ((sfbitset_tmp_x&k0SFBitsetTakeXRef_.at(kRefCurrent_))
+//                          != domain_min_m1_n_level.at(kXIndex)) {
+//                             code_tmp = sfbitset_tmp_x.to_ullong();
+//                             if (code_tmp > code_max || code_tmp < code_min) {
+//                                 ptr_map_ghost_layer->insert({sfbitset_tmp_x, kFlagSize0_});
+//                             }
+//                         } else {
+//                             break;
+//                         }
+//                         sfbitset_tmp_x = FindXNeg(sfbitset_tmp_x);
+//                     }
+//                     sfbitset_tmp_x = sfbitset_tmp_y;
+//                     for (DefAmrIndexUint ix = 0; ix < num_of_ghost_layers; ++ix) {
+//                         sfbitset_tmp_x = FindXPos(sfbitset_tmp_x);
+//                         if ((sfbitset_tmp_x&k0SFBitsetTakeXRef_.at(kRefCurrent_))
+//                          != domain_max_p1_n_level.at(kXIndex)) {
+//                             code_tmp = sfbitset_tmp_x.to_ullong();
+//                             if (code_tmp > code_max || code_tmp < code_min) {
+//                                 ptr_map_ghost_layer->insert({sfbitset_tmp_x, kFlagSize0_});
+//                             }
+//                         } else {
+//                             break;
+//                         }
+//                     }
+//                 } else {
+//                     break;
+//                 }
+//             }
+//         } else {
+//             break;
+//         }
+//         sfbitset_tmp_z = FindZNeg(sfbitset_tmp_z);
+//     }
+//     // positive z direction
+//     sfbitset_tmp_z = sfbitset_in;
+//     for (DefAmrIndexUint iz = 0; iz < num_of_ghost_layers; ++iz) {
+//         sfbitset_tmp_z = FindZPos(sfbitset_tmp_z);
+//         if ((sfbitset_tmp_z&k0SFBitsetTakeZRef_.at(kRefCurrent_)) != domain_max_p1_n_level.at(kZIndex)) {
+//             sfbitset_tmp_y = sfbitset_tmp_z;
+//             // negative y direction
+//             for (DefAmrIndexUint iy = 0; iy <= num_of_ghost_layers; ++iy) {
+//                 if ((sfbitset_tmp_y&k0SFBitsetTakeYRef_.at(kRefCurrent_)) != domain_min_m1_n_level.at(kYIndex)) {
+//                     sfbitset_tmp_x = sfbitset_tmp_y;
+//                     for (DefAmrIndexUint ix = 0; ix <= num_of_ghost_layers; ++ix) {
+//                         if ((sfbitset_tmp_x&k0SFBitsetTakeXRef_.at(kRefCurrent_))
+//                          != domain_min_m1_n_level.at(kXIndex)) {
+//                             code_tmp = sfbitset_tmp_x.to_ullong();
+//                             if (code_tmp > code_max || code_tmp < code_min) {
+//                                 ptr_map_ghost_layer->insert({sfbitset_tmp_x, kFlagSize0_});
+//                             }
+//                         } else {
+//                             break;
+//                         }
+//                         sfbitset_tmp_x = FindXNeg(sfbitset_tmp_x);
+//                     }
+//                     sfbitset_tmp_x = sfbitset_tmp_y;
+//                     for (DefAmrIndexUint ix = 0; ix < num_of_ghost_layers; ++ix) {
+//                         sfbitset_tmp_x = FindXPos(sfbitset_tmp_x);
+//                         if ((sfbitset_tmp_x&k0SFBitsetTakeXRef_.at(kRefCurrent_))
+//                          != domain_max_p1_n_level.at(kXIndex)) {
+//                             code_tmp = sfbitset_tmp_x.to_ullong();
+//                             if (code_tmp > code_max || code_tmp < code_min) {
+//                                 ptr_map_ghost_layer->insert({sfbitset_tmp_x, kFlagSize0_});
+//                             }
+//                         } else {
+//                             break;
+//                         }
+//                     }
+//                 } else {
+//                     break;
+//                 }
+//                 sfbitset_tmp_y = FindYNeg(sfbitset_tmp_y);
+//             }
+//             // positive y direction
+//             sfbitset_tmp_y = sfbitset_tmp_z;
+//             for (DefAmrIndexUint iy = 0; iy < num_of_ghost_layers; ++iy) {
+//                 sfbitset_tmp_y = FindYPos(sfbitset_tmp_y);
+//                 if ((sfbitset_tmp_y&k0SFBitsetTakeYRef_.at(kRefCurrent_)) != domain_max_p1_n_level.at(kYIndex)) {
+//                     sfbitset_tmp_x = sfbitset_tmp_y;
+//                     for (DefAmrIndexUint ix = 0; ix <= num_of_ghost_layers; ++ix) {
+//                         if ((sfbitset_tmp_x&k0SFBitsetTakeXRef_.at(kRefCurrent_))
+//                          != domain_min_m1_n_level.at(kXIndex)) {
+//                             code_tmp = sfbitset_tmp_x.to_ullong();
+//                             if (code_tmp > code_max || code_tmp < code_min) {
+//                                 ptr_map_ghost_layer->insert({sfbitset_tmp_x, kFlagSize0_});
+//                             }
+//                         } else {
+//                             break;
+//                         }
+//                         sfbitset_tmp_x = FindXNeg(sfbitset_tmp_x);
+//                     }
+//                     sfbitset_tmp_x = sfbitset_tmp_y;
+//                     for (DefAmrIndexUint ix = 0; ix < num_of_ghost_layers; ++ix) {
+//                         sfbitset_tmp_x = FindXPos(sfbitset_tmp_x);
+//                         if ((sfbitset_tmp_x&k0SFBitsetTakeXRef_.at(kRefCurrent_))
+//                          != domain_max_p1_n_level.at(kXIndex)) {
+//                             code_tmp = sfbitset_tmp_x.to_ullong();
+//                             if (code_tmp > code_max || code_tmp < code_min) {
+//                                 ptr_map_ghost_layer->insert({sfbitset_tmp_x, kFlagSize0_});
+//                             }
+//                         } else {
+//                             break;
+//                         }
+//                     }
+//                 } else {
+//                     break;
+//                 }
+//             }
+//         } else {
+//             break;
+//         }
+//     }
+// }
 /**
 * @brief   function to calculate space filling code for mpi partition.
 * @param[in] bitset_domain_min minimum space filling code of the computational domain

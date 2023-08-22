@@ -8,7 +8,9 @@
 * @date  2023-5-2
 */
 #include <limits>
+#include <fstream>
 #include "mpi/mpi_manager.h"
+#include "grid/grid_manager.h"
 #ifdef ENABLE_MPI
 #include "io/log_write.h"
 namespace rootproject {
@@ -137,87 +139,260 @@ void MpiManager::DeserializeNodeSFBitset(const DefAmrIndexUint flag_node,
 /**
  * @brief function to send and receive partitioned grid for each rank
  * @param[in] flag_size0 flag of existing node
+ * @param[in] bitset_min minimum space filling code for each partition.
  * @param[in] bitset_max maximum space filling code for each partition.
+ * @param[in] indices_min minimum indices of the computational domain.
+ * @param[in] indices_max maximum indices of the computational domain.
  * @param[in] vec_sfbitset space-filling codes for nodes at given refinements levels.
  * @param[in] bitset_aux class manage space filling curves.
  * @param[out] ptr_sfbitset_each nodes on current rank at sizeof(vec_sfbitset) levels.
  */
-void MpiManager::IniSendNReceivePartitionedGrid(const DefAmrIndexUint flag_size0,
-    const std::vector<DefSFBitset>& bitset_max,
+void MpiManager::IniSendNReceivePartitionedGrid(const DefAmrIndexUint dims, const DefAmrIndexUint flag_size0,
+    const std::vector<DefSFBitset>& bitset_min, const std::vector<DefSFBitset>& bitset_max,
+    const std::vector<DefAmrIndexLUint>& indices_min, const std::vector<DefAmrIndexLUint>& indices_max,
     const std::vector<DefMap<DefAmrIndexUint>>& vec_sfbitset,
     const SFBitsetAuxInterface& bitset_aux,
-    std::vector<DefMap<DefAmrIndexUint>>* const ptr_sfbitset_each) const {
+    std::vector<DefMap<DefAmrIndexUint>>* const ptr_sfbitset_each,
+    std::vector<DefMap<DefAmrIndexUint>>* const ptr_sfbitset_partition_interface) const {
     if (vec_sfbitset.size() - 1 > INT_MAX) {
-        LogManager::LogError("size of vector vec_sfbitset is larger than INT_MAX");
+        LogManager::LogError("size of vector vec_sfbitset is larger than INT_MAX in "
+         + std::string(__FILE__) + "at line " + std::to_string(__LINE__));
     }
     int max_level = static_cast<int>(vec_sfbitset.size() - 1);
     int rank_id = rank_id_, num_ranks = num_of_ranks_;
-    std::vector<DefSFCodeToUint> ull_max(bitset_max.size());
+    std::vector<DefSFCodeToUint> ull_min(bitset_min.size()), ull_max(bitset_max.size());
+    std::array<DefAmrIndexLUint, 2> indices_min_2d, indices_max_2d;
+    if (dims == 2) {
+        if (indices_min.size() != 2) {
+            LogManager::LogError("size of vector indices_min shoule be 2 in "
+             + std::string(__FILE__) + "at line " + std::to_string(__LINE__));
+        }
+        if (indices_max.size() != 2) {
+            LogManager::LogError("size of vector indices_max shoule be 2 in "
+             + std::string(__FILE__) + "at line " + std::to_string(__LINE__));
+        }
+        indices_min_2d = { indices_min.at(kXIndex), indices_min.at(kYIndex) };
+        indices_max_2d = { indices_max.at(kXIndex), indices_max.at(kYIndex) };
+    }
+    std::array<DefAmrIndexLUint, 3> indices_min_3d, indices_max_3d;
+    if (dims == 3) {
+        if (indices_min.size() != 3) {
+            LogManager::LogError("size of vector indices_min shoule be 3 in "
+             + std::string(__FILE__) + "at line " + std::to_string(__LINE__));
+        }
+        if (indices_max.size() != 3) {
+            LogManager::LogError("size of vector indices_max shoule be 3 in "
+             + std::string(__FILE__) + "at line " + std::to_string(__LINE__));
+        }
+        indices_min_3d = { indices_min.at(kXIndex), indices_min.at(kYIndex), indices_min.at(kZIndex)};
+        indices_max_3d = { indices_max.at(kXIndex), indices_max.at(kYIndex), indices_max.at(kZIndex) };
+    }
 
     if (rank_id == 0) {
         if (vec_sfbitset.size() != ptr_sfbitset_each->size()) {
             LogManager::LogError("size of the input vector (vec_sfbitset) is different from the"
-                " size of the output vector (ptr_sfbitset_each) in MpiManager::IniSendNReceivePartitionedGrid");
+             " size of the output vector (ptr_sfbitset_each) in MpiManager::IniSendNReceivePartitionedGrid in "
+             + std::string(__FILE__) + "at line " + std::to_string(__LINE__));
         }
         for (auto i = 0; i < bitset_max.size(); ++i) {
+            ull_min.at(i) = bitset_min.at(i).to_ullong();
             ull_max.at(i) = bitset_max.at(i).to_ullong();
         }
     }
-    int max_buffer = (std::numeric_limits<int>::max)() / sizeof(DefAmrIndexUint) - 1;
+    int max_buffer = (std::numeric_limits<int>::max)() / sizeof(DefSFBitset) - 1;
     DefSFCodeToUint background_code;
+    DefAmrIndexUint num_ghost = num_of_partition_ghost_layers_/2 + num_of_partition_ghost_layers_%1;
+    DefMap<DefAmrIndexUint> map_ghost_tmp;
     DefSizet num_max = ull_max.size();
+    std::vector<DefMap<DefAmrIndexUint>> partition_interface_background(num_ranks);
+    if (rank_id == 0) {  // partition nodes on rank 0
+        for (auto i_rank = 0; i_rank < num_ranks; ++i_rank) {
+            if (dims == 2) {
+#ifndef  DEBUG_DISABLE_2D_FUNCTIONS
+                const SFBitsetAux2D bitset_aux_2d = dynamic_cast<const SFBitsetAux2D&>(bitset_aux);
+                FindInterfaceForPartitionFromMinNMax(
+                    bitset_min.at(i_rank), bitset_max.at(i_rank), indices_min_2d, indices_max_2d,
+                    bitset_aux_2d, &partition_interface_background.at(i_rank));
+#endif  // DEBUG_DISABLE_2D_FUNCTIONS
+            } else {
+#ifndef  DEBUG_DISABLE_3D_FUNCTIONS
+                const SFBitsetAux3D bitset_aux_3d = dynamic_cast<const SFBitsetAux3D&>(bitset_aux);
+                FindInterfaceForPartitionFromMinNMax(
+                    bitset_min.at(i_rank), bitset_max.at(i_rank), indices_min_3d, indices_max_3d,
+                    bitset_aux_3d, &partition_interface_background.at(i_rank));
+#endif  // DEBUG_DISABLE_3D_FUNCTIONS
+            }
+        }
+    }
     for (int i_level = max_level; i_level > 0; --i_level) {
         if (rank_id == 0) {  // partition nodes on rank 0
-            std::vector<std::vector<DefMap<DefAmrIndexUint>>> vec_nodes_ranks(num_ranks);
-            int index;
-            std::vector<int> i_chunk_each_rank(num_ranks, -1), i_counts(num_ranks, 0);
+            std::vector<DefMap<DefAmrIndexUint>> partition_interface_current(num_ranks);
+            std::vector<std::vector<DefMap<DefAmrIndexUint>>> vec_nodes_ranks(num_ranks),
+             vec_interface_nodes_ranks(num_ranks);
+            int i_rank = 0;
+            DefAmrIndexUint i_level_lower = i_level - 1;
+            // min and max code at i_level_lower level
+            std::vector<DefSFCodeToUint> code_min_current(num_ranks), code_max_current(num_ranks);
+            std::vector<DefSFBitset> bitset_cell_lower_ghost, bitset_all_ghost;
+            std::vector<DefSFBitset> corresponding_ones(dims),
+             domain_min_m1_n_level(dims), domain_max_p1_n_level(dims);
+            DefMap<DefAmrIndexUint> map_ghost_for_mpi_communication;
+            if (dims == 2) {
+#ifndef  DEBUG_DISABLE_2D_FUNCTIONS
+                const SFBitsetAux2D bitset_aux_2d = dynamic_cast<const SFBitsetAux2D&>(bitset_aux);
+                for (auto i = 0; i < num_ranks; ++i) {
+                    code_min_current.at(i) = bitset_aux_2d.SFBitsetToNHigherLevel(
+                     i_level_lower, ull_min.at(i)).to_ullong();
+                    code_max_current.at(i) = bitset_aux_2d.SFBitsetToNHigherLevel(
+                     i_level_lower, ull_max.at(i)).to_ullong();
+                }
+                GetNLevelCorrespondingOnes2D(i_level_lower, bitset_aux_2d, &corresponding_ones);
+                GetMinM1AtGivenLevel2D(i_level_lower, indices_min_2d, bitset_aux_2d, &domain_min_m1_n_level);
+                GetMaxP1AtGivenLevel2D(i_level_lower, indices_max_2d, bitset_aux_2d, &domain_max_p1_n_level);
+#endif  // DEBUG_DISABLE_2D_FUNCTIONS
+            } else {
+#ifndef  DEBUG_DISABLE_3D_FUNCTIONS
+                // const SFBitsetAux3D bitset_aux_3d = dynamic_cast<const SFBitsetAux3D&>(bitset_aux);
+                // GetNLevelCorrespondingOnes2D(i_level_lower, bitset_aux_3d, &corresponding_ones);
+                // GetMinM1AtGivenLevel2D(i_level_lower, indices_min_3d, bitset_aux_3d, &domain_min_m1_n_level);
+                // GetMaxP1AtGivenLevel2D(i_level_lower, indices_max_3d, bitset_aux_3d, &domain_max_p1_n_level);
+#endif  // DEBUG_DISABLE_3D_FUNCTIONSS
+            }
+            std::vector<int> i_chunk_each_rank(num_ranks, -1), i_chunk_partition_each_rank(num_ranks, -1),
+             i_counts(num_ranks, 0), i_counts_partition(num_ranks, 0);
+            bool bool_on_interface;
             for (const auto& iter_node : vec_sfbitset.at(i_level)) {
-                background_code = (bitset_aux.SFBitsetToNLowerLevelVir(i_level, iter_node.first)).to_ullong();
-                auto iter_index = std::lower_bound(ull_max.begin(),
-                    ull_max.end(), background_code);
-                index = static_cast<int>(iter_index - ull_max.begin());
-                if (index == 0) {
+                background_code = (bitset_aux.SFBitsetToNLowerLevelVir(i_level_lower, iter_node.first)).to_ullong();
+                auto iter_index = std::lower_bound(ull_max.begin(), ull_max.end(), background_code);
+                i_rank = static_cast<int>(iter_index - ull_max.begin());
+                if (i_rank == 0) {
                     ptr_sfbitset_each->at(i_level).insert(iter_node);
+                    if (dims == 2) {
+                        bool_on_interface = CheckNodeOnOuterBoundaryOfBackgroundCell2D(i_level_lower,
+                         code_min_current.at(i_rank), code_max_current.at(i_rank), iter_node.first,
+                         dynamic_cast<const SFBitsetAux2D&>(bitset_aux), domain_min_m1_n_level,
+                         domain_max_p1_n_level, corresponding_ones, partition_interface_background.at(i_rank));
+                        if (bool_on_interface) {
+                            SearchForGhostLayerForMinNMax2D(iter_node.first, num_ghost,
+                            code_min_current.at(i_rank), code_max_current.at(i_rank),
+                            flag_size0, dynamic_cast<const SFBitsetAux2D&>(bitset_aux),
+                            domain_min_m1_n_level, domain_max_p1_n_level, &map_ghost_tmp);
+                        }
+                    }
+                    if (bool_on_interface) {
+                        for (const auto& iter_ghost : map_ghost_tmp) {
+                            if (vec_sfbitset.at(i_level).find(iter_ghost.first)
+                                !=vec_sfbitset.at(i_level).end()) {
+                                ptr_sfbitset_each->at(i_level).insert(iter_ghost);
+                                ptr_sfbitset_partition_interface->at(i_level).insert(iter_ghost);
+                            }
+                        }
+                    }
                 } else {
 #ifdef DEBUG_CHECK_GRID
-                    if (index == num_max) {
+                    if (i_rank == num_max) {
                         // lower_bound returns the next element of last in ull_max if not found the desired one,
                         // which means that the space filling code of the node exceeds the maximum given by ull_max
                         LogManager::LogError("nodes is out of computational domain"
-                            " in MpiManager::IniSendNReceivePartitionedGrid");
+                            " in MpiManager::IniSendNReceivePartitionedGrid in "
+                             + std::string(__FILE__) + " at line " + std::to_string(__LINE__));
                     }
 #endif  // DEBUG_CHECK_GRID
-                    if (i_counts.at(index) == 0) {
-                        vec_nodes_ranks.at(index).push_back({iter_node});
-                        i_chunk_each_rank.at(index) +=1;
-                        ++i_counts.at(index);
+                    if (i_counts.at(i_rank) == 0) {
+                        vec_nodes_ranks.at(i_rank).push_back({iter_node});
+                        i_chunk_each_rank.at(i_rank) +=1;
+                        ++i_counts.at(i_rank);
                     } else {
-                        vec_nodes_ranks.at(index).at(i_chunk_each_rank.at(index)).insert(iter_node);
-                        ++i_counts.at(index);
-                        if (i_counts.at(index) == max_buffer) {
+                        vec_nodes_ranks.at(i_rank).at(i_chunk_each_rank.at(i_rank)).insert(iter_node);
+                        ++i_counts.at(i_rank);
+                        if (i_counts.at(i_rank) == max_buffer) {
                             // check if size of send buffer exceeds limits of int
-                            i_counts.at(index) = 0;
+                            i_counts.at(i_rank) = 0;
+                        }
+                    }
+                    if (dims == 2) {
+                        bool_on_interface = CheckNodeOnOuterBoundaryOfBackgroundCell2D(i_level_lower,
+                         code_min_current.at(i_rank), code_max_current.at(i_rank), iter_node.first,
+                         dynamic_cast<const SFBitsetAux2D&>(bitset_aux), domain_min_m1_n_level,
+                         domain_max_p1_n_level, corresponding_ones, partition_interface_background.at(i_rank));
+                        if (bool_on_interface) {
+                            SearchForGhostLayerForMinNMax2D(iter_node.first, num_ghost,
+                            code_min_current.at(i_rank), code_max_current.at(i_rank),
+                            flag_size0, dynamic_cast<const SFBitsetAux2D&>(bitset_aux),
+                            domain_min_m1_n_level, domain_max_p1_n_level, &map_ghost_tmp);
+                        }
+                    }
+                    if (bool_on_interface) {
+                        // since nodes are stored in multiple vectors, may lead to duplications
+                        // However, since number of nodes on the interface is less than the total number,
+                        // it may not have so many duplications
+                        for (const auto& iter_ghost : map_ghost_tmp) {
+                            if (partition_interface_current.at(i_rank).find(iter_ghost.first)
+                                == partition_interface_current.at(i_rank).end()
+                                &&vec_sfbitset.at(i_level).find(iter_ghost.first)
+                                !=vec_sfbitset.at(i_level).end()) {
+                                if (i_counts.at(i_rank) == 0) {
+                                    vec_nodes_ranks.at(i_rank).push_back({iter_ghost});
+                                    i_chunk_each_rank.at(i_rank) +=1;
+                                    ++i_counts.at(i_rank);
+                                } else {
+                                    vec_nodes_ranks.at(i_rank).at(i_chunk_each_rank.at(i_rank)).insert(iter_ghost);
+                                    ++i_counts.at(i_rank);
+                                    if (i_counts.at(i_rank) == max_buffer) {
+                                        // check if size of send buffer exceeds limits of int
+                                        i_counts.at(i_rank) = 0;
+                                    }
+                                }
+                                if (i_counts_partition.at(i_rank) == 0) {
+                                    vec_interface_nodes_ranks.at(i_rank).push_back({iter_ghost});
+                                    i_chunk_partition_each_rank.at(i_rank) +=1;
+                                    ++i_counts_partition.at(i_rank);
+                                } else {
+                                    vec_interface_nodes_ranks.at(i_rank).at(i_chunk_partition_each_rank
+                                        .at(i_rank)).insert(iter_ghost);
+                                    ++i_counts_partition.at(i_rank);
+                                    if (i_counts_partition.at(i_rank) == max_buffer) {
+                                        // check if size of send buffer exceeds limits of int
+                                        i_counts_partition.at(i_rank) = 0;
+                                    }
+                                }
+                            }
                         }
                     }
                 }
             }
             int buffer_size_send = 0;
-            for (auto iter_rank = 1; iter_rank < num_ranks; ++iter_rank) {
-                int num_chunks = static_cast<int>(vec_nodes_ranks.at(iter_rank).size());
-                MPI_Send(&num_chunks, 1, MPI_INT, iter_rank, i_level, MPI_COMM_WORLD);
+            for (auto i_rank = 1; i_rank < num_ranks; ++i_rank) {
+                // send grid nodes
+                int num_chunks = static_cast<int>(vec_nodes_ranks.at(i_rank).size());
+                MPI_Send(&num_chunks, 1, MPI_INT, i_rank, i_level, MPI_COMM_WORLD);
                 std::vector<std::unique_ptr<char[]>> vec_ptr_buffer(num_chunks);
                 std::vector<MPI_Request> reqs_send(num_chunks);
                 for (int i_chunk = 0; i_chunk < num_chunks; ++i_chunk) {
-                    buffer_size_send = SerializeNodeSFBitset(vec_nodes_ranks.at(iter_rank).at(i_chunk),
+                    buffer_size_send = SerializeNodeSFBitset(vec_nodes_ranks.at(i_rank).at(i_chunk),
                     vec_ptr_buffer.at(i_chunk));
-                    MPI_Send(&buffer_size_send, 1, MPI_INT, iter_rank, i_chunk, MPI_COMM_WORLD);
-                    MPI_Isend(vec_ptr_buffer.at(i_chunk).get(), buffer_size_send, MPI_BYTE, iter_rank,
+                    MPI_Send(&buffer_size_send, 1, MPI_INT, i_rank, i_chunk, MPI_COMM_WORLD);
+                    MPI_Isend(vec_ptr_buffer.at(i_chunk).get(), buffer_size_send, MPI_BYTE, i_rank,
+                    i_chunk, MPI_COMM_WORLD, &reqs_send[i_chunk]);
+                }
+                MPI_Waitall(num_chunks, reqs_send.data(), MPI_STATUS_IGNORE);
+                // send nodes on partition interface
+                num_chunks = static_cast<int>(vec_interface_nodes_ranks.at(i_rank).size());
+                MPI_Send(&num_chunks, 1, MPI_INT, i_rank, i_level, MPI_COMM_WORLD);
+                vec_ptr_buffer.resize(num_chunks);
+                reqs_send.resize(num_chunks);
+                for (int i_chunk = 0; i_chunk < num_chunks; ++i_chunk) {
+                    buffer_size_send = SerializeNodeSFBitset(
+                     vec_interface_nodes_ranks.at(i_rank).at(i_chunk), vec_ptr_buffer.at(i_chunk));
+                    MPI_Send(&buffer_size_send, 1, MPI_INT, i_rank, i_chunk, MPI_COMM_WORLD);
+                    MPI_Isend(vec_ptr_buffer.at(i_chunk).get(), buffer_size_send, MPI_BYTE, i_rank,
                     i_chunk, MPI_COMM_WORLD, &reqs_send[i_chunk]);
                 }
                 MPI_Waitall(num_chunks, reqs_send.data(), MPI_STATUS_IGNORE);
             }
         } else {
             int num_chunks = 0;
+            // receive grid nodes
             MPI_Recv(&num_chunks, 1, MPI_INT, 0, i_level, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
             for (int i_chunk = 0; i_chunk < num_chunks; ++i_chunk) {
                 int buffer_size_receive;
@@ -226,6 +401,16 @@ void MpiManager::IniSendNReceivePartitionedGrid(const DefAmrIndexUint flag_size0
                 MPI_Recv(vec_ptr_buffer.get(), buffer_size_receive, MPI_BYTE, 0,
                     i_chunk, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
                 DeserializeNodeSFBitset(flag_size0, vec_ptr_buffer, &ptr_sfbitset_each->at(i_level));
+            }
+            // receive nodes on partition interface
+            MPI_Recv(&num_chunks, 1, MPI_INT, 0, i_level, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+            for (int i_chunk = 0; i_chunk < num_chunks; ++i_chunk) {
+                int buffer_size_receive;
+                MPI_Recv(&buffer_size_receive, sizeof(int), MPI_INT, 0, i_chunk, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+                std::unique_ptr<char[]> vec_ptr_buffer = std::make_unique<char[]>(buffer_size_receive);
+                MPI_Recv(vec_ptr_buffer.get(), buffer_size_receive, MPI_BYTE, 0,
+                    i_chunk, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+                DeserializeNodeSFBitset(flag_size0, vec_ptr_buffer, &ptr_sfbitset_partition_interface->at(i_level));
             }
         }
     }
@@ -248,11 +433,13 @@ void MpiManager::IniSendNReceivePartitionedGrid(const DefAmrIndexUint flag_size0
 void MpiManager::SendNReceiveGridInfoAtGivenLevels(const DefAmrIndexUint flag_size0,
     const DefAmrIndexUint dims, const DefAmrIndexUint max_level,
     const DefSFBitset bitset_domain_min, const DefSFBitset bitset_domain_max,
+    const std::vector<DefAmrIndexLUint>& indices_min, const std::vector<DefAmrIndexLUint>& indices_max,
     const std::vector<DefAmrIndexLUint>& vec_cost, const SFBitsetAuxInterface& sfbitset_aux,
     const std::vector<DefMap<DefAmrIndexUint>>&  ini_sfbitset_one_lower_level_rank0,
     const std::vector<std::unique_ptr<TrackingGridInfoCreatorInterface>>& vec_tracking_creator,
     std::array<DefSFBitset, 2>* const ptr_sfbitset_bound_current,
     std::vector<DefMap<DefAmrIndexUint>>* const  ptr_sfbitset_one_lower_level_current_rank,
+    std::vector<DefMap<DefAmrIndexUint>>* const  ptr_sfbitset_partition_interface,
     std::vector<std::shared_ptr<GridInfoInterface>>* const ptr_vec_grid_info) const {
     std::vector<DefSFBitset> bitset_min(num_of_ranks_), bitset_max(num_of_ranks_);
     if (rank_id_ == 0) {
@@ -281,8 +468,9 @@ void MpiManager::SendNReceiveGridInfoAtGivenLevels(const DefAmrIndexUint flag_si
 
     ptr_sfbitset_bound_current->at(0) = bitset_min.at(rank_id_);
     ptr_sfbitset_bound_current->at(1) = bitset_max.at(rank_id_);
-    IniSendNReceivePartitionedGrid(flag_size0, bitset_max, ini_sfbitset_one_lower_level_rank0,
-     sfbitset_aux, ptr_sfbitset_one_lower_level_current_rank);
+    IniSendNReceivePartitionedGrid(dims, flag_size0, bitset_min, bitset_max, indices_min, indices_max,
+      ini_sfbitset_one_lower_level_rank0, sfbitset_aux, ptr_sfbitset_one_lower_level_current_rank,
+      ptr_sfbitset_partition_interface);
 
     // send and receive tracking and interface nodes
     for (DefAmrIndexUint i_level = max_level; i_level > 0; --i_level) {

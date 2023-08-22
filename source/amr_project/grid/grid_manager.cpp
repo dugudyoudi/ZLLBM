@@ -426,26 +426,15 @@ void GridManagerInterface::InstantiateOverlapLayerOfRefinementInterface(
  * @brief function to instantiate grid noes for all refinement levels.
  * @param[in] sfbitset_min  minimum space filling code of the current rank.
  * @param[in] sfbitset_max  maximum space filling code of the current rank.
- * @param[in] partitioned_interface_background interface of partitioned block of current rank.
  * @param[in] space filling codes at one lower refinement level.
  */
 void GridManagerInterface::InstantiateGridNodeAllLevel(const DefSFBitset sfbitset_min,
-    const DefSFBitset sfbitset_max, const DefMap<DefAmrIndexUint>& partitioned_interface_background,
-    const std::vector<DefMap<DefAmrIndexUint>>& sfbitset_one_lower_level) {
+    const DefSFBitset sfbitset_max, const std::vector<DefMap<DefAmrIndexUint>>& sfbitset_one_lower_level) {
     DefMap<DefAmrIndexUint> background_occupied;
     InstantiateOverlapLayerOfRefinementInterface(sfbitset_one_lower_level);
     DefSFCodeToUint code_min = sfbitset_min.to_ullong(), code_max = sfbitset_max.to_ullong();
     for (DefAmrIndexUint i_level = k0MaxLevel_; i_level > 0; --i_level) {
         DefAmrIndexUint i_level_lower = i_level - 1;
-#ifdef ENABLE_MPI
-        std::vector<DefSFBitset> bitset_cell_lower_ghost, bitset_all_ghost;
-        std::vector<DefSFBitset> corresponding_ones(k0GridDims_),
-            domain_min_m1_n_level(k0GridDims_), domain_max_p1_n_level(k0GridDims_);
-        DefMap<DefAmrIndexUint> map_ghost_for_mpi_communication;
-        GetNLevelCorrespondingOnes(i_level_lower, &corresponding_ones);
-        GetMinM1AtGivenLevel(i_level_lower, &domain_min_m1_n_level);
-        GetMaxP1AtGivenLevel(i_level_lower, &domain_max_p1_n_level);
-#endif  // ENABLE_MPI
         GridInfoInterface& grid_info = *(vec_ptr_grid_info_.at(i_level));
         DefMap<GridNode>& map_grid = grid_info.map_grid_node_;
         GridNode node_instance(grid_info.k0GridNodeInstance_);
