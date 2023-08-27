@@ -15,6 +15,7 @@
 #include <cstdint>
 #include <unordered_map>
 #include <iostream>
+#include <fstream>
 #include "./config.h"  // configuration file generated
 namespace rootproject {
 using DefReal = double_t;

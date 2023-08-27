@@ -178,13 +178,6 @@ class GridInfoInterface {
     virtual void InitialGridNode(const DefSFBitset& bitset_in) = 0;
 
     virtual ~GridInfoInterface() {}
-
-#ifdef ENABLE_MPI
-
- public:
-    DefAmrIndexUint num_of_ghost_layer_;
-    DefMap<DefAmrUint> map_ghost_layer_for_mpi_communication_{};
-#endif  // ENABLE_MPI
 };
 /**
 * @class GridInfoCreatorInterface

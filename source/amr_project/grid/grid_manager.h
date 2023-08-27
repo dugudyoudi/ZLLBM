@@ -131,7 +131,7 @@ class GridManagerInterface{
         <GeometryInfoInterface>>&vec_geo_info,
         std::vector<DefMap<DefAmrIndexUint>>* const ptr_sfbitset_one_lower_level);
     void InstantiateGridNodeAllLevel(const DefSFBitset sfbitset_min, const DefSFBitset sfbitset_max,
-        const std::vector<DefMap<DefAmrIndexUint>>& sfbitset_one_lower_level);
+        const std::vector<DefMap<DefAmrIndexUint>>&  sfbitset_one_lower_level);
 
     template<InterfaceInfoHasType InterfaceInfo>
     DefSizet CheckExistenceOfTypeAtGivenLevel(

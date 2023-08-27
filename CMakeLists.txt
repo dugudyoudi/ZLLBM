@@ -15,7 +15,7 @@ option(DEBUG_CHECK_GRID                        "Enable if clauses for checking g
 option(DEBUG_BUILD_2D_ONLY                     "Disable 3D related functions"                              OFF)
 option(DEBUG_BUILD_3D_ONLY                     "Disable 2D related functions"                              OFF)
 option(DEBUG_TREAT_WARNING_AS_ERROR            "Treat warnings as errors"                                  ON)
-option(DEBUG_CHECK_MEMORY_LEAKS                "Using AddressSanitizer to check memory leaks"              OFF)
+option(DEBUG_CHECK_MEMORY_LEAKS                "Using AddressSanitizer to check memory leaks"              ON)
 
 set(CMAKE_BUILD_TYPE "Debug")
 set(CXX_STANDARD "c++20")

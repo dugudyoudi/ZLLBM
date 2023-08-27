@@ -51,10 +51,11 @@ int MpiManager::CreateAndCommitCriterionIndexType(MPI_Datatype* ptr_mpi_tracking
 int MpiManager::IniSerializeTrackingNode(const std::set<DefSFCodeToUint>& set_nodes,
         std::unique_ptr<char[]>& buffer) const {
     int key_size = sizeof(DefSFBitset);
-    int num_nodes;
+    int num_nodes = 0;
     if  (sizeof(int) + set_nodes.size() *key_size > 0x7FFFFFFF) {
         LogManager::LogError("size of the buffer is greater than"
-         " the maximum of int in MpiManager::IniSerializeTrackingNode");
+         " the maximum of int in MpiManager::IniSerializeTrackingNode in "
+         + std::string(__FILE__) + "at line " + std::to_string(__LINE__));
     } else {
         num_nodes = static_cast<int>(set_nodes.size());
     }
@@ -145,22 +146,26 @@ void MpiManager::IniSendNReceiveTracking(const DefAmrIndexUint dims, const DefAm
         if (ptr_map_tracking_info->at(vec_tracking_indices.at(i_tracking))->k0ExtendOuterNeg_.size() != dims) {
             LogManager::LogError("size of k0ExtendOuterNeg_ " + std::to_string(
             ptr_map_tracking_info->at(vec_tracking_indices.at(i_tracking))->k0ExtendOuterNeg_.size())
-            + " is not equal to the dimension " + std::to_string(dims) + " in IniSendNReceiveTracking");
+            + " is not equal to the dimension " + std::to_string(dims) + " in IniSendNReceiveTracking in "
+            + std::string(__FILE__) + "at line " + std::to_string(__LINE__));
         }
         if (ptr_map_tracking_info->at(vec_tracking_indices.at(i_tracking))->k0ExtendOuterPos_.size() != dims) {
             LogManager::LogError("size of k0ExtendOuterPos_ " + std::to_string(
             ptr_map_tracking_info->at(vec_tracking_indices.at(i_tracking))->k0ExtendOuterPos_.size())
-            + " is not equal to the dimension " + std::to_string(dims) + " in IniSendNReceiveTracking");
+            + " is not equal to the dimension " + std::to_string(dims) + " in IniSendNReceiveTracking in "
+            + std::string(__FILE__) + "at line " + std::to_string(__LINE__));
         }
         if (ptr_map_tracking_info->at(vec_tracking_indices.at(i_tracking))->k0ExtendInnerNeg_.size() != dims) {
             LogManager::LogError("size of k0ExtendInnerNeg_ " + std::to_string(
             ptr_map_tracking_info->at(vec_tracking_indices.at(i_tracking))->k0ExtendInnerNeg_.size())
-            + " is not equal to the dimension " + std::to_string(dims) + " in IniSendNReceiveTracking");
+            + " is not equal to the dimension " + std::to_string(dims) + " in IniSendNReceiveTracking in "
+            + std::string(__FILE__) + "at line " + std::to_string(__LINE__));
         }
         if (ptr_map_tracking_info->at(vec_tracking_indices.at(i_tracking))->k0ExtendInnerPos_.size() != dims) {
             LogManager::LogError("size of k0ExtendInnerPos_ " + std::to_string(
             ptr_map_tracking_info->at(vec_tracking_indices.at(i_tracking))->k0ExtendInnerPos_.size())
-            + " is not equal to the dimension " + std::to_string(dims) + " in IniSendNReceiveTracking");
+            + " is not equal to the dimension " + std::to_string(dims) + " in IniSendNReceiveTracking in "
+            + std::string(__FILE__) + "at line " + std::to_string(__LINE__));
         }
 #endif  // DEBUG_CHECK_GRID
         }
@@ -224,7 +229,8 @@ void MpiManager::IniSendNReceiveTracking(const DefAmrIndexUint dims, const DefAm
                         // lower_bound returns the next element of last in ull_max if not found the desired one,
                         // which means that the space filling code of the node exceeds the maximum given by ull_max
                         LogManager::LogError("nodes is out of computational"
-                         " domain in MpiManager::IniSendNReceiveTracking");
+                         " domain in MpiManager::IniSendNReceiveTracking in "
+                         + std::string(__FILE__) + "at line " + std::to_string(__LINE__));
                     }
 #endif  // DEBUG_CHECK_GRID
                     if (i_counts.at(index) == 0) {
@@ -286,10 +292,11 @@ void MpiManager::IniSendNReceiveTracking(const DefAmrIndexUint dims, const DefAm
 int MpiManager::IniSerializeRefinementInterfaceNode(const std::set<DefSFCodeToUint>& set_nodes,
         std::unique_ptr<char[]>& buffer) const {
     int key_size = sizeof(DefSFBitset);
-    int num_nodes;
+    int num_nodes = 0;
     if  (sizeof(int) + set_nodes.size() *key_size > 0x7FFFFFFF) {
         LogManager::LogError("size of the buffer is greater than"
-         " the maximum of int in GridInfoInterface::SerializeTrackingNode");
+         " the maximum of int in GridInfoInterface::SerializeTrackingNode in "
+         + std::string(__FILE__) + "at line " + std::to_string(__LINE__));
     } else {
         num_nodes = static_cast<int>(set_nodes.size());
     }
@@ -333,49 +340,133 @@ void MpiManager::IniDeserializeRefinementInterfaceNode(
 }
 /**
  * @brief  function to send and receive nodes in a given level of the interface layer.
+ * @param[in] dims dimension of the grid
  * @param[in] i_level  level of the interface layer to send/receive.
+ * @param[in] bitset_min minimum space filling code for each partition.
+ * @param[in] bitset_max maximum space filling code for each partition.
  * @param[in] ull_max vector of the maximum space filling codes of partitioned grid.
  * @param[in] bitset_aux manager object for manipulating space filling code.
+ * @param[in] map_grid_nodes initial mesh generated on rank 0 and value of elements indicates if the node 
+ *                         is on the interface of partitioned blocks.
  * @param[out] ptr_map_interface_layer pointer to nodes in the interface layer.
  */
-void MpiManager::IniSendNReiveOneLayerRefinementInterface(const DefAmrIndexUint i_level,
-    const std::vector<DefSFCodeToUint>& ull_max, const SFBitsetAuxInterface& bitset_aux,
-    DefMap<DefAmrUint>* const ptr_map_interface_layer) const {
+void MpiManager::IniSendNReiveOneLayerRefinementInterface(const DefAmrIndexUint dims, const DefAmrIndexUint i_level,
+    const std::vector<DefSFBitset>& bitset_min, const std::vector<DefSFBitset>& bitset_max,
+    const SFBitsetAuxInterface& bitset_aux,
+    const DefMap<DefAmrIndexUint>& map_grid_nodes, DefMap<DefAmrUint>* const ptr_map_interface_layer) const {
     int rank_id = rank_id_, num_ranks = num_of_ranks_;
     DefSFCodeToUint background_code, key_ull;
     std::vector<std::vector<std::set<DefSFCodeToUint>>> vec_nodes_ranks(num_ranks);
     vec_nodes_ranks.at(0).push_back({});
-    DefSizet num_max = ull_max.size();
-    int index;
+    DefSizet num_max = bitset_max.size();
+    int i_rank;
     std::vector<int> i_chunk_each_rank(num_ranks, -1), i_counts(num_ranks, 0);
     int max_buffer = (std::numeric_limits<int>::max)() / sizeof(DefSFBitset) - 1;
     if (rank_id == 0 && num_ranks > 1) {
+        std::vector<DefSFCodeToUint> ull_min(bitset_min.size()), ull_max(bitset_max.size());
+        for (auto i = 0; i < bitset_max.size(); ++i) {
+            ull_min.at(i) = bitset_min.at(i).to_ullong();
+            ull_max.at(i) = bitset_max.at(i).to_ullong();
+        }
+        DefAmrIndexUint num_ghost = num_of_partition_ghost_layers_;
+        DefMap<DefAmrIndexUint> map_ghost_tmp, ghost_rank_0;
+        std::vector<DefSFCodeToUint> code_min_current(num_ranks), code_max_current(num_ranks);
+        std::vector<DefSFBitset> domain_min_m1_n_level(dims), domain_max_p1_n_level(dims);
+        std::vector<DefMap<DefAmrIndexUint>> partition_interface_current(num_ranks);
+        if (dims == 2) {
+#ifndef  DEBUG_DISABLE_2D_FUNCTIONS
+            const SFBitsetAux2D bitset_aux_2d = dynamic_cast<const SFBitsetAux2D&>(bitset_aux);
+            for (auto i = 0; i < num_ranks; ++i) {
+                code_min_current.at(i) = bitset_aux_2d.SFBitsetToNHigherLevel(
+                i_level, ull_min.at(i)).to_ullong();
+                code_max_current.at(i) = bitset_aux_2d.SFBitsetToNHigherLevel(
+                i_level, ull_max.at(i)).to_ullong();
+            }
+#endif  // DEBUG_DISABLE_2D_FUNCTIONS
+        } else {
+#ifndef  DEBUG_DISABLE_3D_FUNCTIONS
+            const SFBitsetAux3D bitset_aux_3d = dynamic_cast<const SFBitsetAux3D&>(bitset_aux);
+            for (auto i = 0; i < num_ranks; ++i) {
+                code_min_current.at(i) = bitset_aux_3d.SFBitsetToNHigherLevel(
+                i_level, ull_min.at(i)).to_ullong();
+                code_max_current.at(i) = bitset_aux_3d.SFBitsetToNHigherLevel(
+                i_level, ull_max.at(i)).to_ullong();
+            }
+#endif  // DEBUG_DISABLE_3D_FUNCTIONS
+        }
         for (const auto& iter_node : *ptr_map_interface_layer) {
             background_code = (bitset_aux.SFBitsetToNLowerLevelVir(i_level, iter_node.first)).to_ullong();
-            auto iter_index = std::lower_bound(ull_max.begin(),
-                ull_max.end(), background_code);
-            index = static_cast<int>(iter_index - ull_max.begin());
+            auto iter_index = std::lower_bound(ull_max.begin(), ull_max.end(), background_code);
+            i_rank = static_cast<int>(iter_index - ull_max.begin());
             key_ull = iter_node.first.to_ullong();
-            if (index != 0) {
-                vec_nodes_ranks.at(0).at(0).insert(key_ull);  // nodes need to be deleted on rank 0
+            if (i_rank != 0) {
 #ifdef DEBUG_CHECK_GRID
-                if (index == num_max) {
+                if (i_rank == num_max) {
                     // lower_bound returns the next element of last in ull_max if not found the desired one,
                     // which means that the space filling code of the node exceeds the maximum
                     LogManager::LogError("node is out of computational"
-                     " domain in InterfaceLayerInfo::SendNReiveOneLayer");
+                     " domain in MpiManager::IniSendNReiveOneLayerRefinementInterface in "
+                     + std::string(__FILE__) + "at line " + std::to_string(__LINE__));
                 }
 #endif  // DEBUG_CHECK_GRID
-                if (i_counts.at(index) == 0) {
-                    vec_nodes_ranks.at(index).push_back({key_ull});
-                    i_chunk_each_rank.at(index) +=1;
-                    ++i_counts.at(index);
+                vec_nodes_ranks.at(0).at(0).insert(key_ull);  // nodes need to be deleted on rank 0
+                if (i_counts.at(i_rank) == 0) {
+                    vec_nodes_ranks.at(i_rank).push_back({key_ull});
+                    i_chunk_each_rank.at(i_rank) +=1;
+                    ++i_counts.at(i_rank);
                 } else {
-                    vec_nodes_ranks.at(index).at(i_chunk_each_rank.at(index)).insert(key_ull);
-                    ++i_counts.at(index);
-                    if (i_counts.at(index) == max_buffer) {
+                    vec_nodes_ranks.at(i_rank).at(i_chunk_each_rank.at(i_rank)).insert(key_ull);
+                    ++i_counts.at(i_rank);
+                    if (i_counts.at(i_rank) == max_buffer) {
                         // check if size of send buffer exceeds limits of int
-                        i_counts.at(index) = 0;
+                        i_counts.at(i_rank) = 0;
+                    }
+                }
+                // check if node is on the interface of partitioned blocks
+                if (dims == 2) {
+#ifndef  DEBUG_DISABLE_2D_FUNCTIONS
+                    if (map_grid_nodes.find(iter_node.first) != map_grid_nodes.end()
+                     && map_grid_nodes.at(iter_node.first) == kFlagOnInterface) {
+                        SearchForGhostLayerForMinNMax2D(iter_node.first, num_ghost,
+                         code_min_current.at(i_rank), code_max_current.at(i_rank),
+                         0, dynamic_cast<const SFBitsetAux2D&>(bitset_aux),
+                         domain_min_m1_n_level, domain_max_p1_n_level, &map_ghost_tmp);
+                    }
+#endif  // DEBUG_DISABLE_2D_FUNCTIONS
+                } else {
+#ifndef  DEBUG_DISABLE_3D_FUNCTIONS
+                    if (map_grid_nodes.find(iter_node.first) != map_grid_nodes.end()
+                     && map_grid_nodes.at(iter_node.first) == kFlagOnInterface) {
+                        SearchForGhostLayerForMinNMax3D(iter_node.first, num_ghost,
+                         code_min_current.at(i_rank), code_max_current.at(i_rank),
+                         0, dynamic_cast<const SFBitsetAux3D&>(bitset_aux),
+                         domain_min_m1_n_level, domain_max_p1_n_level, &map_ghost_tmp);
+                    }
+#endif  // DEBUG_DISABLE_3D_FUNCTIONS
+                }
+                for (const auto& iter_ghost : map_ghost_tmp) {
+                    if (partition_interface_current.at(i_rank).find(iter_ghost.first)
+                     == partition_interface_current.at(i_rank).end()
+                     &&ptr_map_interface_layer->find(iter_ghost.first)
+                     !=ptr_map_interface_layer->end()) {
+                        if (iter_ghost.first.to_ullong() < ull_max.at(0)
+                         &&ghost_rank_0.find(iter_ghost.first) == ghost_rank_0.end()) {
+                            ghost_rank_0.insert(iter_ghost);
+                        }
+                        partition_interface_current.at(i_rank).insert(iter_ghost);
+                        key_ull = iter_ghost.first.to_ullong();
+                        if (i_counts.at(i_rank) == 0) {
+                            vec_nodes_ranks.at(i_rank).push_back({key_ull});
+                            i_chunk_each_rank.at(i_rank) +=1;
+                            ++i_counts.at(i_rank);
+                        } else {
+                            vec_nodes_ranks.at(i_rank).at(i_chunk_each_rank.at(i_rank)).insert(key_ull);
+                            ++i_counts.at(i_rank);
+                            if (i_counts.at(i_rank) == max_buffer) {
+                                // check if size of send buffer exceeds limits of int
+                                i_counts.at(i_rank) = 0;
+                            }
+                        }
                     }
                 }
             }
@@ -396,7 +487,9 @@ void MpiManager::IniSendNReiveOneLayerRefinementInterface(const DefAmrIndexUint 
             MPI_Waitall(num_chunks, reqs_send.data(), MPI_STATUS_IGNORE);
         }
         for (const auto& iter_key : vec_nodes_ranks.at(0).at(0)) {
-            ptr_map_interface_layer->erase(static_cast<DefSFBitset>(iter_key));
+            if (ghost_rank_0.find(iter_key) == ghost_rank_0.end()) {
+                ptr_map_interface_layer->erase(static_cast<DefSFBitset>(iter_key));
+            }
         }
     } else if (rank_id > 0) {
         int num_chunks = 0;
@@ -416,13 +509,17 @@ void MpiManager::IniSendNReiveOneLayerRefinementInterface(const DefAmrIndexUint 
  * @param[in] dims dimension of the grid.
  * @param[in] i_level refinement level of the interface layer.
  * @param[in] num_of_layers_coarse2fine number of layers in the coarse to fine overlapping region.
- * @param[in] bitset_max vector containing the maximum space filling code for each grid.
+ * @param[in] bitset_min minimum space filling code for each partition.
+ * @param[in] bitset_max maximum space filling code for each partition.
  * @param[in] bitset_aux manager object for manipulating space filling code.
+ * @param[in] map_grid_nodes initial mesh generated on rank 0 and value of elements indicates if the node 
+ *                         is on the interface of partitioned blocks.
  * @param[out] ptr_map_interface_info map of unique pointers to refinement interface information.
  */
 void MpiManager::IniSendNReceiveRefinementInterface(const DefAmrIndexUint dims,
     const DefAmrIndexUint i_level, const DefAmrIndexUint num_of_layers_coarse2fine,
-    const std::vector<DefSFBitset>& bitset_max, const SFBitsetAuxInterface& bitset_aux,
+    const std::vector<DefSFBitset>& bitset_min, const std::vector<DefSFBitset>& bitset_max,
+    const SFBitsetAuxInterface& sfbitset_aux, const DefMap<DefAmrIndexUint>& map_grid_nodes,
     std::map<std::pair<ECriterionType, DefAmrIndexUint>,
     std::shared_ptr<InterfaceLayerInfo>>* const ptr_map_interface_info) const {
     MPI_Datatype mpi_interface_index_type;
@@ -472,64 +569,72 @@ void MpiManager::IniSendNReceiveRefinementInterface(const DefAmrIndexUint dims,
                     LogManager::LogError("size of k0ExtendOuterNeg_ " + std::to_string(
                      ptr_map_interface_info->at(pair_interface)->k0ExtendOuterNeg_.size())
                      + " is not equal to the dimension " + std::to_string(dims)
-                     + " in IniSendNReceiveRefinementInterface");
+                     + " in IniSendNReceiveRefinementInterface in "
+                     + std::string(__FILE__) + "at line " + std::to_string(__LINE__));
                 }
                 if (ptr_map_interface_info->at(pair_interface)->k0ExtendOuterPos_.size() != dims) {
                     LogManager::LogError("size of k0ExtendOuterPos_ " + std::to_string(
                      ptr_map_interface_info->at(pair_interface)->k0ExtendOuterPos_.size())
                      + " is not equal to the dimension " + std::to_string(dims)
-                     + " in IniSendNReceiveRefinementInterface");
+                     + " in IniSendNReceiveRefinementInterface in "
+                     + std::string(__FILE__) + "at line " + std::to_string(__LINE__));
                 }
                 if (ptr_map_interface_info->at(pair_interface)->k0ExtendInnerNeg_.size() != dims) {
                     LogManager::LogError("size of k0ExtendInnerNeg_ " + std::to_string(
                      ptr_map_interface_info->at(pair_interface)->k0ExtendInnerNeg_.size())
                      + " is not equal to the dimension " + std::to_string(dims)
-                     + " in IniSendNReceiveRefinementInterface");
+                     + " in IniSendNReceiveRefinementInterface in "
+                     + std::string(__FILE__) + "at line " + std::to_string(__LINE__));
                 }
                 if (ptr_map_interface_info->at(pair_interface)->k0ExtendInnerPos_.size() != dims) {
                     LogManager::LogError("size of k0ExtendInnerPos_ " + std::to_string(
                      ptr_map_interface_info->at(pair_interface)->k0ExtendInnerPos_.size())
                      + " is not equal to the dimension " + std::to_string(dims)
-                     + " in IniSendNReceiveRefinementInterface");
+                     + " in IniSendNReceiveRefinementInterface in "
+                     + std::string(__FILE__) + "at line " + std::to_string(__LINE__));
                 }
                 if (ptr_map_interface_info->at(pair_interface)->vec_outer_coarse2fine_.size()
                  != num_of_layers_coarse2fine) {
                     LogManager::LogError("size of vec_outer_coarse2fine_ " + std::to_string(
                      ptr_map_interface_info->at(pair_interface)->vec_outer_coarse2fine_.size())
                      + " is not equal to the number of layers " + std::to_string(num_of_layers_coarse2fine)
-                     + " in IniSendNReceiveRefinementInterface");
+                     + " in IniSendNReceiveRefinementInterface in "
+                     + std::string(__FILE__) + "at line " + std::to_string(__LINE__));
                 }
                 if (ptr_map_interface_info->at(pair_interface)->vec_inner_coarse2fine_.size()
                  != num_of_layers_coarse2fine) {
                     LogManager::LogError("size of vec_inner_coarse2fine_ " + std::to_string(
                      ptr_map_interface_info->at(pair_interface)->vec_inner_coarse2fine_.size())
                      + " is not equal to the number of layers " + std::to_string(num_of_layers_coarse2fine)
-                     + " in IniSendNReceiveRefinementInterface");
+                     + " in IniSendNReceiveRefinementInterface in "
+                     + std::string(__FILE__) + "at line " + std::to_string(__LINE__));
                 }
             }
 #endif  // DEBUG_CHECK_GRID
         }
+
         InterfaceLayerInfo* ptr_interface = ptr_map_interface_info->at(pair_interface).get();
 
         // broadcast number of extending layers
-        MPI_Bcast(ptr_interface->k0ExtendInnerNeg_.data(),
-           static_cast<int>(dims), MPI_AMR_UINT_TYPE, 0, MPI_COMM_WORLD);
-        MPI_Bcast(ptr_interface->k0ExtendInnerPos_.data(),
-           static_cast<int>(dims), MPI_AMR_UINT_TYPE, 0, MPI_COMM_WORLD);
-        MPI_Bcast(ptr_interface->k0ExtendOuterNeg_.data(),
-           static_cast<int>(dims), MPI_AMR_UINT_TYPE, 0, MPI_COMM_WORLD);
-        MPI_Bcast(ptr_interface->k0ExtendOuterPos_.data(),
-           static_cast<int>(dims), MPI_AMR_UINT_TYPE, 0, MPI_COMM_WORLD);
-
+        if (i_level > 0) {
+            MPI_Bcast(ptr_interface->k0ExtendInnerNeg_.data(),
+             static_cast<int>(dims), MPI_AMR_UINT_TYPE, 0, MPI_COMM_WORLD);
+            MPI_Bcast(ptr_interface->k0ExtendInnerPos_.data(),
+             static_cast<int>(dims), MPI_AMR_UINT_TYPE, 0, MPI_COMM_WORLD);
+            MPI_Bcast(ptr_interface->k0ExtendOuterNeg_.data(),
+             static_cast<int>(dims), MPI_AMR_UINT_TYPE, 0, MPI_COMM_WORLD);
+            MPI_Bcast(ptr_interface->k0ExtendOuterPos_.data(),
+             static_cast<int>(dims), MPI_AMR_UINT_TYPE, 0, MPI_COMM_WORLD);
+        }
         //  send and receive outer layers
         for (DefAmrIndexUint i_layer = 0; i_layer < num_of_layers_coarse2fine; ++i_layer) {
-            IniSendNReiveOneLayerRefinementInterface(i_level, ull_max,
-                bitset_aux, &ptr_interface->vec_outer_coarse2fine_.at(i_layer));
+            IniSendNReiveOneLayerRefinementInterface(dims, i_level, bitset_min, bitset_max,
+              sfbitset_aux, map_grid_nodes, &ptr_interface->vec_outer_coarse2fine_.at(i_layer));
         }
         //  send and receive inner layers
         for (DefAmrIndexUint i_layer = 0; i_layer < num_of_layers_coarse2fine; ++i_layer) {
-            IniSendNReiveOneLayerRefinementInterface(i_level, ull_max,
-                bitset_aux, &ptr_interface->vec_inner_coarse2fine_.at(i_layer));
+            IniSendNReiveOneLayerRefinementInterface(dims, i_level, bitset_min, bitset_max,
+             sfbitset_aux, map_grid_nodes, &ptr_interface->vec_inner_coarse2fine_.at(i_layer));
         }
     }
 

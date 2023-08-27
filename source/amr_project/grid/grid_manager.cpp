@@ -455,35 +455,14 @@ void GridManagerInterface::InstantiateGridNodeAllLevel(const DefSFBitset sfbitse
                     if (map_grid.find(iter_node) == map_grid.end()) {
                         map_grid.insert({ iter_node, node_instance });
                     }
-#ifdef ENABLE_MPI
-                    // node is on the partitioned interface
-                    // if (CheckNodeOnOuterBoundaryOfBackgroundCell(i_level, code_min, code_max,
-                    //  iter_node, domain_min_m1_n_level, domain_max_p1_n_level,
-                    //  corresponding_ones, partitioned_interface_background)) {
-                    //     SearchForGhostLayerForMinNMax(iter_node, grid_info.num_of_ghost_layer_,
-                    //      code_min, code_max, domain_min_m1_n_level, domain_max_p1_n_level,
-                    //      &map_ghost_for_mpi_communication);
-                    //     for (const auto& iter_lower_ghost : map_ghost_for_mpi_communication) {
-                    //         if (CheckCoincideBackground(i_level_lower, iter_lower_ghost.first, &bitset_background)) {
-                    //             if (background_occupied.find(bitset_background)
-                    //              == background_occupied.end()) {
-                    //                 background_occupied.insert({ bitset_background, kFlagSize0_ });
-                    //             }
-                    //         }
-                    //         NodesBelongToOneCell(iter_lower_ghost.first,
-                    //          sfbitset_one_lower_level.at(i_level), &bitset_cell_lower_ghost);
-                    //         FindAllNodesInACellAtLowerLevel(bitset_cell_lower_ghost, &bitset_all_ghost);
-                    //         for (const auto& iter_node_ghost : bitset_all_ghost) {
-                    //             if (map_grid.find(iter_node_ghost) == map_grid.end()) {
-                    //                 map_grid.insert({ iter_node_ghost, node_instance });
-                    //             }
-                    //             map_grid.at(iter_node_ghost).flag_status_ |= kNodeStatusGhostCommunication_;
-                    //         }
-    
-                    //     }
-                    // }
-#endif  // ENABLE_MPI
                 }
+            }
+        }
+    }
+    for (const auto & iter_interfaces : vec_ptr_grid_info_.at(0)->map_ptr_interface_layer_info_) {
+        for (const auto & iter_coarse2fine : iter_interfaces.second->vec_outer_coarse2fine_) {
+            for (const auto & iter_node : iter_coarse2fine) {
+                background_occupied.erase(iter_node.first);
             }
         }
     }

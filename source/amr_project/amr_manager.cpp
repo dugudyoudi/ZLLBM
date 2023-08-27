@@ -115,8 +115,8 @@ void AmrManager::InitializeMesh() {
          {ptr_grid_manager_2d->k0IntOffset_[kXIndex], ptr_grid_manager_2d->k0IntOffset_[kYIndex]},
          {ptr_grid_manager_2d->k0MaxIndexOfBackgroundNode_[kXIndex],
           ptr_grid_manager_2d->k0MaxIndexOfBackgroundNode_[kYIndex]},
-         vec_cost, *ptr_grid_manager_2d, sfbitset_one_lower_level, ptr_grid_manager_->vec_ptr_tracking_info_creator_,
-         &sfbitset_bound_current, &sfbitset_one_lower_level_current_rank,
+         vec_cost, *ptr_grid_manager_2d, ptr_grid_manager_->vec_ptr_tracking_info_creator_,
+         &sfbitset_one_lower_level, &sfbitset_bound_current, &sfbitset_one_lower_level_current_rank,
          &sfbitset_one_lower_partition_interface, &(ptr_grid_manager_->vec_ptr_grid_info_));
 #endif  // DEBUG_DISABLE_3D_FUNCTIONS
     } else {
@@ -130,8 +130,8 @@ void AmrManager::InitializeMesh() {
          {ptr_grid_manager_3d->k0MaxIndexOfBackgroundNode_[kXIndex],
           ptr_grid_manager_3d->k0MaxIndexOfBackgroundNode_[kYIndex],
           ptr_grid_manager_3d->k0MaxIndexOfBackgroundNode_[kZIndex]},
-         vec_cost, *ptr_grid_manager_3d, sfbitset_one_lower_level, ptr_grid_manager_->vec_ptr_tracking_info_creator_,
-         &sfbitset_bound_current, &sfbitset_one_lower_level_current_rank,
+         vec_cost, *ptr_grid_manager_3d, ptr_grid_manager_->vec_ptr_tracking_info_creator_,
+         &sfbitset_one_lower_level, &sfbitset_bound_current, &sfbitset_one_lower_level_current_rank,
          &sfbitset_one_lower_partition_interface, &(ptr_grid_manager_->vec_ptr_grid_info_));
 #endif  // DEBUG_DISABLE_3D_FUNCTIONS
     }
@@ -141,10 +141,27 @@ void AmrManager::InitializeMesh() {
     ptr_grid_manager_->InstantiateGridNodeAllLevel(
      sfbitset_bound_current.at(0), sfbitset_bound_current.at(1),
      sfbitset_one_lower_level_current_rank);
-#else  // run serially mesh on rank 0 is the only one
+
+    // add nodes on both the refinement and partition interfaces
+    // which are only stored in coarse to fine refinement interfaces
+    const DefAmrIndexUint flag0 = ptr_grid_manager_->kFlagSize0_;
+    for (DefAmrIndexUint i_level = 0; i_level < ptr_grid_manager_->k0MaxLevel_; ++i_level) {
+        for (const auto & iter_interfaces :
+         ptr_grid_manager_->vec_ptr_grid_info_.at(i_level)->map_ptr_interface_layer_info_) {
+            for (const auto & iter_coarse2fine : iter_interfaces.second->vec_outer_coarse2fine_) {
+                for (const auto & iter_node : iter_coarse2fine) {
+                    if (ptr_grid_manager_->vec_ptr_grid_info_.at(i_level)->map_grid_node_.find(iter_node.first)
+                        == ptr_grid_manager_->vec_ptr_grid_info_.at(i_level)->map_grid_node_.end()) {
+                        ptr_grid_manager_->vec_ptr_grid_info_.at(i_level)->map_grid_node_.insert(
+                         {iter_node.first, ptr_grid_manager_->vec_ptr_grid_info_.at(i_level)->k0GridNodeInstance_});
+                    }
+                }
+            }
+        }
+    }
+#else   // mesh on rank 0 is the only one when run serially
     ptr_grid_manager_->InstantiateGridNodeAllLevel(
-     sfbitset_bound_current.at(0), sfbitset_bound_current.at(1),
-    sfbitset_one_lower_level);
+     sfbitset_bound_current.at(0), sfbitset_bound_current.at(1), sfbitset_one_lower_level);
 #endif  // ENABLE_MPI
 }
 /**
@@ -167,5 +184,5 @@ void AmrManager::FinalizeSimulation() {
     ptr_mpi_manager_->FinalizeMpi();
 #endif  // ENABLE_MPI
 }
-}  // end amrproject
+}  // end namespace amrproject
 }  // end namespace rootproject
