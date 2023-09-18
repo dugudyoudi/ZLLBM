@@ -34,8 +34,9 @@ void GeometryConnectionInterface::FindTrackingNodeBasedOnGeo(DefAmrIndexUint i_g
         LogManager::LogError("Size of grid_space ("
             + std::to_string(ptr_grid_info->grid_space_.size()) +
             ") is not equal to size of coordinates("
-        + std::to_string(vertex_given_level_.at(0).vec_vertex_coordinate
-            .at(0).coordinates.size()) + ") in vertex_given_level_.");
+            + std::to_string(vertex_given_level_.at(0).vec_vertex_coordinate
+            .at(0).coordinates.size()) + ") in vertex_given_level_ "
+            + " in "+ std::string(__FILE__) + " at line " + std::to_string(__LINE__));
     }
     DefAmrIndexUint level_diff = ptr_grid_info->i_level_ - i_level;
 

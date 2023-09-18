@@ -66,10 +66,8 @@ class InterfaceLayerInfo {
     std::vector<DefAmrIndexLUint> k0ExtendInnerNeg_, k0ExtendInnerPos_;
     ///< number of extened layers inside the geometry
 
-    std::vector<DefMap<DefAmrUint>> vec_outer_coarse2fine_,
-        vec_outer_fine2coarse_;
-    std::vector<DefMap<DefAmrUint>> vec_inner_coarse2fine_,
-        vec_inner_fine2coarse_;
+    std::vector<DefMap<DefAmrUint>> vec_outer_coarse2fine_, vec_outer_fine2coarse_;
+    std::vector<DefMap<DefAmrUint>> vec_inner_coarse2fine_, vec_inner_fine2coarse_;
 };
 /**
 * @class TrackingGridInfoInterface

@@ -150,12 +150,14 @@ void GridManager2D::IdentifyTypeOfLayerByFloodFill(
             map_nodes_exist, ptr_map_nodes_outside, ptr_map_nodes_inside);
         if (flag_floodfill == 2) {
             LogManager::LogWarning("Iteration of flood fill exceed preset limits for."
-                " geometry (" + std::to_string(i_geo) + ").");
+                " geometry (" + std::to_string(i_geo) + ")"
+                + " in "+ std::string(__FILE__) + " at line " + std::to_string(__LINE__));
         }
     } else {
         LogManager::LogError("Can't find starting node for food fill in geometry: "
             + std::to_string(i_geo) + " in IdentifyTypeOfLayerByFloodFill(2D)"
-            + " after " + std::to_string(count_sum) + " iterations.");
+            + " after " + std::to_string(count_sum) + " iterations"
+            + " in "+ std::string(__FILE__) + " at line " + std::to_string(__LINE__));
     }
 }
 /**
@@ -372,16 +374,13 @@ DefAmrUint GridManager2D::FindAllNeighborsWithSpecifiedDirection(
     return flag_current_node;
 }
 /**
-* @brief   function to find interface between grids of different
-*          refinement levels.
+* @brief   function to find interface between grids of different refinement levels.
 * @param[in] i_level higher refinement level.
-* @param[in] map_outmost_layer outmost layer of the grid at the higher
-*            refinement level.
+* @param[in] map_outmost_layer outmost layer of the grid at the higher refinement level.
 * @param[out] ptr_map_exist existing nodes at the higher refinement level.
 * @param[out] ptr_interface_outmost nodes on the outmost layer.
 * @param[out] ptr_layer_lower_level nodes at the lower refinement level.
-* @param[out] ptr_layer_lower_level_outer outer nodes at the lower
-*             refinement level.
+* @param[out] ptr_layer_lower_level_outer outer nodes at the lower refinement level.
 */
 void  GridManager2D::FindInterfaceBetweenGrid(
     const DefAmrIndexUint i_level, const DefMap<DefAmrUint>& map_outmost_layer,
@@ -392,11 +391,13 @@ void  GridManager2D::FindInterfaceBetweenGrid(
 #ifdef DEBUG_CHECK_GRID
     if (&map_outmost_layer == ptr_interface_outmost) {
         LogManager::LogError("input (map_outmost_layer)"
-            " should not be the same as output (ptr_interface_outmost)");
+            " should not be the same as output (ptr_interface_outmost) in "
+            + std::string(__FILE__) + " at line " + std::to_string(__LINE__));
     }
     if (&map_outmost_layer == ptr_layer_lower_level_outer) {
         LogManager::LogError("input (map_outmost_layer)"
-            " should not be the same as output (ptr_layer_lower_level_outer)");
+            " should not be the same as output (ptr_layer_lower_level_outer) in "
+            + std::string(__FILE__) + " at line " + std::to_string(__LINE__));
     }
 #endif  // DEBUG_CHECK_GRID
 
@@ -435,6 +436,7 @@ void  GridManager2D::FindInterfaceBetweenGrid(
         for (const auto& iter_neighbour : vec_neighbors) {
             if (map_exist->find(iter_neighbour) == map_exist->end()) {
                 ptr_interface_outmost->insert({ iter.first, kFlag0_ });
+                map_exist->at(iter.first) |= kNodeStatusCoarse2Fine0_;
                 // find interface at lower level
                 bitset_lower_level = SFBitsetToOneLowerLevel(iter.first);
                 if (ptr_layer_lower_level->find(bitset_lower_level)

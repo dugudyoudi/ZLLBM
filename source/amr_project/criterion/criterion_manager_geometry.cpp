@@ -26,7 +26,8 @@ void CriterionManager::InitialAllGeometrySerial(
        bool bool_dims = vec_ptr_geometries_.at(i_geo)->SetCenter(vec_real_offset);
        if (!bool_dims) {
         std::string msg = "dimension of center for geometry " + std::to_string(i_geo) + "is "
-         + std::to_string(vec_real_offset.size()) + " but it should be " + std::to_string(dims);
+         + std::to_string(vec_real_offset.size()) + " but it should be " + std::to_string(dims)
+         + " in "+ std::string(__FILE__) + " at line " + std::to_string(__LINE__);
          LogManager::LogError(msg);
        }
 

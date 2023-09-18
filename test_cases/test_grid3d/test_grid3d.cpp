@@ -125,7 +125,7 @@ int main(int argc, char* argv[]) {
     // set grid node type and solver at all levels the same
     std::shared_ptr<SolverCreatorTest> ptr_solver_creator =
         std::make_shared<SolverCreatorTest>();
-    amr_instance->SetTheSameLevelDependentInfoForAllLevels(
+    amr_instance->SetDependentInfoForAllLevelsTheSame(
         ptr_solver_creator.get());
 
     amr_instance->InitializeMesh();

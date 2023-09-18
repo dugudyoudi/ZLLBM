@@ -95,7 +95,6 @@ void AmrManager::InitializeMesh() {
         sfbitset_bound_current = {ptr_grid_manager_->k0SFBitsetDomainMin_, ptr_grid_manager_->k0SFBitsetDomainMax_};
     }
 
-
 #ifdef ENABLE_MPI
     // mpi partition sending and receiving nodes
     std::vector<DefAmrIndexLUint> vec_cost;
@@ -103,44 +102,75 @@ void AmrManager::InitializeMesh() {
         vec_cost.push_back(iter_grid->computational_cost_);
     }
     std::vector<DefMap<DefAmrIndexUint>> sfbitset_one_lower_level_current_rank(ptr_grid_manager_->k0MaxLevel_ + 1);
-    std::vector<DefMap<DefAmrIndexUint>> sfbitset_one_lower_partition_interface(ptr_grid_manager_->k0MaxLevel_ + 1);
     ptr_mpi_manager_->sfbitset_min_current_rank_ = sfbitset_bound_current.at(0);
     ptr_mpi_manager_->sfbitset_max_current_rank_ = sfbitset_bound_current.at(1);
+    DefMap<DefAmrIndexUint> partition_interface_background;
     if (ptr_grid_manager_->k0GridDims_ == 2) {
 #ifndef  DEBUG_DISABLE_2D_FUNCTIONS
         GridManager2D* ptr_grid_manager_2d = dynamic_cast<GridManager2D*>(ptr_grid_manager_.get());
         ptr_mpi_manager_->SendNReceiveGridInfoAtGivenLevels(ptr_grid_manager_->kFlagSize0_,
-         ptr_grid_manager_->k0GridDims_, ptr_grid_manager_->k0MaxLevel_,
-         ptr_grid_manager_->k0SFBitsetDomainMin_, ptr_grid_manager_->k0SFBitsetDomainMax_,
-         {ptr_grid_manager_2d->k0IntOffset_[kXIndex], ptr_grid_manager_2d->k0IntOffset_[kYIndex]},
-         {ptr_grid_manager_2d->k0MaxIndexOfBackgroundNode_[kXIndex],
-          ptr_grid_manager_2d->k0MaxIndexOfBackgroundNode_[kYIndex]},
-         vec_cost, *ptr_grid_manager_2d, ptr_grid_manager_->vec_ptr_tracking_info_creator_,
-         &sfbitset_one_lower_level, &sfbitset_bound_current, &sfbitset_one_lower_level_current_rank,
-         &sfbitset_one_lower_partition_interface, &(ptr_grid_manager_->vec_ptr_grid_info_));
+            ptr_grid_manager_->kNodeStatusCoarse2Fine0_,
+            ptr_grid_manager_->k0GridDims_, ptr_grid_manager_->k0MaxLevel_,
+            ptr_grid_manager_->k0SFBitsetDomainMin_, ptr_grid_manager_->k0SFBitsetDomainMax_,
+            {ptr_grid_manager_2d->k0MinIndexOfBackgroundNode_[kXIndex],
+            ptr_grid_manager_2d->k0MinIndexOfBackgroundNode_[kYIndex]},
+            {ptr_grid_manager_2d->k0MaxIndexOfBackgroundNode_[kXIndex],
+            ptr_grid_manager_2d->k0MaxIndexOfBackgroundNode_[kYIndex]},
+            vec_cost, *ptr_grid_manager_2d, ptr_grid_manager_->vec_ptr_tracking_info_creator_,
+            sfbitset_one_lower_level, &sfbitset_bound_current, &sfbitset_one_lower_level_current_rank,
+            &(ptr_grid_manager_->vec_ptr_grid_info_));
+
+        if (rank_id == 0) {
+            sfbitset_one_lower_level.clear();
+            sfbitset_one_lower_level.shrink_to_fit();
+        }
+        ptr_mpi_manager_->FindInterfaceForPartitionFromMinNMax(
+            ptr_mpi_manager_->vec_sfbitset_min_all_ranks_.at(rank_id),
+            ptr_mpi_manager_->vec_sfbitset_max_all_ranks_.at(rank_id),
+            ptr_grid_manager_2d->k0MinIndexOfBackgroundNode_, ptr_grid_manager_2d->k0MaxIndexOfBackgroundNode_,
+            *ptr_grid_manager_2d, &partition_interface_background);
+
+        ptr_grid_manager_->InstantiateGridNodeAllLevelMpi(rank_id, ptr_mpi_manager_->k0NumPartitionInnerLayers_,
+            ptr_mpi_manager_->k0NumPartitionOuterLayers_, ptr_mpi_manager_->vec_sfbitset_min_all_ranks_,
+            ptr_mpi_manager_->vec_sfbitset_max_all_ranks_, *ptr_grid_manager_2d, sfbitset_one_lower_level_current_rank,
+            partition_interface_background,
+            &ptr_mpi_manager_->mpi_communication_inner_layers_, &ptr_mpi_manager_->mpi_communication_outer_layers_);
 #endif  // DEBUG_DISABLE_3D_FUNCTIONS
     } else {
 #ifndef  DEBUG_DISABLE_3D_FUNCTIONS
         GridManager3D* ptr_grid_manager_3d = dynamic_cast<GridManager3D*>(ptr_grid_manager_.get());
         ptr_mpi_manager_->SendNReceiveGridInfoAtGivenLevels(ptr_grid_manager_->kFlagSize0_,
-         ptr_grid_manager_->k0GridDims_, ptr_grid_manager_->k0MaxLevel_,
-         ptr_grid_manager_->k0SFBitsetDomainMin_, ptr_grid_manager_->k0SFBitsetDomainMax_,
-         {ptr_grid_manager_3d->k0IntOffset_[kXIndex], ptr_grid_manager_3d->k0IntOffset_[kYIndex],
-          ptr_grid_manager_3d->k0IntOffset_[kZIndex]},
-         {ptr_grid_manager_3d->k0MaxIndexOfBackgroundNode_[kXIndex],
-          ptr_grid_manager_3d->k0MaxIndexOfBackgroundNode_[kYIndex],
-          ptr_grid_manager_3d->k0MaxIndexOfBackgroundNode_[kZIndex]},
-         vec_cost, *ptr_grid_manager_3d, ptr_grid_manager_->vec_ptr_tracking_info_creator_,
-         &sfbitset_one_lower_level, &sfbitset_bound_current, &sfbitset_one_lower_level_current_rank,
-         &sfbitset_one_lower_partition_interface, &(ptr_grid_manager_->vec_ptr_grid_info_));
+            ptr_grid_manager_->kNodeStatusCoarse2Fine0_,
+            ptr_grid_manager_->k0GridDims_, ptr_grid_manager_->k0MaxLevel_,
+            ptr_grid_manager_->k0SFBitsetDomainMin_, ptr_grid_manager_->k0SFBitsetDomainMax_,
+            {ptr_grid_manager_3d->k0MinIndexOfBackgroundNode_[kXIndex],
+            ptr_grid_manager_3d->k0MinIndexOfBackgroundNode_[kYIndex],
+            ptr_grid_manager_3d->k0MinIndexOfBackgroundNode_[kZIndex]},
+            {ptr_grid_manager_3d->k0MaxIndexOfBackgroundNode_[kXIndex],
+            ptr_grid_manager_3d->k0MaxIndexOfBackgroundNode_[kYIndex],
+            ptr_grid_manager_3d->k0MaxIndexOfBackgroundNode_[kZIndex]},
+            vec_cost, *ptr_grid_manager_3d, ptr_grid_manager_->vec_ptr_tracking_info_creator_,
+            sfbitset_one_lower_level, &sfbitset_bound_current, &sfbitset_one_lower_level_current_rank,
+            &(ptr_grid_manager_->vec_ptr_grid_info_));
+
+        if (rank_id == 0) {
+            sfbitset_one_lower_level.clear();
+            sfbitset_one_lower_level.shrink_to_fit();
+        }
+        ptr_mpi_manager_->FindInterfaceForPartitionFromMinNMax(
+            ptr_mpi_manager_->vec_sfbitset_min_all_ranks_.at(rank_id),
+            ptr_mpi_manager_->vec_sfbitset_max_all_ranks_.at(rank_id),
+            ptr_grid_manager_3d->k0MinIndexOfBackgroundNode_, ptr_grid_manager_3d->k0MaxIndexOfBackgroundNode_,
+            *ptr_grid_manager_3d, &partition_interface_background);
+
+        ptr_grid_manager_->InstantiateGridNodeAllLevelMpi(rank_id, ptr_mpi_manager_->k0NumPartitionInnerLayers_,
+            ptr_mpi_manager_->k0NumPartitionOuterLayers_, ptr_mpi_manager_->vec_sfbitset_min_all_ranks_,
+            ptr_mpi_manager_->vec_sfbitset_max_all_ranks_, *ptr_grid_manager_3d, sfbitset_one_lower_level_current_rank,
+            partition_interface_background,
+            &ptr_mpi_manager_->mpi_communication_inner_layers_, &ptr_mpi_manager_->mpi_communication_outer_layers_);
 #endif  // DEBUG_DISABLE_3D_FUNCTIONS
     }
-    if (rank_id == 0) {
-        sfbitset_one_lower_level.clear();
-    }
-    ptr_grid_manager_->InstantiateGridNodeAllLevel(
-     sfbitset_bound_current.at(0), sfbitset_bound_current.at(1),
-     sfbitset_one_lower_level_current_rank);
+
 
     // add nodes on both the refinement and partition interfaces
     // which are only stored in coarse to fine refinement interfaces
@@ -153,7 +183,7 @@ void AmrManager::InitializeMesh() {
                     if (ptr_grid_manager_->vec_ptr_grid_info_.at(i_level)->map_grid_node_.find(iter_node.first)
                         == ptr_grid_manager_->vec_ptr_grid_info_.at(i_level)->map_grid_node_.end()) {
                         ptr_grid_manager_->vec_ptr_grid_info_.at(i_level)->map_grid_node_.insert(
-                         {iter_node.first, ptr_grid_manager_->vec_ptr_grid_info_.at(i_level)->k0GridNodeInstance_});
+                            {iter_node.first, ptr_grid_manager_->vec_ptr_grid_info_.at(i_level)->k0GridNodeInstance_});
                     }
                 }
             }
@@ -170,7 +200,7 @@ void AmrManager::InitializeMesh() {
 * @param[in]  node_type  type of grid node.
 * @note  just for convience. Grid instance can be specified for each level.
 */
-void AmrManager::SetTheSameLevelDependentInfoForAllLevels(
+void AmrManager::SetDependentInfoForAllLevelsTheSame(
     SolverCreatorInterface* const ptr_solver_creator) {
     std::shared_ptr<SolverInterface> ptr_solver = ptr_solver_creator->CreateSolver();
     ptr_grid_manager_->CreateSameGridInstanceForAllLevel(ptr_solver->ptr_grid_info_creator_.get());

@@ -24,13 +24,16 @@ void GridManager3D::SetGridParameters() {
     // check if length of computational domain is given
     if (k0DomainSize_.at(kXIndex) < kEps) {
         LogManager::LogError("Domain length in x direction (k0DomainSize_[0])"
-            " should be a positive value");
+            " should be a positive value in "
+            + std::string(__FILE__) + " at line " + std::to_string(__LINE__));
     } else if (k0DomainSize_.at(kYIndex) < kEps) {
         LogManager::LogError("Domain length in y direction (k0DomainSize_[1])"
-            " should be a positive value");
+            " should be a positive value in "
+            + std::string(__FILE__) + " at line " + std::to_string(__LINE__));
     } else if (k0DomainSize_.at(kZIndex) < kEps) {
         LogManager::LogError("Domain length in z direction (k0DomainSize_[2])"
-            " should be a positive value");
+            " should be a positive value in "
+            + std::string(__FILE__) + " at line " + std::to_string(__LINE__));
     }
 
     // check if grid space is given
@@ -38,7 +41,8 @@ void GridManager3D::SetGridParameters() {
         && k0DomainDx_.at(kYIndex) < kEps
         && k0DomainDx_.at(kZIndex < kEps)) {
         LogManager::LogError("Grid space of x, y, or z (k0DomainDx_)"
-            " should be positive values");
+            " should be positive values in "
+            + std::string(__FILE__) + " at line " + std::to_string(__LINE__));
     }
 
     // set grid space if not all grid spaces are given
@@ -69,23 +73,23 @@ void GridManager3D::SetGridParameters() {
     // calculate number of background nodes in each direction
     k0MaxIndexOfBackgroundNode_ = {
         static_cast<DefAmrIndexLUint>(k0DomainSize_[kXIndex]
-        / k0DomainDx_[kXIndex] + kEps) + k0IntOffset_[kXIndex],
+        / k0DomainDx_[kXIndex] + kEps) + k0MinIndexOfBackgroundNode_[kXIndex],
         static_cast<DefAmrIndexLUint>(k0DomainSize_[kYIndex]
-        / k0DomainDx_[kYIndex] + kEps) + k0IntOffset_[kYIndex],
+        / k0DomainDx_[kYIndex] + kEps) + k0MinIndexOfBackgroundNode_[kYIndex],
         static_cast<DefAmrIndexLUint>(k0DomainSize_[kZIndex]
-        / k0DomainDx_[kZIndex] + kEps) + k0IntOffset_[kZIndex]};
+        / k0DomainDx_[kZIndex] + kEps) + k0MinIndexOfBackgroundNode_[kZIndex]};
 
     SFBitsetMinAndMaxGlobal(
-        k0IntOffset_, k0MaxIndexOfBackgroundNode_);
+        k0MinIndexOfBackgroundNode_, k0MaxIndexOfBackgroundNode_);
     SFBitsetMinAndMaxCoordinates(k0MaxLevel_,
-        k0IntOffset_, k0MaxIndexOfBackgroundNode_);
+        k0MinIndexOfBackgroundNode_, k0MaxIndexOfBackgroundNode_);
 
     // set offsets
-    k0RealOffset_[kXIndex] = k0IntOffset_[kXIndex] * k0DomainDx_[kXIndex];
-    k0RealOffset_[kYIndex] = k0IntOffset_[kYIndex] * k0DomainDx_[kYIndex];
-    k0RealOffset_[kZIndex] = k0IntOffset_[kZIndex] * k0DomainDx_[kZIndex];
+    k0RealMin_[kXIndex] = k0MinIndexOfBackgroundNode_[kXIndex] * k0DomainDx_[kXIndex];
+    k0RealMin_[kYIndex] = k0MinIndexOfBackgroundNode_[kYIndex] * k0DomainDx_[kYIndex];
+    k0RealMin_[kZIndex] = k0MinIndexOfBackgroundNode_[kZIndex] * k0DomainDx_[kZIndex];
 
-    k0SFBitsetDomainMin_ = SFBitsetEncoding({k0IntOffset_[kXIndex], k0IntOffset_[kYIndex], k0IntOffset_[kZIndex]});
+    k0SFBitsetDomainMin_ = SFBitsetEncoding({k0MinIndexOfBackgroundNode_[kXIndex], k0MinIndexOfBackgroundNode_[kYIndex], k0MinIndexOfBackgroundNode_[kZIndex]});
     k0SFBitsetDomainMax_ = SFBitsetEncoding({k0MaxIndexOfBackgroundNode_[kXIndex],
         k0MaxIndexOfBackgroundNode_[kYIndex], k0MaxIndexOfBackgroundNode_[kZIndex]});
 
@@ -105,17 +109,20 @@ void GridManager3D::SetGridParameters() {
     if (k0MaxIndexOfBackgroundNode_.at(kXIndex) > index_max) {
         LogManager::LogError("Domain size exceeds the limits of space filling code in"
             " x direction, try to increase number of bits for "
-            " storing space filling code (kSFBitsetBit) in defs_libs.h");
+            " storing space filling code (kSFBitsetBit) in defs_libs.h. Error in"
+            + std::string(__FILE__) + " at line " + std::to_string(__LINE__));
     }
     if (k0MaxIndexOfBackgroundNode_.at(kYIndex) > index_max) {
         LogManager::LogError("Domain size exceeds the limits of space filling code  in"
             " y direction, try to increase number of bits for "
-            " storing space filling code (kSFBitsetBit) in defs_libs.h");
+            " storing space filling code (kSFBitsetBit) in defs_libs.h. Error in"
+            +  std::string(__FILE__) + " at line " + std::to_string(__LINE__));
     }
     if (k0MaxIndexOfBackgroundNode_.at(kZIndex) > index_max) {
         LogManager::LogError("Domain size exceeds the limits of space filling code  in"
             " z direction, try to increase number of bits for "
-            " storing space filling code (kSFBitsetBit) in defs_libs.h");
+            " storing space filling code (kSFBitsetBit) in defs_libs.h. Error in"
+            + std::string(__FILE__) + " at line " + std::to_string(__LINE__));
     }
 }
 /**
@@ -149,7 +156,7 @@ void GridManager3D::PrintGridInfo(void) const {
 * @param[out] ptr_vec_neighbors space filling codes of neighbors
 *            of the center node.
 */
-void GridManager3D::FindAllNeighborsSFBitset(const DefSFBitset& bitset_in,
+void GridManager3D::GridFindAllNeighborsVir(const DefSFBitset& bitset_in,
     std::vector<DefSFBitset>* const ptr_vec_neighbors) const {
     std::array<DefSFBitset, 27> array_neighbors;
     SFBitsetFindAllNeighbors(bitset_in, &array_neighbors);
@@ -172,11 +179,11 @@ void GridManager3D::ResetExtendLayerBasedOnDomainSize(
     std::vector<DefAmrIndexLUint>* const ptr_vec_extend_pos) const {
     //  extended layer at the background refinement level
     DefAmrIndexLUint two_power_i_level = static_cast<DefAmrIndexLUint>(TwoPowerN(i_level));
-    DefAmrIndexLUint index_xmin = k0IntOffset_[kXIndex] * two_power_i_level;
+    DefAmrIndexLUint index_xmin = k0MinIndexOfBackgroundNode_[kXIndex] * two_power_i_level;
     DefAmrIndexLUint index_xmax = k0MaxIndexOfBackgroundNode_[kXIndex] * two_power_i_level;
-    DefAmrIndexLUint index_ymin = k0IntOffset_[kYIndex] * two_power_i_level;
+    DefAmrIndexLUint index_ymin = k0MinIndexOfBackgroundNode_[kYIndex] * two_power_i_level;
     DefAmrIndexLUint index_ymax = k0MaxIndexOfBackgroundNode_[kYIndex] * two_power_i_level;
-    DefAmrIndexLUint index_zmin = k0IntOffset_[kZIndex] * two_power_i_level;
+    DefAmrIndexLUint index_zmin = k0MinIndexOfBackgroundNode_[kZIndex] * two_power_i_level;
     DefAmrIndexLUint index_zmax = k0MaxIndexOfBackgroundNode_[kZIndex] * two_power_i_level;
 
     std::array<DefAmrIndexLUint, 3> indices;
@@ -557,9 +564,9 @@ void GridManager3D::OverlapLayerFromHighToLow(
 bool GridManager3D::CheckBackgroundOffset(const DefSFBitset& bitset_in) const {
     std::array<DefAmrIndexLUint, 3> indices;
     SFBitsetComputeIndices(bitset_in, &indices);
-    if ((indices[kXIndex] < k0IntOffset_[kXIndex])
-        || (indices[kYIndex] < k0IntOffset_[kYIndex])
-        || (indices[kZIndex] < k0IntOffset_[kZIndex])) {
+    if ((indices[kXIndex] < k0MinIndexOfBackgroundNode_[kXIndex])
+        || (indices[kYIndex] < k0MinIndexOfBackgroundNode_[kYIndex])
+        || (indices[kZIndex] < k0MinIndexOfBackgroundNode_[kZIndex])) {
         return true;
     } else {
         return false;
@@ -579,7 +586,7 @@ void GridManager3D::InstantiateBackgroundGrid(const DefSFBitset bitset_min,
     GridNode node_instance(grid_info.k0GridNodeInstance_);
     DefSFCodeToUint i_code = bitset_min.to_ullong(), code_max = bitset_max.to_ullong();
     while (i_code <= code_max) {
-        ResetIndicesExceedingDomain(k0IntOffset_, k0MaxIndexOfBackgroundNode_, &i_code, &bitset_temp);
+        ResetIndicesExceedingDomain(k0MinIndexOfBackgroundNode_, k0MaxIndexOfBackgroundNode_, &i_code, &bitset_temp);
         if (map_occupied.find(bitset_temp) == map_occupied.end()) {
                 grid_info.map_grid_node_.insert({ bitset_temp, node_instance });
         }

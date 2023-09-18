@@ -191,7 +191,8 @@ void GridManager3D::IdentifyTypeOfLayerByFloodFill(
     } else {
         LogManager::LogError("Can't find starting node for food fill in geometry: "
             + std::to_string(i_geo) + " in IdentifyTypeOfLayerByFloodFill(2D)"
-            + " after " + std::to_string(count_sum) + " iterations.");
+            + " after " + std::to_string(count_sum) + " iterations"
+            + " in "+ std::string(__FILE__) + " at line " + std::to_string(__LINE__));
     }
 }
 /**
@@ -282,7 +283,7 @@ void GridManager3D::ExtendOneLayerGrid(
         }
         if ((flag_node_boundary & kFlagCurrentNodeXNeg_)
             == kFlagCurrentNodeXNeg_) {
-            if (bool_neg_boundary[kXIndex]) {  // on the mimimum x boundary
+            if (bool_neg_boundary[kXIndex]) {  // on the minimum x boundary
                 ptr_vector_boundary_min->at(kXIndex)
                     .insert({ iter.first, kFlag0_ });
             } else {
@@ -300,7 +301,7 @@ void GridManager3D::ExtendOneLayerGrid(
         }
         if ((flag_node_boundary & kFlagCurrentNodeYNeg_)
             == kFlagCurrentNodeYNeg_) {
-            if (bool_neg_boundary[kYIndex]) {  // on the mimimum y boundary
+            if (bool_neg_boundary[kYIndex]) {  // on the minimum y boundary
                 ptr_vector_boundary_min->at(kYIndex)
                     .insert({ iter.first, kFlag0_ });
             } else {
@@ -542,11 +543,13 @@ void  GridManager3D::FindInterfaceBetweenGrid(
 #ifdef DEBUG_CHECK_GRID
     if (&map_outmost_layer == ptr_interface_outmost) {
         LogManager::LogError("input (map_outmost_layer)"
-            " should not be the same as output (ptr_interface_outmost)");
+            " should not be the same as output (ptr_interface_outmost) in "
+            + std::string(__FILE__) + " at line " + std::to_string(__LINE__));
     }
     if (&map_outmost_layer == ptr_layer_lower_level_outer) {
         LogManager::LogError("input (map_outmost_layer)"
-            " should not be the same as output (ptr_layer_lower_level_outer)");
+            " should not be the same as output (ptr_layer_lower_level_outer) in"
+            + std::string(__FILE__) + " at line " + std::to_string(__LINE__));
     }
 #endif  // DEBUG_CHECK_GRID
     std::vector<DefSFBitset> vec_bitset_min(k0GridDims_, 0),

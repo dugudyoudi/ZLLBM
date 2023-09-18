@@ -25,12 +25,14 @@ void GridInfoLBM::initial_grid_node(const DefSFBitset& bit_set_in) {
     map_grid_node_.at(bit_set_in).vec_real[ptr_solver->k0UyIndex_] = 0.;
 }
 void SolverLbmDnQn::SolverInitial() {
-    io::LogManager::LogError("Need to sepecify LBM DnQn Model.");
+    io::LogManager::LogError("Need to specify LBM DnQn Model"
+     + " in "+ std::string(__FILE__) + " at line " + std::to_string(__LINE__));
 }
 void SolverLbmD2Q9::SolverInitial() {
     if (k0SolverDims_ != 2) {
         io::LogManager::LogError("k0SolverDims_ for LBM D2Q9 Model should be"
-            "2 rather than: " + std::to_string(k0SolverDims_) + ".");
+            "2 rather than: " + std::to_string(k0SolverDims_)
+             + " in "+ std::string(__FILE__) + " at line " + std::to_string(__LINE__));
     }
     k0NumQ_ = 9;
     k0Cx_ = { 0., 1., 0., -1., 0., 1., -1., -1., 1. };

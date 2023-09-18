@@ -47,7 +47,7 @@ class AmrManager {
     void InitializeMesh();
     void FinalizeSimulation();
 
-    void SetTheSameLevelDependentInfoForAllLevels(
+    void SetDependentInfoForAllLevelsTheSame(
         SolverCreatorInterface* const ptr_solver_creator);
 
  private:

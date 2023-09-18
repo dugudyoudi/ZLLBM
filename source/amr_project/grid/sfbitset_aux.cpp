@@ -9,6 +9,7 @@
 * @note  functions from other managers will be called.
 */
 #include<array>
+#include<string>
 #include "auxiliary_inline_func.h"
 #include "grid/sfbitset_aux.h"
 #include "grid/grid_manager.h"
@@ -215,49 +216,146 @@ void SFBitsetAux2D::SFBitsetFindAllNeighbors(
     std::array<DefSFBitset, 9>* const  ptr_bitset_neighbors) const {
     bool bool_x_gt0 = (sfbitset_center & k0SFBitsetTakeXRef_[kRefCurrent_]) != 0;
     bool bool_y_gt0 = (sfbitset_center & k0SFBitsetTakeYRef_[kRefCurrent_]) != 0;
-    DefSFBitset sfbitset_temp0, sfbitset_temp1;
+    DefSFBitset sfbitset_temp0 = sfbitset_center, sfbitset_temp1 = sfbitset_center;
 
     ptr_bitset_neighbors->at(kNodeIndexX0Y0_) = sfbitset_center;
     // node at (-x, 0, 0)
-    if (bool_x_gt0) {
-        sfbitset_temp0 = FindXNeg(sfbitset_center);
-    }
-    ptr_bitset_neighbors->at(kNodeIndexXnY0_)
-        = sfbitset_temp0;
+    sfbitset_temp0 = bool_x_gt0 ? FindXNeg(sfbitset_center) : sfbitset_center;
+    ptr_bitset_neighbors->at(kNodeIndexXnY0_) = sfbitset_temp0;
     // node at (-x, -y, 0)
-    if (bool_y_gt0) {
-        sfbitset_temp1 = FindYNeg(sfbitset_temp0);
-    }
-    ptr_bitset_neighbors->at(kNodeIndexXnYn_)
-        = sfbitset_temp1;
+    sfbitset_temp1 = bool_y_gt0 ? FindYNeg(sfbitset_temp0) : sfbitset_temp0;
+    ptr_bitset_neighbors->at(kNodeIndexXnYn_) = sfbitset_temp1;
     // node at (-x, +y, 0)
     sfbitset_temp1 = FindYPos(sfbitset_temp0);
-    ptr_bitset_neighbors->at(kNodeIndexXnYp_)
-        = sfbitset_temp1;
+    ptr_bitset_neighbors->at(kNodeIndexXnYp_) = sfbitset_temp1;
     // node at (+x, 0, 0)
     sfbitset_temp0 = FindXPos(sfbitset_center);
-    ptr_bitset_neighbors->at(kNodeIndexXpY0_)
-        = sfbitset_temp0;
+    ptr_bitset_neighbors->at(kNodeIndexXpY0_) = sfbitset_temp0;
     // node at (+x, -y, 0)
-    if (bool_y_gt0) {
-        sfbitset_temp1 = FindYNeg(sfbitset_temp0);
-    }
-    ptr_bitset_neighbors->at(kNodeIndexXpYn_)
-        = sfbitset_temp1;
+    sfbitset_temp1 = bool_y_gt0 ? FindYNeg(sfbitset_temp0) : sfbitset_temp0;
+    ptr_bitset_neighbors->at(kNodeIndexXpYn_) = sfbitset_temp1;
     // node at (+x, +y, 0)
     sfbitset_temp1 = FindYPos(sfbitset_temp0);
-    ptr_bitset_neighbors->at(kNodeIndexXpYp_)
-        = sfbitset_temp1;
+    ptr_bitset_neighbors->at(kNodeIndexXpYp_) = sfbitset_temp1;
     // node at (0, -y, 0)
-    if (bool_y_gt0) {
-        sfbitset_temp0 = FindYNeg(sfbitset_center);
-    }
+    sfbitset_temp0 = bool_y_gt0 ? FindYNeg(sfbitset_center) : sfbitset_center;
     ptr_bitset_neighbors->at(kNodeIndexX0Yn_)
         = sfbitset_temp0;
     // node at (0, +y, 0)
     sfbitset_temp0 = FindYPos(sfbitset_center);
     ptr_bitset_neighbors->at(kNodeIndexX0Yp_)
         = sfbitset_temp0;
+}
+/**
+ * @brief function to search for the ghost layers near a given node based on min and max space fill codes.
+ * @param[in] sfbitset_in space fill code of the given node
+ * @param[in] region_length half length of the given region
+ * @param[in] domain_min_m1_n_level minimum indicies of current refinement level minus 1.
+ * @param[in] domain_max_p1_n_level maximum indicies of current refinement level plus 1.
+ * @param[out] ptr_sfbitset_nodes pointer to nodes in the given region.
+ */
+void SFBitsetAux2D::FindNodesInReginOfGivenLength(const DefSFBitset& sfbitset_in,
+    const DefAmrIndexLUint region_length, const std::vector<DefSFBitset>& domain_min_m1_n_level,
+    const std::vector<DefSFBitset>& domain_max_p1_n_level, std::vector<DefSFBitset>* const ptr_sfbitset_nodes) const {
+    DefSFBitset sfbitset_tmp_y = sfbitset_in, sfbitset_tmp_x;
+    ptr_sfbitset_nodes->clear();
+    // negative y direction
+    for (DefAmrIndexLUint iy = 0; iy <= region_length; ++iy) {
+        if ((sfbitset_tmp_y&k0SFBitsetTakeYRef_.at(kRefCurrent_))
+         != domain_min_m1_n_level.at(kYIndex)) {
+            sfbitset_tmp_x = sfbitset_tmp_y;
+            for (DefAmrIndexUint ix = 0; ix <= region_length; ++ix) {
+                if ((sfbitset_tmp_x&k0SFBitsetTakeXRef_.at(kRefCurrent_))
+                 != domain_min_m1_n_level.at(kXIndex)) {
+                    ptr_sfbitset_nodes->push_back(sfbitset_tmp_x);
+                } else {
+                    break;
+                }
+                sfbitset_tmp_x = FindXNeg(sfbitset_tmp_x);
+            }
+            sfbitset_tmp_x = sfbitset_tmp_y;
+            for (DefAmrIndexLUint ix = 0; ix < region_length; ++ix) {
+                sfbitset_tmp_x = FindXPos(sfbitset_tmp_x);
+                if ((sfbitset_tmp_x&k0SFBitsetTakeXRef_.at(kRefCurrent_))
+                 != domain_max_p1_n_level.at(kXIndex)) {
+                    ptr_sfbitset_nodes->push_back(sfbitset_tmp_x);
+                } else {
+                    break;
+                }
+            }
+        } else {
+            break;
+        }
+        sfbitset_tmp_y = FindYNeg(sfbitset_tmp_y);
+    }
+    // positive y direction
+    sfbitset_tmp_y = sfbitset_in;
+    for (DefAmrIndexLUint iy = 0; iy < region_length; ++iy) {
+        sfbitset_tmp_y = FindYPos(sfbitset_tmp_y);
+        if ((sfbitset_tmp_y&k0SFBitsetTakeYRef_.at(kRefCurrent_))
+         != domain_max_p1_n_level.at(kYIndex)) {
+            sfbitset_tmp_x = sfbitset_tmp_y;
+            for (DefAmrIndexLUint ix = 0; ix <= region_length; ++ix) {
+                if ((sfbitset_tmp_x&k0SFBitsetTakeXRef_.at(kRefCurrent_))
+                 != domain_min_m1_n_level.at(kXIndex)) {
+                    ptr_sfbitset_nodes->push_back(sfbitset_tmp_x);
+                } else {
+                    break;
+                }
+                sfbitset_tmp_x = FindXNeg(sfbitset_tmp_x);
+            }
+            sfbitset_tmp_x = sfbitset_tmp_y;
+            for (DefAmrIndexUint ix = 0; ix < region_length; ++ix) {
+                sfbitset_tmp_x = FindXPos(sfbitset_tmp_x);
+                if ((sfbitset_tmp_x&k0SFBitsetTakeXRef_.at(kRefCurrent_))
+                 != domain_max_p1_n_level.at(kXIndex)) {
+                    ptr_sfbitset_nodes->push_back(sfbitset_tmp_x);
+                } else {
+                    break;
+                }
+            }
+        } else {
+            break;
+        }
+    }
+}
+/**
+ * @brief function to calculate spacing fill code of minimum indices minus 1 at a given level.
+ * @param[in] i_level the given refinement level
+ * @param[in] indices_min minimum indicies of the computational domain 
+ * @param[out] ptr_min_m1_bitsets a pointer to minimum indices minus 1
+ * @throws ErrorType if the size of min_m1_bitsets is not 2
+ */
+void SFBitsetAux2D::GetMinM1AtGivenLevel(const DefAmrIndexUint i_level,
+    std::vector<DefAmrIndexLUint> indices_min,
+    std::vector<DefSFBitset>* const ptr_min_m1_bitsets) const {
+    if (ptr_min_m1_bitsets->size() != 2) {
+        LogManager::LogError("size of ptr_min_m1_bitsets should be 2 in MpiManager::GetMinM1AtGivenLevel in "
+         + std::string(__FILE__) + " at line " + std::to_string(__LINE__));
+    }
+    DefSFBitset bitset_tmp = SFBitsetToNHigherLevel(i_level, SFBitsetEncoding({indices_min[kXIndex], 0}));
+    ptr_min_m1_bitsets->at(kXIndex) = FindXNeg(bitset_tmp);
+    bitset_tmp = SFBitsetToNHigherLevel(i_level, SFBitsetEncoding({0, indices_min[kYIndex]}));
+    ptr_min_m1_bitsets->at(kYIndex) = FindYNeg(bitset_tmp);
+}
+/**
+ * @brief function to calculate spacing fill code of maximum indices plus 1 at a given level.
+ * @param[in] i_level the given refinement level
+ * @param[in] indices_max maximum indicies of the computational domain 
+ * @param[out] ptr_max_p1_bitsets a pointer to maximum indices plus
+ * @throws ErrorType if the size of max_p1_bitsets is not 2
+ */
+void SFBitsetAux2D::GetMaxP1AtGivenLevel(const DefAmrIndexUint i_level,
+    std::vector<DefAmrIndexLUint> indices_max,
+    std::vector<DefSFBitset>* const ptr_max_p1_bitsets) const {
+    if (ptr_max_p1_bitsets->size() != 2) {
+        LogManager::LogError("size of ptr_max_p1_bitsets should be 2 in MpiManager::GetMaxP1AtGivenLevel in "
+         + std::string(__FILE__) + " at line " + std::to_string(__LINE__));
+    }
+    DefSFBitset bitset_tmp = SFBitsetToNHigherLevel(i_level, SFBitsetEncoding({indices_max[kXIndex], 0}));
+    ptr_max_p1_bitsets->at(kXIndex) = FindXPos(bitset_tmp);
+    bitset_tmp = SFBitsetToNHigherLevel(i_level, SFBitsetEncoding({0, indices_max[kYIndex]}));
+    ptr_max_p1_bitsets->at(kYIndex) = FindYPos(bitset_tmp);
 }
 #endif  // DEBUG_DISABLE_2D_FUNCTIONS
 #ifndef  DEBUG_DISABLE_3D_FUNCTIONS
@@ -378,7 +476,7 @@ void SFBitsetAux3D::SFBitsetFindCellNeighbors(
     ptr_sfbitsets->at(6) = FindYPos(ptr_sfbitsets->at(4));
 }
 /**
-* @brief   function to find all neighouring sfbitset (3D).
+* @brief   function to find all neighoring sfbitset (3D).
 * @param[in]  sfbitset_center  sfbitset at the center.
 * @param[out]  ptr_bitset_neighbors
 *              sfbitset of the given node and its 26 neighbors.
@@ -386,116 +484,287 @@ void SFBitsetAux3D::SFBitsetFindCellNeighbors(
 void SFBitsetAux3D::SFBitsetFindAllNeighbors(
     const DefSFBitset& sfbitset_center,
     std::array<DefSFBitset, 27>* const  ptr_bitset_neighbors) const {
+    bool bool_x_gt0 = (sfbitset_center & k0SFBitsetTakeXRef_[kRefCurrent_]) != 0;
+    bool bool_y_gt0 = (sfbitset_center & k0SFBitsetTakeYRef_[kRefCurrent_]) != 0;
+    bool bool_z_gt0 = (sfbitset_center & k0SFBitsetTakeZRef_[kRefCurrent_]) != 0;
+    DefSFBitset sfbitset_temp0 = sfbitset_center, sfbitset_temp1 = sfbitset_center,
+     sfbitset_temp2 = sfbitset_center;
 
-    DefSFBitset sfbitset_temp0, sfbitset_temp1, sfbitset_temp2;
-
-    ptr_bitset_neighbors->at(kNodeIndexX0Y0Z0_)
-        = sfbitset_center;
+    ptr_bitset_neighbors->at(kNodeIndexX0Y0Z0_) = sfbitset_center;
     // node at (-x, 0, 0)
-    sfbitset_temp0 = FindXNeg(sfbitset_center);
-    ptr_bitset_neighbors->at(kNodeIndexXnY0Z0_)
-        = sfbitset_temp0;
+    sfbitset_temp0 = bool_x_gt0 ? FindXNeg(sfbitset_center) : sfbitset_center;
+    ptr_bitset_neighbors->at(kNodeIndexXnY0Z0_) = sfbitset_temp0;
     // node at (-x, -y, 0)
-    sfbitset_temp1 = FindYNeg(sfbitset_temp0);
-    ptr_bitset_neighbors->at(kNodeIndexXnYnZ0_)
-        = sfbitset_temp1;
+    sfbitset_temp1 = bool_y_gt0 ? FindYNeg(sfbitset_temp0) : sfbitset_temp0;
+    ptr_bitset_neighbors->at(kNodeIndexXnYnZ0_) = sfbitset_temp1;
     // node at (-x, +y, 0)
     sfbitset_temp1 = FindYPos(sfbitset_temp0);
-    ptr_bitset_neighbors->at(kNodeIndexXnYpZ0_)
-        = sfbitset_temp1;
+    ptr_bitset_neighbors->at(kNodeIndexXnYpZ0_) = sfbitset_temp1;
     // node at (+x, 0, 0)
     sfbitset_temp0 = FindXPos(sfbitset_center);
-    ptr_bitset_neighbors->at(kNodeIndexXpY0Z0_)
-        = sfbitset_temp0;
+    ptr_bitset_neighbors->at(kNodeIndexXpY0Z0_) = sfbitset_temp0;
     // node at (+x, -y, 0)
-    sfbitset_temp1 = FindYNeg(sfbitset_temp0);
-    ptr_bitset_neighbors->at(kNodeIndexXpYnZ0_)
-        = sfbitset_temp1;
+    sfbitset_temp1 = bool_y_gt0 ? FindYNeg(sfbitset_temp0) : sfbitset_temp0;
+    ptr_bitset_neighbors->at(kNodeIndexXpYnZ0_) = sfbitset_temp1;
     // node at (+x, +y, 0)
     sfbitset_temp1 = FindYPos(sfbitset_temp0);
-    ptr_bitset_neighbors->at(kNodeIndexXpYpZ0_)
-        = sfbitset_temp1;
+    ptr_bitset_neighbors->at(kNodeIndexXpYpZ0_) = sfbitset_temp1;
     // node at (0, -y, 0)
-    sfbitset_temp0 = FindYNeg(sfbitset_center);
-    ptr_bitset_neighbors->at(kNodeIndexX0YnZ0_)
-        = sfbitset_temp0;
+    sfbitset_temp0 = bool_y_gt0 ? FindYNeg(sfbitset_center) : sfbitset_center;
+    ptr_bitset_neighbors->at(kNodeIndexX0YnZ0_) = sfbitset_temp0;
     // node at (0, +y, 0)
     sfbitset_temp0 = FindYPos(sfbitset_center);
-    ptr_bitset_neighbors->at(kNodeIndexX0YpZ0_)
-        = sfbitset_temp0;
+    ptr_bitset_neighbors->at(kNodeIndexX0YpZ0_) = sfbitset_temp0;
 
     // node at (0, 0, -z)
-    sfbitset_temp0 = FindZNeg(sfbitset_center);
-    ptr_bitset_neighbors->at(kNodeIndexX0Y0Zn_)
-        = sfbitset_temp0;
+    sfbitset_temp0 = bool_z_gt0 ? FindZNeg(sfbitset_center) : sfbitset_center;
+    ptr_bitset_neighbors->at(kNodeIndexX0Y0Zn_) = sfbitset_temp0;
     // node at (-x, 0, -z)
-    sfbitset_temp1 = FindXNeg(sfbitset_temp0);
-    ptr_bitset_neighbors->at(kNodeIndexXnY0Zn_)
-        = sfbitset_temp1;
+    sfbitset_temp1 = bool_x_gt0 ? FindXNeg(sfbitset_temp0) : sfbitset_temp0;
+    ptr_bitset_neighbors->at(kNodeIndexXnY0Zn_) = sfbitset_temp1;
     // node at (-x, -y, -z)
-    sfbitset_temp2 = FindYNeg(sfbitset_temp1);
-    ptr_bitset_neighbors->at(kNodeIndexXnYnZn_)
-        = sfbitset_temp2;
+    sfbitset_temp2 = bool_y_gt0 ? FindYNeg(sfbitset_temp1) : sfbitset_temp1;
+    ptr_bitset_neighbors->at(kNodeIndexXnYnZn_) = sfbitset_temp2;
     // node at (-x, +y, -z)
     sfbitset_temp2 = FindYPos(sfbitset_temp1);
-    ptr_bitset_neighbors->at(kNodeIndexXnYpZn_)
-        = sfbitset_temp2;
+    ptr_bitset_neighbors->at(kNodeIndexXnYpZn_) = sfbitset_temp2;
     // node at (+x, 0, -z)
     sfbitset_temp1 = FindXPos(sfbitset_temp0);
-    ptr_bitset_neighbors->at(kNodeIndexXpY0Zn_)
-        = sfbitset_temp1;
+    ptr_bitset_neighbors->at(kNodeIndexXpY0Zn_) = sfbitset_temp1;
     // node at (+x, -y, -z)
-    sfbitset_temp2 = FindYNeg(sfbitset_temp1);
-    ptr_bitset_neighbors->at(kNodeIndexXpYnZn_)
-        = sfbitset_temp2;
+    sfbitset_temp2 = bool_y_gt0 ? FindYNeg(sfbitset_temp1) : sfbitset_temp1;
+    ptr_bitset_neighbors->at(kNodeIndexXpYnZn_) = sfbitset_temp2;
     // node at (+x, +y, -z)
     sfbitset_temp2 = FindYPos(sfbitset_temp1);
-    ptr_bitset_neighbors->at(kNodeIndexXpYpZn_)
-        = sfbitset_temp2;
+    ptr_bitset_neighbors->at(kNodeIndexXpYpZn_) = sfbitset_temp2;
     // node at (0, -y, -z)
-    sfbitset_temp1 = FindYNeg(sfbitset_temp0);
-    ptr_bitset_neighbors->at(kNodeIndexX0YnZn_)
-        = sfbitset_temp1;
+    sfbitset_temp1 = bool_y_gt0 ? FindYNeg(sfbitset_temp0) : sfbitset_temp0;
+    ptr_bitset_neighbors->at(kNodeIndexX0YnZn_) = sfbitset_temp1;
     //  node at (0, +y, -z)
     sfbitset_temp1 = FindYPos(sfbitset_temp0);
-    ptr_bitset_neighbors->at(kNodeIndexX0YpZn_)
-        = sfbitset_temp1;
+    ptr_bitset_neighbors->at(kNodeIndexX0YpZn_) = sfbitset_temp1;
     // node at (0, 0, +z)
     sfbitset_temp0 = FindZPos(sfbitset_center);
-    ptr_bitset_neighbors->at(kNodeIndexX0Y0Zp_)
-        = sfbitset_temp0;
+    ptr_bitset_neighbors->at(kNodeIndexX0Y0Zp_) = sfbitset_temp0;
     // node at (-x, 0, +z)
-    sfbitset_temp1 = FindXNeg(sfbitset_temp0);
-    ptr_bitset_neighbors->at(kNodeIndexXnY0Zp_)
-        = sfbitset_temp1;
+    sfbitset_temp1 = bool_x_gt0 ? FindXNeg(sfbitset_temp0) : sfbitset_temp0;
+    ptr_bitset_neighbors->at(kNodeIndexXnY0Zp_) = sfbitset_temp1;
     // node at (-x, -y, +z)
-    sfbitset_temp2 = FindYNeg(sfbitset_temp1);
-    ptr_bitset_neighbors->at(kNodeIndexXnYnZp_)
-        = sfbitset_temp2;
+    sfbitset_temp2 = bool_y_gt0 ? FindYNeg(sfbitset_temp1) : sfbitset_temp1;
+    ptr_bitset_neighbors->at(kNodeIndexXnYnZp_) = sfbitset_temp2;
     // node at (-x, +y, +z)
     sfbitset_temp2 = FindYPos(sfbitset_temp1);
-    ptr_bitset_neighbors->at(kNodeIndexXnYpZp_)
-        = sfbitset_temp2;
+    ptr_bitset_neighbors->at(kNodeIndexXnYpZp_) = sfbitset_temp2;
     // node at (+x, 0, +z)
     sfbitset_temp1 = FindXPos(sfbitset_temp0);
-    ptr_bitset_neighbors->at(kNodeIndexXpY0Zp_)
-        = sfbitset_temp1;
+    ptr_bitset_neighbors->at(kNodeIndexXpY0Zp_) = sfbitset_temp1;
     // node at (+x, -y, +z)
-    sfbitset_temp2 = FindYNeg(sfbitset_temp1);
-    ptr_bitset_neighbors->at(kNodeIndexXpYnZp_)
-        = sfbitset_temp2;
+    sfbitset_temp2 = bool_y_gt0 ? FindYNeg(sfbitset_temp1) : sfbitset_temp1;
+    ptr_bitset_neighbors->at(kNodeIndexXpYnZp_) = sfbitset_temp2;
     // node at (+x, +y, +z)
     sfbitset_temp2 = FindYPos(sfbitset_temp1);
-    ptr_bitset_neighbors->at(kNodeIndexXpYpZp_)
-        = sfbitset_temp2;
+    ptr_bitset_neighbors->at(kNodeIndexXpYpZp_) = sfbitset_temp2;
     // node at (0, -y, +z)
-    sfbitset_temp1 = FindYNeg(sfbitset_temp0);
-    ptr_bitset_neighbors->at(kNodeIndexX0YnZp_)
-        = sfbitset_temp1;
-    //  node at (0, +y, +z)
+    sfbitset_temp1 = bool_y_gt0 ? FindYNeg(sfbitset_temp0) : sfbitset_temp0;
+    ptr_bitset_neighbors->at(kNodeIndexX0YnZp_) = sfbitset_temp1;
+    // node at (0, +y, +z)
     sfbitset_temp1 = FindYPos(sfbitset_temp0);
-    ptr_bitset_neighbors->at(kNodeIndexX0YpZp_)
-        = sfbitset_temp1;
+    ptr_bitset_neighbors->at(kNodeIndexX0YpZp_) = sfbitset_temp1;
+}
+/**
+ * @brief function to search for the ghost layers near a given node based on min and max space fill codes.
+ * @param[in] sfbitset_in space fill code of the given node
+ * @param[in] region_length half length of the given region
+ * @param[in] domain_min_m1_n_level minimum indicies of current refinement level minus 1.
+ * @param[in] domain_max_p1_n_level maximum indicies of current refinement level plus 1.
+ * @param[out] ptr_sfbitset_nodes pointer to nodes in the given region.
+ */
+void SFBitsetAux3D::FindNodesInReginOfGivenLength(const DefSFBitset& sfbitset_in,
+    const DefAmrIndexLUint region_length, const std::vector<DefSFBitset>& domain_min_m1_n_level,
+    const std::vector<DefSFBitset>& domain_max_p1_n_level, std::vector<DefSFBitset>* const ptr_sfbitset_nodes) const {
+    DefSFBitset sfbitset_tmp_y, sfbitset_tmp_x, sfbitset_tmp_z = sfbitset_in;
+    ptr_sfbitset_nodes->clear();
+    // negative z direction
+    for (DefAmrIndexUint iz = 0; iz <= region_length; ++iz) {
+        if ((sfbitset_tmp_z&k0SFBitsetTakeZRef_.at(kRefCurrent_))
+         != domain_min_m1_n_level.at(kZIndex)) {
+            sfbitset_tmp_y = sfbitset_tmp_z;
+            // negative y direction
+            for (DefAmrIndexUint iy = 0; iy <= region_length; ++iy) {
+                if ((sfbitset_tmp_y&k0SFBitsetTakeYRef_.at(kRefCurrent_))
+                 != domain_min_m1_n_level.at(kYIndex)) {
+                    sfbitset_tmp_x = sfbitset_tmp_y;
+                    for (DefAmrIndexUint ix = 0; ix <= region_length; ++ix) {
+                        if ((sfbitset_tmp_x&k0SFBitsetTakeXRef_.at(kRefCurrent_))
+                         != domain_min_m1_n_level.at(kXIndex)) {
+                            ptr_sfbitset_nodes->push_back(sfbitset_tmp_x);
+                        } else {
+                            break;
+                        }
+                        sfbitset_tmp_x = FindXNeg(sfbitset_tmp_x);
+                    }
+                    sfbitset_tmp_x = sfbitset_tmp_y;
+                    for (DefAmrIndexUint ix = 0; ix < region_length; ++ix) {
+                        sfbitset_tmp_x = FindXPos(sfbitset_tmp_x);
+                        if ((sfbitset_tmp_x&k0SFBitsetTakeXRef_.at(kRefCurrent_))
+                         != domain_max_p1_n_level.at(kXIndex)) {
+                            ptr_sfbitset_nodes->push_back(sfbitset_tmp_x);
+                        } else {
+                            break;
+                        }
+                    }
+                } else {
+                    break;
+                }
+                sfbitset_tmp_y = FindYNeg(sfbitset_tmp_y);
+            }
+            // positive y direction
+            sfbitset_tmp_y = sfbitset_tmp_z;
+            for (DefAmrIndexUint iy = 0; iy < region_length; ++iy) {
+                sfbitset_tmp_y = FindYPos(sfbitset_tmp_y);
+                if ((sfbitset_tmp_y&k0SFBitsetTakeYRef_.at(kRefCurrent_))
+                 != domain_max_p1_n_level.at(kYIndex)) {
+                    sfbitset_tmp_x = sfbitset_tmp_y;
+                    for (DefAmrIndexUint ix = 0; ix <= region_length; ++ix) {
+                        if ((sfbitset_tmp_x&k0SFBitsetTakeXRef_.at(kRefCurrent_))
+                         != domain_min_m1_n_level.at(kXIndex)) {
+                            ptr_sfbitset_nodes->push_back(sfbitset_tmp_x);
+                        } else {
+                            break;
+                        }
+                        sfbitset_tmp_x = FindXNeg(sfbitset_tmp_x);
+                    }
+                    sfbitset_tmp_x = sfbitset_tmp_y;
+                    for (DefAmrIndexUint ix = 0; ix < region_length; ++ix) {
+                        sfbitset_tmp_x = FindXPos(sfbitset_tmp_x);
+                        if ((sfbitset_tmp_x&k0SFBitsetTakeXRef_.at(kRefCurrent_))
+                         != domain_max_p1_n_level.at(kXIndex)) {
+                            ptr_sfbitset_nodes->push_back(sfbitset_tmp_x);
+                        } else {
+                            break;
+                        }
+                    }
+                } else {
+                    break;
+                }
+            }
+        } else {
+            break;
+        }
+        sfbitset_tmp_z = FindZNeg(sfbitset_tmp_z);
+    }
+    // positive z direction
+    sfbitset_tmp_z = sfbitset_in;
+    for (DefAmrIndexUint iz = 0; iz < region_length; ++iz) {
+        sfbitset_tmp_z = FindZPos(sfbitset_tmp_z);
+        if ((sfbitset_tmp_z&k0SFBitsetTakeZRef_.at(kRefCurrent_))
+         != domain_max_p1_n_level.at(kZIndex)) {
+            sfbitset_tmp_y = sfbitset_tmp_z;
+            // negative y direction
+            for (DefAmrIndexUint iy = 0; iy <= region_length; ++iy) {
+                if ((sfbitset_tmp_y&k0SFBitsetTakeYRef_.at(kRefCurrent_))
+                 != domain_min_m1_n_level.at(kYIndex)) {
+                    sfbitset_tmp_x = sfbitset_tmp_y;
+                    for (DefAmrIndexUint ix = 0; ix <= region_length; ++ix) {
+                        if ((sfbitset_tmp_x&k0SFBitsetTakeXRef_.at(kRefCurrent_))
+                         != domain_min_m1_n_level.at(kXIndex)) {
+                            ptr_sfbitset_nodes->push_back(sfbitset_tmp_x);
+                        } else {
+                            break;
+                        }
+                        sfbitset_tmp_x = FindXNeg(sfbitset_tmp_x);
+                    }
+                    sfbitset_tmp_x = sfbitset_tmp_y;
+                    for (DefAmrIndexUint ix = 0; ix < region_length; ++ix) {
+                        sfbitset_tmp_x = FindXPos(sfbitset_tmp_x);
+                        if ((sfbitset_tmp_x&k0SFBitsetTakeXRef_.at(kRefCurrent_))
+                         != domain_max_p1_n_level.at(kXIndex)) {
+                            ptr_sfbitset_nodes->push_back(sfbitset_tmp_x);
+                        } else {
+                            break;
+                        }
+                    }
+                } else {
+                    break;
+                }
+                sfbitset_tmp_y = FindYNeg(sfbitset_tmp_y);
+            }
+            // positive y direction
+            sfbitset_tmp_y = sfbitset_tmp_z;
+            for (DefAmrIndexUint iy = 0; iy < region_length; ++iy) {
+                sfbitset_tmp_y = FindYPos(sfbitset_tmp_y);
+                if ((sfbitset_tmp_y&k0SFBitsetTakeYRef_.at(kRefCurrent_))
+                 != domain_max_p1_n_level.at(kYIndex)) {
+                    sfbitset_tmp_x = sfbitset_tmp_y;
+                    for (DefAmrIndexUint ix = 0; ix <= region_length; ++ix) {
+                        if ((sfbitset_tmp_x&k0SFBitsetTakeXRef_.at(kRefCurrent_))
+                         != domain_min_m1_n_level.at(kXIndex)) {
+                            ptr_sfbitset_nodes->push_back(sfbitset_tmp_x);
+                        } else {
+                            break;
+                        }
+                        sfbitset_tmp_x = FindXNeg(sfbitset_tmp_x);
+                    }
+                    sfbitset_tmp_x = sfbitset_tmp_y;
+                    for (DefAmrIndexUint ix = 0; ix < region_length; ++ix) {
+                        sfbitset_tmp_x = FindXPos(sfbitset_tmp_x);
+                        if ((sfbitset_tmp_x&k0SFBitsetTakeXRef_.at(kRefCurrent_))
+                         != domain_max_p1_n_level.at(kXIndex)) {
+                            ptr_sfbitset_nodes->push_back(sfbitset_tmp_x);
+                        } else {
+                            break;
+                        }
+                    }
+                } else {
+                    break;
+                }
+            }
+        } else {
+            break;
+        }
+    }
+}
+/**
+ * @brief function to calculate spacing fill code of minimum indices minus 1 at a given level.
+ * @param[in] i_level the given refinement level
+ * @param[in] indices_min minimum indicies of the computational domain 
+ * @param[out] ptr_min_m1_bitsets a pointer to minimum indices minus 1
+ * @throws ErrorType if the size of min_m1_bitsets is not 3
+ */
+void SFBitsetAux3D::GetMinM1AtGivenLevel(const DefAmrIndexUint i_level,
+    std::vector<DefAmrIndexLUint> indices_min,
+    std::vector<DefSFBitset>* const ptr_min_m1_bitsets) const {
+    if (ptr_min_m1_bitsets->size() != 3) {
+        LogManager::LogError("size of ptr_min_m1_bitsets should be 3 in MpiManager::GetMinM1AtGivenLevel3D in "
+         + std::string(__FILE__) + " at line " + std::to_string(__LINE__));
+    }
+    DefSFBitset bitset_tmp = SFBitsetToNHigherLevel(i_level, SFBitsetEncoding({indices_min[kXIndex], 0, 0}));
+    ptr_min_m1_bitsets->at(kXIndex) = FindXNeg(bitset_tmp);
+    bitset_tmp = SFBitsetToNHigherLevel(i_level, SFBitsetEncoding({0,  indices_min[kYIndex], 0}));
+    ptr_min_m1_bitsets->at(kYIndex) = FindYNeg(bitset_tmp);
+    bitset_tmp = SFBitsetToNHigherLevel(i_level, SFBitsetEncoding({0, 0, indices_min[kZIndex]}));
+    ptr_min_m1_bitsets->at(kZIndex) = FindZNeg(bitset_tmp);
+}
+/**
+ * @brief function to calculate spacing fill code of maximum indices plus 1 at a given level.
+ * @param[in] i_level the given refinement level
+ * @param[in] indices_max maximum indicies of the computational domain 
+ * @param[out] ptr_max_p1_bitsets a pointer to maximum indices plus
+ * @throws ErrorType if the size of max_p1_bitsets is not 3
+ */
+void SFBitsetAux3D::GetMaxP1AtGivenLevel(const DefAmrIndexUint i_level,
+    std::vector<DefAmrIndexLUint> indices_max,
+    std::vector<DefSFBitset>* const ptr_max_p1_bitsets) const {
+    if (ptr_max_p1_bitsets->size() != 3) {
+        LogManager::LogError("size of ptr_max_p1_bitsets should be 3 in MpiManager::GetMaxP1AtGivenLevel3D in "
+         + std::string(__FILE__) + " at line " + std::to_string(__LINE__));
+    }
+    DefSFBitset bitset_tmp = SFBitsetToNHigherLevel(i_level, SFBitsetEncoding({indices_max[kXIndex], 0, 0}));
+    ptr_max_p1_bitsets->at(kXIndex) = FindXPos(bitset_tmp);
+    bitset_tmp = SFBitsetToNHigherLevel(i_level, SFBitsetEncoding({0, indices_max[kYIndex], 0}));
+    ptr_max_p1_bitsets->at(kYIndex) = FindYPos(bitset_tmp);
+    bitset_tmp = SFBitsetToNHigherLevel(i_level, SFBitsetEncoding({0, 0, indices_max[kZIndex]}));
+    ptr_max_p1_bitsets->at(kZIndex) = FindZPos(bitset_tmp);
 }
 #endif  // DEBUG_DISABLE_3D_FUNCTIONS
 }  // end namespace amrproject

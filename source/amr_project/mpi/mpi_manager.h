@@ -40,9 +40,20 @@ class MpiManager{
 
     DefSFBitset sfbitset_min_current_rank_, sfbitset_max_current_rank_;
     ///< space filling codes of background nodes on the interfaces of partitioned grid
+    std::vector<DefSFBitset> vec_sfbitset_min_all_ranks_, vec_sfbitset_max_all_ranks_;
 
-    DefAmrIndexUint num_of_partition_ghost_layers_ = 2;
-    std::vector<std::vector<DefMap<DefAmrIndexUint>>> mpi_communication_ghost_layers_;
+    DefAmrIndexUint k0NumPartitionOuterLayers_ = 2;
+    DefAmrIndexUint k0NumPartitionInnerLayers_ = k0NumPartitionOuterLayers_;
+    std::vector<DefMap<std::set<int>>> mpi_communication_inner_layers_;
+    /** nodes not on the partition interface and whose spacing filling code is
+     between the minimum and the maximum spacing filling codes of current rank*/
+    std::vector<DefMap<DefAmrUint>> mpi_communication_outer_layers_;
+    /** nodes whose spacing filling code exceeds 
+     the minimum and the maximum spacing filling codes of current rank*/
+    //  i      i       i  inner layer (rank 0)            o      o      o  outer layer (rank 1)
+    //  -      -       -  inner layer: interface(rank 0)  o      o      o  outer layer (rank 1)
+    //  o      o       o  outer layer (rank 0)            -      -      -  inner layer: interface (rank 1)
+    //  o      o       o  outer layer (rank 0)            i      i      i  inner layer (rank 1)
 
     void StartupMpi(int argc, char* argv[]);
     void FinalizeMpi();
@@ -249,30 +260,29 @@ class MpiManager{
         const std::vector<std::unique_ptr<TrackingGridInfoCreatorInterface>>& vec_tracking_info_creator,
         std::map<std::pair<ECriterionType, DefAmrIndexUint>, std::shared_ptr<TrackingGridInfoInterface>>*
         const ptr_map_tracking_info) const;
-    void IniSendNReceiveRefinementInterface(const DefAmrIndexUint dims, const DefAmrIndexUint i_level,
-        const DefAmrIndexUint num_of_layers_coarse2fine,
-        const std::vector<DefSFBitset>& bitset_min, const std::vector<DefSFBitset>& bitset_max,
-        const SFBitsetAuxInterface& sfbitset_aux, const DefMap<DefAmrIndexUint>& map_grid_nodes,
+    void IniSendNReceiveCoarse2Fine0Interface(const DefAmrIndexUint dims, const DefAmrIndexUint i_level,
+        const DefAmrIndexUint num_of_layers_coarse2fine, const DefAmrUint flag0,
+        const DefMap<std::set<int>>& outmost_for_all_ranks,
         std::map<std::pair<ECriterionType, DefAmrIndexUint>,
         std::shared_ptr<InterfaceLayerInfo>>* const ptr_map_interface_info) const;
-    void IniSendNReceivePartitionedGrid(const DefAmrIndexUint dims, const DefAmrIndexUint flag_size0,
+    void IniSendNReceivePartitionedGrid(const DefAmrIndexUint dims,
+        const DefAmrIndexUint flag_size0, const DefAmrUint flag_coarse2fine,
         const std::vector<DefSFBitset>& bitset_min, const std::vector<DefSFBitset>& bitset_max,
         const std::vector<DefAmrIndexLUint>& indices_min, const std::vector<DefAmrIndexLUint>& indices_max,
         const SFBitsetAuxInterface& sfbitset_aux,
-        std::vector<DefMap<DefAmrIndexUint>>* const ptr_vec_sfbitset,
-        std::vector<DefMap<DefAmrIndexUint>>* const ptr_sfbitset_each_one_lower_level,
-        std::vector<DefMap<DefAmrIndexUint>>* const ptr_sfbitset_partition_interface) const;
+        const std::vector<DefMap<DefAmrIndexUint>>& vec_sfbitset_rank0,
+        std::vector<DefMap<DefAmrIndexUint>>* const ptr_sfbitset_each,
+        std::vector<std::shared_ptr<GridInfoInterface>>* const ptr_vec_grid_info) const;
     void SendNReceiveGridInfoAtGivenLevels(const DefAmrIndexUint flag_size0,
-        const DefAmrIndexUint dims, const DefAmrIndexUint max_level,
+        const DefAmrUint flag_coarse2fine, const DefAmrIndexUint dims, const DefAmrIndexUint max_level,
         const DefSFBitset bitset_domain_min, const DefSFBitset bitset_domain_max,
         const std::vector<DefAmrIndexLUint>& indices_min, const std::vector<DefAmrIndexLUint>& indices_max,
         const std::vector<DefAmrIndexLUint>& vec_cost, const SFBitsetAuxInterface& sfbitset_aux,
         const std::vector<std::unique_ptr<TrackingGridInfoCreatorInterface>>& vec_tracking_creator,
-        std::vector<DefMap<DefAmrIndexUint>>* const ptr_ini_sfbitset_one_lower_level_rank0,
+        const std::vector<DefMap<DefAmrIndexUint>> ini_sfbitset_one_lower_level_rank0,
         std::array<DefSFBitset, 2>* const sfbitset_bound_current,
         std::vector<DefMap<DefAmrIndexUint>>* const ptr_sfbitset_one_lower_level_current_rank,
-        std::vector<DefMap<DefAmrIndexUint>>* const ptr_sfbitset_partition_interface,
-        std::vector<std::shared_ptr<GridInfoInterface>>* const ptr_vec_grid_info) const;
+        std::vector<std::shared_ptr<GridInfoInterface>>* const ptr_vec_grid_info);
 
  private:
     DefAmrIndexUint kFlagNotOnInterface = 1, kFlagOnInterface = 2;
@@ -281,14 +291,13 @@ class MpiManager{
         std::unique_ptr<char[]>& buffer) const;
     void IniDeserializeTrackingNode(const std::unique_ptr<char[]>& buffer,
         const TrackingNode& tracking_node_instance, DefMap<TrackingNode>* const ptr_map_tracking) const;
-    int IniSerializeRefinementInterfaceNode(const std::set<DefSFCodeToUint>& set_nodes,
+    int IniSerializeRefinementInterfaceNode(const DefMap<DefAmrUint>& interface_nodes,
         std::unique_ptr<char[]>& buffer) const;
-    void IniDeserializeRefinementInterfaceNode(
+    void IniDeserializeRefinementInterfaceNode(const DefAmrUint flag0,
         const std::unique_ptr<char[]>& buffer, DefMap<DefAmrUint>* ptr_map_interface_layer) const;
-    void IniSendNReiveOneLayerRefinementInterface(const DefAmrIndexUint dims, const DefAmrIndexUint i_level,
-        const std::vector<DefSFBitset>& bitset_min, const std::vector<DefSFBitset>& bitset_max,
-        const SFBitsetAuxInterface& sfbitset_aux,
-        const DefMap<DefAmrIndexUint>& map_grid_nodes, DefMap<DefAmrUint>* const ptr_map_interface_layer) const;
+    void IniSendNReiveOneLayerRefinementInterface(
+        const DefAmrUint flag0, const DefMap<std::set<int>>& outmost_for_all_ranks,
+        DefMap<DefAmrUint>* const ptr_map_interface_layer) const;
 
  public:
 #ifndef  DEBUG_DISABLE_2D_FUNCTION
@@ -303,11 +312,7 @@ class MpiManager{
         DefMap<DefAmrIndexUint>* const ptr_partition_interface_background) const;
     void GetNLevelCorrespondingOnes2D(const DefAmrIndexUint i_level,
         const SFBitsetAux2D& bitset_aux2d, std::vector<DefSFBitset>* const ptr_last_ones) const;
-    void GetMinM1AtGivenLevel2D(const DefAmrIndexUint i_level, std::array<DefAmrIndexLUint, 2> indices_min,
-        const SFBitsetAux2D& bitset_aux2d, std::vector<DefSFBitset>* const ptr_min_m1_bitsets) const;
-    void GetMaxP1AtGivenLevel2D(const DefAmrIndexUint i_level, std::array<DefAmrIndexLUint, 2> indices_max,
-        const SFBitsetAux2D& bitset_aux2d, std::vector<DefSFBitset>* const ptr_max_p1_bitsets) const;
-    bool CheckNodeOnOuterBoundaryOfBackgroundCell2D(DefAmrIndexUint i_level,
+    int CheckNodeOnOuterBoundaryOfBackgroundCell2D(DefAmrIndexUint i_level,
         const DefSFCodeToUint code_min, const DefSFCodeToUint code_max,
         const DefSFBitset bitset_in, const SFBitsetAux2D& bitset_aux2d,
         const std::vector<DefSFBitset>& domain_min_m1_n_level,
@@ -320,10 +325,6 @@ class MpiManager{
         const std::vector<DefSFBitset>& domain_min_m1_n_level,
         const std::vector<DefSFBitset>& domain_max_p1_n_level,
         DefMap<DefAmrIndexUint>* const ptr_map_ghost_layer) const;
-    void SearchPartitionInterfaceLayer2D(const DefAmrIndexUint flag0, const GridNode& grid_not_instance,
-    const SFBitsetAux2D sfbitset_aux2d, const std::vector<std::shared_ptr<GridInfoInterface>>& vec_grid_info,
-    const std::vector<DefMap<DefAmrIndexUint>> sfbitset_partition_interface,
-    GridInfoInterface* const ptr_background_grid);
 #endif  // DEBUG_DISABLE_2D_FUNCTIONS
 #ifndef  DEBUG_DISABLE_3D_FUNCTION
     void TraverseBackgroundForPartitionRank0(
@@ -337,11 +338,7 @@ class MpiManager{
         DefMap<DefAmrIndexUint>* const ptr_partition_interface_background) const;
     void GetNLevelCorrespondingOnes3D(const DefAmrIndexUint i_level,
         const SFBitsetAux3D& bitset_aux3d, std::vector<DefSFBitset>* const ptr_last_ones) const;
-    void GetMinM1AtGivenLevel3D(const DefAmrIndexUint i_level, std::array<DefAmrIndexLUint, 3> indices_min,
-        const SFBitsetAux3D& bitset_aux3d, std::vector<DefSFBitset>* const ptr_min_m1_bitsets) const;
-    void GetMaxP1AtGivenLevel3D(const DefAmrIndexUint i_level, std::array<DefAmrIndexLUint, 3> indices_max,
-        const SFBitsetAux3D& bitset_aux3d, std::vector<DefSFBitset>* const ptr_max_p1_bitsets) const;
-    bool CheckNodeOnOuterBoundaryOfBackgroundCell3D(DefAmrIndexUint i_level,
+    int CheckNodeOnOuterBoundaryOfBackgroundCell3D(DefAmrIndexUint i_level,
         const DefSFCodeToUint code_min, const DefSFCodeToUint code_max,
         const DefSFBitset bitset_in, const SFBitsetAux3D& bitset_aux3d,
         const std::vector<DefSFBitset>& domain_min_m1_n_level,

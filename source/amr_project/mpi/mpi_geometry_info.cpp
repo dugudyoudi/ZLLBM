@@ -25,7 +25,8 @@ int MpiManager::SerializeCoordiOrigin(const std::vector<GeometryCoordinate2D>& v
     int real_size = sizeof(DefReal);
     if  (vec_points.size() * real_size* 2 > 0x7FFFFFFF) {
         LogManager::LogError("size of the buffer is greater than the maximum of int"
-            " in MpiManager::SerializeData(std::vector<GeometryCoordinate2D>)");
+            " in MpiManager::SerializeData(std::vector<GeometryCoordinate2D>) in "
+            + std::string(__FILE__) + " at line " + std::to_string(__LINE__));
     } else {
         num_points = static_cast<int>(vec_points.size());
     }
@@ -104,7 +105,8 @@ void MpiManager::IniSendNReceivePartitionedGeoCoordi(const std::array<DefReal, 2
 #ifdef DEBUG_CHECK_GRID
             if (index == num_max) {
                 LogManager::LogError("geometry point is out of computational "
-                     "domain in GeometryInfo2DInterface::IniSendNReceivePartitionedGeoCoordiCoordi");
+                     "domain in GeometryInfo2DInterface::IniSendNReceivePartitionedGeoCoordi in "
+                     + std::string(__FILE__) + " at line " + std::to_string(__LINE__));
             }
 #endif  // DEBUG_CHECK_GRID
             if (index > 0) {
@@ -172,7 +174,8 @@ int MpiManager::SerializeCoordiOrigin(const std::vector<GeometryCoordinate3D>& v
     int real_size = sizeof(DefReal);
     if  (vec_points.size() * real_size* 2 > 0x7FFFFFFF) {
         LogManager::LogError("size of the buffer is greater than the maximum of int"
-            " in MpiManager::SerializeData(std::vector<GeometryCoordinate3D>)");
+            " in MpiManager::SerializeData(std::vector<GeometryCoordinate3D>) in "
+            + std::string(__FILE__) + " at line " + std::to_string(__LINE__));
     } else {
         num_points = static_cast<int>(vec_points.size());
     }
@@ -256,7 +259,8 @@ void MpiManager::IniSendNReceivePartitionedGeoCoordi(const std::array<DefReal, 3
 #ifdef DEBUG_CHECK_GRID
             if (index == num_max) {
                 LogManager::LogError("geometry point is out of computational "
-                     "domain in MpiManager::IniSendNReceivePartitionedGeoCoordi");
+                     "domain in MpiManager::IniSendNReceivePartitionedGeoCoordi in "
+                     + std::string(__FILE__) + " at line " + std::to_string(__LINE__));
             }
 #endif  // DEBUG_CHECK_GRID
             if (index > 0) {

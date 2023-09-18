@@ -24,55 +24,12 @@ void MpiManager::GetNLevelCorrespondingOnes2D(const DefAmrIndexUint i_level,
     const SFBitsetAux2D& bitset_aux2d, std::vector<DefSFBitset>* const ptr_last_ones) const {
     if (ptr_last_ones->size() != 2) {
         LogManager::LogError("size of ptr_last_ones should be 2 in MpiManager::GetNLevelCorrespondingOnes2D in "
-         + std::string(__FILE__) + "at line " + std::to_string(__LINE__));
+         + std::string(__FILE__) + " at line " + std::to_string(__LINE__));
     }
     ptr_last_ones->at(kXIndex) =
         bitset_aux2d.k0SFBitsetTakeXRef_.at(bitset_aux2d.kRefCurrent_)>>(kSFBitsetBit - i_level * 2);
     ptr_last_ones->at(kYIndex) =
         bitset_aux2d.k0SFBitsetTakeYRef_.at(bitset_aux2d.kRefCurrent_)>>(kSFBitsetBit - i_level * 2);
-}
-/**
- * @brief function to calculate spacing fill code of minimum indices minus 1 at a given level.
- * @param[in] i_level the given refinement level
- * @param[in] indices_min minimum indicies of the computational domain 
- * @param[in] bitset_aux2d class manage space filling curves.
- * @param[out] ptr_min_m1_bitsets a pointer to minimum indices minus 1
- * @throws ErrorType if the size of min_m1_bitsets is not 2
- */
-void MpiManager::GetMinM1AtGivenLevel2D(const DefAmrIndexUint i_level,
-    std::array<DefAmrIndexLUint, 2> indices_min, const SFBitsetAux2D& bitset_aux2d,
-    std::vector<DefSFBitset>* const ptr_min_m1_bitsets) const {
-    if (ptr_min_m1_bitsets->size() != 2) {
-        LogManager::LogError("size of ptr_min_m1_bitsets should be 2 in MpiManager::GetMinM1AtGivenLevel2D in "
-         + std::string(__FILE__) + "at line " + std::to_string(__LINE__));
-    }
-    DefSFBitset bitset_tmp = bitset_aux2d.SFBitsetToNHigherLevel(i_level,
-     bitset_aux2d.SFBitsetEncoding({indices_min[kXIndex], 0}));
-    ptr_min_m1_bitsets->at(kXIndex) = bitset_aux2d.FindXNeg(bitset_tmp);
-    bitset_tmp = bitset_aux2d.SFBitsetToNHigherLevel(i_level, bitset_aux2d.SFBitsetEncoding({0, indices_min[kYIndex]}));
-    ptr_min_m1_bitsets->at(kYIndex) = bitset_aux2d.FindYNeg(bitset_tmp);
-}
-/**
- * @brief function to calculate spacing fill code of maximum indices plus 1 at a given level.
- * @param[in] i_level the given refinement level
- * @param[in] indices_max maximum indicies of the computational domain 
- * @param[in] bitset_aux2d class manage space filling curves.
- * @param[out] ptr_max_p1_bitsets a pointer to maximum indices plus
- * @throws ErrorType if the size of max_p1_bitsets is not 2
- */
-void MpiManager::GetMaxP1AtGivenLevel2D(const DefAmrIndexUint i_level,
-    std::array<DefAmrIndexLUint, 2> indices_max, const SFBitsetAux2D& bitset_aux2d,
-    std::vector<DefSFBitset>* const ptr_max_p1_bitsets) const {
-    if (ptr_max_p1_bitsets->size() != 2) {
-        LogManager::LogError("size of ptr_max_p1_bitsets should be 2 in MpiManager::GetMaxP1AtGivenLevel2D in "
-         + std::string(__FILE__) + "at line " + std::to_string(__LINE__));
-    }
-    DefSFBitset bitset_tmp = bitset_aux2d.SFBitsetToNHigherLevel(i_level,
-     bitset_aux2d.SFBitsetEncoding({indices_max[kXIndex], 0}));
-    ptr_max_p1_bitsets->at(kXIndex) = bitset_aux2d.FindXPos(bitset_tmp);
-    bitset_tmp = bitset_aux2d.SFBitsetToNHigherLevel(i_level,
-     bitset_aux2d.SFBitsetEncoding({0, indices_max[kYIndex]}));
-    ptr_max_p1_bitsets->at(kYIndex) = bitset_aux2d.FindYPos(bitset_tmp);
 }
 /**
  * @brief function to check if a given node is on the interface of partitioned blocks
@@ -85,18 +42,19 @@ void MpiManager::GetMaxP1AtGivenLevel2D(const DefAmrIndexUint i_level,
  * @param[in] domain_max_p1_n_level maximum indicies of current refinement level plus 1.
  * @param[in] bitset_level_ones bitsets of current refinement level excluding background space filling code.
  * @param[out] partitioned_interface_background  background nodes on the partitioned interface.
+ * @return 0 is not on the partitioned interface; 1 is on the lower interface; and 2 on the upper interface
  */
-bool MpiManager::CheckNodeOnOuterBoundaryOfBackgroundCell2D(DefAmrIndexUint i_level,
+int MpiManager::CheckNodeOnOuterBoundaryOfBackgroundCell2D(DefAmrIndexUint i_level,
     const DefSFCodeToUint code_min, const DefSFCodeToUint code_max,
     const DefSFBitset bitset_in, const SFBitsetAux2D& bitset_aux2d,
     const std::vector<DefSFBitset>& domain_min_m1_n_level, const std::vector<DefSFBitset>& domain_max_p1_n_level,
     const std::vector<DefSFBitset>& bitset_level_ones,
     const DefMap<DefAmrIndexUint>& partitioned_interface_background) const {
-    // At least one index is the minimum or maximum of the background cell,
-    // or the node is inside the background cell, not on the edge.
+    // if at least one neighboring node is outside the partitioned block,
+    // the given node is on the partitioned interface
     if ((bitset_in & bitset_level_ones.at(kXIndex)) == 0
-        || (bitset_in & bitset_level_ones.at(kXIndex)) == bitset_level_ones.at(kXIndex)
         || (bitset_in & bitset_level_ones.at(kYIndex)) == 0
+        || (bitset_in & bitset_level_ones.at(kXIndex)) == bitset_level_ones.at(kXIndex)
         || (bitset_in & bitset_level_ones.at(kYIndex)) == bitset_level_ones.at(kYIndex)) {
         DefSFBitset bitset_background = bitset_aux2d.SFBitsetToNLowerLevel(i_level, bitset_in), bitset_tmp;
         if (partitioned_interface_background.find(bitset_background) != partitioned_interface_background.end()) {
@@ -105,7 +63,7 @@ bool MpiManager::CheckNodeOnOuterBoundaryOfBackgroundCell2D(DefAmrIndexUint i_le
             DefSFCodeToUint code;
             for (unsigned int i = 1; i < 9; ++i) {
                 code = array_neighbors.at(i).to_ullong();
-                if ((code < code_min || code > code_max)
+                if (code < code_min
                     && ((array_neighbors.at(i) & bitset_aux2d.k0SFBitsetTakeXRef_.at(bitset_aux2d.kRefCurrent_))
                     != domain_min_m1_n_level.at(kXIndex))
                     && ((array_neighbors.at(i) & bitset_aux2d.k0SFBitsetTakeXRef_.at(bitset_aux2d.kRefCurrent_))
@@ -114,12 +72,22 @@ bool MpiManager::CheckNodeOnOuterBoundaryOfBackgroundCell2D(DefAmrIndexUint i_le
                     != domain_min_m1_n_level.at(kYIndex))
                     && ((array_neighbors.at(i) & bitset_aux2d.k0SFBitsetTakeYRef_.at(bitset_aux2d.kRefCurrent_))
                     != domain_max_p1_n_level.at(kYIndex))) {
-                    return true;
+                    return 1;
+                } else if (code > code_max
+                    && ((array_neighbors.at(i) & bitset_aux2d.k0SFBitsetTakeXRef_.at(bitset_aux2d.kRefCurrent_))
+                    != domain_min_m1_n_level.at(kXIndex))
+                    && ((array_neighbors.at(i) & bitset_aux2d.k0SFBitsetTakeXRef_.at(bitset_aux2d.kRefCurrent_))
+                    != domain_max_p1_n_level.at(kXIndex))
+                    && ((array_neighbors.at(i) & bitset_aux2d.k0SFBitsetTakeYRef_.at(bitset_aux2d.kRefCurrent_))
+                    != domain_min_m1_n_level.at(kYIndex))
+                    && ((array_neighbors.at(i) & bitset_aux2d.k0SFBitsetTakeYRef_.at(bitset_aux2d.kRefCurrent_))
+                    != domain_max_p1_n_level.at(kYIndex))) {
+                    return 2;
                 }
             }
         }
     }
-    return false;
+    return 0;
 }
 /**
  * @brief function to search for the ghost layers near a given node based on min and max space fill codes.
@@ -132,7 +100,6 @@ bool MpiManager::CheckNodeOnOuterBoundaryOfBackgroundCell2D(DefAmrIndexUint i_le
  * @param[in] domain_min_m1_n_level minimum indicies of current refinement level minus 1.
  * @param[in] domain_max_p1_n_level maximum indicies of current refinement level plus 1.
  * @param[out] ptr_map_ghost_layer pointer to nodes on ghost layers near the given node.
- * @throws None
  */
 void MpiManager::SearchForGhostLayerForMinNMax2D(const DefSFBitset sfbitset_in,
     const DefAmrIndexUint num_of_ghost_layers, const DefSFCodeToUint code_min, const DefSFCodeToUint code_max,
@@ -140,7 +107,6 @@ void MpiManager::SearchForGhostLayerForMinNMax2D(const DefSFBitset sfbitset_in,
     const std::vector<DefSFBitset>& domain_min_m1_n_level,
     const std::vector<DefSFBitset>& domain_max_p1_n_level,
     DefMap<DefAmrIndexUint>* const ptr_map_ghost_layer) const {
-    ptr_map_ghost_layer->clear();
     DefSFCodeToUint code_tmp;
     DefSFBitset sfbitset_tmp_y = sfbitset_in, sfbitset_tmp_x;
     // negative y direction
@@ -368,32 +334,6 @@ void MpiManager::FindInterfaceForPartitionFromMinNMax(const DefSFBitset& bitset_
         code_tmp = (code_tmp + code_remain) / 4;
         code_cri = code_tmp *block_length *block_length;
     }
-}
-void MpiManager::SearchPartitionInterfaceLayer2D(const DefAmrIndexUint flag0, const GridNode& grid_not_instance,
-    const SFBitsetAux2D sfbitset_aux2d, const std::vector<std::shared_ptr<GridInfoInterface>>& vec_grid_info,
-    const std::vector<DefMap<DefAmrIndexUint>> sfbitset_partition_interface,
-    GridInfoInterface* const ptr_background_grid) {
-    DefSizet max_level = sfbitset_partition_interface.size();
-    DefSFBitset sfbitset_current, sfbitset_x, sfbitset_y;
-    for (auto i_level = 1; i_level < max_level; ++i_level) {
-        for (const auto iter_node : sfbitset_partition_interface.at(i_level)) {
-            sfbitset_current = sfbitset_aux2d.SFBitsetToNHigherLevel(1, iter_node.first);
-            mpi_communication_ghost_layers_.at(i_level).at(0).insert({sfbitset_current, flag0});
-            sfbitset_x = sfbitset_aux2d.FindXPos(iter_node.first);
-            if (sfbitset_partition_interface.at(i_level).find(sfbitset_x)
-             != sfbitset_partition_interface.at(i_level).end()) {
-                mpi_communication_ghost_layers_.at(i_level).at(0).insert(
-                    {sfbitset_aux2d.FindXPos(sfbitset_current), flag0});
-            }
-            sfbitset_y = sfbitset_aux2d.FindXPos(iter_node.first);
-            if (sfbitset_partition_interface.at(i_level).find(sfbitset_y)
-             != sfbitset_partition_interface.at(i_level).end()) {
-                mpi_communication_ghost_layers_.at(i_level).at(0).insert(
-                    {sfbitset_aux2d.FindXPos(sfbitset_current), flag0});
-            }
-        }
-    }
-
 }
 }  // end namespace amrproject
 }  // end namespace rootproject

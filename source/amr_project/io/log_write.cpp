@@ -64,7 +64,7 @@ void LogManager::LogInfo(const std::string& msg) {
     if (!fp) {
         printf_s("The log file was not opened\n");
     } else {
-        fprintf(fp, "%s \n", msg.c_str());
+        fprintf(fp, "%s. \n", msg.c_str());
         fclose(fp);
     }
     printf("%s \n", msg.c_str());
@@ -86,7 +86,7 @@ void LogManager::LogWarning(const std::string& msg) {
     if (!fp) {
         printf_s("The log file was not opened\n");
     } else {
-        fprintf(fp, "Warning: %s \n", msg.c_str());
+        fprintf(fp, "Warning: %s. \n", msg.c_str());
         fclose(fp);
     }
 #ifdef _WIN32
@@ -117,14 +117,14 @@ void LogManager::LogError(const std::string& msg) {
     if (!fp) {
         printf_s("The log file was not opened\n");
     } else {
-        fprintf(fp, "Error: %s \n",  msg.c_str());
+        fprintf(fp, "Error: %s. \n",  msg.c_str());
         fclose(fp);
     }
 #ifdef _WIN32
     SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE),
         FOREGROUND_INTENSITY | FOREGROUND_RED);
 #endif
-    printf("Error of rank %d: %s \n", rank_id, msg.c_str());
+    printf("Error of rank %d: %s. \n", rank_id, msg.c_str());
 #ifdef _WIN32
     SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE),
         FOREGROUND_INTENSITY | FOREGROUND_RED

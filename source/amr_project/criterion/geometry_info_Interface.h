@@ -102,15 +102,15 @@ class GeometryInfo2DInterface: virtual public GeometryInfoInterface {
     // information of geometry itself
     std::array<DefReal, 2> geometry_center_{};
     std::array<DefReal, 2> flood_fill_origin_{};
-    std::array<DefReal, 2> k0RealOffset_{};
+    std::array<DefReal, 2> k0RealMin_{};
     std::vector<GeometryCoordinate2D> coordinate_origin_{};
 
     bool SetCenter(const std::vector<DefReal>& vec_offset) final {
         if (vec_offset.size() != 2) {
             return false;
         }
-        k0RealOffset_[kXIndex] = vec_offset.at(kXIndex);
-        k0RealOffset_[kYIndex] = vec_offset.at(kYIndex);
+        k0RealMin_[kXIndex] = vec_offset.at(kXIndex);
+        k0RealMin_[kYIndex] = vec_offset.at(kYIndex);
         return true;
     }
     int InitialGeometry(const DefReal dx, const DefaultGeoShapeType shape_type,
@@ -130,16 +130,16 @@ class GeometryInfo3DInterface: virtual public GeometryInfoInterface {
     // information of geometry itself
     std::array<DefReal, 3> geometry_center_{};
     std::array<DefReal, 3> flood_fill_origin_{};
-    std::array<DefReal, 3> k0RealOffset_{};
+    std::array<DefReal, 3> k0RealMin_{};
     std::vector<GeometryCoordinate3D> coordinate_origin_{};
 
     bool SetCenter(const std::vector<DefReal>& vec_offset) final {
         if (vec_offset.size() != 3) {
             return false;
         }
-        k0RealOffset_[kXIndex] = vec_offset.at(kXIndex);
-        k0RealOffset_[kYIndex] = vec_offset.at(kYIndex);
-        k0RealOffset_[kZIndex] = vec_offset.at(kZIndex);
+        k0RealMin_[kXIndex] = vec_offset.at(kXIndex);
+        k0RealMin_[kYIndex] = vec_offset.at(kYIndex);
+        k0RealMin_[kZIndex] = vec_offset.at(kZIndex);
         return true;
     }
     int InitialGeometry(const DefReal dx, const DefaultGeoShapeType shape_type,

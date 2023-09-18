@@ -115,9 +115,9 @@ void VtkWriterManager::WriteVtuAll(const std::string& folder_name,
         const GridManager2D& grid_manager2d =
             dynamic_cast<GridManager2D&> (grid_manager);
         grid_offset.at(kXIndex) =
-            grid_manager2d.k0RealOffset_.at(kXIndex);
+            grid_manager2d.k0RealMin_.at(kXIndex);
         grid_offset.at(kYIndex) =
-            grid_manager2d.k0RealOffset_.at(kYIndex);
+            grid_manager2d.k0RealMin_.at(kYIndex);
         grid_offset.at(kZIndex) = 0.;
     }
 #endif  // DEBUG_DISABLE_2D_FUNCTIONS
@@ -126,11 +126,11 @@ void VtkWriterManager::WriteVtuAll(const std::string& folder_name,
         const GridManager3D& grid_manager3d =
             dynamic_cast<GridManager3D&> (grid_manager);
         grid_offset.at(kXIndex) =
-            grid_manager3d.k0RealOffset_.at(kXIndex);
+            grid_manager3d.k0RealMin_.at(kXIndex);
         grid_offset.at(kYIndex) =
-            grid_manager3d.k0RealOffset_.at(kYIndex);
+            grid_manager3d.k0RealMin_.at(kYIndex);
         grid_offset.at(kZIndex) =
-            grid_manager3d.k0RealOffset_.at(kZIndex);
+            grid_manager3d.k0RealMin_.at(kZIndex);
     }
 #endif  // DEBUG_DISABLE_3D_FUNCTIONS
     bool bool_overlap;
@@ -139,7 +139,7 @@ void VtkWriterManager::WriteVtuAll(const std::string& folder_name,
     case EVtkWriterGhostCellOption::kOutputEntirety : {
         bool_overlap = false;
         overlap_flag = grid_manager.kNodeStatusFine2CoarseM1_
-            | grid_manager.kNodeStatusFine2Coarse0_;
+            | grid_manager.kNodeStatusFine2Coarse0_ | grid_manager.kNodeStatusMpiPartitionOutside_;
         std::vector<DefAmrIndexUint> output_levels;
         for (DefAmrIndexUint i = 0; i < grid_manager.k0MaxLevel_ + 1; ++i) {
             output_levels.push_back(i);
@@ -153,7 +153,7 @@ void VtkWriterManager::WriteVtuAll(const std::string& folder_name,
         std::vector<DefAmrIndexUint> output_levels;
         bool_overlap = true;
         overlap_flag = grid_manager.kNodeStatusCoarse2FineM1_
-            | grid_manager.kNodeStatusCoarse2FineM1_;
+            | grid_manager.kNodeStatusCoarse2FineM1_ | grid_manager.kNodeStatusMpiPartitionOutside_;
         std::vector<std::string> vec_pvtu_file_name;
         for (DefAmrIndexUint i = 0; i < grid_manager.k0MaxLevel_ + 1; ++i) {
             std::string grid_file_name = proj_and_rank + "grid_level_" + std::to_string(i);
@@ -167,7 +167,8 @@ void VtkWriterManager::WriteVtuAll(const std::string& folder_name,
         errno_t err = fopen_s(&fp, (proj_and_rank + ".pvtu").c_str(), "w");
         if (!fp) {
             LogManager::LogError("File was not opened for writing"
-                " pvtu file in WriteVtuAll.");
+                " pvtu file in WriteVtuAll in "
+                + std::string(__FILE__) + " at line " + std::to_string(__LINE__));
         } else {
             WritePvtu(fp, vec_pvtu_file_name, output_data_format);
         }
@@ -216,7 +217,8 @@ void VtkWriterManager::WriteVtuGeo(const std::string& datafile_name,
         MPI_Comm_rank(MPI_COMM_WORLD, &rank_id);
 #endif  // ENABLE_MPI
         LogManager::LogError("File on node " + std::to_string(rank_id)
-            + " was not opened for writing vtu data in WriteVtuGeo.");
+            + " was not opened for writing vtu data in WriteVtuGeo."
+            + " in "+ std::string(__FILE__) + " at line " + std::to_string(__LINE__));
     } else {
         fprintf_s(fp, "<?xml version=\"1.0\"?>\n");
         str_temp.assign("<VTKFile type=\"UnstructuredGrid\""
@@ -260,7 +262,8 @@ void VtkWriterManager::WriteVtuGrid(const std::string& datafile_name,
         MPI_Comm_rank(MPI_COMM_WORLD, &rank_id);
 #endif  // ENABLE_MPI
         LogManager::LogError("File on node " + std::to_string(rank_id)
-            + " was not opened for writing vtu data in WriteVtuGrid.");
+            + " was not opened for writing vtu data in WriteVtuGrid."
+            + " in "+ std::string(__FILE__) + " at line " + std::to_string(__LINE__));
     } else {
         fprintf_s(fp, "<?xml version=\"1.0\"?>\n");
         str_temp.assign("<VTKFile type=\"UnstructuredGrid\""
@@ -737,8 +740,9 @@ DefSizet VtkWriterManager::CalculateNumOfGeometryCells(
         num_cell = geo_info.GetNumOfGeometryPoints() - 1;
         break;
     default:
-        LogManager::LogError("GeometryOutputType is undefined for calculing cell"
-            " numbers in CalculateGemetryCells.");
+        LogManager::LogError("GeometryOutputType is undefined for calculating cell"
+            " numbers in CalculateGeometryCells in "
+            + std::string(__FILE__) + " at line " + std::to_string(__LINE__));
         break;
     }
     return num_cell;
@@ -920,8 +924,8 @@ void VtkWriterManager::WriteGridCoordinates(FILE* const fp,
     std::array<DefReal, 2> grid_space_2d, coordi_2d;
 
     DefSizet i_nodes = 0;
-    x_offset = grid_manager2d.k0RealOffset_.at(kXIndex);
-    y_offset = grid_manager2d.k0RealOffset_.at(kYIndex);
+    x_offset = grid_manager2d.k0RealMin_.at(kXIndex);
+    y_offset = grid_manager2d.k0RealMin_.at(kYIndex);
     grid_space_2d = { grid_info.grid_space_[kXIndex],
         grid_info.grid_space_[kYIndex] };
 
@@ -1142,9 +1146,9 @@ void VtkWriterManager::WriteGridCoordinates(FILE* const fp,
         + output_data_format.output_real_.printf_format_ + "\n";
     DefReal x_offset = 0., y_offset = 0., z_offset = 0.;
     std::array<DefReal, 3> grid_space_3d, coordi_3d;
-    x_offset = grid_manager3d.k0RealOffset_.at(kXIndex);
-    y_offset = grid_manager3d.k0RealOffset_.at(kYIndex);
-    z_offset = grid_manager3d.k0RealOffset_.at(kZIndex);
+    x_offset = grid_manager3d.k0RealMin_.at(kXIndex);
+    y_offset = grid_manager3d.k0RealMin_.at(kYIndex);
+    z_offset = grid_manager3d.k0RealMin_.at(kZIndex);
     grid_space_3d = { grid_info.grid_space_[kXIndex],
         grid_info.grid_space_[kYIndex],  grid_info.grid_space_[kZIndex] };
     std::vector<DefReal> coordi(3, 0.);

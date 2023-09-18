@@ -25,7 +25,8 @@ void GridManagerInterface::GenerateGridFromHighToLowLevelSerial(
         LogManager::LogError("Number of grid refinement level " + std::to_string(
             vec_ptr_grid_info_.size() - 1) + " is different from k0MaxLevel_ "
             + std::to_string(k0MaxLevel_) + ", need to create grid instance "
-            + "before calling the function: GenerateGridFromHighToLowLevelSerial.");
+            + "before calling the function: GenerateGridFromHighToLowLevelSerial"
+            + " in "+ std::string(__FILE__) + " at line " + std::to_string(__LINE__));
     }
 
     // generate tracking and ghost nodes based on geometries
@@ -270,13 +271,15 @@ void GridManagerInterface::ExtendGivenNumbOfLayer(
         LogManager::LogError("Dimension of num_extend_neg at" + std::to_string(i_level)
             + " should be " + std::to_string(k0GridDims_)
             + " rather than " + std::to_string(num_extend_neg.size())
-            + "in GridManagerInterface::ExtendGivenNumbOfLayer.");
+            + " in GridManagerInterface::ExtendGivenNumbOfLayer in "
+            + std::string(__FILE__) + " at line " + std::to_string(__LINE__));
     }
     if (num_extend_pos.size() != k0GridDims_) {
         LogManager::LogError("Dimension of num_extend_pos at" + std::to_string(i_level)
             + " should be " + std::to_string(k0GridDims_)
             + " rather than " + std::to_string(num_extend_pos.size())
-            + "in GridManagerInterface::ExtendGivenNumbOfLayer.");
+            + " in GridManagerInterface::ExtendGivenNumbOfLayer in t"
+            + std::string(__FILE__) + " at line " + std::to_string(__LINE__));
     }
     // find the maximum layers need to be extended
     DefAmrIndexLUint extend_layer_max = 0;
@@ -344,7 +347,7 @@ int GridManagerInterface::FloodFillForInAndOut(
         std::vector<DefSFBitset> bitset_neigh;
         for (auto iter = map_nodes_exist.begin();
             iter != map_nodes_exist.end(); ++iter) {
-            FindAllNeighborsSFBitset(iter->first, &bitset_neigh);
+            GridFindAllNeighborsVir(iter->first, &bitset_neigh);
             for (const auto& iter_neigh : bitset_neigh) {
                 if (map_nodes_exist.find(iter_neigh)
                     == map_nodes_exist.end()) {
@@ -363,7 +366,7 @@ int GridManagerInterface::FloodFillForInAndOut(
         for (auto iter = map_nodes_exist.begin();
             iter != map_nodes_exist.end(); ++iter) {
             map_nodes_temp.at(iter->first) = flag_bit_exist;
-            FindAllNeighborsSFBitset(iter->first, &bitset_neigh);
+            GridFindAllNeighborsVir(iter->first, &bitset_neigh);
             for (const auto& iter_neighbour : bitset_neigh) {
                 if (map_nodes_temp.find(iter_neighbour)
                     == map_nodes_temp.end()) {
@@ -400,7 +403,7 @@ int GridManagerInterface::FloodFillForInAndOut(
             iter != map_nodes_exist.end(); ++iter) {
             if (ptr_map_nodes_inside->find(iter->first)
                 == ptr_map_nodes_inside->end()) {
-                FindAllNeighborsSFBitset(iter->first, &bitset_neigh);
+                GridFindAllNeighborsVir(iter->first, &bitset_neigh);
                 for (const auto& iter_neigh : bitset_neigh) {
                     if (map_nodes_exist.find(iter_neigh)
                         == map_nodes_exist.end()) {
