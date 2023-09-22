@@ -12,6 +12,7 @@
 #include "grid/grid_manager.h"
 #ifdef ENABLE_MPI
 #include "io/log_write.h"
+#include "io/debug_write.h"
 namespace rootproject {
 namespace amrproject {
 /**
@@ -156,6 +157,7 @@ void MpiManager::IniSendNReceivePartitionedGrid(const DefAmrIndexUint dims,
     const SFBitsetAuxInterface& sfbitset_aux,
     const std::vector<DefMap<DefAmrIndexUint>>& vec_sfbitset_rank0,
     std::vector<DefMap<DefAmrIndexUint>>* const ptr_sfbitset_each,
+    std::vector<DefMap<DefAmrIndexUint>>* const ptr_sfbitset_ghost_each,
     std::vector<std::shared_ptr<GridInfoInterface>>* const ptr_vec_grid_info) const {
     if (vec_sfbitset_rank0.size() - 1 > INT_MAX) {
         LogManager::LogError("size of vector vec_sfbitset_rank0 is larger than INT_MAX in "
@@ -232,13 +234,13 @@ void MpiManager::IniSendNReceivePartitionedGrid(const DefAmrIndexUint dims,
         if (rank_id == 0) {  // partition nodes on rank 0
             std::vector<std::vector<DefMap<DefAmrIndexUint>>> vec_nodes_ranks(num_ranks);
             int i_rank = 0;
-            // min and max code at i_level_lower level
+            // min and max code at i_level_lower refinement level
             std::vector<DefSFCodeToUint> code_min_current(num_ranks), code_max_current(num_ranks);
             std::vector<DefSFBitset> bitset_cell_lower_ghost, bitset_all_ghost;
             std::vector<DefSFBitset> corresponding_ones(dims),
                 domain_min_m1_n_level(dims), domain_max_p1_n_level(dims);
             std::vector<DefMap<DefAmrIndexUint>> map_ghost_lower_tmp_ranks(num_ranks),
-                map_ghost_upper_tmp_ranks(num_ranks);
+                map_ghost_upper_tmp_ranks(num_ranks), map_ghost_current_tmp(num_ranks);
             if (dims == 2) {
 #ifndef  DEBUG_DISABLE_2D_FUNCTIONS
                 const SFBitsetAux2D sfbitset_aux_2d = dynamic_cast<const SFBitsetAux2D&>(sfbitset_aux);
@@ -266,6 +268,7 @@ void MpiManager::IniSendNReceivePartitionedGrid(const DefAmrIndexUint dims,
             sfbitset_aux.GetMaxP1AtGivenLevel(i_level_lower, indices_max, &domain_max_p1_n_level);
             std::vector<int> i_chunk_each_rank(num_ranks, -1), i_counts(num_ranks, 0);
             std::vector<DefSFCodeToUint>::iterator iter_index;
+            std::vector<DefSFBitset> nodes_in_region;
             for (auto& iter_node : vec_sfbitset_rank0.at(i_level)) {
                 background_code = (sfbitset_aux.SFBitsetToNLowerLevelVir(i_level_lower, iter_node.first)).to_ullong();
                 iter_index = std::lower_bound(ull_max.begin(), ull_max.end(), background_code);
@@ -281,6 +284,7 @@ void MpiManager::IniSendNReceivePartitionedGrid(const DefAmrIndexUint dims,
 #endif  // DEBUG_CHECK_GRID
                 if (dims == 2) {
 #ifndef  DEBUG_DISABLE_2D_FUNCTIONS
+                    // search potential ghost nodes near partition interface
                     int_interface_status = CheckNodeOnOuterBoundaryOfBackgroundCell2D(i_level_lower,
                         code_min_current.at(i_rank), code_max_current.at(i_rank), iter_node.first,
                         dynamic_cast<const SFBitsetAux2D&>(sfbitset_aux), domain_min_m1_n_level,
@@ -303,6 +307,7 @@ void MpiManager::IniSendNReceivePartitionedGrid(const DefAmrIndexUint dims,
 #endif  // DEBUG_DISABLE_2D_FUNCTIONS
                 } else {
 #ifndef  DEBUG_DISABLE_3D_FUNCTIONS
+                    // search potential ghost nodes near partition interface
                     int_interface_status = CheckNodeOnOuterBoundaryOfBackgroundCell3D(i_level_lower,
                         code_min_current.at(i_rank), code_max_current.at(i_rank), iter_node.first,
                         dynamic_cast<const SFBitsetAux3D&>(sfbitset_aux), domain_min_m1_n_level,
@@ -324,9 +329,22 @@ void MpiManager::IniSendNReceivePartitionedGrid(const DefAmrIndexUint dims,
                     }
 #endif  // DEBUG_DISABLE_3D_FUNCTIONS
                 }
-                if (i_rank == 0) {
+                if (int_interface_status) {
+                    sfbitset_aux.FindNodesInReginOfGivenLength(iter_node.first,
+                        k0NumPartitionOuterLayers_, domain_min_m1_n_level, domain_max_p1_n_level,
+                        &nodes_in_region);
+                    for (const auto& iter_node_in_region : nodes_in_region) {
+                        if (map_ghost_current_tmp.at(i_rank).find(iter_node_in_region)
+                            == map_ghost_current_tmp.at(i_rank).end()
+                            && vec_sfbitset_rank0.at(i_level).find(iter_node_in_region)
+                            != vec_sfbitset_rank0.at(i_level).end()) {
+                            map_ghost_current_tmp.at(i_rank).insert({iter_node_in_region, flag_size0});
+                        }
+                    }
+                }
+                if (i_rank == 0) {  // nodes on rank 0 do not need send to other ranks
                     ptr_sfbitset_each->at(i_level).insert(iter_node);
-                } else {
+                } else {   // nodes on rank 0 need to send to other ranks
                     if (i_counts.at(i_rank) == 0) {
                         vec_nodes_ranks.at(i_rank).push_back({iter_node});
                         i_chunk_each_rank.at(i_rank) +=1;
@@ -340,6 +358,7 @@ void MpiManager::IniSendNReceivePartitionedGrid(const DefAmrIndexUint dims,
                         }
                     }
                 }
+                // node on outmost coarse to fine refinement interface
                 if (iter_node.second & flag_coarse2fine) {
                     if (outmost_for_all_ranks.find(iter_node.first) == outmost_for_all_ranks.end()) {
                         outmost_for_all_ranks.insert({iter_node.first, {i_rank}});
@@ -348,155 +367,189 @@ void MpiManager::IniSendNReceivePartitionedGrid(const DefAmrIndexUint dims,
                     }
                 }
             }
-            int buffer_size_send = 0;
-            bool bool_interface_upper_extra = ((k0NumPartitionOuterLayers_%2) == 0);
-            if (bool_interface_upper_extra) {
-                for (const auto& iter_ghost : map_ghost_upper_tmp_ranks.at(0)) {
+            // ghost nodes on rank 0
+            for (const auto& iter_ghost : map_ghost_upper_tmp_ranks.at(0)) {
+                if (vec_sfbitset_rank0.at(i_level).find(iter_ghost.first)
+                    !=vec_sfbitset_rank0.at(i_level).end()) {
+                    if (vec_sfbitset_rank0.at(i_level).at(iter_ghost.first) & flag_coarse2fine) {
+                        if (outmost_for_all_ranks.find(iter_ghost.first) == outmost_for_all_ranks.end()) {
+                            outmost_for_all_ranks.insert({iter_ghost.first, {0}});
+                        } else {
+                            outmost_for_all_ranks.at(iter_ghost.first).insert(0);
+                        }
+                    }
                     if (ptr_sfbitset_each->at(i_level).find(iter_ghost.first) == ptr_sfbitset_each->at(i_level).end()) {
-                        ptr_sfbitset_each->at(i_level).insert(iter_ghost);
-                    }
-                }
-                for (const auto& iter_ghost : map_ghost_lower_tmp_ranks.at(0)) {
-                    if (ptr_sfbitset_each->at(i_level).find(iter_ghost.first) == ptr_sfbitset_each->at(i_level).end()
-                     && vec_sfbitset_rank0.at(i_level).find(iter_ghost.first)
-                     != vec_sfbitset_rank0.at(i_level).end()) {
-                        ptr_sfbitset_each->at(i_level).insert(iter_ghost);
-                    }
-                }
-            } else {
-                for (const auto& iter_ghost : map_ghost_lower_tmp_ranks.at(0)) {
-                    if (ptr_sfbitset_each->at(i_level).find(iter_ghost.first) == ptr_sfbitset_each->at(i_level).end()) {
-                        ptr_sfbitset_each->at(i_level).insert(iter_ghost);
-                    }
-                }
-                for (const auto& iter_ghost : map_ghost_upper_tmp_ranks.at(0)) {
-                    if (ptr_sfbitset_each->at(i_level).find(iter_ghost.first) == ptr_sfbitset_each->at(i_level).end()
-                     && vec_sfbitset_rank0.at(i_level).find(iter_ghost.first)
-                     != vec_sfbitset_rank0.at(i_level).end()) {
                         ptr_sfbitset_each->at(i_level).insert(iter_ghost);
                     }
                 }
             }
+            for (const auto& iter_ghost : map_ghost_lower_tmp_ranks.at(0)) {
+                if (vec_sfbitset_rank0.at(i_level).find(iter_ghost.first)
+                    !=vec_sfbitset_rank0.at(i_level).end()) {
+                    if (vec_sfbitset_rank0.at(i_level).at(iter_ghost.first) & flag_coarse2fine) {
+                        if (outmost_for_all_ranks.find(iter_ghost.first) == outmost_for_all_ranks.end()) {
+                            outmost_for_all_ranks.insert({iter_ghost.first, {0}});
+                        } else {
+                            outmost_for_all_ranks.at(iter_ghost.first).insert(0);
+                        }
+                    }
+                    if (ptr_sfbitset_each->at(i_level).find(iter_ghost.first) == ptr_sfbitset_each->at(i_level).end()) {
+                        ptr_sfbitset_each->at(i_level).insert(iter_ghost);
+                    }
+                }
+            }
+            // ghost nodes used for removing nodes do not need for communication near refinement interface
+            DefMap<DefAmrIndexUint> map_ghost_n_refinement;
+            DefAmrIndexUint num_extend_coarse2fine = ptr_vec_grid_info->at(i_level_lower)->k0NumCoarse2FineLayer_ - 1;
+            DefSFCodeToUint code_tmp;
+            for (const auto& iter_ghost : map_ghost_current_tmp.at(0)) {
+                if (vec_sfbitset_rank0.at(i_level).find(iter_ghost.first)
+                    != vec_sfbitset_rank0.at(i_level).end()
+                    && (vec_sfbitset_rank0.at(i_level).at(iter_ghost.first)&flag_coarse2fine)
+                    == flag_coarse2fine) {
+                    sfbitset_aux.FindNodesInReginOfGivenLength(iter_ghost.first,
+                        num_extend_coarse2fine, domain_min_m1_n_level, domain_max_p1_n_level,
+                        &nodes_in_region);
+                    for (const auto& iter_region : nodes_in_region) {
+                        code_tmp = iter_region.to_ullong();
+                        if ((code_tmp < code_min_current.at(0)
+                            || code_tmp > code_max_current.at(0))
+                            && map_ghost_current_tmp.at(0).find(iter_region)
+                            != map_ghost_current_tmp.at(0).end()) {
+                            ptr_sfbitset_ghost_each->at(i_level).insert({iter_region, 0});
+                        }
+                    }
+                }
+            }
+                            if (i_level == 2) {
+            int output_rank = 0;
+            DefMap<DefAmrUint> map_tmp;
+            for (const auto &iter : ptr_sfbitset_ghost_each->at(i_level)) {
+                map_tmp.insert({iter.first, 0});
+            }
+            DebugWriterManager::WriteCoordinatesInPts(2, std::to_string(output_rank),
+             {0.02, 0.02}, {0.01, 0.01}, sfbitset_aux, map_tmp);
+
+            }
+
+            // ghost nodes on other ranks
+            std::vector<std::vector<DefMap<DefAmrIndexUint>>> vec_ghost_nodes_ranks(num_ranks);
+            std::vector<int> i_ghost_chunk_each_rank(num_ranks, -1), i_ghost_counts(num_ranks, 0);
             for (auto i_rank = 1; i_rank < num_ranks; ++i_rank) {
-                int num_chunks;
                 std::vector<std::unique_ptr<char[]>> vec_ptr_buffer;
                 std::vector<MPI_Request> reqs_send;
-                // find nodes on extened one layer
+                // find nodes on extened ghost layers for mpi communication
                 DefMap<DefAmrIndexUint> partition_interface_rank0_lower_level;
-                if (bool_interface_upper_extra) {
-                    for (const auto& iter_ghost : map_ghost_upper_tmp_ranks.at(i_rank)) {
-                        if (partition_interface_rank0_lower_level.find(iter_ghost.first)
-                            == partition_interface_rank0_lower_level.end()
-                            &&vec_sfbitset_rank0.at(i_level).find(iter_ghost.first)
-                            !=vec_sfbitset_rank0.at(i_level).end()) {
-                            if (vec_sfbitset_rank0.at(i_level).at(iter_ghost.first) & flag_coarse2fine) {
-                                if (outmost_for_all_ranks.find(iter_ghost.first) == outmost_for_all_ranks.end()) {
-                                    outmost_for_all_ranks.insert({iter_ghost.first, {i_rank}});
-                                } else {
-                                    outmost_for_all_ranks.at(iter_ghost.first).insert(i_rank);
-                                }
-                            }
-                            partition_interface_rank0_lower_level.insert(iter_ghost);
-                            if (i_counts.at(i_rank) == 0) {
-                                vec_nodes_ranks.at(i_rank).push_back({iter_ghost});
-                                i_chunk_each_rank.at(i_rank) +=1;
-                                ++i_counts.at(i_rank);
+                for (const auto& iter_ghost : map_ghost_upper_tmp_ranks.at(i_rank)) {
+                    if (partition_interface_rank0_lower_level.find(iter_ghost.first)
+                        == partition_interface_rank0_lower_level.end()
+                        &&vec_sfbitset_rank0.at(i_level).find(iter_ghost.first)
+                        !=vec_sfbitset_rank0.at(i_level).end()) {
+                        if (vec_sfbitset_rank0.at(i_level).at(iter_ghost.first) & flag_coarse2fine) {
+                            if (outmost_for_all_ranks.find(iter_ghost.first) == outmost_for_all_ranks.end()) {
+                                outmost_for_all_ranks.insert({iter_ghost.first, {i_rank}});
                             } else {
-                                vec_nodes_ranks.at(i_rank).at(i_chunk_each_rank.at(i_rank)).insert(iter_ghost);
-                                ++i_counts.at(i_rank);
-                                if (i_counts.at(i_rank) == max_buffer) {
-                                    i_counts.at(i_rank) = 0;
-                                }
+                                outmost_for_all_ranks.at(iter_ghost.first).insert(i_rank);
+                            }
+                        }
+                        partition_interface_rank0_lower_level.insert(iter_ghost);
+                        if (i_counts.at(i_rank) == 0) {
+                            vec_nodes_ranks.at(i_rank).push_back({iter_ghost});
+                            i_chunk_each_rank.at(i_rank) +=1;
+                            ++i_counts.at(i_rank);
+                        } else {
+                            vec_nodes_ranks.at(i_rank).at(i_chunk_each_rank.at(i_rank)).insert(iter_ghost);
+                            ++i_counts.at(i_rank);
+                            if (i_counts.at(i_rank) == max_buffer) {
+                                i_counts.at(i_rank) = 0;
                             }
                         }
                     }
-                    for (const auto& iter_ghost : map_ghost_lower_tmp_ranks.at(i_rank)) {
-                        if (partition_interface_rank0_lower_level.find(iter_ghost.first)
-                            == partition_interface_rank0_lower_level.end()
-                            &&vec_sfbitset_rank0.at(i_level).find(iter_ghost.first)
-                            !=vec_sfbitset_rank0.at(i_level).end()) {
-                            if (vec_sfbitset_rank0.at(i_level).at(iter_ghost.first) & flag_coarse2fine) {
-                                if (outmost_for_all_ranks.find(iter_ghost.first) == outmost_for_all_ranks.end()) {
-                                    outmost_for_all_ranks.insert({iter_ghost.first, {i_rank}});
-                                } else {
-                                    outmost_for_all_ranks.at(iter_ghost.first).insert(i_rank);
-                                }
-                            }
-                            partition_interface_rank0_lower_level.insert(iter_ghost);
-                            if (i_counts.at(i_rank) == 0) {
-                                vec_nodes_ranks.at(i_rank).push_back({iter_ghost});
-                                i_chunk_each_rank.at(i_rank) +=1;
-                                ++i_counts.at(i_rank);
+                }
+                for (const auto& iter_ghost : map_ghost_lower_tmp_ranks.at(i_rank)) {
+                    if (partition_interface_rank0_lower_level.find(iter_ghost.first)
+                        == partition_interface_rank0_lower_level.end()
+                        &&vec_sfbitset_rank0.at(i_level).find(iter_ghost.first)
+                        !=vec_sfbitset_rank0.at(i_level).end()) {
+                        if (vec_sfbitset_rank0.at(i_level).at(iter_ghost.first) & flag_coarse2fine) {
+                            if (outmost_for_all_ranks.find(iter_ghost.first) == outmost_for_all_ranks.end()) {
+                                outmost_for_all_ranks.insert({iter_ghost.first, {i_rank}});
                             } else {
-                                vec_nodes_ranks.at(i_rank).at(i_chunk_each_rank.at(i_rank)).insert(iter_ghost);
-                                ++i_counts.at(i_rank);
-                                if (i_counts.at(i_rank) == max_buffer) {
-                                    i_counts.at(i_rank) = 0;
-                                }
+                                outmost_for_all_ranks.at(iter_ghost.first).insert(i_rank);
                             }
                         }
-                    }
-                } else {
-                    for (const auto& iter_ghost : map_ghost_lower_tmp_ranks.at(i_rank)) {
-                        if (partition_interface_rank0_lower_level.find(iter_ghost.first)
-                         == partition_interface_rank0_lower_level.end()
-                         &&vec_sfbitset_rank0.at(i_level).find(iter_ghost.first)
-                         !=vec_sfbitset_rank0.at(i_level).end()) {
-                            if (vec_sfbitset_rank0.at(i_level).at(iter_ghost.first) & flag_coarse2fine) {
-                                if (outmost_for_all_ranks.find(iter_ghost.first) == outmost_for_all_ranks.end()) {
-                                    outmost_for_all_ranks.insert({iter_ghost.first, {i_rank}});
-                                } else {
-                                    outmost_for_all_ranks.at(iter_ghost.first).insert(i_rank);
-                                }
-                            }
-                            partition_interface_rank0_lower_level.insert(iter_ghost);
-                            if (i_counts.at(i_rank) == 0) {
-                                vec_nodes_ranks.at(i_rank).push_back({iter_ghost});
-                                i_chunk_each_rank.at(i_rank) +=1;
-                                ++i_counts.at(i_rank);
-                            } else {
-                                vec_nodes_ranks.at(i_rank).at(i_chunk_each_rank.at(i_rank)).insert(iter_ghost);
-                                ++i_counts.at(i_rank);
-                                if (i_counts.at(i_rank) == max_buffer) {
-                                    i_counts.at(i_rank) = 0;
-                                }
-                            }
-                        }
-                    }
-                    for (const auto& iter_ghost : map_ghost_upper_tmp_ranks.at(i_rank)) {
-                        if (partition_interface_rank0_lower_level.find(iter_ghost.first)
-                            == partition_interface_rank0_lower_level.end()
-                            &&vec_sfbitset_rank0.at(i_level).find(iter_ghost.first)
-                            !=vec_sfbitset_rank0.at(i_level).end()) {
-                            if (vec_sfbitset_rank0.at(i_level).at(iter_ghost.first) & flag_coarse2fine) {
-                                if (outmost_for_all_ranks.find(iter_ghost.first) == outmost_for_all_ranks.end()) {
-                                    outmost_for_all_ranks.insert({iter_ghost.first, {i_rank}});
-                                } else {
-                                    outmost_for_all_ranks.at(iter_ghost.first).insert(i_rank);
-                                }
-                            }
-                            partition_interface_rank0_lower_level.insert(iter_ghost);
-                            if (i_counts.at(i_rank) == 0) {
-                                vec_nodes_ranks.at(i_rank).push_back({iter_ghost});
-                                i_chunk_each_rank.at(i_rank) +=1;
-                                ++i_counts.at(i_rank);
-                            } else {
-                                vec_nodes_ranks.at(i_rank).at(i_chunk_each_rank.at(i_rank)).insert(iter_ghost);
-                                ++i_counts.at(i_rank);
-                                if (i_counts.at(i_rank) == max_buffer) {
-                                    i_counts.at(i_rank) = 0;
-                                }
+                        partition_interface_rank0_lower_level.insert(iter_ghost);
+                        if (i_counts.at(i_rank) == 0) {
+                            vec_nodes_ranks.at(i_rank).push_back({iter_ghost});
+                            i_chunk_each_rank.at(i_rank) +=1;
+                            ++i_counts.at(i_rank);
+                        } else {
+                            vec_nodes_ranks.at(i_rank).at(i_chunk_each_rank.at(i_rank)).insert(iter_ghost);
+                            ++i_counts.at(i_rank);
+                            if (i_counts.at(i_rank) == max_buffer) {
+                                i_counts.at(i_rank) = 0;
                             }
                         }
                     }
                 }
                 // send grid nodes
+                int buffer_size_send = 0;
+                int num_chunks;
                 num_chunks = static_cast<int>(vec_nodes_ranks.at(i_rank).size());
                 vec_ptr_buffer.resize(num_chunks);
                 reqs_send.resize(num_chunks);
                 MPI_Send(&num_chunks, 1, MPI_INT, i_rank, i_level, MPI_COMM_WORLD);
                 for (int i_chunk = 0; i_chunk < num_chunks; ++i_chunk) {
                     buffer_size_send = SerializeNodeSFBitset(vec_nodes_ranks.at(i_rank).at(i_chunk),
+                    vec_ptr_buffer.at(i_chunk));
+                    MPI_Send(&buffer_size_send, 1, MPI_INT, i_rank, i_chunk, MPI_COMM_WORLD);
+                    MPI_Isend(vec_ptr_buffer.at(i_chunk).get(), buffer_size_send, MPI_BYTE, i_rank,
+                    i_chunk, MPI_COMM_WORLD, &reqs_send[i_chunk]);
+                }
+                MPI_Waitall(num_chunks, reqs_send.data(), MPI_STATUS_IGNORE);
+
+                // nodes used on both refinement layers and outer mpi communication layers
+                map_ghost_n_refinement.clear();
+                for (const auto& iter_ghost : map_ghost_current_tmp.at(i_rank)) {
+                    if (vec_sfbitset_rank0.at(i_level).find(iter_ghost.first)
+                        != vec_sfbitset_rank0.at(i_level).end()
+                        && (vec_sfbitset_rank0.at(i_level).at(iter_ghost.first)&flag_coarse2fine)
+                        == flag_coarse2fine) {
+                        sfbitset_aux.FindNodesInReginOfGivenLength(iter_ghost.first,
+                            num_extend_coarse2fine, domain_min_m1_n_level, domain_max_p1_n_level,
+                            &nodes_in_region);
+                        for (const auto& iter_region : nodes_in_region) {
+                            code_tmp = iter_region.to_ullong();
+                            if ((code_tmp < code_min_current.at(i_rank)
+                                || code_tmp > code_max_current.at(i_rank))
+                                &&map_ghost_n_refinement.find(iter_region) == map_ghost_n_refinement.end()
+                                &&map_ghost_current_tmp.at(i_rank).find(iter_region)
+                                != map_ghost_current_tmp.at(i_rank).end()) {
+                                map_ghost_n_refinement.insert({iter_region, 0});
+                            }
+                        }
+                    }
+                }
+                for (const auto& iter_ghost : map_ghost_n_refinement) {
+                    if (i_ghost_counts.at(i_rank) == 0) {
+                        vec_ghost_nodes_ranks.at(i_rank).push_back({iter_ghost});
+                        i_ghost_chunk_each_rank.at(i_rank) +=1;
+                        ++i_ghost_counts.at(i_rank);
+                    } else {
+                        vec_ghost_nodes_ranks.at(i_rank).at(i_ghost_chunk_each_rank.at(i_rank)).insert(iter_ghost);
+                        ++i_ghost_counts.at(i_rank);
+                        if (i_ghost_counts.at(i_rank) == max_buffer) {
+                            i_ghost_counts.at(i_rank) = 0;
+                        }
+                    }
+                }
+                // send ghost nodes
+                num_chunks = static_cast<int>(vec_ghost_nodes_ranks.at(i_rank).size());
+                vec_ptr_buffer.resize(num_chunks);
+                reqs_send.resize(num_chunks);
+                MPI_Send(&num_chunks, 1, MPI_INT, i_rank, i_level, MPI_COMM_WORLD);
+                for (int i_chunk = 0; i_chunk < num_chunks; ++i_chunk) {
+                    buffer_size_send = SerializeNodeSFBitset(vec_ghost_nodes_ranks.at(i_rank).at(i_chunk),
                     vec_ptr_buffer.at(i_chunk));
                     MPI_Send(&buffer_size_send, 1, MPI_INT, i_rank, i_chunk, MPI_COMM_WORLD);
                     MPI_Isend(vec_ptr_buffer.at(i_chunk).get(), buffer_size_send, MPI_BYTE, i_rank,
@@ -516,11 +569,21 @@ void MpiManager::IniSendNReceivePartitionedGrid(const DefAmrIndexUint dims,
                     i_chunk, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
                 DeserializeNodeSFBitset(flag_size0, vec_ptr_buffer, &ptr_sfbitset_each->at(i_level));
             }
-        }
 
+            // receive ghost nodes
+            MPI_Recv(&num_chunks, 1, MPI_INT, 0, i_level, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+            for (int i_chunk = 0; i_chunk < num_chunks; ++i_chunk) {
+                int buffer_size_receive;
+                MPI_Recv(&buffer_size_receive, sizeof(int), MPI_INT, 0, i_chunk, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+                std::unique_ptr<char[]> vec_ptr_buffer = std::make_unique<char[]>(buffer_size_receive);
+                MPI_Recv(vec_ptr_buffer.get(), buffer_size_receive, MPI_BYTE, 0,
+                    i_chunk, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+                DeserializeNodeSFBitset(flag_size0, vec_ptr_buffer, &ptr_sfbitset_ghost_each->at(i_level));
+            }
+        }
         // send and receive nodes on outmost coarse to fine refinement interfaces
         DefAmrUint flag0 = static_cast<DefAmrUint>(flag_size0);
-        IniSendNReceiveCoarse2Fine0Interface(dims, i_level,
+        IniSendNReceiveCoarse2Fine0Interface(dims, i_level_lower,
             ptr_vec_grid_info->at(i_level_lower)->k0NumCoarse2FineLayer_, flag0,
             outmost_for_all_ranks, &ptr_vec_grid_info->at(i_level_lower)->map_ptr_interface_layer_info_);
     }
@@ -539,6 +602,7 @@ void MpiManager::IniSendNReceivePartitionedGrid(const DefAmrIndexUint dims,
  * @param[in] ini_sfbitset_one_lower_level_rank0 pointer to initial mesh generated on rank 0.
  * @param[out] ptr_sfbitset_bound_current pointer to lower and upper bound space filling code of current rank
  * @param[out] ptr_sfbitset_one_lower_level_current_rank pointer to mesh on current rank.
+ * @param[out] ptr_sfbitset_ghost_one_lower_level_current_rank  pointer non-mpi communication ghost node on current rank.
  * @param[out] ptr_vec_grid_info pointer to vector of grid information.
  */
 void MpiManager::SendNReceiveGridInfoAtGivenLevels(const DefAmrIndexUint flag_size0,
@@ -550,6 +614,7 @@ void MpiManager::SendNReceiveGridInfoAtGivenLevels(const DefAmrIndexUint flag_si
     const std::vector<DefMap<DefAmrIndexUint>> ini_sfbitset_one_lower_level_rank0,
     std::array<DefSFBitset, 2>* const ptr_sfbitset_bound_current,
     std::vector<DefMap<DefAmrIndexUint>>* const  ptr_sfbitset_one_lower_level_current_rank,
+    std::vector<DefMap<DefAmrIndexUint>>* const  ptr_sfbitset_ghost_one_lower_level_current_rank,
     std::vector<std::shared_ptr<GridInfoInterface>>* const ptr_vec_grid_info) {
     std::vector<DefSFBitset> bitset_min(num_of_ranks_), bitset_max(num_of_ranks_);
     if (rank_id_ == 0) {
@@ -584,7 +649,8 @@ void MpiManager::SendNReceiveGridInfoAtGivenLevels(const DefAmrIndexUint flag_si
     ptr_sfbitset_bound_current->at(0) = bitset_min.at(rank_id_);
     ptr_sfbitset_bound_current->at(1) = bitset_max.at(rank_id_);
     IniSendNReceivePartitionedGrid(dims, flag_size0, flag_coarse2fine, bitset_min, bitset_max, indices_min, indices_max,
-        sfbitset_aux, ini_sfbitset_one_lower_level_rank0, ptr_sfbitset_one_lower_level_current_rank, ptr_vec_grid_info);
+        sfbitset_aux, ini_sfbitset_one_lower_level_rank0, ptr_sfbitset_one_lower_level_current_rank,
+        ptr_sfbitset_ghost_one_lower_level_current_rank, ptr_vec_grid_info);
 
     // send and receive tracking  nodes
     for (DefAmrIndexUint i_level = max_level; i_level > 0; --i_level) {

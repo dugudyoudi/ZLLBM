@@ -101,7 +101,8 @@ void AmrManager::InitializeMesh() {
     for (auto iter_grid : ptr_grid_manager_->vec_ptr_grid_info_) {
         vec_cost.push_back(iter_grid->computational_cost_);
     }
-    std::vector<DefMap<DefAmrIndexUint>> sfbitset_one_lower_level_current_rank(ptr_grid_manager_->k0MaxLevel_ + 1);
+    std::vector<DefMap<DefAmrIndexUint>> sfbitset_one_lower_level_current_rank(ptr_grid_manager_->k0MaxLevel_ + 1),
+       sfbitset_ghost_one_lower_level_current_rank(ptr_grid_manager_->k0MaxLevel_ + 1);
     ptr_mpi_manager_->sfbitset_min_current_rank_ = sfbitset_bound_current.at(0);
     ptr_mpi_manager_->sfbitset_max_current_rank_ = sfbitset_bound_current.at(1);
     DefMap<DefAmrIndexUint> partition_interface_background;
@@ -118,7 +119,18 @@ void AmrManager::InitializeMesh() {
             ptr_grid_manager_2d->k0MaxIndexOfBackgroundNode_[kYIndex]},
             vec_cost, *ptr_grid_manager_2d, ptr_grid_manager_->vec_ptr_tracking_info_creator_,
             sfbitset_one_lower_level, &sfbitset_bound_current, &sfbitset_one_lower_level_current_rank,
-            &(ptr_grid_manager_->vec_ptr_grid_info_));
+            &sfbitset_ghost_one_lower_level_current_rank, &(ptr_grid_manager_->vec_ptr_grid_info_));
+
+
+
+            // for (const auto& iter_ghost : sfbitset_ghost_one_lower_level_current_rank.at(2)) {
+            //     std::vector<DefReal> indices, indices1;
+            //     ptr_grid_manager_2d->SFBitsetComputeCoordinateVir(iter_ghost.first, {0.01, 0.01}, &indices);
+            //     if (rank_id == 1 && std::fabs(indices[0] - 0.56) < 0.001) {
+            //     ptr_grid_manager_2d->SFBitsetComputeCoordinateVir(iter_ghost.first, {0.01, 0.01}, &indices1);
+            //     std::cout << indices1[0] - 0.02 << " " << indices1[1] - 0.02 << std::endl;
+            //     }
+            // }
 
         if (rank_id == 0) {
             sfbitset_one_lower_level.clear();
@@ -133,7 +145,7 @@ void AmrManager::InitializeMesh() {
         ptr_grid_manager_->InstantiateGridNodeAllLevelMpi(rank_id, ptr_mpi_manager_->k0NumPartitionInnerLayers_,
             ptr_mpi_manager_->k0NumPartitionOuterLayers_, ptr_mpi_manager_->vec_sfbitset_min_all_ranks_,
             ptr_mpi_manager_->vec_sfbitset_max_all_ranks_, *ptr_grid_manager_2d, sfbitset_one_lower_level_current_rank,
-            partition_interface_background,
+            sfbitset_ghost_one_lower_level_current_rank, partition_interface_background,
             &ptr_mpi_manager_->mpi_communication_inner_layers_, &ptr_mpi_manager_->mpi_communication_outer_layers_);
 #endif  // DEBUG_DISABLE_3D_FUNCTIONS
     } else {
@@ -151,7 +163,7 @@ void AmrManager::InitializeMesh() {
             ptr_grid_manager_3d->k0MaxIndexOfBackgroundNode_[kZIndex]},
             vec_cost, *ptr_grid_manager_3d, ptr_grid_manager_->vec_ptr_tracking_info_creator_,
             sfbitset_one_lower_level, &sfbitset_bound_current, &sfbitset_one_lower_level_current_rank,
-            &(ptr_grid_manager_->vec_ptr_grid_info_));
+            &sfbitset_ghost_one_lower_level_current_rank, &(ptr_grid_manager_->vec_ptr_grid_info_));
 
         if (rank_id == 0) {
             sfbitset_one_lower_level.clear();
@@ -166,11 +178,10 @@ void AmrManager::InitializeMesh() {
         ptr_grid_manager_->InstantiateGridNodeAllLevelMpi(rank_id, ptr_mpi_manager_->k0NumPartitionInnerLayers_,
             ptr_mpi_manager_->k0NumPartitionOuterLayers_, ptr_mpi_manager_->vec_sfbitset_min_all_ranks_,
             ptr_mpi_manager_->vec_sfbitset_max_all_ranks_, *ptr_grid_manager_3d, sfbitset_one_lower_level_current_rank,
-            partition_interface_background,
+            sfbitset_ghost_one_lower_level_current_rank, partition_interface_background,
             &ptr_mpi_manager_->mpi_communication_inner_layers_, &ptr_mpi_manager_->mpi_communication_outer_layers_);
 #endif  // DEBUG_DISABLE_3D_FUNCTIONS
     }
-
 
     // add nodes on both the refinement and partition interfaces
     // which are only stored in coarse to fine refinement interfaces

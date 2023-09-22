@@ -272,6 +272,7 @@ class MpiManager{
         const SFBitsetAuxInterface& sfbitset_aux,
         const std::vector<DefMap<DefAmrIndexUint>>& vec_sfbitset_rank0,
         std::vector<DefMap<DefAmrIndexUint>>* const ptr_sfbitset_each,
+        std::vector<DefMap<DefAmrIndexUint>>* const ptr_sfbitset_ghost_each,
         std::vector<std::shared_ptr<GridInfoInterface>>* const ptr_vec_grid_info) const;
     void SendNReceiveGridInfoAtGivenLevels(const DefAmrIndexUint flag_size0,
         const DefAmrUint flag_coarse2fine, const DefAmrIndexUint dims, const DefAmrIndexUint max_level,
@@ -282,6 +283,7 @@ class MpiManager{
         const std::vector<DefMap<DefAmrIndexUint>> ini_sfbitset_one_lower_level_rank0,
         std::array<DefSFBitset, 2>* const sfbitset_bound_current,
         std::vector<DefMap<DefAmrIndexUint>>* const ptr_sfbitset_one_lower_level_current_rank,
+        std::vector<DefMap<DefAmrIndexUint>>* const  ptr_sfbitset_ghost_one_lower_level_current_rank,
         std::vector<std::shared_ptr<GridInfoInterface>>* const ptr_vec_grid_info);
 
  private:

@@ -143,6 +143,7 @@ class GridManagerInterface{
         const std::vector<DefSFBitset>& vec_sfbitset_min,
         const std::vector<DefSFBitset>& vec_sfbitset_max, const SFBitsetAuxInterface& sfbitset_aux,
         const std::vector<DefMap<DefAmrIndexUint>>& sfbitset_one_lower_level,
+        const std::vector<DefMap<DefAmrIndexUint>>& sfbitset_ghost_one_lower_level,
         const DefMap<DefAmrIndexUint>& sfbitset_partition_interface,
         std::vector<DefMap<std::set<int>>>* const ptr_mpi_inner_layer,
         std::vector<DefMap<DefAmrUint>>* const ptr_mpi_outer_layer);
@@ -165,6 +166,14 @@ class GridManagerInterface{
     // functions to generate grid
     void InstantiateOverlapLayerOfRefinementInterface(
         const std::vector<DefMap<DefAmrIndexUint>>& sfbitset_one_lower_level);
+    void InstantiateOverlapLayerOfRefinementInterfaceMpi(
+        const DefAmrIndexUint i_level, const DefAmrIndexUint num_partition_outer_layer,
+        const DefSFCodeToUint code_min, const DefSFCodeToUint code_max,
+        const SFBitsetAuxInterface& sfbitset_aux, const DefMap<DefAmrIndexUint>& map_sfbitset_one_lower_level,
+        const DefMap<DefAmrIndexUint>& map_sfbitset_ghost_one_lower_level,
+        const DefMap<DefAmrIndexUint>& sfbitset_partition_interface_background,
+        DefMap<DefAmrUint>* const ptr_outer_layer_lower_level);
+
 
     virtual void OverlapLayerFromHighToLow(
         const DefMap<DefAmrUint>& layer_high_level,

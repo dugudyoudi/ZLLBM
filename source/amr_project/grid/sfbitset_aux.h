@@ -56,6 +56,8 @@ class  SFBitsetAuxInterface {
     virtual DefAmrIndexUint SFBitsetCoincideLevelVir(const DefSFBitset& morton_in) const = 0;
     virtual void SFBitsetFindAllNeighborsVir(const DefSFBitset& bitset_in,
         std::vector<DefSFBitset>* const ptr_vec_neighbors) const = 0;
+    virtual void SFBitsetComputeCoordinateVir(const DefSFBitset& bitset_in,
+        const std::vector<DefReal>& grid_space, std::vector<DefReal>* const ptr_coordi) const = 0;
     virtual ~SFBitsetAuxInterface() {}
 
  protected:
@@ -134,6 +136,14 @@ class  SFBitsetAux2D : public SFBitsetAuxInterface {
         ptr_vec_edge_nodes->at(1) = FindXPos(morton_in);
         ptr_vec_edge_nodes->at(2) = FindYNeg(morton_in);
         ptr_vec_edge_nodes->at(3) = FindYPos(morton_in);
+    }
+    void SFBitsetComputeCoordinateVir(const DefSFBitset& bitset_in,
+        const std::vector<DefReal>& grid_space, std::vector<DefReal>* const ptr_coordi) const final {
+        std::array<DefReal, 2> arr_grid_space = {grid_space[kXIndex], grid_space[kYIndex]}, arr_coordi;
+        SFBitsetComputeCoordinate(bitset_in, arr_grid_space, &arr_coordi);
+        ptr_coordi->resize(2);
+        ptr_coordi->at(kXIndex) = arr_coordi[kXIndex];
+        ptr_coordi->at(kYIndex) = arr_coordi[kYIndex];
     }
     void FindNodesInReginOfGivenLength(const DefSFBitset& sfbitset_in,
         const DefAmrIndexLUint region_length,
@@ -274,6 +284,16 @@ class  SFBitsetAux3D : public SFBitsetAuxInterface {
         ptr_vec_edge_nodes->at(3) = FindYPos(morton_in);
         ptr_vec_edge_nodes->at(4) = FindZNeg(morton_in);
         ptr_vec_edge_nodes->at(5) = FindZPos(morton_in);
+    }
+    void SFBitsetComputeCoordinateVir(const DefSFBitset& bitset_in,
+        const std::vector<DefReal>& grid_space, std::vector<DefReal>* const ptr_coordi) const final {
+        std::array<DefReal, 3> arr_grid_space =
+            {grid_space[kXIndex], grid_space[kYIndex], grid_space[kZIndex]}, arr_coordi;
+        SFBitsetComputeCoordinate(bitset_in, arr_grid_space, &arr_coordi);
+        ptr_coordi->resize(3);
+        ptr_coordi->at(kXIndex) = arr_coordi[kXIndex];
+        ptr_coordi->at(kYIndex) = arr_coordi[kYIndex];
+        ptr_coordi->at(kZIndex) = arr_coordi[kZIndex];
     }
     void FindNodesInReginOfGivenLength(const DefSFBitset& sfbitset_in,
         const DefAmrIndexLUint region_length,

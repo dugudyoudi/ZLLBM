@@ -1,0 +1,57 @@
+//  Copyright (c) 2021 - 2023, Zhengliang Liu
+//  All rights reserved
+
+/**
+* @file log_write.cpp
+* @author Zhengliang Liu
+* @date  2022-8-14
+*/
+#include <vector>
+
+#include "../defs_libs.h"
+#ifdef ENABLE_MPI
+#include <mpi.h>
+#endif  // ENABLE_MPI
+#include "io/debug_write.h"
+namespace rootproject {
+namespace amrproject {
+// static member
+void DebugWriterManager::WriteCoordinatesInPts(const DefAmrIndexUint dims, const std::string& datafile_name,
+    const std::vector<DefReal>& grid_offset, const std::vector<DefReal>& grid_space,
+    const SFBitsetAuxInterface& sfbitset_aux, const DefMap<DefAmrUint>& map_points) {
+    FILE* fp = nullptr;
+    errno_t err = fopen_s(&fp, ("pointdata_rank_" + datafile_name + ".pts").c_str(), "w");
+    if (!fp) {
+        int rank_id = 0;
+#ifdef ENABLE_MPI
+        MPI_Comm_rank(MPI_COMM_WORLD, &rank_id);
+#endif  // ENABLE_MPI
+        LogManager::LogError("File on node " + std::to_string(rank_id)
+            + " was not opened for writing csv data in WriteCoordinatesInPts."
+            + " in "+ std::string(__FILE__) + " at line " + std::to_string(__LINE__));
+    } else {
+        DefSizet num_points = map_points.size();
+
+        fprintf_s(fp, "%zd\n", num_points);
+
+        std::string str_format = "%.6f  %.6f %.6f\n";
+        std::vector<DefReal> coordinates;
+        for (const auto& iter : map_points) {
+            sfbitset_aux.SFBitsetComputeCoordinateVir(iter.first, grid_space, &coordinates);
+            if (dims == 2) {
+                fprintf_s(fp, str_format.c_str(),
+                    coordinates.at(kXIndex) - grid_offset.at(kXIndex),
+                    coordinates.at(kYIndex) - grid_offset.at(kYIndex),
+                    0.);
+            } else {
+                fprintf_s(fp, str_format.c_str(),
+                    coordinates.at(kXIndex) - grid_offset.at(kXIndex),
+                    coordinates.at(kYIndex) - grid_offset.at(kYIndex),
+                    coordinates.at(kZIndex) - grid_offset.at(kZIndex));
+            }
+        }
+        fclose(fp);
+    }
+}
+}  // end namespace amrproject
+}  // end namespace rootproject

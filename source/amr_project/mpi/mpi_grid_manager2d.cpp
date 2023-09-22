@@ -117,7 +117,7 @@ void MpiManager::SearchForGhostLayerForMinNMax2D(const DefSFBitset sfbitset_in,
             for (DefAmrIndexUint ix = 0; ix <= num_of_ghost_layers; ++ix) {
                 if ((sfbitset_tmp_x&bitset_aux2d.k0SFBitsetTakeXRef_.at(bitset_aux2d.kRefCurrent_))
                  != domain_min_m1_n_level.at(kXIndex)) {
-                    code_tmp = sfbitset_tmp_x.to_ullong();
+                    code_tmp =  sfbitset_tmp_x.to_ullong();
                     if (code_tmp > code_max || code_tmp < code_min) {
                         ptr_map_ghost_layer->insert({sfbitset_tmp_x, flag_ini});
                     }
@@ -144,6 +144,7 @@ void MpiManager::SearchForGhostLayerForMinNMax2D(const DefSFBitset sfbitset_in,
         }
         sfbitset_tmp_y = bitset_aux2d.FindYNeg(sfbitset_tmp_y);
     }
+
     // positive y direction
     sfbitset_tmp_y = sfbitset_in;
     for (DefAmrIndexUint iy = 0; iy < num_of_ghost_layers; ++iy) {

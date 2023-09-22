@@ -968,7 +968,6 @@ void VtkWriterManager::WriteGridCoordinates(FILE* const fp,
                 coordi[kXIndex] - x_offset,
                 coordi[kYIndex] - y_offset,
                 coordi[kZIndex] - z_offset);
-
             ++i_nodes;
         }
     }
