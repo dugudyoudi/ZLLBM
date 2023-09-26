@@ -48,6 +48,12 @@ class  SFBitsetAuxInterface {
     virtual void GetMaxP1AtGivenLevel(const DefAmrIndexUint i_level,
         std::vector<DefAmrIndexLUint> indices_max,
         std::vector<DefSFBitset>* const ptr_max_p1_bitset) const = 0;
+    virtual void GetMinAtGivenLevel(const DefAmrIndexUint i_level,
+        std::vector<DefAmrIndexLUint> indices_min,
+        std::vector<DefSFBitset>* const ptr_min_bitsets) const = 0;
+    virtual void GetMaxAtGivenLevel(const DefAmrIndexUint i_level,
+        std::vector<DefAmrIndexLUint> indices_max,
+        std::vector<DefSFBitset>* const ptr_max_bitset) const = 0;
     // compared to inline function, this virtual is costly, avoiding using this if possible
     virtual DefSFBitset SFBitsetToNLowerLevelVir(
         const DefAmrIndexUint n_level, const DefSFBitset& morton_in) const = 0;
@@ -55,6 +61,10 @@ class  SFBitsetAuxInterface {
         const DefAmrIndexUint n_level, const DefSFBitset& morton_in) const = 0;
     virtual DefAmrIndexUint SFBitsetCoincideLevelVir(const DefSFBitset& morton_in) const = 0;
     virtual void SFBitsetFindAllNeighborsVir(const DefSFBitset& bitset_in,
+        std::vector<DefSFBitset>* const ptr_vec_neighbors) const = 0;
+    virtual void SFBitsetFindAllBondedNeighborsVir(const DefSFBitset& bitset_in,
+        const std::vector<DefSFBitset>& domain_min_m1_n_level,
+        const std::vector<DefSFBitset>& domain_max_p1_n_level,
         std::vector<DefSFBitset>* const ptr_vec_neighbors) const = 0;
     virtual void SFBitsetComputeCoordinateVir(const DefSFBitset& bitset_in,
         const std::vector<DefReal>& grid_space, std::vector<DefReal>* const ptr_coordi) const = 0;
@@ -112,6 +122,10 @@ class  SFBitsetAux2D : public SFBitsetAuxInterface {
         std::array<bool, 2>* const ptr_bool_not_at_boundary_pos) const;
     void SFBitsetFindAllNeighbors(const DefSFBitset& sfbitset_center,
         std::array<DefSFBitset, 9>* const ptr_bitset_neighbour) const;
+    void SFBitsetFindAllBondedNeighborsVir(const DefSFBitset& bitset_in,
+        const std::vector<DefSFBitset>& domain_min_m1_n_level,
+        const std::vector<DefSFBitset>& domain_max_p1_n_level,
+        std::vector<DefSFBitset>* const ptr_vec_neighbors) const;
     void SFBitsetFindCellNeighbors(const DefSFBitset& sfbitset_corner,
         std::array<DefSFBitset, 4>* const ptr_bitset_neighbour) const;
     void SFBitsetHigherLevelInACell(
@@ -156,6 +170,12 @@ class  SFBitsetAux2D : public SFBitsetAuxInterface {
     void GetMaxP1AtGivenLevel(const DefAmrIndexUint i_level,
         std::vector<DefAmrIndexLUint> indices_max,
         std::vector<DefSFBitset>* const ptr_max_p1_bitset) const final;
+    void GetMinAtGivenLevel(const DefAmrIndexUint i_level,
+        std::vector<DefAmrIndexLUint> indices_min,
+        std::vector<DefSFBitset>* const ptr_min_bitsets) const final;
+    void GetMaxAtGivenLevel(const DefAmrIndexUint i_level,
+        std::vector<DefAmrIndexLUint> indices_max,
+        std::vector<DefSFBitset>* const ptr_max_bitset) const final;
     DefSFBitset  SFBitsetToNLowerLevelVir(const DefAmrIndexUint n_level,
         const DefSFBitset& morton_in) const final {
         return SFBitsetToNLowerLevel(n_level, morton_in);
@@ -262,6 +282,10 @@ class  SFBitsetAux3D : public SFBitsetAuxInterface {
         std::array<DefSFBitset, 27>* const ptr_bitset_neighbour) const;
     void SFBitsetFindCellNeighbors(const DefSFBitset& sfbitset_corner,
         std::array<DefSFBitset, 8>* const ptr_vec_bitset_neighbour) const;
+    void SFBitsetFindAllBondedNeighborsVir(const DefSFBitset& bitset_in,
+        const std::vector<DefSFBitset>& domain_min_m1_n_level,
+        const std::vector<DefSFBitset>& domain_max_p1_n_level,
+        std::vector<DefSFBitset>* const ptr_vec_neighbors) const;
     void SFBitsetHigherLevelInACell(const DefAmrIndexUint level_diff, const DefSFBitset& sfbitset_corner,
         std::vector<DefSFBitset>* const ptr_ptr_sfbitsets_higher_level) const;
     template<typename DataType>
@@ -306,6 +330,12 @@ class  SFBitsetAux3D : public SFBitsetAuxInterface {
     void GetMaxP1AtGivenLevel(const DefAmrIndexUint i_level,
         std::vector<DefAmrIndexLUint> indices_max,
         std::vector<DefSFBitset>* const ptr_max_p1_bitset) const final;
+    void GetMinAtGivenLevel(const DefAmrIndexUint i_level,
+        std::vector<DefAmrIndexLUint> indices_min,
+        std::vector<DefSFBitset>* const ptr_min_bitsets) const final;
+    void GetMaxAtGivenLevel(const DefAmrIndexUint i_level,
+        std::vector<DefAmrIndexLUint> indices_max,
+        std::vector<DefSFBitset>* const ptr_max_bitset) const final;
     DefSFBitset  SFBitsetToNLowerLevelVir(const DefAmrIndexUint n_level, const DefSFBitset& morton_in) const final {
         return SFBitsetToNLowerLevel(n_level, morton_in);
     }

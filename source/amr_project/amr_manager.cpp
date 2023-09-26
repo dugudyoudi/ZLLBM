@@ -121,17 +121,6 @@ void AmrManager::InitializeMesh() {
             sfbitset_one_lower_level, &sfbitset_bound_current, &sfbitset_one_lower_level_current_rank,
             &sfbitset_ghost_one_lower_level_current_rank, &(ptr_grid_manager_->vec_ptr_grid_info_));
 
-
-
-            // for (const auto& iter_ghost : sfbitset_ghost_one_lower_level_current_rank.at(2)) {
-            //     std::vector<DefReal> indices, indices1;
-            //     ptr_grid_manager_2d->SFBitsetComputeCoordinateVir(iter_ghost.first, {0.01, 0.01}, &indices);
-            //     if (rank_id == 1 && std::fabs(indices[0] - 0.56) < 0.001) {
-            //     ptr_grid_manager_2d->SFBitsetComputeCoordinateVir(iter_ghost.first, {0.01, 0.01}, &indices1);
-            //     std::cout << indices1[0] - 0.02 << " " << indices1[1] - 0.02 << std::endl;
-            //     }
-            // }
-
         if (rank_id == 0) {
             sfbitset_one_lower_level.clear();
             sfbitset_one_lower_level.shrink_to_fit();

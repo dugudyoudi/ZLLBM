@@ -12,7 +12,6 @@
 #include "grid/grid_manager.h"
 #ifdef ENABLE_MPI
 #include "io/log_write.h"
-#include "io/debug_write.h"
 namespace rootproject {
 namespace amrproject {
 /**
@@ -335,9 +334,7 @@ void MpiManager::IniSendNReceivePartitionedGrid(const DefAmrIndexUint dims,
                         &nodes_in_region);
                     for (const auto& iter_node_in_region : nodes_in_region) {
                         if (map_ghost_current_tmp.at(i_rank).find(iter_node_in_region)
-                            == map_ghost_current_tmp.at(i_rank).end()
-                            && vec_sfbitset_rank0.at(i_level).find(iter_node_in_region)
-                            != vec_sfbitset_rank0.at(i_level).end()) {
+                            == map_ghost_current_tmp.at(i_rank).end()) {
                             map_ghost_current_tmp.at(i_rank).insert({iter_node_in_region, flag_size0});
                         }
                     }
@@ -420,16 +417,6 @@ void MpiManager::IniSendNReceivePartitionedGrid(const DefAmrIndexUint dims,
                         }
                     }
                 }
-            }
-                            if (i_level == 2) {
-            int output_rank = 0;
-            DefMap<DefAmrUint> map_tmp;
-            for (const auto &iter : ptr_sfbitset_ghost_each->at(i_level)) {
-                map_tmp.insert({iter.first, 0});
-            }
-            DebugWriterManager::WriteCoordinatesInPts(2, std::to_string(output_rank),
-             {0.02, 0.02}, {0.01, 0.01}, sfbitset_aux, map_tmp);
-
             }
 
             // ghost nodes on other ranks

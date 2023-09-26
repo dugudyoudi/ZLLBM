@@ -188,11 +188,11 @@ void GridManagerInterface::GenerateGridFromHighToLowLevelSerial(
                 == outermost_layer_current.end()) {
                 outermost_layer_current.insert({ iter_outer.first, {} });
                 ExtendGivenNumbOfLayer(i_level,
-                 map_num_extend_outer_layer.at(iter_outer.first).neg,
-                 map_num_extend_outer_layer.at(iter_outer.first).pos,
-                 iter_outer.second,
-                 &ptr_sfbitset_one_lower_level->at(i_level),
-                 &outermost_layer_current.at(iter_outer.first));
+                    map_num_extend_outer_layer.at(iter_outer.first).neg,
+                    map_num_extend_outer_layer.at(iter_outer.first).pos,
+                    iter_outer.second,
+                    &ptr_sfbitset_one_lower_level->at(i_level),
+                    &outermost_layer_current.at(iter_outer.first));
             } else {
                 outermost_layer_current.clear();
             }
@@ -200,6 +200,12 @@ void GridManagerInterface::GenerateGridFromHighToLowLevelSerial(
 
         // find interface between different grids
         DefInt level_low = i_level - 1;
+        if (vec_ptr_grid_info_.at(level_low)->k0NumCoarse2FineLayer_ < 2) {
+        LogManager::LogError("Number of coarse to fine layers should be greater than 2, which is"
+            + std::to_string(vec_ptr_grid_info_.at(level_low)->k0NumCoarse2FineLayer_)
+            + "at refinement level" + std::to_string(level_low)
+            + " in "+ std::string(__FILE__) + " at line " + std::to_string(__LINE__));
+        }
         for (auto& iter_inner : innermost_layer_current) {
             innermost_layer.at(iter_inner.first).clear();
             if (vec_ptr_grid_info_.at(level_low)->map_ptr_interface_layer_info_
@@ -216,7 +222,7 @@ void GridManagerInterface::GenerateGridFromHighToLowLevelSerial(
                 vec_ptr_grid_info_.at(level_low)->k0NumCoarse2FineLayer_);
             FindInterfaceBetweenGrid(i_level, iter_inner.second,
                 &ptr_sfbitset_one_lower_level->at(i_level),
-                &ptr_interface_info->vec_inner_coarse2fine_.back(),
+                &ptr_interface_info->vec_inner_coarse2fine_.back() - 1,
                 &ptr_sfbitset_one_lower_level->at(level_low),
                 &innermost_layer.at(iter_inner.first));
         }
@@ -236,7 +242,7 @@ void GridManagerInterface::GenerateGridFromHighToLowLevelSerial(
                 vec_ptr_grid_info_.at(level_low)->k0NumCoarse2FineLayer_);
             FindInterfaceBetweenGrid(i_level, iter_outer.second,
                 &ptr_sfbitset_one_lower_level->at(i_level),
-                &ptr_interface_info->vec_outer_coarse2fine_.back(),
+                &ptr_interface_info->vec_outer_coarse2fine_.back() - 1,
                 &ptr_sfbitset_one_lower_level->at(level_low),
                 &outermost_layer.at(iter_outer.first));
         }
