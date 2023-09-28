@@ -429,7 +429,6 @@ void GridManagerInterface::InstantiateOverlapLayerOfRefinementInterfaceMpi(
     const DefAmrUint flag_refinement,
     const DefSFCodeToUint code_min, const DefSFCodeToUint code_max,
     const SFBitsetAuxInterface& sfbitset_aux, const DefMap<DefAmrIndexUint>& map_sfbitset_one_lower_level,
-    const DefMap<DefAmrIndexUint>& map_sfbitset_ghost_one_lower_level,
     const DefMap<DefAmrIndexUint>& sfbitset_partition_interface_background,
     DefMap<DefAmrUint>* const ptr_outer_layer_current_level,
     DefMap<DefAmrUint>* const ptr_outer_layer_lower_level) {
@@ -694,7 +693,7 @@ void GridManagerInterface::InstantiateGridNodeAllLevel(const DefSFBitset sfbitse
  * @param[in] vec_sfbitset_max  maximum space filling code of all ranks.
  * @param[in] sfbitset_aux  class manage space filling curves.
  * @param[in] sfbitset_one_lower_level space filling codes at one lower refinement level.
- * @param[in] sfbitset_ghost_one_lower_level space filling codes of mpi communication ghost node at one lower refinement level.
+ * @param[in] sfbitset_ghost_one_lower_level space filling codes of mpi communication node near coarse to fine refinement interface.
  * @param[in] sfbitset_partition_interface_0  nodes on the background partitioned interface of background level on current rank.
  * @param[out] ptr_mpi_inner_layer pointer to nodes on the inner layer for mpi communication (sending).
  * @param[out] ptr_mpi_outer_layer pointer to nodes on the outer layer for mpi communication (sending). 
@@ -722,7 +721,7 @@ void GridManagerInterface::InstantiateGridNodeAllLevelMpi(const int i_rank,
     std::vector<DefSFCodeToUint>::iterator iter_index;
     int node_rank;
     std::vector<DefSFCodeToUint> ull_max(vec_sfbitset_max.size());
-    for (auto i = 0; i < vec_sfbitset_max.size(); ++i) {
+    for (DefSizet i = 0; i < vec_sfbitset_max.size(); ++i) {
         ull_max.at(i) = vec_sfbitset_max.at(i).to_ullong();
     }
     std::vector<DefAmrIndexLUint> indices_min = GetMinIndexOfBackgroundNodeArrAsVec(),
@@ -747,12 +746,12 @@ void GridManagerInterface::InstantiateGridNodeAllLevelMpi(const int i_rank,
         // Thus nodes on coarse to fine interfaces are sent from rank0 individually
         for (const auto& iter_ghost : sfbitset_ghost_one_lower_level.at(i_level)) {
             vec_ptr_grid_info_.at(i_level_lower)->map_grid_node_.insert({iter_ghost.first, node_outer});
-            ptr_mpi_outer_layer->at(i_level_lower).insert({iter_ghost.first, flag_not_refinement});
+            ptr_mpi_outer_layer->at(i_level_lower).insert({iter_ghost.first, flag_refinement});
         }
         // instantiate refinement interfaces
         InstantiateOverlapLayerOfRefinementInterfaceMpi(i_level, num_partition_outer_layer, flag_refinement,
             code_min, code_max, sfbitset_aux, sfbitset_one_lower_level.at(i_level),
-            sfbitset_ghost_one_lower_level.at(i_level), sfbitset_partition_interface_0,
+            sfbitset_partition_interface_0,
             &ptr_mpi_outer_layer->at(i_level), &ptr_mpi_outer_layer->at(i_level_lower));
         // instantiate nodes stored in sfbitset_one_lower_level
         DefMap<DefAmrUint> partition_interface_level;   // nodes on partition interface at current level
@@ -874,6 +873,15 @@ void GridManagerInterface::InstantiateGridNodeAllLevelMpi(const int i_rank,
             }
         }
     }
+            // if (i_rank == 0) {
+            //     DefMap<DefAmrUint> map_tmp;
+            //     for (const auto& iter : vec_ptr_grid_info_.at(0)->map_grid_node_) {
+            //         map_tmp.insert({iter.first, 0});
+            //     }
+            //     DebugWriterManager::WriteCoordinatesInPts(2, std::to_string(1),
+            //     {0.02, 0.02}, {0.02, 0.02}, sfbitset_aux, map_tmp);
+            // }
+
     InstantiateBackgroundGrid(code_min, code_max, background_occupied);
     // find background nodes on mpi communication interface
     DefMap<GridNode>& map_grid_level_0 = vec_ptr_grid_info_.at(0)->map_grid_node_;
@@ -882,8 +890,13 @@ void GridManagerInterface::InstantiateGridNodeAllLevelMpi(const int i_rank,
     node_outer.flag_status_ |= kNodeStatusMpiPartitionOutside_;
     sfbitset_aux.GetMinM1AtGivenLevel(0, indices_min, &domain_min_m1_n_level);
     sfbitset_aux.GetMaxP1AtGivenLevel(0, indices_max, &domain_max_p1_n_level);
-    DefMap<DefAmrIndexUint> map_outmost_current(sfbitset_partition_interface_0), map_outmost_pre;
+    DefMap<DefAmrIndexUint> map_outmost_current, map_outmost_pre;
     std::vector<DefSFBitset> vec_neighbors;
+    for (const auto& iter_interface : sfbitset_partition_interface_0) {
+        if (background_occupied.find(iter_interface.first) == background_occupied.end()) {
+            map_outmost_current.insert({iter_interface.first, 0});
+        }
+    }
     // find nodes on inner communication layers
     for (const auto& iter_interface : map_outmost_current) {
         for (const auto& iter_interface : map_outmost_current) {

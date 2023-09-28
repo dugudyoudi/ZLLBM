@@ -63,7 +63,7 @@ void GeometryConnectionInterface::InitialConnection(
         max_vertex = iter_connection.size() - 1;
         connection_surface_given_level_.at(0).vec_surface_connection
             .push_back(surface_temp);
-        for (auto i = 0; i <= max_vertex; ++i) {
+        for (DefSizet i = 0; i <= max_vertex; ++i) {
             connection_surface_given_level_.at(0).vec_surface_connection
                 .back().vertex_connection.push_back(
                     std::make_pair(0, iter_connection.at(i)));
@@ -260,7 +260,7 @@ void GeometryConnectionInterface::BisectEdgeOnce(
                 max_vertex = connection_surface_given_level_
                     .at(i_input_level).vec_surface_connection.at(iter_surface)
                     .vertex_connection.size() - 1;
-                for (auto i = 0; i <= max_vertex; ++i) {
+                for (DefSizet i = 0; i <= max_vertex; ++i) {
                     // update added vertex of the bisected surface
                     if (connection_surface_given_level_.at(i_input_level)
                         .vec_surface_connection.at(iter_surface)
@@ -916,7 +916,7 @@ void GeometryConnectionInterface::MergeEdgeOnce(
             max_vertex = connection_surface_given_level_.at(i_input_level)
                 .vec_surface_connection.at(*iter_surface)
                 .vertex_connection.size() - 1;
-            for (auto i = 0; i <= max_vertex; ++i) {
+            for (DefSizet i = 0; i <= max_vertex; ++i) {
                 if (i == max_vertex) {
                     if (!bool_periodic_connection_) {
                         break;
@@ -1239,7 +1239,7 @@ void GeometryConnectionInterface::ReconstructSurfaceBasedOnExistingVertex(
                 max_vertex = connection_surface_given_level_
                     .at(i_input_level).vec_surface_connection.at(i_surface)
                     .vertex_connection.size() - 1;
-                for (auto i = 0; i <= max_vertex; ++i) {
+                for (DefSizet i = 0; i <= max_vertex; ++i) {
                     if (i == max_vertex) {
                         if (!bool_periodic_connection_) {
                             break;
@@ -1344,7 +1344,7 @@ void GeometryConnectionInterface::ReconstructSurfaceBasedOnExistingVertex(
             max_vertex = connection_surface_given_level_
                 .at(i_input_level).vec_surface_connection.at(i_surface)
                 .vertex_connection.size() - 1;
-            for (auto i = 0; i <= max_vertex; ++i) {
+            for (DefSizet i = 0; i <= max_vertex; ++i) {
                 if (i == max_vertex) {
                     if (!bool_periodic_connection_) {
                         break;
@@ -1433,7 +1433,7 @@ void GeometryConnectionInterface::ReconstructSurfaceBasedOnExistingVertex(
                 max_vertex = connection_surface_given_level_
                     .at(i_input_level).vec_surface_connection.at(i_surface)
                     .vertex_connection.size() - 1;
-                for (auto i = 0; i <= max_vertex; ++i) {
+                for (DefSizet i = 0; i <= max_vertex; ++i) {
                     if (i == max_vertex) {
                         if (!bool_periodic_connection_) {
                             break;

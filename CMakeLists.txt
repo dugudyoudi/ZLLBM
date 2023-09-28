@@ -145,8 +145,8 @@ add_subdirectory("./source/amr_project")
 
 # test cases
 if(BUILD_TEST_CASES)
-    add_subdirectory("test_cases/test_grid2d")
-    add_subdirectory("test_cases/test_grid3d")
+    add_subdirectory("integrate_test/test_grid2d")
+    add_subdirectory("integrate_test/test_grid3d")
 endif(BUILD_TEST_CASES)
 
 # unit test

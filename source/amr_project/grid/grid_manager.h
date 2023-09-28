@@ -171,7 +171,6 @@ class GridManagerInterface{
         const DefAmrUint flag_refinement,
         const DefSFCodeToUint code_min, const DefSFCodeToUint code_max,
         const SFBitsetAuxInterface& sfbitset_aux, const DefMap<DefAmrIndexUint>& map_sfbitset_one_lower_level,
-        const DefMap<DefAmrIndexUint>& map_sfbitset_ghost_one_lower_level,
         const DefMap<DefAmrIndexUint>& sfbitset_partition_interface_background,
         DefMap<DefAmrUint>* const ptr_outer_layer_current_level,
         DefMap<DefAmrUint>* const ptr_outer_layer_lower_level);

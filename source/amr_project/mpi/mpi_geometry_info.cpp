@@ -83,7 +83,7 @@ void MpiManager::IniSendNReceivePartitionedGeoCoordi(const std::array<DefReal, 2
     int max_buffer = (std::numeric_limits<int>::max)() / sizeof(DefReal) / 2;
     std::vector<DefSFCodeToUint> ull_max(bitset_max.size());
     if (rank_id == 0) {
-        for (auto i = 0; i < bitset_max.size(); ++i) {
+        for (DefSizet i = 0; i < bitset_max.size(); ++i) {
             ull_max.at(i) = bitset_max.at(i).to_ullong();
         }
     }
@@ -236,7 +236,7 @@ void MpiManager::IniSendNReceivePartitionedGeoCoordi(const std::array<DefReal, 3
     int max_buffer = (std::numeric_limits<int>::max)() / sizeof(DefReal) / 3;
     std::vector<DefSFCodeToUint> ull_max(bitset_max.size());
     if (rank_id == 0) {
-        for (auto i = 0; i < bitset_max.size(); ++i) {
+        for (DefSizet i = 0; i < bitset_max.size(); ++i) {
             ull_max.at(i) = bitset_max.at(i).to_ullong();
         }
     }

@@ -118,7 +118,7 @@ void MpiManager::IniSendNReceiveTracking(const DefAmrIndexUint dims, const DefAm
     int rank_id = rank_id_, num_ranks = num_of_ranks_;
     std::vector<DefSFCodeToUint> ull_max(bitset_max.size());
     if (rank_id == 0) {
-        for (auto i = 0; i < bitset_max.size(); ++i) {
+        for (DefSizet i = 0; i < bitset_max.size(); ++i) {
             ull_max.at(i) = bitset_max.at(i).to_ullong();
         }
     }
@@ -341,10 +341,9 @@ void MpiManager::IniDeserializeRefinementInterfaceNode(const DefAmrUint flag0,
 /**
  * @brief  function to send and receive nodes in a given level of the interface layer.
  * @param[in] i_level  level of the interface layer to send/receive.
- * @param[in] flag0 flag for initialization..
- * @param[in] outmost_for_all_ranks nodes on coarse to fine interface for all ranks stored on rank 0. 
+ * @param[in] flag0 flag for initialization.
+ * @param[in] outmost_for_all_ranks nodes on the outmost fine to coarse interface for all ranks stored on rank 0. 
  * @param[out] ptr_map_interface_layer pointer to nodes on the refinement interface layer.
- * 
  */
 void MpiManager::IniSendNReiveOneLayerRefinementInterface(
     const DefAmrUint flag0, const DefMap<std::set<int>>& outmost_for_all_ranks,
@@ -421,7 +420,7 @@ void MpiManager::IniSendNReiveOneLayerRefinementInterface(
  * @param[in] i_level refinement level of the interface layer.
  * @param[in] num_of_layers_coarse2fine number of layers in the coarse to fine overlapping region.
  * @param[in] flag0 flag for initialization.
- * @param[in] outmost_for_all_ranks nodes on coarse to fine interface for all ranks stored on rank 0. 
+ * @param[in] outmost_for_all_ranks nodes on the outmost fine to coarse interface for all ranks stored on rank 0. 
  * @param[out] ptr_map_interface_info  pointer to refinement interface information.
  */
 void MpiManager::IniSendNReceiveCoarse2Fine0Interface(const DefAmrIndexUint dims,
@@ -442,12 +441,12 @@ void MpiManager::IniSendNReceiveCoarse2Fine0Interface(const DefAmrIndexUint dims
         }
     }
     CriterionIndexForMpi interface_index_tmp;
-    for (uint64_t i_interface = 0; i_interface < num_interface; ++i_interface) {
+    for (DefAmrIndexUint i_interface = 0; i_interface < num_interface; ++i_interface) {
         // broadcast the current index of the interfaces
         if (rank_id == 0) {
-            interface_index_tmp.enum_criterion = vec_interface_indices.at(i_interface).first;
+            interface_index_tmp.enum_criterion = vec_interface_indices[i_interface].first;
             interface_index_tmp.index_criterion =
-             static_cast<uint64_t>(vec_interface_indices.at(i_interface).second);
+                static_cast<uint64_t>(vec_interface_indices[i_interface].second);
             interface_index_tmp.index_creator = 0;
         }
         MPI_Bcast(&interface_index_tmp, 1, mpi_interface_index_type, 0, MPI_COMM_WORLD);
@@ -529,11 +528,11 @@ void MpiManager::IniSendNReceiveCoarse2Fine0Interface(const DefAmrIndexUint dims
         }
 
         //  send and receive outer layers
-        IniSendNReiveOneLayerRefinementInterface(flag0,
-            outmost_for_all_ranks, &ptr_interface->vec_outer_coarse2fine_.at(num_of_layers_coarse2fine - 2));
+        IniSendNReiveOneLayerRefinementInterface(flag0, outmost_for_all_ranks,
+            &ptr_interface->vec_outer_coarse2fine_.at(num_of_layers_coarse2fine - 2));
         //  send and receive inner layers
-        IniSendNReiveOneLayerRefinementInterface(flag0,
-            outmost_for_all_ranks, &ptr_interface->vec_inner_coarse2fine_.at(num_of_layers_coarse2fine - 2));
+        IniSendNReiveOneLayerRefinementInterface(flag0, outmost_for_all_ranks,
+            &ptr_interface->vec_inner_coarse2fine_.at(num_of_layers_coarse2fine - 2));
     }
 
     MPI_Type_free(&mpi_interface_index_type);
