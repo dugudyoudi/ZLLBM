@@ -143,30 +143,30 @@ void MpiManager::IniSendNReceiveTracking(const DefAmrIndexUint dims, const DefAm
             tracking_index_tmp.index_creator =
                 ptr_map_tracking_info->at(vec_tracking_indices.at(i_tracking))->k0IndexCreator;
 #ifdef DEBUG_CHECK_GRID
-        if (ptr_map_tracking_info->at(vec_tracking_indices.at(i_tracking))->k0ExtendOuterNeg_.size() != dims) {
-            LogManager::LogError("size of k0ExtendOuterNeg_ " + std::to_string(
-            ptr_map_tracking_info->at(vec_tracking_indices.at(i_tracking))->k0ExtendOuterNeg_.size())
-            + " is not equal to the dimension " + std::to_string(dims) + " in IniSendNReceiveTracking in "
-            + std::string(__FILE__) + " at line " + std::to_string(__LINE__));
-        }
-        if (ptr_map_tracking_info->at(vec_tracking_indices.at(i_tracking))->k0ExtendOuterPos_.size() != dims) {
-            LogManager::LogError("size of k0ExtendOuterPos_ " + std::to_string(
-            ptr_map_tracking_info->at(vec_tracking_indices.at(i_tracking))->k0ExtendOuterPos_.size())
-            + " is not equal to the dimension " + std::to_string(dims) + " in IniSendNReceiveTracking in "
-            + std::string(__FILE__) + " at line " + std::to_string(__LINE__));
-        }
-        if (ptr_map_tracking_info->at(vec_tracking_indices.at(i_tracking))->k0ExtendInnerNeg_.size() != dims) {
-            LogManager::LogError("size of k0ExtendInnerNeg_ " + std::to_string(
-            ptr_map_tracking_info->at(vec_tracking_indices.at(i_tracking))->k0ExtendInnerNeg_.size())
-            + " is not equal to the dimension " + std::to_string(dims) + " in IniSendNReceiveTracking in "
-            + std::string(__FILE__) + " at line " + std::to_string(__LINE__));
-        }
-        if (ptr_map_tracking_info->at(vec_tracking_indices.at(i_tracking))->k0ExtendInnerPos_.size() != dims) {
-            LogManager::LogError("size of k0ExtendInnerPos_ " + std::to_string(
-            ptr_map_tracking_info->at(vec_tracking_indices.at(i_tracking))->k0ExtendInnerPos_.size())
-            + " is not equal to the dimension " + std::to_string(dims) + " in IniSendNReceiveTracking in "
-            + std::string(__FILE__) + " at line " + std::to_string(__LINE__));
-        }
+            if (ptr_map_tracking_info->at(vec_tracking_indices.at(i_tracking))->k0ExtendOuterNeg_.size() != dims) {
+                LogManager::LogError("size of k0ExtendOuterNeg_ " + std::to_string(
+                ptr_map_tracking_info->at(vec_tracking_indices.at(i_tracking))->k0ExtendOuterNeg_.size())
+                + " is not equal to the dimension " + std::to_string(dims) + " in IniSendNReceiveTracking in "
+                + std::string(__FILE__) + " at line " + std::to_string(__LINE__));
+            }
+            if (ptr_map_tracking_info->at(vec_tracking_indices.at(i_tracking))->k0ExtendOuterPos_.size() != dims) {
+                LogManager::LogError("size of k0ExtendOuterPos_ " + std::to_string(
+                ptr_map_tracking_info->at(vec_tracking_indices.at(i_tracking))->k0ExtendOuterPos_.size())
+                + " is not equal to the dimension " + std::to_string(dims) + " in IniSendNReceiveTracking in "
+                + std::string(__FILE__) + " at line " + std::to_string(__LINE__));
+            }
+            if (ptr_map_tracking_info->at(vec_tracking_indices.at(i_tracking))->k0ExtendInnerNeg_.size() != dims) {
+                LogManager::LogError("size of k0ExtendInnerNeg_ " + std::to_string(
+                ptr_map_tracking_info->at(vec_tracking_indices.at(i_tracking))->k0ExtendInnerNeg_.size())
+                + " is not equal to the dimension " + std::to_string(dims) + " in IniSendNReceiveTracking in "
+                + std::string(__FILE__) + " at line " + std::to_string(__LINE__));
+            }
+            if (ptr_map_tracking_info->at(vec_tracking_indices.at(i_tracking))->k0ExtendInnerPos_.size() != dims) {
+                LogManager::LogError("size of k0ExtendInnerPos_ " + std::to_string(
+                ptr_map_tracking_info->at(vec_tracking_indices.at(i_tracking))->k0ExtendInnerPos_.size())
+                + " is not equal to the dimension " + std::to_string(dims) + " in IniSendNReceiveTracking in "
+                + std::string(__FILE__) + " at line " + std::to_string(__LINE__));
+            }
 #endif  // DEBUG_CHECK_GRID
         }
         MPI_Bcast(&tracking_index_tmp, 1, mpi_tracking_index_type, 0, MPI_COMM_WORLD);
@@ -530,6 +530,7 @@ void MpiManager::IniSendNReceiveCoarse2Fine0Interface(const DefAmrIndexUint dims
         //  send and receive outer layers
         IniSendNReiveOneLayerRefinementInterface(flag0, outmost_for_all_ranks,
             &ptr_interface->vec_outer_coarse2fine_.at(num_of_layers_coarse2fine - 2));
+
         //  send and receive inner layers
         IniSendNReiveOneLayerRefinementInterface(flag0, outmost_for_all_ranks,
             &ptr_interface->vec_inner_coarse2fine_.at(num_of_layers_coarse2fine - 2));

@@ -389,7 +389,7 @@ void MpiManager::FindInterfaceForPartitionFromMinNMax(const DefSFBitset& bitset_
 
     DefSFCodeToUint code_max_criterion, code_remain;
     DefSFCodeToUint code_min_current;
-    while (code_cri >= code_min) {
+    while (code_cri >= code_min && code_cri > 0) {
         code_max_criterion = code_tmp;
         code_min_current = code_max/ block_length/ block_length/ block_length;
         // though using FindPartitionRemainMax standalone gives the same result,

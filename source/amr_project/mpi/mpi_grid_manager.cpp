@@ -445,15 +445,6 @@ void MpiManager::IniSendNReceivePartitionedGrid(const DefAmrIndexUint dims,
                     }
                 }
             }
-            if (i_level == 1) {
-                DefMap<DefAmrUint> map_tmp;
-                for (const auto& iter : map_interface_near_coarse2fine.at(0)) {
-                    map_tmp.insert({iter.first, 0});
-                }
-                DebugWriterManager::WriteCoordinatesInPts(2, std::to_string(1),
-                {0.02, 0.02}, {0.02, 0.02}, sfbitset_aux, map_tmp);
-            }
-
             // ghost nodes on other ranks
             std::vector<std::vector<DefMap<DefAmrIndexUint>>> vec_ghost_nodes_ranks(num_ranks);
             std::vector<int> i_ghost_chunk_each_rank(num_ranks, -1), i_ghost_counts(num_ranks, 0);
@@ -659,6 +650,7 @@ void MpiManager::SendNReceiveGridInfoAtGivenLevels(const DefAmrIndexUint flag_si
 #endif  // DEBUG_DISABLE_3D_FUNCTION
         }
     }
+
     // broadcast minimum and maximum space filling code of all ranks to each rank
     MPI_Bcast(&bitset_min[0], static_cast<int>(num_of_ranks_), MPI_CODE_UINT_TYPE, 0, MPI_COMM_WORLD);
     MPI_Bcast(&bitset_max[0], static_cast<int>(num_of_ranks_), MPI_CODE_UINT_TYPE, 0, MPI_COMM_WORLD);

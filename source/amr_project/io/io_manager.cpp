@@ -50,6 +50,22 @@ void IoManager::DefaultInitialization() {
         LogManager::LogWarning("Output format for uint type was not found.");
     }
 
+    if (typeid(k0OutputDataFormat_.output_sizet_.CastType(1))
+        == typeid(uint16_t)) {
+        k0OutputDataFormat_.output_sizet_.printf_format_ = "%hu";
+        k0OutputDataFormat_.output_sizet_.format_name_ = "UInt16";
+    } else if (typeid(k0OutputDataFormat_.output_sizet_.CastType(1))
+        == typeid(uint32_t)) {
+        k0OutputDataFormat_.output_sizet_.printf_format_ = "%u";
+        k0OutputDataFormat_.output_sizet_.format_name_ = "UInt32";
+    } else if (typeid(k0OutputDataFormat_.output_sizet_.CastType(1))
+        == typeid(uint64_t)) {
+        k0OutputDataFormat_.output_sizet_.printf_format_ = "%llu";
+        k0OutputDataFormat_.output_sizet_.format_name_ = "UInt64";
+    } else {
+        LogManager::LogWarning("Output format for uint type was not found.");
+    }
+
     if (typeid(k0OutputDataFormat_.output_int_.CastType(1))
         == typeid(int16_t)) {
         k0OutputDataFormat_.output_int_.printf_format_ = "%hd";

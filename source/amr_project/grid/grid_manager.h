@@ -59,13 +59,11 @@ class GridManagerInterface{
     e.g. solid boundary and free surface*/
 
     // grid status
-    const DefAmrUint kNodeStatusExist_ = 1;
     const DefAmrUint kNodeStatusCoarse2Fine0_ = 1 << 1;  ///< flag indicating node on the outmost fine layer
     const DefAmrUint kNodeStatusCoarse2FineM1_ = 1 << 2;
     const DefAmrUint kNodeStatusFine2Coarse0_ = 1 << 3;  ///< flag indicating node on the outmost coarse layer
     const DefAmrUint kNodeStatusFine2CoarseM1_ = 1 << 4;
-    const DefAmrUint kNodeStatusMpiPartitionInterface_ = 1 << 5;
-    const DefAmrUint kNodeStatusMpiPartitionOutside_ = 1 << 6;
+    const DefAmrUint kNodeStatusMpiPartitionOutside_ = 1 << 5;
     const DefAmrIndexUint kFlagSize0_ = 0;  // flag initialize size as 0
 
     //  o     o     o     o  // coarse grid

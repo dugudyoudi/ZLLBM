@@ -140,6 +140,7 @@ void AmrManager::InitializeMesh() {
     } else {
 #ifndef  DEBUG_DISABLE_3D_FUNCTIONS
         GridManager3D* ptr_grid_manager_3d = dynamic_cast<GridManager3D*>(ptr_grid_manager_.get());
+
         ptr_mpi_manager_->SendNReceiveGridInfoAtGivenLevels(ptr_grid_manager_->kFlagSize0_,
             ptr_grid_manager_->kNodeStatusCoarse2Fine0_,
             ptr_grid_manager_->k0GridDims_, ptr_grid_manager_->k0MaxLevel_,
@@ -183,7 +184,7 @@ void AmrManager::InitializeMesh() {
                     if (ptr_grid_manager_->vec_ptr_grid_info_.at(i_level)->map_grid_node_.find(iter_node.first)
                         == ptr_grid_manager_->vec_ptr_grid_info_.at(i_level)->map_grid_node_.end()) {
                         ptr_grid_manager_->vec_ptr_grid_info_.at(i_level)->map_grid_node_.insert(
-                            {iter_node.first, ptr_grid_manager_->vec_ptr_grid_info_.at(i_level)->k0GridNodeInstance_});
+                            {iter_node.first, ptr_grid_manager_->vec_ptr_grid_info_.at(i_level)->GridNodeCreator()});
                     }
                 }
             }

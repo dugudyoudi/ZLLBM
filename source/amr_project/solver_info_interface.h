@@ -14,12 +14,13 @@
 namespace rootproject {
 namespace amrproject {
 class GridInfoCreatorInterface;
+class GridInfoInterface;
 /**
 * @class SolverInterface
 * @brief abstract class used to manager solver.
 */
 class SolverInterface {
-public:
+ public:
     DefAmrIndexUint k0SolverDims_ = 0;  ///< dimension
     std::string node_type_;
     std::unique_ptr<GridInfoCreatorInterface>
@@ -33,7 +34,7 @@ public:
 * @brief abstract class used to generate solver instance.
 */
 class SolverCreatorInterface {
-public:
+ public:
     virtual std::shared_ptr<SolverInterface> CreateSolver() = 0;
 };
 }  // end namespace amrprproject

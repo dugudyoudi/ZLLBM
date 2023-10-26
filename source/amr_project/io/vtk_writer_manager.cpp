@@ -138,7 +138,7 @@ void VtkWriterManager::WriteVtuAll(const std::string& folder_name,
     switch (vtk_ghost_cell_option_) {
     case EVtkWriterGhostCellOption::kOutputEntirety : {
         bool_overlap = false;
-        overlap_flag = grid_manager.kNodeStatusFine2CoarseM1_
+        overlap_flag = grid_manager.kNodeStatusFine2Coarse0_
             | grid_manager.kNodeStatusFine2Coarse0_ | grid_manager.kNodeStatusMpiPartitionOutside_;
         std::vector<DefAmrIndexUint> output_levels;
         for (DefAmrIndexUint i = 0; i < grid_manager.k0MaxLevel_ + 1; ++i) {
@@ -326,14 +326,14 @@ void VtkWriterManager::WritePvtu(FILE* const fp,
     fprintf_s(fp, "   <PCells>\n");
     // cell connectivity
     str_temp.assign("    <PDataArray type=\""
-        + output_data_format.output_uint_.format_name_
+        + output_data_format.output_sizet_.format_name_
         + "\" Name=\"connectivity\" format=\""
         + k0StrVtkAsciiOrBinary_ + "\">\n");
     fprintf_s(fp, str_temp.c_str());
     fprintf_s(fp, "    </PDataArray>\n");
     // cell offset
     str_temp.assign("    <PDataArray type=\""
-        + output_data_format.output_uint_.format_name_
+        + output_data_format.output_sizet_.format_name_
         + "\" Name=\"offsets\" format=\""
         + k0StrVtkAsciiOrBinary_ + "\">\n");
     fprintf_s(fp, str_temp.c_str());
@@ -391,6 +391,7 @@ void VtkWriterManager::WriteGridPieces(FILE* const fp, const bool bool_binary,
             grid_manager3d, grid_info.map_grid_node_, &map_node_index);
 #endif  // DEBUG_DISABLE_3D_FUNCTIONS
     }
+
     str_temp.assign("  <Piece NumberOfPoints=\""
         + std::to_string(node_and_cell_number[0])
         + "\" NumberOfCells=\"" + std::to_string(node_and_cell_number[1]) + "\">\n");
@@ -431,7 +432,7 @@ void VtkWriterManager::WriteGridPieces(FILE* const fp, const bool bool_binary,
     // write cell connectivity
     fprintf_s(fp, "   <Cells>\n");
     str_temp.assign("    <DataArray type=\""
-        + output_data_format.output_uint_.format_name_
+        + output_data_format.output_sizet_.format_name_
         + "\" Name=\"connectivity\" format=\"" + k0StrVtkAsciiOrBinary_ + "\">\n");
     fprintf_s(fp, str_temp.c_str());
     if (dims == 2) {
@@ -451,7 +452,7 @@ void VtkWriterManager::WriteGridPieces(FILE* const fp, const bool bool_binary,
     }
     fprintf_s(fp, "    </DataArray>\n");
     str_temp.assign("    <DataArray type=\""
-        + output_data_format.output_uint_.format_name_
+        + output_data_format.output_sizet_.format_name_
         + "\" Name=\"offsets\" format=\""
         + k0StrVtkAsciiOrBinary_ + "\">\n");
     fprintf_s(fp, str_temp.c_str());
@@ -492,7 +493,7 @@ void VtkWriterManager::WriteGridCellOffsets(FILE* const fp,
         std::vector<uint8_t> vec_uint8{}, vec_base64{};
         for (DefSizet i = 1; i < num_cell + 1; ++i) {
             base64_instance_.AddToVecChar(
-                output_data_format.output_uint_.CastType(
+                output_data_format.output_sizet_.CastType(
                     i * num_offsets), &vec_uint8);
         }
         base64_instance_.Encode(&vec_uint8, &vec_base64);
@@ -502,7 +503,7 @@ void VtkWriterManager::WriteGridCellOffsets(FILE* const fp,
         fprintf_s(fp, "\n");
     } else {
         std::string str_format = "   "
-            + output_data_format.output_uint_.printf_format_ + "\n";
+            + output_data_format.output_sizet_.printf_format_ + "\n";
         for (DefSizet i = 1; i < num_cell + 1; ++i) {
             fprintf_s(fp, str_format.c_str(), i * num_offsets);
         }
@@ -551,7 +552,7 @@ void VtkWriterManager::WriteGridCellTypes(FILE* const fp,
 void VtkWriterManager::WriteGridNodeFlagStatus(FILE* const fp,
     const bool bool_binary, OutputDataFormat& output_data_format,
     const DefMap<DefSizet>& map_node_index,
-    const DefMap<GridNode>& map_grid_node) {
+    const DefMap<std::unique_ptr<GridNode>>& map_grid_node) {
     std::string str_temp;
     str_temp.assign("      <DataArray NumberOfComponents=\"1\" type=\""
         + output_data_format.output_uint_.format_name_
@@ -565,7 +566,7 @@ void VtkWriterManager::WriteGridNodeFlagStatus(FILE* const fp,
             iter != map_node_index.end(); ++iter) {
             base64_instance_.AddToVecChar(
                 output_data_format.output_uint_.CastType(
-                    map_grid_node.at(iter->first).flag_status_), &vec_uint8);
+                    map_grid_node.at(iter->first)->flag_status_), &vec_uint8);
         }
         base64_instance_.Encode(&vec_uint8, &vec_base64);
         for (const auto& iter : vec_base64) {
@@ -579,7 +580,7 @@ void VtkWriterManager::WriteGridNodeFlagStatus(FILE* const fp,
             iter != map_node_index.end(); ++iter) {
             fprintf_s(fp, "  ");
             fprintf_s(fp, str_format.c_str(),
-                map_grid_node.at(iter->first).flag_status_);
+                map_grid_node.at(iter->first)->flag_status_);
             fprintf_s(fp, "\n");
         }
     }
@@ -599,7 +600,7 @@ void VtkWriterManager::WriteGridNodeVtkVisualization(
     const DefAmrUint flag_overlap_visual,
     OutputDataFormat& output_data_format,
     const DefMap<DefSizet>& map_node_index,
-    const DefMap<GridNode>& map_grid_node) {
+    const DefMap<std::unique_ptr<GridNode>>& map_grid_node) {
     std::string str_temp;
     str_temp.assign("      <DataArray type=\"UInt8\" Name=\"vtkGhostType\" "
         "format=\"" + k0StrVtkAsciiOrBinary_ + "\">\n");
@@ -609,7 +610,7 @@ void VtkWriterManager::WriteGridNodeVtkVisualization(
         std::vector<uint8_t> vec_uint8{}, vec_base64{};
         for (auto iter = map_node_index.begin();
             iter != map_node_index.end(); ++iter) {
-            if ((map_grid_node.at(iter->first).flag_status_
+            if ((map_grid_node.at(iter->first)->flag_status_
                 & flag_overlap_visual) == 0) {
                 base64_instance_.AddToVecChar(vtk_normal, &vec_uint8);
             } else {
@@ -624,7 +625,7 @@ void VtkWriterManager::WriteGridNodeVtkVisualization(
     } else {
         for (auto iter = map_node_index.begin();
             iter != map_node_index.end(); ++iter) {
-            if ((map_grid_node.at(iter->first).flag_status_
+            if ((map_grid_node.at(iter->first)->flag_status_
                 & flag_overlap_visual) == 0) {
                 fprintf_s(fp, "   %u\n", vtk_normal);
             } else {
@@ -685,7 +686,7 @@ void VtkWriterManager::WriteGeometryPieces(
     fprintf_s(fp, "   </Points>\n");
     fprintf_s(fp, "   <Cells>\n");
     str_temp.assign("    <DataArray type=\""
-        + output_data_format.output_uint_.format_name_
+        + output_data_format.output_sizet_.format_name_
         + "\" Name=\"connectivity\" format=\""
         + k0StrVtkAsciiOrBinary_ + "\">\n");
     fprintf_s(fp, str_temp.c_str());
@@ -704,7 +705,7 @@ void VtkWriterManager::WriteGeometryPieces(
 
     fprintf_s(fp, "    </DataArray>\n");
     str_temp.assign("    <DataArray type=\""
-        + output_data_format.output_uint_.format_name_
+        + output_data_format.output_sizet_.format_name_
         + "\" Name=\"offsets\" format=\""
         + k0StrVtkAsciiOrBinary_ + "\">\n");
     fprintf_s(fp, str_temp.c_str());
@@ -761,10 +762,10 @@ void VtkWriterManager::WriteGeometryCellConnectivitykPolyLine(FILE* const fp,
         std::vector<uint8_t> vec_uint8{}, vec_base64{};
         for (DefSizet i_vertex = 0; i_vertex < num_points - 1; ++i_vertex) {
             base64_instance_.AddToVecChar(
-                output_data_format.output_uint_.CastType(
+                output_data_format.output_sizet_.CastType(
                     i_vertex), &vec_uint8);
             base64_instance_.AddToVecChar(
-                output_data_format.output_uint_.CastType(
+                output_data_format.output_sizet_.CastType(
                     i_vertex + 1), &vec_uint8);
         }
         base64_instance_.Encode(&vec_uint8, &vec_base64);
@@ -774,8 +775,8 @@ void VtkWriterManager::WriteGeometryCellConnectivitykPolyLine(FILE* const fp,
         fprintf_s(fp, "\n");
     } else {
         std::string str_format = "   "
-            + output_data_format.output_uint_.printf_format_ + " "
-            + output_data_format.output_uint_.printf_format_ + "\n";
+            + output_data_format.output_sizet_.printf_format_ + " "
+            + output_data_format.output_sizet_.printf_format_ + "\n";
         for (DefSizet i_vertex = 0; i_vertex < num_points - 1; ++i_vertex) {
             fprintf_s(fp, str_format.c_str(), i_vertex,
                 i_vertex + 1);
@@ -810,7 +811,7 @@ void VtkWriterManager::WriteGeometryCellOffset(FILE* const fp,
         std::vector<uint8_t> vec_uint8{}, vec_base64{};
         for (DefSizet i_vertex = 1; i_vertex < num_cell + 1; ++i_vertex) {
             base64_instance_.AddToVecChar(
-                output_data_format.output_uint_.CastType(
+                output_data_format.output_sizet_.CastType(
                     i_vertex * num_offset), &vec_uint8);;
         }
         base64_instance_.Encode(&vec_uint8, &vec_base64);
@@ -820,7 +821,7 @@ void VtkWriterManager::WriteGeometryCellOffset(FILE* const fp,
         fprintf_s(fp, "\n");
     } else {
         std::string str_format = "   "
-            + output_data_format.output_uint_.printf_format_ + "\n";
+            + output_data_format.output_sizet_.printf_format_ + "\n";
         for (DefSizet i_vertex = 1; i_vertex < num_cell + 1; ++i_vertex) {
             fprintf_s(fp, str_format.c_str(), i_vertex * num_offset);
         }
@@ -868,7 +869,7 @@ void VtkWriterManager::WriteGeometryCellType(
 std::array<DefSizet, 2> VtkWriterManager::CalculateNumOfGridCells(
     const bool bool_overlap, const DefAmrUint overlap_flag,
     const SFBitsetAux2D& sfbitset_aux2d,
-    const DefMap<GridNode>& map_grid_node,
+    const DefMap<std::unique_ptr<GridNode>>& map_grid_node,
     DefMap<DefSizet>* ptr_map_node_index) const {
 
     DefSizet num_cell = 0;
@@ -877,7 +878,7 @@ std::array<DefSizet, 2> VtkWriterManager::CalculateNumOfGridCells(
     for (auto iter = map_grid_node.begin();
         iter != map_grid_node.end(); ++iter) {
         if (bool_overlap ||  // points not in overlapping regions
-            (iter->second.flag_status_ & overlap_flag) == 0) {
+            (iter->second->flag_status_ & overlap_flag) == 0) {
             // record the node indices in map_grid_node_
             ptr_map_node_index->insert({ iter->first, 0 });
             // check if the node is at the lower corner of a cell
@@ -886,7 +887,7 @@ std::array<DefSizet, 2> VtkWriterManager::CalculateNumOfGridCells(
                 no_overlap = true;
                 for (const auto& iter_cell : bitset_cell) {
                     if (!bool_overlap
-                        && (map_grid_node.at(iter_cell).flag_status_
+                        && (map_grid_node.at(iter_cell)->flag_status_
                         & overlap_flag) != 0) {
                         no_overlap = false;
                         break;
@@ -999,7 +1000,7 @@ void VtkWriterManager::WriteGridCellConnectivity(FILE* const fp,
                 iter->first, map_node_index, &bitset_cell_2d)) {
                 for (const auto& iter_sfbitset : bitset_cell_2d) {
                     base64_instance_.AddToVecChar(
-                        output_data_format.output_uint_.CastType(
+                        output_data_format.output_sizet_.CastType(
                             map_node_index.at(iter_sfbitset)), &vec_uint8);
                 }
             }
@@ -1011,7 +1012,7 @@ void VtkWriterManager::WriteGridCellConnectivity(FILE* const fp,
         fprintf_s(fp, "\n");
     } else {
         std::string str_format = " "
-            + output_data_format.output_uint_.printf_format_;
+            + output_data_format.output_sizet_.printf_format_;
         for (auto iter = map_node_index.begin();
             iter != map_node_index.end(); ++iter) {
             if (bitset_aux2d.SFBitsetBelongToOneCell(
@@ -1089,18 +1090,17 @@ DefSizet VtkWriterManager::WriteGeometryCoordinates(FILE* const fp,
 std::array<DefSizet, 2> VtkWriterManager::CalculateNumOfGridCells(
     const bool bool_overlap, const DefAmrUint overlap_flag,
     const SFBitsetAux3D& sfbitset_aux3d,
-    const DefMap<GridNode>& map_grid_node,
+    const DefMap<std::unique_ptr<GridNode>>& map_grid_node,
     DefMap<DefSizet>* ptr_map_node_index) const {
 
     DefAmrIndexLUint num_cell = 0;
-    DefAmrIndexLUint node_index = 0;
     std::array<DefSFBitset, 8> bitset_cell;
 
     bool no_overlap;
     for (auto iter = map_grid_node.begin();
         iter != map_grid_node.end(); ++iter) {
         if (bool_overlap ||  // points not in overlapping regions
-            (iter->second.flag_status_ & overlap_flag) == 0) {
+            (iter->second->flag_status_ & overlap_flag) == 0) {
             // record the node indices in map_grid_node_
             ptr_map_node_index->insert({ iter->first, 0 });
             // check if the node is at the lower corner of a cell
@@ -1109,7 +1109,7 @@ std::array<DefSizet, 2> VtkWriterManager::CalculateNumOfGridCells(
                 no_overlap = true;
                 for (const auto& iter_cell : bitset_cell) {
                     if (!bool_overlap
-                        && (map_grid_node.at(iter_cell).flag_status_
+                        && (map_grid_node.at(iter_cell)->flag_status_
                             & overlap_flag) != 0) {
                         no_overlap = false;
                         break;
@@ -1224,7 +1224,7 @@ void VtkWriterManager::WriteGridCellConnectivity(FILE* const fp,
                 iter->first, map_node_index, &bitset_cell_3d)) {
                 for (const auto& iter_sfbitset : bitset_cell_3d) {
                     base64_instance_.AddToVecChar(
-                        output_data_format.output_uint_.CastType(
+                        output_data_format.output_sizet_.CastType(
                             map_node_index.at(iter_sfbitset)), &vec_uint8);
                 }
             }
@@ -1236,7 +1236,7 @@ void VtkWriterManager::WriteGridCellConnectivity(FILE* const fp,
         fprintf_s(fp, "\n");
     } else {
         std::string str_format = " "
-            + output_data_format.output_uint_.printf_format_;
+            + output_data_format.output_sizet_.printf_format_;
         for (auto iter = map_node_index.begin();
             iter != map_node_index.end(); ++iter) {
             // check if the node is at the lower corner of a cell

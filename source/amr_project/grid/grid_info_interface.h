@@ -37,7 +37,7 @@ struct TrackingNode {
 * @struct GhostNode
 * @brief structure to store ghost node information
 */
-struct GhostNode {
+struct GhostNode{
  public:
     std::vector<DefInt> vec_int{};
     std::vector<DefReal> vec_real{};
@@ -50,13 +50,11 @@ struct GhostNode {
 struct GridNode {
  public:
     DefAmrUint flag_status_;
-    std::vector<DefInt> vec_int{};
-    std::vector<DefReal> vec_real{};
+    virtual ~GridNode() {}
 };
 /**
 * @class InterfaceLayerInfo
-* @brief class used to store information of
-* @date  2023-1-5
+* @brief class used to store information of refinement interface layer
 */
 class InterfaceLayerInfo {
  public:
@@ -72,7 +70,6 @@ class InterfaceLayerInfo {
 /**
 * @class TrackingGridInfoInterface
 * @brief class used to store tracking grid information at i_level_ of refinement
-* @date  2022-6-4
 */
 class TrackingGridInfoInterface {
  public:
@@ -107,8 +104,6 @@ class TrackingGridInfoCreatorInterface {
 /**
 * @class GhostGridInfoInterface
 * @brief class used to store ghost grid information at i_level_ of refinement
-* @note
-* @date  2022-6-4
 */
 class GhostGridInfoInterface {
  public:
@@ -122,8 +117,6 @@ class GhostGridInfoInterface {
     DefMap<GhostNode> map_ghost_node_{};
     DefAmrIndexUint k0NumIntForEachNode_ = 1;
     DefAmrIndexUint k0NumRealForEachNode_ = 0;
-    GridNode k0GhostNodeInstance_;
-    ///< instance for a ghost node with preset vector sizes
     virtual ~GhostGridInfoInterface() {}
  protected:
     virtual void InitialGhostNode(const DefSFBitset& bitset_in) = 0;
@@ -141,8 +134,6 @@ class GhostGridInfoCreatorInterface {
 /**
 * @class GridInfoInterface
 * @brief class used to store grid information at i_level_ of refinement
-* @note
-* @date  2022-6-4
 */
 class GridInfoInterface {
  public:
@@ -165,14 +156,15 @@ class GridInfoInterface {
         std::shared_ptr<InterfaceLayerInfo>> map_ptr_interface_layer_info_;
 
     // information of GridNode
-    DefMap<GridNode> map_grid_node_{};
+    DefMap<std::unique_ptr<GridNode>> map_grid_node_{};
     DefMap<DefAmrUint> map_grid_count_exist_{};
     DefAmrIndexUint k0NumIntForEachNode_ = 0;
     DefAmrIndexUint k0NumRealForEachNode_ = 0;
-    virtual void SetNumberOfVecElements() = 0;
 
-    GridNode k0GridNodeInstance_;
-    ///< instance for insert node with preset vector sizes
+    virtual std::unique_ptr<GridNode> GridNodeCreator() {
+        return std::make_unique<GridNode>();
+    }
+    virtual void SetPointerToCurrentNodeType() {}
     virtual void InitialGridNode(const DefSFBitset& bitset_in) = 0;
 
     virtual ~GridInfoInterface() {}

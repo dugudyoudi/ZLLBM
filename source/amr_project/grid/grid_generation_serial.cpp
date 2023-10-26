@@ -82,7 +82,7 @@ void GridManagerInterface::GenerateGridFromHighToLowLevelSerial(
             // tracking nodes need to identify inside and outside
 
             GenerateGridNodeNearTrackingNode(
-                    i_level, iter_tracking_grid_info.first, &node_near_tracking);
+                i_level, iter_tracking_grid_info.first, &node_near_tracking);
             if (iter_tracking_grid_info.second->grid_extend_type_
                 == EGridExtendType::kInAndOut) {
                 for (DefAmrIndexUint idims = 0; idims < k0GridDims_; ++idims) {

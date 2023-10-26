@@ -239,12 +239,10 @@ void SFBitsetAux2D::SFBitsetFindAllNeighbors(
     ptr_bitset_neighbors->at(kNodeIndexXpYp_) = sfbitset_temp1;
     // node at (0, -y, 0)
     sfbitset_temp0 = bool_y_gt0 ? FindYNeg(sfbitset_center) : sfbitset_center;
-    ptr_bitset_neighbors->at(kNodeIndexX0Yn_)
-        = sfbitset_temp0;
+    ptr_bitset_neighbors->at(kNodeIndexX0Yn_) = sfbitset_temp0;
     // node at (0, +y, 0)
     sfbitset_temp0 = FindYPos(sfbitset_center);
-    ptr_bitset_neighbors->at(kNodeIndexX0Yp_)
-        = sfbitset_temp0;
+    ptr_bitset_neighbors->at(kNodeIndexX0Yp_) = sfbitset_temp0;
 }
 /**
 * @brief   function to find all neighboring nodes bonded by lower and upper limits.

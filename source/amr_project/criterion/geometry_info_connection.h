@@ -113,28 +113,28 @@ class GeometryConnectionInterface {
     ///<  vertices at the current and higher geometry levels exist simultaneously at the given level (the ith element)
 
     virtual void InitialCoordinateGivenLevel(
-     std::vector<DefReal>* const ptr_coordi_min, std::vector<DefReal>* const ptr_coordi_max) = 0;
+        std::vector<DefReal>* const ptr_coordi_min, std::vector<DefReal>* const ptr_coordi_max) = 0;
     virtual DefReal ComputeDistanceFromCoordinates(
-     const std::pair<DefAmrIndexUint, DefSizet>& vertex0, const std::pair<DefAmrIndexUint, DefSizet>& vertex1) = 0;
+        const std::pair<DefAmrIndexUint, DefSizet>& vertex0, const std::pair<DefAmrIndexUint, DefSizet>& vertex1) = 0;
     virtual void ComputeMidCoordinates(const std::pair<DefAmrIndexUint, DefSizet>& vertex0,
-     const std::pair<DefAmrIndexUint, DefSizet>& vertex1, std::vector<DefReal>* const ptr_coordinates) = 0;
+        const std::pair<DefAmrIndexUint, DefSizet>& vertex1, std::vector<DefReal>* const ptr_coordinates) = 0;
     virtual ~GeometryConnectionInterface() {}
 
     void SetupConnectionParameters(EGeometryCellType cell_type);
     void InitialConnection(std::vector<DefReal>* const ptr_coordi_min,
         std::vector<DefReal>* const ptr_coordi_max);
     void MergeEdgeOnce(const DefAmrIndexUint i_level, const DefAmrIndexUint i_input_level, const DefReal ds_min,
-     const std::shared_ptr<SFBitsetAuxInterface> ptr_sfbitset_aux,
-     const std::set<std::pair<std::pair<DefAmrIndexUint, DefSizet>,
-      std::pair<DefAmrIndexUint, DefSizet>>>& edge_for_merge,
-     std::set<std::pair<std::pair<DefAmrIndexUint, DefSizet>, std::pair<DefAmrIndexUint, DefSizet>>>*
-     const ptr_edhe_remain_for_merge, DefMap<DefAmrUint>* const ptr_sfbitset_ref_removed);
+        const SFBitsetAuxInterface& sfbitset_aux,
+        const std::set<std::pair<std::pair<DefAmrIndexUint, DefSizet>,
+        std::pair<DefAmrIndexUint, DefSizet>>>& edge_for_merge,
+        std::set<std::pair<std::pair<DefAmrIndexUint, DefSizet>, std::pair<DefAmrIndexUint, DefSizet>>>*
+        const ptr_edhe_remain_for_merge, DefMap<DefAmrUint>* const ptr_sfbitset_ref_removed);
     void BisectEdgeOnce(const DefAmrIndexUint i_level, const DefAmrIndexUint i_input_level, const DefReal ds_max,
-     const std::shared_ptr<SFBitsetAuxInterface> ptr_sfbitset_aux,
-     const std::set<std::pair<std::pair<DefAmrIndexUint, DefSizet>,
-      std::pair<DefAmrIndexUint, DefSizet>>>& edge_for_bisect,
-     std::set<std::pair<std::pair<DefAmrIndexUint, DefSizet>, std::pair<DefAmrIndexUint, DefSizet>>>*
-     const ptr_surface_remain_for_bisect, DefMap<DefAmrUint>* const ptr_sfbitset_ref_added);
+        const SFBitsetAuxInterface& sfbitset_aux,
+        const std::set<std::pair<std::pair<DefAmrIndexUint, DefSizet>,
+        std::pair<DefAmrIndexUint, DefSizet>>>& edge_for_bisect,
+        std::set<std::pair<std::pair<DefAmrIndexUint, DefSizet>, std::pair<DefAmrIndexUint, DefSizet>>>*
+        const ptr_surface_remain_for_bisect, DefMap<DefAmrUint>* const ptr_sfbitset_ref_added);
 
     void FindTrackingNodeBasedOnGeo(DefAmrIndexUint i_geo, DefAmrIndexUint i_level,
      const EGridExtendType grid_extend_type, const SFBitsetAuxInterface& sfbitset_aux,
@@ -144,7 +144,7 @@ class GeometryConnectionInterface {
     GeometryConnectionCoordinate vertex_instance_;
     void RemoveVertex(const DefAmrIndexUint i_input_level,
         const std::vector<DefReal>& grid_space,
-        const std::shared_ptr<SFBitsetAuxInterface> ptr_sfbitset_aux,
+        const SFBitsetAuxInterface& sfbitset_aux,
         const std::set<std::pair<DefAmrIndexUint, DefSizet>>& set_vertex_remove,
         DefMap<DefAmrUint>* const ptr_sfbitset_ref_removed);
     void AddNewLinkage(const DefAmrIndexUint i_input_level,

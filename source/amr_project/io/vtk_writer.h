@@ -11,6 +11,7 @@
 #ifndef ROOTPROJECT_SOURCE_IO_VTK_WRITER_H_
 #define ROOTPROJECT_SOURCE_IO_VTK_WRITER_H_
 #include <string>
+#include <memory>
 #include <vector>
 #include <unordered_map>
 #include "../defs_libs.h"
@@ -121,18 +122,18 @@ class VtkWriterManager {
     void WriteGridNodeFlagStatus(FILE* const fp, const bool bool_binary,
         OutputDataFormat& output_data_format,
         const DefMap<DefSizet>& map_node_index,
-        const DefMap<GridNode>& map_grid_node);
+        const DefMap<std::unique_ptr<GridNode>>& map_grid_node);
     void WriteGridNodeVtkVisualization(FILE* const fp, const bool bool_binary,
         const DefAmrUint flag_overlap_visual,
         OutputDataFormat& output_data_format,
         const DefMap<DefSizet>& map_node_index,
-        const DefMap<GridNode>& map_grid_node);
+        const DefMap<std::unique_ptr<GridNode>>& map_grid_node);
 
 #ifndef  DEBUG_DISABLE_2D_FUNCTIONS
     std::array<DefSizet, 2> CalculateNumOfGridCells(
         const bool bool_overlap, const DefAmrUint overlap_flag,
         const SFBitsetAux2D& sfbitset_aux,
-        const DefMap<GridNode>& map_grid_node,
+        const DefMap<std::unique_ptr<GridNode>>& map_grid_node,
         DefMap<DefSizet>* ptr_map_node_index) const;
     void WriteGridCoordinates(FILE* const fp, const bool bool_binary,
         OutputDataFormat& output_data_format,
@@ -153,7 +154,7 @@ class VtkWriterManager {
     std::array<DefSizet, 2> CalculateNumOfGridCells(
         const bool bool_overlap, const DefAmrUint overlap_flag,
         const SFBitsetAux3D& sfbitset_aux,
-        const DefMap<GridNode>& map_grid_node,
+        const DefMap<std::unique_ptr<GridNode>>& map_grid_node,
         DefMap<DefSizet>* ptr_map_node_index) const;
     void WriteGridCellConnectivity(FILE* const fp, const bool bool_binary,
         OutputDataFormat& output_data_format,
@@ -189,6 +190,6 @@ class VtkWriterManager {
         const GeometryInfo3DInterface& geo_info);
 #endif  // DEBUG_DISABLE_3D_FUNCTIONS
 };
-}  // end amrproject
+}  // end namespace amrproject
 }  // end namespace rootproject
 #endif  // ROOTPROJECT_SOURCE_IO_VTK_WRITER_MANAGER_H_

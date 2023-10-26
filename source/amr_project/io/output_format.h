@@ -8,6 +8,7 @@
 */
 #ifndef ROOTPROJECT_SOURCE_AMR_PROJECT_IO_OUTPUT_FORMAT_H_
 #define ROOTPROJECT_SOURCE_AMR_PROJECT_IO_OUTPUT_FORMAT_H_
+#include <string>
 #include "../defs_libs.h"
 #include "io/vtk_writer.h"
 namespace rootproject {
@@ -18,7 +19,7 @@ namespace amrproject {
 * @note  change return data type of CastType for desired output format.
 */
 class OutputDataFormatReal {
-public:
+ public:
     std::string printf_format_{};
     std::string format_name_{};
     template<typename DataType>
@@ -31,7 +32,7 @@ public:
 * @brief class used to manage int format for output data.
 */
 class OutputDataFormatInt {
-public:
+ public:
     std::string printf_format_{};
     std::string format_name_{};
     template<typename DataType>
@@ -40,11 +41,24 @@ public:
     }
 };
 /**
-* @class OutputDataFormatReal
+* @class OutputDataFormatSizet
+* @brief class used to manage size_t format for output data.
+*/
+class OutputDataFormatSizet {
+ public:
+    std::string printf_format_{};
+    std::string format_name_{};
+    template<typename DataType>
+    std::uint64_t CastType(const DataType& data) {
+        return static_cast<uint64_t>(data);
+    }
+};
+/**
+* @class OutputDataFormatUint
 * @brief class used to manage unsigned int format for output data.
 */
 class OutputDataFormatUint {
-public:
+ public:
     std::string printf_format_{};
     std::string format_name_{};
     template<typename DataType>
@@ -59,6 +73,7 @@ public:
 class OutputDataFormat {
 public:
     OutputDataFormatReal output_real_;
+    OutputDataFormatSizet output_sizet_;
     OutputDataFormatUint output_uint_;
     OutputDataFormatInt output_int_;
 };

@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.1)
+cmake_minimum_required(VERSION 3.5)
 
 # project information
 set(PROJECT_NAME rootProject)
@@ -15,7 +15,7 @@ option(DEBUG_CHECK_GRID                        "Enable if clauses for checking g
 option(DEBUG_BUILD_2D_ONLY                     "Disable 3D related functions"                              OFF)
 option(DEBUG_BUILD_3D_ONLY                     "Disable 2D related functions"                              OFF)
 option(DEBUG_TREAT_WARNING_AS_ERROR            "Treat warnings as errors"                                  ON)
-option(DEBUG_CHECK_MEMORY_LEAKS                "Using AddressSanitizer to check memory leaks"              ON)
+option(DEBUG_CHECK_MEMORY_LEAKS                "Using AddressSanitizer to check memory leaks"              OFF)
 
 set(CMAKE_BUILD_TYPE "Debug")
 set(CXX_STANDARD "c++20")
@@ -141,7 +141,11 @@ if(BUILD_WITH_MPI)
     endif(MPI_CXX_FOUND)
 endif(BUILD_WITH_MPI)
 
+# amr project
 add_subdirectory("./source/amr_project")
+
+# lbm project
+add_subdirectory("./source/lbm_project")
 
 # test cases
 if(BUILD_TEST_CASES)
@@ -155,6 +159,7 @@ if(DEBUG_UNIT_TEST)
     add_subdirectory("./googletest-main")
     # compile test cases
     add_subdirectory("./unit_tests/test_amr")
+    add_subdirectory("./unit_tests/test_lbm")
 endif(DEBUG_UNIT_TEST)
 
 
