@@ -13,6 +13,7 @@
 #include <vector>
 #include <memory>
 #include "criterion/geometry_info_connection.h"
+#include "criterion/geometry_info_origin.h"
 namespace rootproject {
 namespace amrproject {
 /**

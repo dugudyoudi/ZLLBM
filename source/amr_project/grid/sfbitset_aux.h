@@ -42,6 +42,12 @@ class  SFBitsetAuxInterface {
         const std::vector<DefSFBitset>& domain_min_m1_n_level,
         const std::vector<DefSFBitset>& domain_max_p1_n_level,
         std::vector<DefSFBitset>* const ptr_sfbitset_nodes) const = 0;
+    virtual DefAmrIndexLUint FindNodesInPeriodicReginOfGivenLength(const DefSFBitset& sfbitset_in,
+        const DefAmrIndexLUint region_length,
+        const std::vector<bool>& periodic_min, const std::vector<bool>& periodic_max,
+        const std::vector<DefSFBitset>& domain_min_n_level,
+        const std::vector<DefSFBitset>& domain_max_n_level,
+        std::vector<DefSFBitset>* const ptr_sfbitset_node) const = 0;
     virtual void GetMinM1AtGivenLevel(const DefAmrIndexUint i_level,
         std::vector<DefAmrIndexLUint> indices_min,
         std::vector<DefSFBitset>* const ptr_min_m1_bitsets) const = 0;
@@ -85,7 +91,9 @@ class  SFBitsetAux2D : public SFBitsetAuxInterface {
     static std::array<DefSFBitset, 2> k0SFBitsetTakeXRef_, k0SFBitsetTakeYRef_;
     /**< reference bitset used to take digitals at a given direction
           by bool operator.*/
-    std::array<DefSFBitset, 2> SFBitsetMin_, SFBitsetMax_;
+    std::array<DefSFBitset, 2> SFBitsetMin_ = {~DefSFCodeToUint(0), ~DefSFCodeToUint(0)}, SFBitsetMax_ = {0, 0};
+    /**< bitset corresponding to the minimum and maximum
+     indices of the computational domain in each direction*/
     std::array<DefSFBitset, 2> k0SFBitsetDomainCoordMin_, k0SFBitsetDomainCoordMax_;
     /**< bitset corresponding to the minimum and maximum
      coordinates of the computational domain in each direction*/
@@ -112,9 +120,7 @@ class  SFBitsetAux2D : public SFBitsetAuxInterface {
     DefSFBitset SFBitsetEncoding(const std::array<DefAmrIndexLUint, 2>& coordi_index) const;
 
     DefSFBitset SFBitsetBitsForRefinement(const DefAmrIndexUint i_level) const;
-    void SFBitsetMinAndMaxCoordinates(const DefAmrIndexUint max_level,
-        const std::array<DefAmrIndexLUint, 2>& indices_min, const std::array<DefAmrIndexLUint, 2>& indices_max);
-    void SFBitsetMinAndMaxGlobal(
+    void SFBitsetSetMinAndMaxBounds(
         const std::array<DefAmrIndexLUint, 2>& indices_min, const std::array<DefAmrIndexLUint, 2>& indices_max);
     void SFBitsetNotOnDomainBoundary(const DefSFBitset& sfbitset_in,
         const std::array<DefSFBitset, 2>& sfbitset_min, const std::array<DefSFBitset, 2>& sfbitset_max,
@@ -135,8 +141,8 @@ class  SFBitsetAux2D : public SFBitsetAuxInterface {
     bool SFBitsetBelongToOneCell(const DefSFBitset& sfbitset_in,
         const DefMap<DataType>& map_node_exist,
         std::array<DefSFBitset, 4>* const ptr_sfbitsets) const;
-    int ResetIndicesExceedingDomain(const std::array<DefAmrIndexLUint, 2> domain_min_indices,
-        const std::array<DefAmrIndexLUint, 2> domain_max_indices,
+    int ResetIndicesExceedingDomain(const std::array<DefAmrIndexLUint, 2>& domain_min_indices,
+        const std::array<DefAmrIndexLUint, 2>& domain_max_indices,
         DefSFCodeToUint* const ptr_i_code, DefSFBitset* ptr_bitset_tmp) const;
 
     // virtual functions
@@ -164,6 +170,12 @@ class  SFBitsetAux2D : public SFBitsetAuxInterface {
         const std::vector<DefSFBitset>& domain_min_m1_n_level,
         const std::vector<DefSFBitset>& domain_max_p1_n_level,
         std::vector<DefSFBitset>* const ptr_sfbitset_nodes) const final;
+    DefAmrIndexLUint FindNodesInPeriodicReginOfGivenLength(const DefSFBitset& sfbitset_in,
+        const DefAmrIndexLUint region_length,
+        const std::vector<bool>& periodic_min, const std::vector<bool>& periodic_max,
+        const std::vector<DefSFBitset>& domain_min_n_level,
+        const std::vector<DefSFBitset>& domain_max_n_level,
+        std::vector<DefSFBitset>* const ptr_sfbitset_node) const final;
     void GetMinM1AtGivenLevel(const DefAmrIndexUint i_level,
         std::vector<DefAmrIndexLUint> indices_min,
         std::vector<DefSFBitset>* const ptr_min_m1_bitsets) const final;
@@ -247,7 +259,8 @@ class  SFBitsetAux3D : public SFBitsetAuxInterface {
      k0SFBitsetTakeXRef_, k0SFBitsetTakeYRef_, k0SFBitsetTakeZRef_;
     /**< reference bitset used to take digitals at a given direction
           by bool operator.*/
-    std::array<DefSFBitset, 3> SFBitsetMin_, SFBitsetMax_;
+    std::array<DefSFBitset, 3> SFBitsetMin_ = {~DefSFCodeToUint(0), ~DefSFCodeToUint(0), ~DefSFCodeToUint(0)},
+        SFBitsetMax_ = {0, 0, 0};
     std::array<DefSFBitset, 3> k0SFBitsetDomainCoordMin_, k0SFBitsetDomainCoordMax_;
     /**< bitset corresponding to the minimum and maximum
      coordinates of the computational domain in each direction*/
@@ -269,10 +282,8 @@ class  SFBitsetAux3D : public SFBitsetAuxInterface {
     const std::array<DefReal, 3>& grid_space, std::array<DefReal, 3>* const ptr_coordi) const;
 
     DefSFBitset SFBitsetBitsForRefinement(const DefAmrIndexUint i_level) const;
-    void SFBitsetMinAndMaxCoordinates(const DefAmrIndexUint max_level,
+    void SFBitsetSetMinAndMaxBounds(
        const std::array<DefAmrIndexLUint, 3>& indices_min, const std::array<DefAmrIndexLUint, 3>& indices_max);
-    void SFBitsetMinAndMaxGlobal(
-        const std::array<DefAmrIndexLUint, 3>& indices_min, const std::array<DefAmrIndexLUint, 3>& indices_max);
     void SFBitsetNotOnDomainBoundary(const DefSFBitset& sfbitset_in,
         const std::array<DefSFBitset, 3>& sfbitset_min,
         const std::array<DefSFBitset, 3>& sfbitset_max,
@@ -291,8 +302,8 @@ class  SFBitsetAux3D : public SFBitsetAuxInterface {
     template<typename DataType>
     bool SFBitsetBelongToOneCell(const DefSFBitset& sfbitset_in,
         const DefMap<DataType>& map_node_exist, std::array<DefSFBitset, 8>* const ptr_sfbitsets) const;
-    int ResetIndicesExceedingDomain(const std::array<DefAmrIndexLUint, 3> domain_min_indices,
-        const std::array<DefAmrIndexLUint, 3> domain_max_indices,
+    int ResetIndicesExceedingDomain(const std::array<DefAmrIndexLUint, 3>& domain_min_indices,
+        const std::array<DefAmrIndexLUint, 3>& domain_max_indices,
         DefSFCodeToUint* const ptr_i_code, DefSFBitset* ptr_bitset_tmp) const;
 
     // virtual functions
@@ -324,6 +335,12 @@ class  SFBitsetAux3D : public SFBitsetAuxInterface {
         const std::vector<DefSFBitset>& domain_min_m1_n_level,
         const std::vector<DefSFBitset>& domain_max_p1_n_level,
         std::vector<DefSFBitset>* const ptr_sfbitset_nodes) const final;
+    DefAmrIndexLUint FindNodesInPeriodicReginOfGivenLength(const DefSFBitset& sfbitset_in,
+        const DefAmrIndexLUint region_length,
+        const std::vector<bool>& periodic_min, const std::vector<bool>& periodic_max,
+        const std::vector<DefSFBitset>& domain_min_n_level,
+        const std::vector<DefSFBitset>& domain_max_n_level,
+        std::vector<DefSFBitset>* const ptr_sfbitset_node) const final;
     void GetMinM1AtGivenLevel(const DefAmrIndexUint i_level,
         std::vector<DefAmrIndexLUint> indices_min,
         std::vector<DefSFBitset>* const ptr_min_m1_bitsets) const final;

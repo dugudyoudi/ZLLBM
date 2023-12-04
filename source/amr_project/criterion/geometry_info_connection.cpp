@@ -719,7 +719,7 @@ void GeometryConnectionInterface::AddNewLinkage(const DefAmrIndexUint i_input_le
 * @brief function to remove vertices and their connection relations.
 * @param[in]  i_input_level    level of current connection relations.
 * @param[in] grid_space   grid spacing
-* @param[in]  sfbitset_aux pointer to class manage space filling curves.
+* @param[in]  sfbitset_aux class manage space filling curves.
 * @param[in]  set_vertex_remove    vertices need to be removed.
 * @param[out] ptr_sfbitset_ref_removed space filling code corresponding
 *             to removed vertices.

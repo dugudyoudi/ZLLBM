@@ -23,6 +23,8 @@
 #include "grid/sfbitset_aux.h"
 namespace rootproject {
 namespace amrproject {
+class OutputDataFormat;
+class Base64Utility;
 /**
 * @struct TrackingNode
 * @brief structure to nodes information for tracking movement
@@ -49,7 +51,7 @@ struct GhostNode{
 */
 struct GridNode {
  public:
-    DefAmrUint flag_status_;
+    DefAmrUint flag_status_ = 0;
     virtual ~GridNode() {}
 };
 /**
@@ -137,8 +139,11 @@ class GhostGridInfoCreatorInterface {
 */
 class GridInfoInterface {
  public:
-    // information of grid at each level of refinement
+    // level of refinement
     DefAmrIndexUint i_level_ = 0;
+
+    std::map<std::string, void*> kMemberNames_;
+    void SetMemberVariable(const std::string& member_name, int value);
 
     DefAmrUint computational_cost_ = 1;
     std::string node_type_;
@@ -161,12 +166,26 @@ class GridInfoInterface {
     DefAmrIndexUint k0NumIntForEachNode_ = 0;
     DefAmrIndexUint k0NumRealForEachNode_ = 0;
 
+    // domain boundary
+    std::vector<DefSFBitset> k0VecBitsetDomainMin_, k0VecBitsetDomainMax_;
+    ///< space filling codes of bounds for computational domain
+    std::vector<DefMap<DefAmrIndexUint>> domain_boundary_min_, domain_boundary_max_;
+    ///< map storing spacing filling codes of bounds (min and max in each coordinate) for computational domain
+
+    // output related
+    virtual void SetupOutputVariables() {}
+    virtual void WriteOutputScalarAndVectors(FILE* const fp, const bool bool_binary,
+        const Base64Utility& base64_instance,
+        const OutputDataFormat& output_data_format,
+        const DefMap<DefSizet>& map_node_index) const {}
+
+    // node type
     virtual std::unique_ptr<GridNode> GridNodeCreator() {
         return std::make_unique<GridNode>();
     }
     virtual void SetPointerToCurrentNodeType() {}
-    virtual void InitialGridNode(const DefSFBitset& bitset_in) = 0;
 
+    virtual void InitialGridInfo() = 0;
     virtual ~GridInfoInterface() {}
 };
 /**
@@ -176,7 +195,7 @@ class GridInfoInterface {
 class GridInfoCreatorInterface {
  public:
     virtual std::shared_ptr<GridInfoInterface>
-        CreateGridInfo() = 0;
+        CreateGridInfo() const = 0;
     virtual ~GridInfoCreatorInterface() {}
 };
 }  // end namespace amrproject

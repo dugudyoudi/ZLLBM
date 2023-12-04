@@ -124,8 +124,8 @@ void SFBitsetAux2D::SFBitsetComputeIndices(
  * @param[out] ptr_bitset_tmp pointer to space filling code
  * @return an integer indicating the success of the operation
  */
-int SFBitsetAux2D::ResetIndicesExceedingDomain(std::array<DefAmrIndexLUint, 2> domain_min_indices,
-    std::array<DefAmrIndexLUint, 2> domain_max_indices,
+int SFBitsetAux2D::ResetIndicesExceedingDomain(const std::array<DefAmrIndexLUint, 2>& domain_min_indices,
+    const std::array<DefAmrIndexLUint, 2>& domain_max_indices,
     DefSFCodeToUint* const ptr_i_code, DefSFBitset* ptr_bitset_tmp) const {
     std::array<DefAmrIndexLUint, 2> indices;
     DefSFCodeToUint& i_code = *ptr_i_code;
@@ -314,8 +314,8 @@ void SFBitsetAux3D::SFBitsetComputeIndices(
  * @param ptr_bitset_tmp pointer to space filling code
  * @return an integer indicating the success of the operation
  */
-int SFBitsetAux3D::ResetIndicesExceedingDomain(std::array<DefAmrIndexLUint, 3> domain_min_indices,
-    std::array<DefAmrIndexLUint, 3> domain_max_indices,
+int SFBitsetAux3D::ResetIndicesExceedingDomain(const std::array<DefAmrIndexLUint, 3>& domain_min_indices,
+    const std::array<DefAmrIndexLUint, 3>& domain_max_indices,
     DefSFCodeToUint* const ptr_i_code, DefSFBitset* ptr_bitset_tmp) const {
     std::array<DefAmrIndexLUint, 3> indices;
     DefSFCodeToUint& i_code = *ptr_i_code;

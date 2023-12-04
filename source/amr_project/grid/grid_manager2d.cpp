@@ -17,14 +17,37 @@
 namespace rootproject {
 namespace amrproject {
 /**
+* @brief function to setup size of the computational domain.
+* @param[in] domain_size maximum coordinates of the computational domain.
+*/
+void GridManager2D::SetDomainSize(const std::vector<DefReal>& domain_size) {
+    if (domain_size.size() == 2) {
+        k0DomainSize_.at(kXIndex) = domain_size.at(kXIndex);
+        k0DomainSize_.at(kYIndex) = domain_size.at(kYIndex);
+    } else {
+        LogManager::LogError("size of the input vector should be 2"
+            + std::string(__FILE__) + " at line " + std::to_string(__LINE__));
+    }
+}
+/**
+* @brief function to setup grid spacing the background level.
+* @param[in] domain_grid_size grid size of the computational domain.
+*/
+void GridManager2D::SetDomainGridSize(const std::vector<DefReal>& domain_grid_size) {
+    if (domain_grid_size.size() == 1) {
+        k0DomainDx_.at(kXIndex) = domain_grid_size.at(kXIndex);
+    } else if (domain_grid_size.size() == 2) {
+        k0DomainDx_.at(kXIndex) = domain_grid_size.at(kXIndex);
+        k0DomainDx_.at(kYIndex) = domain_grid_size.at(kYIndex);
+    } else {
+        LogManager::LogError("size of the input vector should be 1 or 2"
+            + std::string(__FILE__) + " at line " + std::to_string(__LINE__));
+    }
+}
+/**
 * @brief function to setup and check grid related parameters.
 */
 void GridManager2D::SetGridParameters() {
-    SFBitsetMinAndMaxGlobal(
-        k0MinIndexOfBackgroundNode_, k0MaxIndexOfBackgroundNode_);
-    SFBitsetMinAndMaxCoordinates(k0MaxLevel_,
-        k0MinIndexOfBackgroundNode_, k0MaxIndexOfBackgroundNode_);
-
     // check if length of computational domain is given
     if (k0DomainSize_.at(kXIndex) < kEps) {
         LogManager::LogError("Domain length in x direction (k0DomainSize_[0])"
@@ -50,24 +73,26 @@ void GridManager2D::SetGridParameters() {
     if (k0DomainDx_.at(kYIndex) < kEps) {
         k0DomainDx_.at(kYIndex) = k0DomainDx_.at(kXIndex);
     }
-    k0SpaceBackground_ = { k0DomainDx_[kXIndex], k0DomainDx_[kYIndex] };
+    k0SpaceBackground_ = { k0DomainDx_[kXIndex], k0DomainDx_[kYIndex]};
 
     // calculate number of background nodes in each direction
-    DefAmrIndexLUint x_max = static_cast<DefAmrIndexLUint>(k0DomainSize_[kXIndex]
-        / k0DomainDx_[kXIndex] + kEps);
-
     k0MaxIndexOfBackgroundNode_ = {
         static_cast<DefAmrIndexLUint>(k0DomainSize_[kXIndex]
         / k0DomainDx_[kXIndex] + kEps) + k0MinIndexOfBackgroundNode_[kXIndex],
         static_cast<DefAmrIndexLUint>(k0DomainSize_[kYIndex]
-        / k0DomainDx_[kYIndex] + kEps) + k0MinIndexOfBackgroundNode_[kYIndex] };
+        / k0DomainDx_[kYIndex] + kEps) + k0MinIndexOfBackgroundNode_[kYIndex]};
+
+    SFBitsetSetMinAndMaxBounds(k0MinIndexOfBackgroundNode_, k0MaxIndexOfBackgroundNode_);
+
     // set offsets
     k0RealMin_[kXIndex] = k0MinIndexOfBackgroundNode_[kXIndex] * k0DomainDx_[kXIndex];
     k0RealMin_[kYIndex] = k0MinIndexOfBackgroundNode_[kYIndex] * k0DomainDx_[kYIndex];
 
-    k0SFBitsetDomainMin_ = SFBitsetEncoding({k0MinIndexOfBackgroundNode_[kXIndex], k0MinIndexOfBackgroundNode_[kYIndex]});
+    k0SFBitsetDomainMin_ = SFBitsetEncoding({k0MinIndexOfBackgroundNode_[kXIndex],
+        k0MinIndexOfBackgroundNode_[kYIndex]});
     k0SFBitsetDomainMax_ = SFBitsetEncoding({k0MaxIndexOfBackgroundNode_[kXIndex],
-         k0MaxIndexOfBackgroundNode_[kYIndex]});
+        k0MaxIndexOfBackgroundNode_[kYIndex]});
+
 
     // check if domain size may exceed range of morton code
     /* the criterion is the maximum index for
@@ -97,6 +122,41 @@ void GridManager2D::SetGridParameters() {
     }
 }
 /**
+ * @brief function to calculates the domain bounds for a given refinement level.
+ * @param[in] i_level level of refinement.
+ * @param[out] ptr_domain_min pointer to the minimum domain bounds at a given refinement level.
+ * @param[out] ptr_domain_max pointer to the maximum domain bounds at a given refinement level.
+ */
+void GridManager2D::CalDomainBoundsAtGivenLevel(const DefAmrIndexUint i_level,
+    std::vector<DefSFBitset>* const ptr_domain_min, std::vector<DefSFBitset>* const ptr_domain_max) const {
+    ptr_domain_min->resize(2);
+    ptr_domain_max->resize(2);
+    if (SFBitsetMin_.at(kXIndex) == ~DefSFCodeToUint(0)) {
+         LogManager::LogError("SFBitsetMin_ should be set before calling CalDomainBoundsAtGivenLevel"
+         + std::string(__FILE__) + " at line " + std::to_string(__LINE__));
+    } else {
+        ptr_domain_min->at(kXIndex) = SFBitsetToNHigherLevel(i_level, SFBitsetMin_.at(kXIndex));
+    }
+    if (SFBitsetMin_.at(kYIndex) == ~DefSFCodeToUint(0)) {
+         LogManager::LogError("SFBitsetMin_ should be set before calling CalDomainBoundsAtGivenLevel"
+         + std::string(__FILE__) + " at line " + std::to_string(__LINE__));
+    } else {
+        ptr_domain_min->at(kYIndex) = SFBitsetToNHigherLevel(i_level, SFBitsetMin_.at(kYIndex));
+    }
+    if (SFBitsetMax_.at(kXIndex) == 0) {
+         LogManager::LogError("SFBitsetMax_ should be set before calling CalDomainBoundsAtGivenLevel"
+         + std::string(__FILE__) + " at line " + std::to_string(__LINE__));
+    } else {
+        ptr_domain_max->at(kXIndex) = SFBitsetToNHigherLevel(i_level, SFBitsetMax_.at(kXIndex));
+    }
+    if (SFBitsetMax_.at(kYIndex) == 0) {
+         LogManager::LogError("SFBitsetMax_ should be set before calling CalDomainBoundsAtGivenLevel"
+         + std::string(__FILE__) + " at line " + std::to_string(__LINE__));
+    } else {
+        ptr_domain_max->at(kYIndex) = SFBitsetToNHigherLevel(i_level, SFBitsetMax_.at(kYIndex));
+    }
+}
+/**
 * @brief   function to write grid information in log file.
 */
 void GridManager2D::PrintGridInfo(void) const {
@@ -109,7 +169,7 @@ void GridManager2D::PrintGridInfo(void) const {
         + std::to_string(k0DomainSize_.at(kYIndex)));
     LogManager::LogInfo("Grid space dx is: "
         + std::to_string(k0DomainDx_.at(kXIndex)) + ", and dy is: "
-        + std::to_string(k0DomainDx_.at(kYIndex))); 
+        + std::to_string(k0DomainDx_.at(kYIndex)));
 }
 /**
 * @brief   function to reset number of extended layers.
@@ -166,6 +226,35 @@ void GridManager2D::ResetExtendLayerBasedOnDomainSize(
     }
 }
 /**
+* @brief   function to check node on which domain boundaries.
+* @param[in] sfbitset_in space filling code of a given node.
+* @param[in] sfbitset_min bitset corresponding to the minimum coordinate in each direction.
+* @param[in] sfbitset_max bitset corresponding to the maximum coordinate in each direction.
+* @return flag indicate node on which domain boundaries, 1: x min, 2: x max, 4: y min, 8: y max
+*/
+DefAmrIndexUint GridManager2D::CheckNodeOnDomainBoundary(const DefSFBitset& sfbitset_in,
+    const std::vector<DefSFBitset>& sfbitset_min,
+    const std::vector<DefSFBitset>& sfbitset_max) const {
+    DefAmrIndexUint node_status = 0;
+    if ((sfbitset_in & k0SFBitsetTakeXRef_[kRefCurrent_])
+        == sfbitset_min[kXIndex]) {
+        node_status |= 1;
+    }
+    if ((sfbitset_in & k0SFBitsetTakeXRef_[kRefCurrent_])
+        == sfbitset_max[kXIndex]) {
+        node_status |= 2;  // 1<< 1
+    }
+    if ((sfbitset_in & k0SFBitsetTakeYRef_[kRefCurrent_])
+        == sfbitset_min[kYIndex]) {
+        node_status |= 4;  // 1<< 2
+    }
+    if ((sfbitset_in & k0SFBitsetTakeYRef_[kRefCurrent_])
+        == sfbitset_max[kYIndex]) {
+        node_status |= 8;  // 1<< 3
+    }
+    return node_status;
+}
+/**
 * @brief   function to find space filling code of nodes on a cell (2D)
 * @param[in]  sfbitset_in   bitset of the node at the origin of a cell
 * @param[in]  node_exist grid containing nodes at the same level
@@ -173,7 +262,7 @@ void GridManager2D::ResetExtendLayerBasedOnDomainSize(
 */
 bool GridManager2D::NodesBelongToOneCell(const DefSFBitset bitset_in,
     const DefMap<DefAmrIndexUint>& node_exist,
-    std::vector<DefSFBitset>* const ptr_bitsets) {
+    std::vector<DefSFBitset>* const ptr_bitsets) const {
     bool bool_cell;
     ptr_bitsets->clear();
     std::array<DefSFBitset, 4> bitset_cell;
@@ -389,17 +478,20 @@ bool GridManager2D::CheckBackgroundOffset(const DefSFBitset& bitset_in) const {
 }
 /**
 * @brief   function to instantiate background node.
+* @param[in] code_min the minimum space filling code at background level of current rank.
+* @param[in] code_max the maximum space filling code at background level of current rank.
 * @param[in] map_occupied node exist in grid at high refinement level.
 */
-void GridManager2D::InstantiateBackgroundGrid(const DefSFBitset bitset_min,
-    const DefSFBitset bitset_max, const DefMap<DefAmrIndexUint>& map_occupied) {
+void GridManager2D::InstantiateBackgroundGrid(const DefSFCodeToUint code_min,
+    const DefSFCodeToUint code_max, const DefMap<DefAmrIndexUint>& map_occupied) {
     DefSFBitset bitset_temp;
     GridInfoInterface& grid_info = *(vec_ptr_grid_info_.at(0));
-    DefSFCodeToUint i_code = bitset_min.to_ullong(), code_max = bitset_max.to_ullong();
+    DefSFCodeToUint i_code = code_min;
+
     while (i_code <= code_max) {
         ResetIndicesExceedingDomain(k0MinIndexOfBackgroundNode_, k0MaxIndexOfBackgroundNode_, &i_code, &bitset_temp);
         if (map_occupied.find(bitset_temp) == map_occupied.end()) {
-                grid_info.map_grid_node_.insert({ bitset_temp, grid_info.GridNodeCreator()});
+            InstantiateGridNode(bitset_temp, &grid_info);
         }
         ++i_code;
     }

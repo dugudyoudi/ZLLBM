@@ -151,7 +151,12 @@ add_subdirectory("./source/lbm_project")
 if(BUILD_TEST_CASES)
     add_subdirectory("integrate_test/test_grid2d")
     add_subdirectory("integrate_test/test_grid3d")
+    add_subdirectory("integrate_test/test_lbm")
 endif(BUILD_TEST_CASES)
+
+# run cases
+add_subdirectory("run_cases/test_tmp")
+
 
 # unit test
 if(DEBUG_UNIT_TEST)

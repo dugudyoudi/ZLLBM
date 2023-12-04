@@ -17,6 +17,26 @@
 #include "mpi/mpi_manager.h"
 namespace rootproject {
 namespace amrproject {
+/**
+* @brief      function to set program features.
+* @param[in]  argc    number of inputs from command line.
+* @param[in]  argv    inputs from command line.
+*/
+int AmrManager::SetUpProgramFeature(int argc, char* argv[]) {
+    //  name of the current executable
+    std::filesystem::path file_name = std::filesystem::path(argv[0]).filename();
+    file_name.replace_extension();
+    program_name_ = file_name.generic_string();
+
+    int flag_mpi =  0;
+#ifdef ENABLE_MPI
+    flag_mpi = MPI_Init(&argc, &argv);
+#endif
+    return flag_mpi;
+}
+/**
+* @brief     function to load modules of amr manager.
+*/
 void AmrManager::LoadModules(DefAmrIndexUint dims) {
 #ifdef ENABLE_MPI
     ptr_mpi_manager_ = std::make_unique<MpiManager>();
@@ -33,21 +53,13 @@ void AmrManager::LoadModules(DefAmrIndexUint dims) {
 * @brief      function to set default parameters for all modules.
 * @param[in]  dims    dimension of the mesh.
 * @param[in]  max_level    maxim refinement level.
-* @param[in]  argc    number of inputs from command line.
-* @param[in]  argv    inputs from command line.
 */
-void AmrManager::DefaultInitialization(DefAmrIndexUint dims, DefAmrIndexUint max_level, int argc, char* argv[]) {
-    //  name of the current executable
-    std::filesystem::path file_name =
-        std::filesystem::path(argv[0]).filename();
-    file_name.replace_extension();
-    program_name_ = file_name.generic_string();
-
+void AmrManager::DefaultInitialization(DefAmrIndexUint dims, DefAmrIndexUint max_level) {
     LoadModules(dims);
 
     // mpi settings
 #ifdef ENABLE_MPI
-    ptr_mpi_manager_->StartupMpi(argc, argv);
+    ptr_mpi_manager_->SetUpMpi();
 #endif  // ENABLE_MPI
 
     LogManager::LogStartTime();
@@ -62,15 +74,10 @@ void AmrManager::SetupParameters() {
     // setup grid parameters
     ptr_grid_manager_->SetGridParameters();
 
-#ifdef ENABLE_MPI
-    // setup mpi parameters
-    ptr_mpi_manager_->SetMpiParameters();
-#endif
-
     ptr_io_manager_->SetIoParameters();
 }
 /**
-* @brief   function to initialize simulation
+* @brief   function to initialize mesh.
 */
 void AmrManager::InitializeMesh() {
     int rank_id = 0;
@@ -94,7 +101,6 @@ void AmrManager::InitializeMesh() {
          ptr_criterion_manager_->vec_ptr_geometries_, &sfbitset_one_lower_level);
         sfbitset_bound_current = {ptr_grid_manager_->k0SFBitsetDomainMin_, ptr_grid_manager_->k0SFBitsetDomainMax_};
     }
-
 #ifdef ENABLE_MPI
     // mpi partition sending and receiving nodes
     std::vector<DefAmrIndexLUint> vec_cost;
@@ -140,7 +146,6 @@ void AmrManager::InitializeMesh() {
     } else {
 #ifndef  DEBUG_DISABLE_3D_FUNCTIONS
         GridManager3D* ptr_grid_manager_3d = dynamic_cast<GridManager3D*>(ptr_grid_manager_.get());
-
         ptr_mpi_manager_->SendNReceiveGridInfoAtGivenLevels(ptr_grid_manager_->kFlagSize0_,
             ptr_grid_manager_->kNodeStatusCoarse2Fine0_,
             ptr_grid_manager_->k0GridDims_, ptr_grid_manager_->k0MaxLevel_,
@@ -172,7 +177,6 @@ void AmrManager::InitializeMesh() {
             &ptr_mpi_manager_->mpi_communication_inner_layers_, &ptr_mpi_manager_->mpi_communication_outer_layers_);
 #endif  // DEBUG_DISABLE_3D_FUNCTIONS
     }
-
     // add nodes on both the refinement and partition interfaces
     // which are only stored in coarse to fine refinement interfaces
     const DefAmrIndexUint flag0 = ptr_grid_manager_->kFlagSize0_;
@@ -194,17 +198,31 @@ void AmrManager::InitializeMesh() {
     ptr_grid_manager_->InstantiateGridNodeAllLevel(
      sfbitset_bound_current.at(0), sfbitset_bound_current.at(1), sfbitset_one_lower_level);
 #endif  // ENABLE_MPI
+
+    ptr_grid_manager_->InstantiateTimeSteppingScheme();
 }
 /**
-* @brief   function to create the same type of grid
-*          instance for all levels of refinement.
-* @param[in]  node_type  type of grid node.
-* @note  just for convience. Grid instance can be specified for each level.
+* @brief   function to initialize solvers.
 */
-void AmrManager::SetDependentInfoForAllLevelsTheSame(
-    SolverCreatorInterface* const ptr_solver_creator) {
-    std::shared_ptr<SolverInterface> ptr_solver = ptr_solver_creator->CreateSolver();
-    ptr_grid_manager_->CreateSameGridInstanceForAllLevel(ptr_solver->ptr_grid_info_creator_.get());
+void AmrManager::SetupSolverForGrids() {
+    for (auto& iter_solver : ptr_grid_manager_->vec_ptr_solver_) {
+        iter_solver->SolverInitial();
+    }
+}
+/**
+* @brief   function to create solver instance in GridManager.
+* @param[in]  ptr_solver_creator  pointer to class for instantiating a given solver.
+*/
+void AmrManager::AddSolverToGridManager(const SolverCreatorInterface& solver_creator) {
+    ptr_grid_manager_->vec_ptr_solver_.push_back(solver_creator.CreateSolver());
+}
+/**
+* @brief   function to set solver dependent information as the same.
+* @param[in]  ptr_solver  pointer to a solver.
+*/
+void AmrManager::SetDependentInfoForAllLevelsTheSame(const std::shared_ptr<SolverInterface>& ptr_solver) {
+    ptr_grid_manager_->CreateSameGridInstanceForAllLevel(
+        ptr_solver, *ptr_solver->ptr_grid_info_creator_.get());
 }
 /**
 * @brief   function to finalize simulation

@@ -68,7 +68,7 @@ inline DefSFBitset SFBitsetAux2D::FindXNeg(
         .at(SFBitsetAux2D::kRefCurrent_)).to_ullong();
 #ifdef DEBUG_CHECK_GRID
     if (x_ull == 0) {
-        LogManager::LogError("x coordinate in FindXNeg is 0.");
+        LogManager::LogError("input x coordinate in FindXNeg is 0.");
         return bitset_in;
     } else {
 #endif  // DEBUG_CHECK_GRID
@@ -109,6 +109,7 @@ inline DefSFBitset SFBitsetAux2D::FindYNeg(
         .at(SFBitsetAux2D::kRefCurrent_)).to_ullong();
 #ifdef DEBUG_CHECK_GRID
     if (y_ull == 0) {
+        LogManager::LogError("input y coordinate in FindYNeg is 0.");
         return bitset_in;
     } else {
 #endif  // DEBUG_CHECK_GRID
@@ -196,6 +197,7 @@ inline DefSFBitset SFBitsetAux3D::FindXNeg(
         .at(SFBitsetAux3D::kRefCurrent_)).to_ullong();
 #ifdef DEBUG_CHECK_GRID
     if (x_ull == 0) {
+        LogManager::LogError("input x coordinate in FindXNeg is 0.");
         return bitset_in;
     } else {
 #endif  // DEBUG_CHECK_GRID
@@ -240,6 +242,7 @@ inline DefSFBitset SFBitsetAux3D::FindYNeg(
         .at(SFBitsetAux3D::kRefCurrent_)).to_ullong();
 #ifdef DEBUG_CHECK_GRID
     if (y_ull == 0) {
+        LogManager::LogError("input y coordinate in FindYNeg is 0.");
         return bitset_in;
     } else {
 #endif  // DEBUG_CHECK_GRID
@@ -284,6 +287,7 @@ inline DefSFBitset SFBitsetAux3D::FindZNeg(
         .at(SFBitsetAux3D::kRefCurrent_)).to_ullong();
 #ifdef DEBUG_CHECK_GRID
     if (z_ull == 0) {
+        LogManager::LogError("input z coordinate in FindZNeg is 0.");
         return bitset_in;
     } else {
 #endif  // DEBUG_CHECK_GRID
@@ -294,9 +298,9 @@ inline DefSFBitset SFBitsetAux3D::FindZNeg(
                 .at(SFBitsetAux3D::kRefCurrent_))
             | (bitset_in & SFBitsetAux3D::k0SFBitsetTakeYRef_
                 .at(SFBitsetAux3D::kRefCurrent_)));
-#ifdef DEBUG_CHECK_GRID
+#ifdef  DEBUG_CHECK_GRID
     }
-#endif // DEBUG_CHECK_GRID
+#endif  // DEBUG_CHECK_GRID
 }
 /**
 * @brief function to find morton code (3D) of

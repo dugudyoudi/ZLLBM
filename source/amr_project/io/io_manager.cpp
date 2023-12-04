@@ -19,8 +19,6 @@ namespace amrproject{
 * @brief function to setup default io related parameters.
 */
 void IoManager::DefaultInitialization() {
-    // set header of the log file (start time)
-
     // set format for writing output data
     if (typeid(k0OutputDataFormat_.output_real_.CastType(1.))
         == typeid(float)) {
@@ -31,7 +29,8 @@ void IoManager::DefaultInitialization() {
         k0OutputDataFormat_.output_real_.printf_format_ = "%lf";
         k0OutputDataFormat_.output_real_.format_name_ = "Float64";
     } else {
-        LogManager::LogWarning("Output format for real type was not found.");
+        LogManager::LogWarning("Output format for real type was not found in "
+            + std::string(__FILE__) + " at line " + std::to_string(__LINE__));
     }
 
     if (typeid(k0OutputDataFormat_.output_uint_.CastType(1))
@@ -47,7 +46,8 @@ void IoManager::DefaultInitialization() {
         k0OutputDataFormat_.output_uint_.printf_format_ = "%llu";
         k0OutputDataFormat_.output_uint_.format_name_ = "UInt64";
     } else {
-        LogManager::LogWarning("Output format for uint type was not found.");
+        LogManager::LogWarning("Output format for uint type was not found in "
+            + std::string(__FILE__) + " at line " + std::to_string(__LINE__));
     }
 
     if (typeid(k0OutputDataFormat_.output_sizet_.CastType(1))
@@ -63,7 +63,8 @@ void IoManager::DefaultInitialization() {
         k0OutputDataFormat_.output_sizet_.printf_format_ = "%llu";
         k0OutputDataFormat_.output_sizet_.format_name_ = "UInt64";
     } else {
-        LogManager::LogWarning("Output format for uint type was not found.");
+        LogManager::LogWarning("Output format for uint type was not found in "
+            + std::string(__FILE__) + " at line " + std::to_string(__LINE__));
     }
 
     if (typeid(k0OutputDataFormat_.output_int_.CastType(1))
@@ -79,7 +80,8 @@ void IoManager::DefaultInitialization() {
         k0OutputDataFormat_.output_int_.printf_format_ = "%lld";
         k0OutputDataFormat_.output_int_.format_name_ = "UInt64";
     } else {
-        LogManager::LogWarning("Output format for int type was not found.");
+        LogManager::LogWarning("Output format for int type was not found in "
+            + std::string(__FILE__) + " at line " + std::to_string(__LINE__));
     }
 }
 /**
@@ -95,8 +97,13 @@ void IoManager::OutputFlowfield(
     const std::string& prog_name,
     GridManagerInterface* const ptr_grid_manager,
     CriterionManager* const ptr_criterion_manager) {
-    vtk_instance_.WriteVtuAll(prog_name, bool_binary_, k0OutputDataFormat_,
-        *ptr_grid_manager, *ptr_criterion_manager);
+    if (prog_name.empty()) {
+        LogManager::LogWarning("Name of output file is not found, no flow field will be written in "
+            + std::string(__FILE__) + " at line " + std::to_string(__LINE__));
+    } else {
+        vtk_instance_.WriteVtuAll(prog_name, bool_binary_, k0OutputDataFormat_,
+            *ptr_grid_manager, *ptr_criterion_manager);
+    }
 }
 }  // end amrproject
 }  // end namespace rootproject

@@ -2,7 +2,7 @@
 //  All rights reserved
 
 /**
-* @file io.h
+* @file output_format.h
 * @author Zhengliang Liu
 * @date  2022-8-14
 */
@@ -10,12 +10,11 @@
 #define ROOTPROJECT_SOURCE_AMR_PROJECT_IO_OUTPUT_FORMAT_H_
 #include <string>
 #include "../defs_libs.h"
-#include "io/vtk_writer.h"
 namespace rootproject {
 namespace amrproject {
 /**
 * @class OutputDataFormatReal
-* @brief class used to sepcify real format for output data.
+* @brief class used to specify real format for output data.
 * @note  change return data type of CastType for desired output format.
 */
 class OutputDataFormatReal {
@@ -23,12 +22,12 @@ class OutputDataFormatReal {
     std::string printf_format_{};
     std::string format_name_{};
     template<typename DataType>
-    float CastType(const DataType& data) {
+    float CastType(const DataType& data) const {
         return static_cast<float>(data);
     }
 };
 /**
-* @class OutputDataFormatReal
+* @class OutputDataFormatInt
 * @brief class used to manage int format for output data.
 */
 class OutputDataFormatInt {
@@ -36,7 +35,7 @@ class OutputDataFormatInt {
     std::string printf_format_{};
     std::string format_name_{};
     template<typename DataType>
-    std::int16_t CastType(const DataType& data) {
+    std::int16_t CastType(const DataType& data) const {
         return static_cast<int16_t>(data);
     }
 };
@@ -49,7 +48,7 @@ class OutputDataFormatSizet {
     std::string printf_format_{};
     std::string format_name_{};
     template<typename DataType>
-    std::uint64_t CastType(const DataType& data) {
+    std::uint64_t CastType(const DataType& data) const {
         return static_cast<uint64_t>(data);
     }
 };
@@ -62,7 +61,7 @@ class OutputDataFormatUint {
     std::string printf_format_{};
     std::string format_name_{};
     template<typename DataType>
-    std::uint16_t CastType(const DataType& data) {
+    std::uint16_t CastType(const DataType& data) const {
         return static_cast<uint16_t>(data);
     }
 };
@@ -71,7 +70,7 @@ class OutputDataFormatUint {
 * @brief class used store output data.
 */
 class OutputDataFormat {
-public:
+ public:
     OutputDataFormatReal output_real_;
     OutputDataFormatSizet output_sizet_;
     OutputDataFormatUint output_uint_;

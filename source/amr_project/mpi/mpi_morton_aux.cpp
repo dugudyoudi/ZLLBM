@@ -42,12 +42,12 @@ void SFBitsetAux2D::FindPartitionBlocksMax(const DefSFCodeToUint& code_in, const
     DefAmrIndexLUint i_max1 = block_length - 1, i_max2 = block_length * 2 - 1;
     bitset_tmp = bitset_current;
     switch (code_remain) {
-        case 0:
+    case 0: {
             for (DefAmrIndexLUint ix = 0; ix < i_max1; ++ix) {
                 if (index_x >= code_domain_min[kXIndex] && index_x <= code_domain_max[kXIndex]
                     && index_y >= code_domain_min[kYIndex] && index_y <= code_domain_max[kYIndex]
                     && CheckPartitionLimits(bitset_tmp, code_partition_min, code_partition_max,
-                      code_domain_min, code_domain_max)
+                        code_domain_min, code_domain_max)
                     && ptr_map_partitioned->find(bitset_tmp) == ptr_map_partitioned->end()) {
                     ptr_map_partitioned->insert({bitset_tmp, 0});
                 }
@@ -58,7 +58,7 @@ void SFBitsetAux2D::FindPartitionBlocksMax(const DefSFCodeToUint& code_in, const
                 if (index_x >= code_domain_min[kXIndex] && index_x <= code_domain_max[kXIndex]
                     && index_y >= code_domain_min[kYIndex] && index_y <= code_domain_max[kYIndex]
                     && CheckPartitionLimits(bitset_tmp, code_partition_min, code_partition_max,
-                      code_domain_min, code_domain_max)
+                        code_domain_min, code_domain_max)
                     && ptr_map_partitioned->find(bitset_tmp) == ptr_map_partitioned->end()) {
                     ptr_map_partitioned->insert({bitset_tmp, 0});
                 }
@@ -69,7 +69,7 @@ void SFBitsetAux2D::FindPartitionBlocksMax(const DefSFCodeToUint& code_in, const
                 if (index_x >= code_domain_min[kXIndex] && index_x <= code_domain_max[kXIndex]
                     && index_y >= code_domain_min[kYIndex] && index_y <= code_domain_max[kYIndex]
                     && CheckPartitionLimits(bitset_tmp, code_partition_min, code_partition_max,
-                      code_domain_min, code_domain_max)
+                        code_domain_min, code_domain_max)
                     && ptr_map_partitioned->find(bitset_tmp) == ptr_map_partitioned->end()) {
                     ptr_map_partitioned->insert({bitset_tmp, 0});
                 }
@@ -80,7 +80,7 @@ void SFBitsetAux2D::FindPartitionBlocksMax(const DefSFCodeToUint& code_in, const
                 if (index_x >= code_domain_min[kXIndex] && index_x <= code_domain_max[kXIndex]
                     && index_y >= code_domain_min[kYIndex] && index_y <= code_domain_max[kYIndex]
                     && CheckPartitionLimits(bitset_tmp, code_partition_min, code_partition_max,
-                      code_domain_min, code_domain_max)
+                        code_domain_min, code_domain_max)
                     && ptr_map_partitioned->find(bitset_tmp) == ptr_map_partitioned->end()) {
                     ptr_map_partitioned->insert({bitset_tmp, 0});
                 }
@@ -90,17 +90,18 @@ void SFBitsetAux2D::FindPartitionBlocksMax(const DefSFCodeToUint& code_in, const
             if (index_x >= code_domain_min[kXIndex] && index_x <= code_domain_max[kXIndex]
                 && index_y >= code_domain_min[kYIndex] && index_y <= code_domain_max[kYIndex]
                 && CheckPartitionLimits(bitset_tmp, code_partition_min, code_partition_max,
-                      code_domain_min, code_domain_max)
+                        code_domain_min, code_domain_max)
                 && ptr_map_partitioned->find(bitset_tmp) == ptr_map_partitioned->end()) {
                 ptr_map_partitioned->insert({bitset_tmp, 0});
             }
-            break;
-        case 1:
+        }
+        break;
+    case 1: {
             for (DefAmrIndexLUint ix = 0; ix < i_max2; ++ix) {
                 if (index_x >= code_domain_min[kXIndex] && index_x <= code_domain_max[kXIndex]
                     && index_y >= code_domain_min[kYIndex] && index_y <= code_domain_max[kYIndex]
                     && CheckPartitionLimits(bitset_tmp, code_partition_min, code_partition_max,
-                      code_domain_min, code_domain_max)
+                        code_domain_min, code_domain_max)
                     && ptr_map_partitioned->find(bitset_tmp) == ptr_map_partitioned->end()) {
                     ptr_map_partitioned->insert({bitset_tmp, 0});
                 }
@@ -111,7 +112,7 @@ void SFBitsetAux2D::FindPartitionBlocksMax(const DefSFCodeToUint& code_in, const
                 if (index_x >= code_domain_min[kXIndex] && index_x <= code_domain_max[kXIndex]
                     && index_y >= code_domain_min[kYIndex] && index_y <= code_domain_max[kYIndex]
                     && CheckPartitionLimits(bitset_tmp, code_partition_min, code_partition_max,
-                      code_domain_min, code_domain_max)
+                        code_domain_min, code_domain_max)
                     && ptr_map_partitioned->find(bitset_tmp) == ptr_map_partitioned->end()) {
                     ptr_map_partitioned->insert({bitset_tmp, 0});
                 }
@@ -122,7 +123,7 @@ void SFBitsetAux2D::FindPartitionBlocksMax(const DefSFCodeToUint& code_in, const
                 if (index_x >= code_domain_min[kXIndex] && index_x <= code_domain_max[kXIndex]
                     && index_y >= code_domain_min[kYIndex] && index_y <= code_domain_max[kYIndex]
                     && CheckPartitionLimits(bitset_tmp, code_partition_min, code_partition_max,
-                      code_domain_min, code_domain_max)
+                        code_domain_min, code_domain_max)
                     && ptr_map_partitioned->find(bitset_tmp) == ptr_map_partitioned->end()) {
                     ptr_map_partitioned->insert({bitset_tmp, 0});
                 }
@@ -133,7 +134,7 @@ void SFBitsetAux2D::FindPartitionBlocksMax(const DefSFCodeToUint& code_in, const
                 if (index_x >= code_domain_min[kXIndex] && index_x <= code_domain_max[kXIndex]
                     && index_y >= code_domain_min[kYIndex] && index_y <= code_domain_max[kYIndex]
                     &&CheckPartitionLimits(bitset_tmp, code_partition_min, code_partition_max,
-                      code_domain_min, code_domain_max)
+                        code_domain_min, code_domain_max)
                     && ptr_map_partitioned->find(bitset_tmp) == ptr_map_partitioned->end()) {
                     ptr_map_partitioned->insert({bitset_tmp, 0});
                 }
@@ -143,17 +144,18 @@ void SFBitsetAux2D::FindPartitionBlocksMax(const DefSFCodeToUint& code_in, const
             if (index_x >= code_domain_min[kXIndex] && index_x <= code_domain_max[kXIndex]
                 && index_y >= code_domain_min[kYIndex] && index_y <= code_domain_max[kYIndex]
                 && CheckPartitionLimits(bitset_tmp, code_partition_min, code_partition_max,
-                   code_domain_min, code_domain_max)
+                    code_domain_min, code_domain_max)
                 && ptr_map_partitioned->find(bitset_tmp) == ptr_map_partitioned->end()) {
                 ptr_map_partitioned->insert({bitset_tmp, 0});
             }
-            break;
-        case 2:
+        }
+        break;
+    case 2: {
             for (DefAmrIndexLUint ix = 0; ix < i_max1; ++ix) {
                 if (index_x >= code_domain_min[kXIndex] && index_x <= code_domain_max[kXIndex]
                     && index_y >= code_domain_min[kYIndex] && index_y <= code_domain_max[kYIndex]
                     && CheckPartitionLimits(bitset_tmp, code_partition_min, code_partition_max,
-                      code_domain_min, code_domain_max)
+                        code_domain_min, code_domain_max)
                     && ptr_map_partitioned->find(bitset_tmp) == ptr_map_partitioned->end()) {
                     ptr_map_partitioned->insert({bitset_tmp, 0});
                 }
@@ -164,7 +166,7 @@ void SFBitsetAux2D::FindPartitionBlocksMax(const DefSFCodeToUint& code_in, const
                 if (index_x >= code_domain_min[kXIndex] && index_x <= code_domain_max[kXIndex]
                     && index_y >= code_domain_min[kYIndex] && index_y <= code_domain_max[kYIndex]
                     && CheckPartitionLimits(bitset_tmp, code_partition_min, code_partition_max,
-                      code_domain_min, code_domain_max)
+                        code_domain_min, code_domain_max)
                     && ptr_map_partitioned->find(bitset_tmp) == ptr_map_partitioned->end()) {
                     ptr_map_partitioned->insert({bitset_tmp, 0});
                 }
@@ -175,7 +177,7 @@ void SFBitsetAux2D::FindPartitionBlocksMax(const DefSFCodeToUint& code_in, const
                 if (index_x >= code_domain_min[kXIndex] && index_x <= code_domain_max[kXIndex]
                     && index_y >= code_domain_min[kYIndex] && index_y <= code_domain_max[kYIndex]
                     && CheckPartitionLimits(bitset_tmp, code_partition_min, code_partition_max,
-                      code_domain_min, code_domain_max)
+                        code_domain_min, code_domain_max)
                     && ptr_map_partitioned->find(bitset_tmp) == ptr_map_partitioned->end()) {
                     ptr_map_partitioned->insert({bitset_tmp, 0});
                 }
@@ -186,7 +188,7 @@ void SFBitsetAux2D::FindPartitionBlocksMax(const DefSFCodeToUint& code_in, const
                 if (index_x >= code_domain_min[kXIndex] && index_x <= code_domain_max[kXIndex]
                     && index_y >= code_domain_min[kYIndex] && index_y <= code_domain_max[kYIndex]
                     && CheckPartitionLimits(bitset_tmp, code_partition_min, code_partition_max,
-                      code_domain_min, code_domain_max)
+                        code_domain_min, code_domain_max)
                     && ptr_map_partitioned->find(bitset_tmp) == ptr_map_partitioned->end()) {
                     ptr_map_partitioned->insert({bitset_tmp, 0});
                 }
@@ -197,7 +199,7 @@ void SFBitsetAux2D::FindPartitionBlocksMax(const DefSFCodeToUint& code_in, const
                 if (index_x >= code_domain_min[kXIndex] && index_x <= code_domain_max[kXIndex]
                     && index_y >= code_domain_min[kYIndex] && index_y <= code_domain_max[kYIndex]
                     && CheckPartitionLimits(bitset_tmp, code_partition_min, code_partition_max,
-                      code_domain_min, code_domain_max)
+                        code_domain_min, code_domain_max)
                     && ptr_map_partitioned->find(bitset_tmp) == ptr_map_partitioned->end()) {
                     ptr_map_partitioned->insert({bitset_tmp, 0});
                 }
@@ -208,7 +210,7 @@ void SFBitsetAux2D::FindPartitionBlocksMax(const DefSFCodeToUint& code_in, const
                 if (index_x >= code_domain_min[kXIndex] && index_x <= code_domain_max[kXIndex]
                     && index_y >= code_domain_min[kYIndex] && index_y <= code_domain_max[kYIndex]
                     && CheckPartitionLimits(bitset_tmp, code_partition_min, code_partition_max,
-                      code_domain_min, code_domain_max)
+                        code_domain_min, code_domain_max)
                     && ptr_map_partitioned->find(bitset_tmp) == ptr_map_partitioned->end()) {
                     ptr_map_partitioned->insert({bitset_tmp, 0});
                 }
@@ -218,17 +220,18 @@ void SFBitsetAux2D::FindPartitionBlocksMax(const DefSFCodeToUint& code_in, const
             if (index_x >= code_domain_min[kXIndex] && index_x <= code_domain_max[kXIndex]
                 && index_y >= code_domain_min[kYIndex] && index_y <= code_domain_max[kYIndex]
                 && CheckPartitionLimits(bitset_tmp, code_partition_min, code_partition_max,
-                      code_domain_min, code_domain_max)
+                        code_domain_min, code_domain_max)
                 && ptr_map_partitioned->find(bitset_tmp) == ptr_map_partitioned->end()) {
                 ptr_map_partitioned->insert({bitset_tmp, 0});
             }
-            break;
-        case 3:
+        }
+        break;
+    case 3: {
             for (DefAmrIndexLUint ix = 0;  ix < i_max2; ++ix) {
                 if (index_x >= code_domain_min[kXIndex] && index_x <= code_domain_max[kXIndex]
                     && index_y >= code_domain_min[kYIndex] && index_y <= code_domain_max[kYIndex]
                     && CheckPartitionLimits(bitset_tmp, code_partition_min, code_partition_max,
-                      code_domain_min, code_domain_max)
+                        code_domain_min, code_domain_max)
                     && ptr_map_partitioned->find(bitset_tmp) == ptr_map_partitioned->end()) {
                     ptr_map_partitioned->insert({bitset_tmp, 0});
                 }
@@ -239,7 +242,7 @@ void SFBitsetAux2D::FindPartitionBlocksMax(const DefSFCodeToUint& code_in, const
                 if (index_x >= code_domain_min[kXIndex] && index_x <= code_domain_max[kXIndex]
                     && index_y >= code_domain_min[kYIndex] && index_y <= code_domain_max[kYIndex]
                     && CheckPartitionLimits(bitset_tmp, code_partition_min, code_partition_max,
-                      code_domain_min, code_domain_max)
+                        code_domain_min, code_domain_max)
                     && ptr_map_partitioned->find(bitset_tmp) == ptr_map_partitioned->end()) {
                     ptr_map_partitioned->insert({bitset_tmp, 0});
                 }
@@ -250,7 +253,7 @@ void SFBitsetAux2D::FindPartitionBlocksMax(const DefSFCodeToUint& code_in, const
                 if (index_x >= code_domain_min[kXIndex] && index_x <= code_domain_max[kXIndex]
                     && index_y >= code_domain_min[kYIndex] && index_y <= code_domain_max[kYIndex]
                     && CheckPartitionLimits(bitset_tmp, code_partition_min, code_partition_max,
-                      code_domain_min, code_domain_max)
+                        code_domain_min, code_domain_max)
                     && ptr_map_partitioned->find(bitset_tmp) == ptr_map_partitioned->end()) {
                     ptr_map_partitioned->insert({bitset_tmp, 0});
                 }
@@ -261,7 +264,7 @@ void SFBitsetAux2D::FindPartitionBlocksMax(const DefSFCodeToUint& code_in, const
                 if (index_x >= code_domain_min[kXIndex] && index_x <= code_domain_max[kXIndex]
                     && index_y >= code_domain_min[kYIndex] && index_y <= code_domain_max[kYIndex]
                     && CheckPartitionLimits(bitset_tmp, code_partition_min, code_partition_max,
-                      code_domain_min, code_domain_max)
+                        code_domain_min, code_domain_max)
                     && ptr_map_partitioned->find(bitset_tmp) == ptr_map_partitioned->end()) {
                     ptr_map_partitioned->insert({bitset_tmp, 0});
                 }
@@ -271,13 +274,14 @@ void SFBitsetAux2D::FindPartitionBlocksMax(const DefSFCodeToUint& code_in, const
             if (index_x >= code_domain_min[kXIndex] && index_x <= code_domain_max[kXIndex]
                 && index_y >= code_domain_min[kYIndex] && index_y <= code_domain_max[kYIndex]
                 && CheckPartitionLimits(bitset_tmp, code_partition_min, code_partition_max,
-                   code_domain_min, code_domain_max)
+                    code_domain_min, code_domain_max)
                 && ptr_map_partitioned->find(bitset_tmp) == ptr_map_partitioned->end()) {
                 ptr_map_partitioned->insert({bitset_tmp, 0});
             }
-            break;
-        default:
-            break;
+        }
+        break;
+    default:
+        break;
     }
 }
 /**
@@ -306,12 +310,12 @@ void SFBitsetAux2D::FindPartitionBlocksMin(const DefSFCodeToUint& code_in, const
     DefAmrIndexLUint i_max1 = block_length - 1, i_max2 = block_length * 2 - 1;
     bitset_tmp = bitset_current;
     switch (code_remain) {
-        case 3:
+    case 3: {
             for (DefAmrIndexLUint ix = 0;  ix < i_max1; ++ix) {
                 if (index_x >= code_domain_min[kXIndex] && index_x <= code_domain_max[kXIndex]
                     && index_y >= code_domain_min[kYIndex] && index_y <= code_domain_max[kYIndex]
                     && CheckPartitionLimits(bitset_tmp, code_partition_min, code_partition_max,
-                      code_domain_min, code_domain_max)
+                    code_domain_min, code_domain_max)
                     && ptr_map_partitioned->find(bitset_tmp) == ptr_map_partitioned->end()) {
                     ptr_map_partitioned->insert({bitset_tmp, 0});
                 }
@@ -322,7 +326,7 @@ void SFBitsetAux2D::FindPartitionBlocksMin(const DefSFCodeToUint& code_in, const
                 if (index_x >= code_domain_min[kXIndex] && index_x <= code_domain_max[kXIndex]
                     && index_y >= code_domain_min[kYIndex] && index_y <= code_domain_max[kYIndex]
                     && CheckPartitionLimits(bitset_tmp, code_partition_min, code_partition_max,
-                       code_domain_min, code_domain_max)
+                    code_domain_min, code_domain_max)
                     && ptr_map_partitioned->find(bitset_tmp) == ptr_map_partitioned->end()) {
                     ptr_map_partitioned->insert({bitset_tmp, 0});
                 }
@@ -333,7 +337,7 @@ void SFBitsetAux2D::FindPartitionBlocksMin(const DefSFCodeToUint& code_in, const
                 if (index_x >= code_domain_min[kXIndex] && index_x <= code_domain_max[kXIndex]
                     && index_y >= code_domain_min[kYIndex] && index_y <= code_domain_max[kYIndex]
                     && CheckPartitionLimits(bitset_tmp, code_partition_min, code_partition_max,
-                       code_domain_min, code_domain_max)
+                    code_domain_min, code_domain_max)
                     && ptr_map_partitioned->find(bitset_tmp) == ptr_map_partitioned->end()) {
                     ptr_map_partitioned->insert({bitset_tmp, 0});
                 }
@@ -344,7 +348,7 @@ void SFBitsetAux2D::FindPartitionBlocksMin(const DefSFCodeToUint& code_in, const
                 if (index_x >= code_domain_min[kXIndex] && index_x <= code_domain_max[kXIndex]
                     && index_y >= code_domain_min[kYIndex] && index_y <= code_domain_max[kYIndex]
                     && CheckPartitionLimits(bitset_tmp, code_partition_min, code_partition_max,
-                       code_domain_min, code_domain_max)
+                    code_domain_min, code_domain_max)
                     && ptr_map_partitioned->find(bitset_tmp) == ptr_map_partitioned->end()) {
                     ptr_map_partitioned->insert({bitset_tmp, 0});
                 }
@@ -354,17 +358,18 @@ void SFBitsetAux2D::FindPartitionBlocksMin(const DefSFCodeToUint& code_in, const
             if (index_x >= code_domain_min[kXIndex] && index_x <= code_domain_max[kXIndex]
                 && index_y >= code_domain_min[kYIndex] && index_y <= code_domain_max[kYIndex]
                 && CheckPartitionLimits(bitset_tmp, code_partition_min, code_partition_max,
-                   code_domain_min, code_domain_max)
+                code_domain_min, code_domain_max)
                 && ptr_map_partitioned->find(bitset_tmp) == ptr_map_partitioned->end()) {
                 ptr_map_partitioned->insert({bitset_tmp, 0});
             }
-            break;
-        case 2:
+        }
+        break;
+    case 2: {
             for (DefAmrIndexLUint ix = 0;  ix < i_max2; ++ix) {
                 if (index_x >= code_domain_min[kXIndex] && index_x <= code_domain_max[kXIndex]
                     && index_y >= code_domain_min[kYIndex] && index_y <= code_domain_max[kYIndex]
                     && CheckPartitionLimits(bitset_tmp, code_partition_min, code_partition_max,
-                       code_domain_min, code_domain_max)
+                        code_domain_min, code_domain_max)
                     && ptr_map_partitioned->find(bitset_tmp) == ptr_map_partitioned->end()) {
                     ptr_map_partitioned->insert({bitset_tmp, 0});
                 }
@@ -375,7 +380,7 @@ void SFBitsetAux2D::FindPartitionBlocksMin(const DefSFCodeToUint& code_in, const
                 if (index_x >= code_domain_min[kXIndex] && index_x <= code_domain_max[kXIndex]
                     && index_y >= code_domain_min[kYIndex] && index_y <= code_domain_max[kYIndex]
                     && CheckPartitionLimits(bitset_tmp, code_partition_min, code_partition_max,
-                       code_domain_min, code_domain_max)
+                        code_domain_min, code_domain_max)
                     && ptr_map_partitioned->find(bitset_tmp) == ptr_map_partitioned->end()) {
                     ptr_map_partitioned->insert({bitset_tmp, 0});
                 }
@@ -386,7 +391,7 @@ void SFBitsetAux2D::FindPartitionBlocksMin(const DefSFCodeToUint& code_in, const
                 if (index_x >= code_domain_min[kXIndex] && index_x <= code_domain_max[kXIndex]
                     && index_y >= code_domain_min[kYIndex] && index_y <= code_domain_max[kYIndex]
                     && CheckPartitionLimits(bitset_tmp, code_partition_min, code_partition_max,
-                       code_domain_min, code_domain_max)
+                        code_domain_min, code_domain_max)
                     && ptr_map_partitioned->find(bitset_tmp) == ptr_map_partitioned->end()) {
                     ptr_map_partitioned->insert({bitset_tmp, 0});
                 }
@@ -397,135 +402,7 @@ void SFBitsetAux2D::FindPartitionBlocksMin(const DefSFCodeToUint& code_in, const
                 if (index_x >= code_domain_min[kXIndex] && index_x <= code_domain_max[kXIndex]
                     && index_y >= code_domain_min[kYIndex] && index_y <= code_domain_max[kYIndex]
                     && CheckPartitionLimits(bitset_tmp, code_partition_min, code_partition_max,
-                       code_domain_min, code_domain_max)
-                    && ptr_map_partitioned->find(bitset_tmp) == ptr_map_partitioned->end()) {
-                    ptr_map_partitioned->insert({bitset_tmp, 0});
-                }
-                bitset_tmp = FindYNeg(bitset_tmp);
-                --index_y;
-            }
-            if (index_x >= code_domain_min[kXIndex] && index_x <= code_domain_max[kXIndex]
-                && index_y >= code_domain_min[kYIndex] && index_y <= code_domain_max[kYIndex]
-                && CheckPartitionLimits(bitset_tmp, code_partition_min, code_partition_max,
-                   code_domain_min, code_domain_max)
-                && ptr_map_partitioned->find(bitset_tmp) == ptr_map_partitioned->end()) {
-                ptr_map_partitioned->insert({bitset_tmp, 0});
-            }
-            break;
-        case 1:
-            for (DefAmrIndexLUint iy = 0;  iy < i_max1 + 1; ++iy) {
-                if (index_x >= code_domain_min[kXIndex] && index_x <= code_domain_max[kXIndex]
-                    && index_y >= code_domain_min[kYIndex] && index_y <= code_domain_max[kYIndex]
-                    && CheckPartitionLimits(bitset_tmp, code_partition_min, code_partition_max,
-                       code_domain_min, code_domain_max)
-                    && ptr_map_partitioned->find(bitset_tmp) == ptr_map_partitioned->end()) {
-                    ptr_map_partitioned->insert({bitset_tmp, 0});
-                }
-                bitset_tmp = FindYPos(bitset_tmp);
-                ++index_y;
-            }
-            for (DefAmrIndexLUint ix = 0;  ix < i_max1 + 1; ++ix) {
-                if (index_x >= code_domain_min[kXIndex] && index_x <= code_domain_max[kXIndex]
-                    && index_y >= code_domain_min[kYIndex] && index_y <= code_domain_max[kYIndex]
-                    && CheckPartitionLimits(bitset_tmp, code_partition_min, code_partition_max,
-                       code_domain_min, code_domain_max)
-                    && ptr_map_partitioned->find(bitset_tmp) == ptr_map_partitioned->end()) {
-                    ptr_map_partitioned->insert({bitset_tmp, 0});
-                }
-                bitset_tmp = FindXNeg(bitset_tmp);
-                --index_x;
-            }
-            for (DefAmrIndexLUint iy = 0;  iy < i_max1; ++iy) {
-                if (index_x >= code_domain_min[kXIndex] && index_x <= code_domain_max[kXIndex]
-                    && index_y >= code_domain_min[kYIndex] && index_y <= code_domain_max[kYIndex]
-                    && CheckPartitionLimits(bitset_tmp, code_partition_min, code_partition_max,
-                       code_domain_min, code_domain_max)
-                    && ptr_map_partitioned->find(bitset_tmp) == ptr_map_partitioned->end()) {
-                    ptr_map_partitioned->insert({bitset_tmp, 0});
-                }
-                bitset_tmp = FindYPos(bitset_tmp);
-                ++index_y;
-            }
-            for (DefAmrIndexLUint ix = 0;  ix < i_max2; ++ix) {
-                if (index_x >= code_domain_min[kXIndex] && index_x <= code_domain_max[kXIndex]
-                    && index_y >= code_domain_min[kYIndex] && index_y <= code_domain_max[kYIndex]
-                    && CheckPartitionLimits(bitset_tmp, code_partition_min, code_partition_max,
-                       code_domain_min, code_domain_max)
-                    && ptr_map_partitioned->find(bitset_tmp) == ptr_map_partitioned->end()) {
-                    ptr_map_partitioned->insert({bitset_tmp, 0});
-                }
-                bitset_tmp = FindXPos(bitset_tmp);
-                ++index_x;
-            }
-            for (DefAmrIndexLUint iy = 0;  iy < i_max2; ++iy) {
-                if (index_x >= code_domain_min[kXIndex] && index_x <= code_domain_max[kXIndex]
-                    && index_y >= code_domain_min[kYIndex] && index_y <= code_domain_max[kYIndex]
-                    && CheckPartitionLimits(bitset_tmp, code_partition_min, code_partition_max,
-                       code_domain_min, code_domain_max)
-                    && ptr_map_partitioned->find(bitset_tmp) == ptr_map_partitioned->end()) {
-                    ptr_map_partitioned->insert({bitset_tmp, 0});
-                }
-                bitset_tmp = FindYNeg(bitset_tmp);
-                --index_y;
-            }
-            for (DefAmrIndexLUint ix = 0;  ix < i_max1; ++ix) {
-                if (index_x >= code_domain_min[kXIndex] && index_x <= code_domain_max[kXIndex]
-                    && index_y >= code_domain_min[kYIndex] && index_y <= code_domain_max[kYIndex]
-                    && CheckPartitionLimits(bitset_tmp, code_partition_min, code_partition_max,
-                       code_domain_min, code_domain_max)
-                    && ptr_map_partitioned->find(bitset_tmp) == ptr_map_partitioned->end()) {
-                    ptr_map_partitioned->insert({bitset_tmp, 0});
-                }
-                bitset_tmp = FindXNeg(bitset_tmp);
-                --index_x;
-            }
-            if (index_x >= code_domain_min[kXIndex] && index_x <= code_domain_max[kXIndex]
-                && index_y >= code_domain_min[kYIndex] && index_y <= code_domain_max[kYIndex]
-                && CheckPartitionLimits(bitset_tmp, code_partition_min, code_partition_max,
-                   code_domain_min, code_domain_max)
-                && ptr_map_partitioned->find(bitset_tmp) == ptr_map_partitioned->end()) {
-                ptr_map_partitioned->insert({bitset_tmp, 0});
-            }
-            break;
-        case 0:
-            for (DefAmrIndexLUint ix = 0;  ix < i_max2; ++ix) {
-                if (index_x >= code_domain_min[kXIndex] && index_x <= code_domain_max[kXIndex]
-                    && index_y >= code_domain_min[kYIndex] && index_y <= code_domain_max[kYIndex]
-                    && CheckPartitionLimits(bitset_tmp, code_partition_min, code_partition_max,
-                       code_domain_min, code_domain_max)
-                    && ptr_map_partitioned->find(bitset_tmp) == ptr_map_partitioned->end()) {
-                    ptr_map_partitioned->insert({bitset_tmp, 0});
-                }
-                bitset_tmp = FindXPos(bitset_tmp);
-                ++index_x;
-            }
-            for (DefAmrIndexLUint iy = 0;  iy < i_max2; ++iy) {
-                if (index_x >= code_domain_min[kXIndex] && index_x <= code_domain_max[kXIndex]
-                    && index_y >= code_domain_min[kYIndex] && index_y <= code_domain_max[kYIndex]
-                    && CheckPartitionLimits(bitset_tmp, code_partition_min, code_partition_max,
-                       code_domain_min, code_domain_max)
-                    && ptr_map_partitioned->find(bitset_tmp) == ptr_map_partitioned->end()) {
-                    ptr_map_partitioned->insert({bitset_tmp, 0});
-                }
-                bitset_tmp = FindYPos(bitset_tmp);
-                ++index_y;
-            }
-            for (DefAmrIndexLUint ix = 0;  ix < i_max2; ++ix) {
-                if (index_x >= code_domain_min[kXIndex] && index_x <= code_domain_max[kXIndex]
-                    && index_y >= code_domain_min[kYIndex] && index_y <= code_domain_max[kYIndex]
-                    && CheckPartitionLimits(bitset_tmp, code_partition_min, code_partition_max,
-                       code_domain_min, code_domain_max)
-                    && ptr_map_partitioned->find(bitset_tmp) == ptr_map_partitioned->end()) {
-                    ptr_map_partitioned->insert({bitset_tmp, 0});
-                }
-                bitset_tmp = FindXNeg(bitset_tmp);
-                --index_x;
-            }
-            for (DefAmrIndexLUint iy = 0;  iy < i_max2; ++iy) {
-                if (index_x >= code_domain_min[kXIndex] && index_x <= code_domain_max[kXIndex]
-                    && index_y >= code_domain_min[kYIndex] && index_y <= code_domain_max[kYIndex]
-                    && CheckPartitionLimits(bitset_tmp, code_partition_min, code_partition_max,
-                       code_domain_min, code_domain_max)
+                        code_domain_min, code_domain_max)
                     && ptr_map_partitioned->find(bitset_tmp) == ptr_map_partitioned->end()) {
                     ptr_map_partitioned->insert({bitset_tmp, 0});
                 }
@@ -539,9 +416,140 @@ void SFBitsetAux2D::FindPartitionBlocksMin(const DefSFCodeToUint& code_in, const
                 && ptr_map_partitioned->find(bitset_tmp) == ptr_map_partitioned->end()) {
                 ptr_map_partitioned->insert({bitset_tmp, 0});
             }
-            break;
-        default:
-            break;
+        }
+        break;
+    case 1: {
+            for (DefAmrIndexLUint iy = 0;  iy < i_max1 + 1; ++iy) {
+                if (index_x >= code_domain_min[kXIndex] && index_x <= code_domain_max[kXIndex]
+                    && index_y >= code_domain_min[kYIndex] && index_y <= code_domain_max[kYIndex]
+                    && CheckPartitionLimits(bitset_tmp, code_partition_min, code_partition_max,
+                        code_domain_min, code_domain_max)
+                    && ptr_map_partitioned->find(bitset_tmp) == ptr_map_partitioned->end()) {
+                    ptr_map_partitioned->insert({bitset_tmp, 0});
+                }
+                bitset_tmp = FindYPos(bitset_tmp);
+                ++index_y;
+            }
+            for (DefAmrIndexLUint ix = 0;  ix < i_max1 + 1; ++ix) {
+                if (index_x >= code_domain_min[kXIndex] && index_x <= code_domain_max[kXIndex]
+                    && index_y >= code_domain_min[kYIndex] && index_y <= code_domain_max[kYIndex]
+                    && CheckPartitionLimits(bitset_tmp, code_partition_min, code_partition_max,
+                        code_domain_min, code_domain_max)
+                    && ptr_map_partitioned->find(bitset_tmp) == ptr_map_partitioned->end()) {
+                    ptr_map_partitioned->insert({bitset_tmp, 0});
+                }
+                bitset_tmp = FindXNeg(bitset_tmp);
+                --index_x;
+            }
+            for (DefAmrIndexLUint iy = 0;  iy < i_max1; ++iy) {
+                if (index_x >= code_domain_min[kXIndex] && index_x <= code_domain_max[kXIndex]
+                    && index_y >= code_domain_min[kYIndex] && index_y <= code_domain_max[kYIndex]
+                    && CheckPartitionLimits(bitset_tmp, code_partition_min, code_partition_max,
+                        code_domain_min, code_domain_max)
+                    && ptr_map_partitioned->find(bitset_tmp) == ptr_map_partitioned->end()) {
+                    ptr_map_partitioned->insert({bitset_tmp, 0});
+                }
+                bitset_tmp = FindYPos(bitset_tmp);
+                ++index_y;
+            }
+            for (DefAmrIndexLUint ix = 0;  ix < i_max2; ++ix) {
+                if (index_x >= code_domain_min[kXIndex] && index_x <= code_domain_max[kXIndex]
+                    && index_y >= code_domain_min[kYIndex] && index_y <= code_domain_max[kYIndex]
+                    && CheckPartitionLimits(bitset_tmp, code_partition_min, code_partition_max,
+                        code_domain_min, code_domain_max)
+                    && ptr_map_partitioned->find(bitset_tmp) == ptr_map_partitioned->end()) {
+                    ptr_map_partitioned->insert({bitset_tmp, 0});
+                }
+                bitset_tmp = FindXPos(bitset_tmp);
+                ++index_x;
+            }
+            for (DefAmrIndexLUint iy = 0;  iy < i_max2; ++iy) {
+                if (index_x >= code_domain_min[kXIndex] && index_x <= code_domain_max[kXIndex]
+                    && index_y >= code_domain_min[kYIndex] && index_y <= code_domain_max[kYIndex]
+                    && CheckPartitionLimits(bitset_tmp, code_partition_min, code_partition_max,
+                        code_domain_min, code_domain_max)
+                    && ptr_map_partitioned->find(bitset_tmp) == ptr_map_partitioned->end()) {
+                    ptr_map_partitioned->insert({bitset_tmp, 0});
+                }
+                bitset_tmp = FindYNeg(bitset_tmp);
+                --index_y;
+            }
+            for (DefAmrIndexLUint ix = 0;  ix < i_max1; ++ix) {
+                if (index_x >= code_domain_min[kXIndex] && index_x <= code_domain_max[kXIndex]
+                    && index_y >= code_domain_min[kYIndex] && index_y <= code_domain_max[kYIndex]
+                    && CheckPartitionLimits(bitset_tmp, code_partition_min, code_partition_max,
+                        code_domain_min, code_domain_max)
+                    && ptr_map_partitioned->find(bitset_tmp) == ptr_map_partitioned->end()) {
+                    ptr_map_partitioned->insert({bitset_tmp, 0});
+                }
+                bitset_tmp = FindXNeg(bitset_tmp);
+                --index_x;
+            }
+            if (index_x >= code_domain_min[kXIndex] && index_x <= code_domain_max[kXIndex]
+                && index_y >= code_domain_min[kYIndex] && index_y <= code_domain_max[kYIndex]
+                && CheckPartitionLimits(bitset_tmp, code_partition_min, code_partition_max,
+                    code_domain_min, code_domain_max)
+                && ptr_map_partitioned->find(bitset_tmp) == ptr_map_partitioned->end()) {
+                ptr_map_partitioned->insert({bitset_tmp, 0});
+            }
+        }
+        break;
+    case 0: {
+            for (DefAmrIndexLUint ix = 0;  ix < i_max2; ++ix) {
+                if (index_x >= code_domain_min[kXIndex] && index_x <= code_domain_max[kXIndex]
+                    && index_y >= code_domain_min[kYIndex] && index_y <= code_domain_max[kYIndex]
+                    && CheckPartitionLimits(bitset_tmp, code_partition_min, code_partition_max,
+                        code_domain_min, code_domain_max)
+                    && ptr_map_partitioned->find(bitset_tmp) == ptr_map_partitioned->end()) {
+                    ptr_map_partitioned->insert({bitset_tmp, 0});
+                }
+                bitset_tmp = FindXPos(bitset_tmp);
+                ++index_x;
+            }
+            for (DefAmrIndexLUint iy = 0;  iy < i_max2; ++iy) {
+                if (index_x >= code_domain_min[kXIndex] && index_x <= code_domain_max[kXIndex]
+                    && index_y >= code_domain_min[kYIndex] && index_y <= code_domain_max[kYIndex]
+                    && CheckPartitionLimits(bitset_tmp, code_partition_min, code_partition_max,
+                        code_domain_min, code_domain_max)
+                    && ptr_map_partitioned->find(bitset_tmp) == ptr_map_partitioned->end()) {
+                    ptr_map_partitioned->insert({bitset_tmp, 0});
+                }
+                bitset_tmp = FindYPos(bitset_tmp);
+                ++index_y;
+            }
+            for (DefAmrIndexLUint ix = 0;  ix < i_max2; ++ix) {
+                if (index_x >= code_domain_min[kXIndex] && index_x <= code_domain_max[kXIndex]
+                    && index_y >= code_domain_min[kYIndex] && index_y <= code_domain_max[kYIndex]
+                    && CheckPartitionLimits(bitset_tmp, code_partition_min, code_partition_max,
+                        code_domain_min, code_domain_max)
+                    && ptr_map_partitioned->find(bitset_tmp) == ptr_map_partitioned->end()) {
+                    ptr_map_partitioned->insert({bitset_tmp, 0});
+                }
+                bitset_tmp = FindXNeg(bitset_tmp);
+                --index_x;
+            }
+            for (DefAmrIndexLUint iy = 0;  iy < i_max2; ++iy) {
+                if (index_x >= code_domain_min[kXIndex] && index_x <= code_domain_max[kXIndex]
+                    && index_y >= code_domain_min[kYIndex] && index_y <= code_domain_max[kYIndex]
+                    && CheckPartitionLimits(bitset_tmp, code_partition_min, code_partition_max,
+                        code_domain_min, code_domain_max)
+                    && ptr_map_partitioned->find(bitset_tmp) == ptr_map_partitioned->end()) {
+                    ptr_map_partitioned->insert({bitset_tmp, 0});
+                }
+                bitset_tmp = FindYNeg(bitset_tmp);
+                --index_y;
+            }
+            if (index_x >= code_domain_min[kXIndex] && index_x <= code_domain_max[kXIndex]
+                && index_y >= code_domain_min[kYIndex] && index_y <= code_domain_max[kYIndex]
+                && CheckPartitionLimits(bitset_tmp, code_partition_min, code_partition_max,
+                    code_domain_min, code_domain_max)
+                && ptr_map_partitioned->find(bitset_tmp) == ptr_map_partitioned->end()) {
+                ptr_map_partitioned->insert({bitset_tmp, 0});
+            }
+        }
+        break;
+    default:
+        break;
     }
 }
 /**
@@ -565,13 +573,14 @@ void SFBitsetAux2D::FindPartitionRemainMax(const DefSFCodeToUint& code_in, const
     DefSFCodeToUint code_min_current = code_partition_min/ block_length/ block_length;
     DefSFBitset bitset_tmp = static_cast<DefSFBitset>(code_current);
     switch (code_remain) {
-        case 0:
+    case 0: {
             if (code_in - 1 >= code_min_current) {
                 FindPartitionOneBlock(bitset_tmp, block_length, code_partition_min, code_partition_max,
                     code_domain_min, code_domain_max, ptr_map_partitioned);
             }
-            break;
-        case 1:
+        }
+        break;
+    case 1: {
             if (code_in - 1 >= code_min_current) {
                 FindPartitionOneBlock(bitset_tmp, block_length, code_partition_min, code_partition_max,
                     code_domain_min, code_domain_max, ptr_map_partitioned);
@@ -581,8 +590,9 @@ void SFBitsetAux2D::FindPartitionRemainMax(const DefSFCodeToUint& code_in, const
                 FindPartitionOneBlock(bitset_tmp, block_length, code_partition_min, code_partition_max,
                     code_domain_min, code_domain_max, ptr_map_partitioned);
             }
-            break;
-        case 2:
+        }
+        break;
+    case 2: {
             if (code_in - 1 >= code_min_current) {
                 FindPartitionOneBlock(bitset_tmp, block_length, code_partition_min, code_partition_max,
                     code_domain_min, code_domain_max, ptr_map_partitioned);
@@ -597,8 +607,9 @@ void SFBitsetAux2D::FindPartitionRemainMax(const DefSFCodeToUint& code_in, const
                 FindPartitionOneBlock(bitset_tmp, block_length, code_partition_min, code_partition_max,
                     code_domain_min, code_domain_max, ptr_map_partitioned);
             }
-            break;
-        case 3:
+        }
+        break;
+    case 3: {
             if (code_in - 1 >= code_min_current) {
                 FindPartitionOneBlock(bitset_tmp, block_length, code_partition_min, code_partition_max,
                     code_domain_min, code_domain_max, ptr_map_partitioned);
@@ -618,9 +629,10 @@ void SFBitsetAux2D::FindPartitionRemainMax(const DefSFCodeToUint& code_in, const
                 FindPartitionOneBlock(bitset_tmp, block_length, code_partition_min, code_partition_max,
                     code_domain_min, code_domain_max, ptr_map_partitioned);
             }
-            break;
-        default:
-            break;
+        }
+        break;
+    default:
+        break;
     }
 }
 /**
@@ -836,40 +848,40 @@ void SFBitsetAux3D::FindPartitionBlocksMax(const DefSFCodeToUint& code_in, const
     code_current = (code_in - 1 - code_remain) * block_length_cubic - code_remain;
     bitset_tmp = static_cast<DefSFBitset>(code_current);
     switch (code_remain) {
-        case 0:
-            FindPartitionOneBlock(bitset_tmp, block_level, code_partition_min, code_partition_max,
-                code_domain_min, code_domain_max, ptr_map_partitioned);
-            break;
-        case 1:
-            FindPartition2BlocksMax(bitset_tmp, block_level, code_partition_min, code_partition_max,
-                code_domain_min, code_domain_max, ptr_map_partitioned);
-            break;
-        case 2:
-            FindPartition3BlocksMax(bitset_tmp, block_level, code_partition_min, code_partition_max,
-                code_domain_min, code_domain_max, ptr_map_partitioned);
-            break;
-        case 3:
-            FindPartition4BlocksMax(bitset_tmp, block_level, code_partition_min, code_partition_max,
-                code_domain_min, code_domain_max, ptr_map_partitioned);
-            break;
-        case 4:
-            FindPartition5BlocksMax(bitset_tmp, block_level, code_partition_min, code_partition_max,
-                code_domain_min, code_domain_max, ptr_map_partitioned);
-            break;
-        case 5:
-            FindPartition6BlocksMax(bitset_tmp, block_level, code_partition_min, code_partition_max,
-                code_domain_min, code_domain_max, ptr_map_partitioned);
-            break;
-        case 6:
-            FindPartition7BlocksMax(bitset_tmp, block_level, code_partition_min, code_partition_max,
-                code_domain_min, code_domain_max, ptr_map_partitioned);
-            break;
-        case 7:
-            FindPartitionOneBlock(bitset_tmp, block_level + 1, code_partition_min, code_partition_max,
-                code_domain_min, code_domain_max, ptr_map_partitioned);
-            break;
-        default:
-            break;
+    case 0:
+        FindPartitionOneBlock(bitset_tmp, block_level, code_partition_min, code_partition_max,
+            code_domain_min, code_domain_max, ptr_map_partitioned);
+        break;
+    case 1:
+        FindPartition2BlocksMax(bitset_tmp, block_level, code_partition_min, code_partition_max,
+            code_domain_min, code_domain_max, ptr_map_partitioned);
+        break;
+    case 2:
+        FindPartition3BlocksMax(bitset_tmp, block_level, code_partition_min, code_partition_max,
+            code_domain_min, code_domain_max, ptr_map_partitioned);
+        break;
+    case 3:
+        FindPartition4BlocksMax(bitset_tmp, block_level, code_partition_min, code_partition_max,
+            code_domain_min, code_domain_max, ptr_map_partitioned);
+        break;
+    case 4:
+        FindPartition5BlocksMax(bitset_tmp, block_level, code_partition_min, code_partition_max,
+            code_domain_min, code_domain_max, ptr_map_partitioned);
+        break;
+    case 5:
+        FindPartition6BlocksMax(bitset_tmp, block_level, code_partition_min, code_partition_max,
+            code_domain_min, code_domain_max, ptr_map_partitioned);
+        break;
+    case 6:
+        FindPartition7BlocksMax(bitset_tmp, block_level, code_partition_min, code_partition_max,
+            code_domain_min, code_domain_max, ptr_map_partitioned);
+        break;
+    case 7:
+        FindPartitionOneBlock(bitset_tmp, block_level + 1, code_partition_min, code_partition_max,
+            code_domain_min, code_domain_max, ptr_map_partitioned);
+        break;
+    default:
+        break;
     }
 }
 /**
@@ -897,42 +909,42 @@ void SFBitsetAux3D::FindPartitionBlocksMin(const DefSFCodeToUint& code_in, const
     std::array<DefAmrIndexLUint, 3> indices;
     SFBitsetComputeIndices(bitset_tmp, &indices);
     switch (code_remain) {
-        case 7:
-            bitset_tmp = static_cast<DefSFBitset>(code_in * block_length_cubic);
-            FindPartitionOneBlock(bitset_tmp, block_level, code_partition_min, code_partition_max,
-                code_domain_min, code_domain_max, ptr_map_partitioned);
-            break;
-        case 6:
-            FindPartition2BlocksMin(bitset_tmp, block_level, code_partition_min, code_partition_max,
-                code_domain_min, code_domain_max, ptr_map_partitioned);
-            break;
-        case 5:
-            FindPartition3BlocksMin(bitset_tmp, block_level, code_partition_min, code_partition_max,
-                code_domain_min, code_domain_max, ptr_map_partitioned);
-            break;
-        case 4:
-            FindPartition4BlocksMin(bitset_tmp, block_level, code_partition_min, code_partition_max,
-                code_domain_min, code_domain_max, ptr_map_partitioned);
-            break;
-        case 3:
-            FindPartition5BlocksMin(bitset_tmp, block_level, code_partition_min, code_partition_max,
-                code_domain_min, code_domain_max, ptr_map_partitioned);
-            break;
-        case 2:
-            FindPartition6BlocksMin(bitset_tmp, block_level, code_partition_min, code_partition_max,
-                code_domain_min, code_domain_max, ptr_map_partitioned);
-            break;
-        case 1:
-            FindPartition7BlocksMin(bitset_tmp, block_level, code_partition_min, code_partition_max,
-                code_domain_min, code_domain_max, ptr_map_partitioned);
-            break;
-        case 0:
-            bitset_tmp = static_cast<DefSFBitset>(code_in * block_length_cubic);
-            FindPartitionOneBlock(bitset_tmp, block_level + 1, code_partition_min, code_partition_max,
-                code_domain_min, code_domain_max, ptr_map_partitioned);
-            break;
-        default:
-            break;
+    case 7:
+        bitset_tmp = static_cast<DefSFBitset>(code_in * block_length_cubic);
+        FindPartitionOneBlock(bitset_tmp, block_level, code_partition_min, code_partition_max,
+            code_domain_min, code_domain_max, ptr_map_partitioned);
+        break;
+    case 6:
+        FindPartition2BlocksMin(bitset_tmp, block_level, code_partition_min, code_partition_max,
+            code_domain_min, code_domain_max, ptr_map_partitioned);
+        break;
+    case 5:
+        FindPartition3BlocksMin(bitset_tmp, block_level, code_partition_min, code_partition_max,
+            code_domain_min, code_domain_max, ptr_map_partitioned);
+        break;
+    case 4:
+        FindPartition4BlocksMin(bitset_tmp, block_level, code_partition_min, code_partition_max,
+            code_domain_min, code_domain_max, ptr_map_partitioned);
+        break;
+    case 3:
+        FindPartition5BlocksMin(bitset_tmp, block_level, code_partition_min, code_partition_max,
+            code_domain_min, code_domain_max, ptr_map_partitioned);
+        break;
+    case 2:
+        FindPartition6BlocksMin(bitset_tmp, block_level, code_partition_min, code_partition_max,
+            code_domain_min, code_domain_max, ptr_map_partitioned);
+        break;
+    case 1:
+        FindPartition7BlocksMin(bitset_tmp, block_level, code_partition_min, code_partition_max,
+            code_domain_min, code_domain_max, ptr_map_partitioned);
+        break;
+    case 0:
+        bitset_tmp = static_cast<DefSFBitset>(code_in * block_length_cubic);
+        FindPartitionOneBlock(bitset_tmp, block_level + 1, code_partition_min, code_partition_max,
+            code_domain_min, code_domain_max, ptr_map_partitioned);
+        break;
+    default:
+        break;
     }
 }
 /**

@@ -18,8 +18,7 @@
 #include "io/log_write.h"
 namespace rootproject {
 namespace amrproject {
-void MpiManager::StartupMpi(int argc, char* argv[]) {
-    MPI_Init(&argc, &argv);
+void MpiManager::SetUpMpi() {
     MPI_Comm_rank(MPI_COMM_WORLD, &rank_id_);
     MPI_Comm_size(MPI_COMM_WORLD, &num_of_ranks_);
 
@@ -67,8 +66,6 @@ void MpiManager::StartupMpi(int argc, char* argv[]) {
 }
 void MpiManager::FinalizeMpi() {
     MPI_Finalize();
-}
-void MpiManager::SetMpiParameters() {
 }
 /**
  * @brief function to broadcast grid bounds of all ranks on rank 0 to other ranks.

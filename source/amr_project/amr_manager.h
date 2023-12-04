@@ -12,6 +12,7 @@
 #define ROOTPROJECT_SOURCE_OBJ_MANAGER_H_
 #include <memory>
 #include <string>
+#include <vector>
 #include "../defs_libs.h"
 #include "./solver_info_interface.h"
 #include "io/io_manager.h"
@@ -27,6 +28,7 @@ namespace amrproject {
 */
 class AmrManager {
  public:
+    std::string program_name_;
     static AmrManager* GetInstance() {
         static AmrManager amr_instance_;
         return &amr_instance_;
@@ -34,6 +36,7 @@ class AmrManager {
 
     // modules
 #ifdef ENABLE_MPI
+    int SetUpProgramFeature(int argc, char* argv[]);
     std::unique_ptr<MpiManager> ptr_mpi_manager_;
 #endif  // ENABLE_MPI
     std::unique_ptr<GridManagerInterface> ptr_grid_manager_;
@@ -42,17 +45,17 @@ class AmrManager {
 
     void LoadModules(DefAmrIndexUint dims);
 
-    void DefaultInitialization(DefAmrIndexUint dim, DefAmrIndexUint level, int argc, char* argv[]);
+    void DefaultInitialization(DefAmrIndexUint dim, DefAmrIndexUint level);
     void SetupParameters();
     void InitializeMesh();
+    void SetupSolverForGrids();
     void FinalizeSimulation();
 
-    void SetDependentInfoForAllLevelsTheSame(
-        SolverCreatorInterface* const ptr_solver_creator);
+    void AddSolverToGridManager(const SolverCreatorInterface& solver_creator);
+    void SetDependentInfoForAllLevelsTheSame(const std::shared_ptr<SolverInterface>& ptr_solver);
 
  private:
     static AmrManager* amr_instance_;
-    std::string program_name_;
     AmrManager(void) {}
     ~AmrManager(void) {}
 };

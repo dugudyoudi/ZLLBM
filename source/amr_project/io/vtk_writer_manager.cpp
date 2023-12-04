@@ -24,7 +24,7 @@ namespace amrproject {
 * @param[in]  ptr_vec_base64 converted base64 data
 */
 void Base64Utility::Encode(std::vector<uint8_t>* ptr_vec_uint8,
-    std::vector<uint8_t>* ptr_vec_base64) {
+    std::vector<uint8_t>* ptr_vec_base64) const {
     // number of bytes of the output data
     const uint32_t size_vec = static_cast<uint32_t>(ptr_vec_uint8->size());
     ptr_vec_uint8->insert(ptr_vec_uint8->begin(),
@@ -98,9 +98,9 @@ void VtkWriterManager::OptionInitial(const bool bool_binary) {
 * @param[in]  criterion_manager class to manage criterion information
 */
 void VtkWriterManager::WriteVtuAll(const std::string& folder_name,
-    const bool bool_binary, OutputDataFormat& output_data_format,
-    GridManagerInterface& grid_manager,
-    CriterionManager& criterion_manager) {
+    const bool bool_binary, const OutputDataFormat& output_data_format,
+    const GridManagerInterface& grid_manager,
+    const CriterionManager& criterion_manager) {
     int rank_id = 0;
 #ifdef ENABLE_MPI
     MPI_Comm_rank(MPI_COMM_WORLD, &rank_id);
@@ -113,7 +113,7 @@ void VtkWriterManager::WriteVtuAll(const std::string& folder_name,
 #ifndef DEBUG_DISABLE_2D_FUNCTIONS
     if (grid_manager.k0GridDims_ == 2) {
         const GridManager2D& grid_manager2d =
-            dynamic_cast<GridManager2D&> (grid_manager);
+            dynamic_cast<const GridManager2D&> (grid_manager);
         grid_offset.at(kXIndex) =
             grid_manager2d.k0RealMin_.at(kXIndex);
         grid_offset.at(kYIndex) =
@@ -124,7 +124,7 @@ void VtkWriterManager::WriteVtuAll(const std::string& folder_name,
 #ifndef DEBUG_DISABLE_3D_FUNCTIONS
     if (grid_manager.k0GridDims_ == 3) {
         const GridManager3D& grid_manager3d =
-            dynamic_cast<GridManager3D&> (grid_manager);
+            dynamic_cast<const GridManager3D&> (grid_manager);
         grid_offset.at(kXIndex) =
             grid_manager3d.k0RealMin_.at(kXIndex);
         grid_offset.at(kYIndex) =
@@ -137,43 +137,43 @@ void VtkWriterManager::WriteVtuAll(const std::string& folder_name,
     DefAmrUint overlap_flag = 0;
     switch (vtk_ghost_cell_option_) {
     case EVtkWriterGhostCellOption::kOutputEntirety : {
-        bool_overlap = false;
-        overlap_flag = grid_manager.kNodeStatusFine2Coarse0_
-            | grid_manager.kNodeStatusFine2Coarse0_ | grid_manager.kNodeStatusMpiPartitionOutside_;
-        std::vector<DefAmrIndexUint> output_levels;
-        for (DefAmrIndexUint i = 0; i < grid_manager.k0MaxLevel_ + 1; ++i) {
-            output_levels.push_back(i);
-        }
-        std::string grid_file_name = proj_and_rank + "gridmerged_" + std::to_string(1);
-        WriteVtuGrid(grid_file_name, bool_binary, bool_overlap, overlap_flag,
-            output_levels, output_data_format, grid_manager);
-        break;
-    }
-    case EVtkWriterGhostCellOption::kPartitionMultiBlock: {
-        std::vector<DefAmrIndexUint> output_levels;
-        bool_overlap = true;
-        overlap_flag = grid_manager.kNodeStatusCoarse2FineM1_
-            | grid_manager.kNodeStatusCoarse2FineM1_ | grid_manager.kNodeStatusMpiPartitionOutside_;
-        std::vector<std::string> vec_pvtu_file_name;
-        for (DefAmrIndexUint i = 0; i < grid_manager.k0MaxLevel_ + 1; ++i) {
-            std::string grid_file_name = proj_and_rank + "grid_level_" + std::to_string(i);
+            bool_overlap = false;
+            overlap_flag = grid_manager.kNodeStatusFine2Coarse0_
+                | grid_manager.kNodeStatusFine2Coarse0_ | grid_manager.kNodeStatusMpiPartitionOutside_;
+            std::vector<DefAmrIndexUint> output_levels;
+            for (DefAmrIndexUint i = 0; i < grid_manager.k0MaxLevel_ + 1; ++i) {
+                output_levels.push_back(i);
+            }
+            std::string grid_file_name = proj_and_rank + "gridmerged_" + std::to_string(1);
             WriteVtuGrid(grid_file_name, bool_binary, bool_overlap, overlap_flag,
-                {i}, output_data_format, grid_manager);
-            vec_pvtu_file_name.push_back(name_rank + "grid_level_" + std::to_string(i));
-        }
-
-        // write pvtu
-        FILE* fp = nullptr;
-        errno_t err = fopen_s(&fp, (proj_and_rank + ".pvtu").c_str(), "w");
-        if (!fp) {
-            LogManager::LogError("File was not opened for writing"
-                " pvtu file in WriteVtuAll in "
-                + std::string(__FILE__) + " at line " + std::to_string(__LINE__));
-        } else {
-            WritePvtu(fp, vec_pvtu_file_name, output_data_format);
+                output_levels, output_data_format, grid_manager);
         }
         break;
-    }
+    case EVtkWriterGhostCellOption::kPartitionMultiBlock: {
+            std::vector<DefAmrIndexUint> output_levels;
+            bool_overlap = true;
+            overlap_flag = grid_manager.kNodeStatusCoarse2FineM1_
+                | grid_manager.kNodeStatusCoarse2FineM1_ | grid_manager.kNodeStatusMpiPartitionOutside_;
+            std::vector<std::string> vec_pvtu_file_name;
+            for (DefAmrIndexUint i = 0; i < grid_manager.k0MaxLevel_ + 1; ++i) {
+                std::string grid_file_name = proj_and_rank + "grid_level_" + std::to_string(i);
+                WriteVtuGrid(grid_file_name, bool_binary, bool_overlap, overlap_flag,
+                    {i}, output_data_format, grid_manager);
+                vec_pvtu_file_name.push_back(name_rank + "grid_level_" + std::to_string(i));
+            }
+
+            // write pvtu
+            FILE* fp = nullptr;
+            errno_t err = fopen_s(&fp, (proj_and_rank + ".pvtu").c_str(), "w");
+            if (!fp) {
+                LogManager::LogError("File was not opened for writing"
+                    " pvtu file in WriteVtuAll in "
+                    + std::string(__FILE__) + " at line " + std::to_string(__LINE__));
+            } else {
+                WritePvtu(fp, vec_pvtu_file_name, output_data_format);
+            }
+        }
+        break;
     default:
         break;
     }
@@ -206,8 +206,8 @@ void VtkWriterManager::WriteVtuGeo(const std::string& datafile_name,
     const DefAmrUint overlap_flag, const DefAmrIndexUint dims,
     const std::vector<DefAmrIndexUint>& vec_geo_in_one_vtu,
     const std::array<DefReal, 3>& grid_offset,
-    OutputDataFormat& output_data_format,
-    CriterionManager& criterion_manager) {
+    const OutputDataFormat& output_data_format,
+    const CriterionManager& criterion_manager) {
     FILE* fp = nullptr;
     std::string str_temp;
     errno_t err = fopen_s(&fp, (datafile_name + ".vtu").c_str(), "w");
@@ -251,8 +251,8 @@ void VtkWriterManager::WriteVtuGrid(const std::string& datafile_name,
     const bool bool_binary, const bool bool_overlap,
     const DefAmrUint overlap_flag,
     const std::vector<DefAmrIndexUint>& vec_level_in_one_vtu,
-    OutputDataFormat& output_data_format,
-    GridManagerInterface& grid_manager) {
+    const OutputDataFormat& output_data_format,
+    const GridManagerInterface& grid_manager) {
     FILE* fp = nullptr;
     std::string str_temp;
     errno_t err = fopen_s(&fp, (datafile_name + ".vtu").c_str(), "w");
@@ -272,6 +272,7 @@ void VtkWriterManager::WriteVtuGrid(const std::string& datafile_name,
         fprintf_s(fp, " <UnstructuredGrid>\n");
 
         for (const auto& iter_level : vec_level_in_one_vtu) {
+            grid_manager.vec_ptr_grid_info_.at(iter_level)->SetupOutputVariables();
             WriteGridPieces(fp, bool_binary, bool_overlap, overlap_flag,
                 *grid_manager.vec_ptr_grid_info_.at(iter_level), output_data_format, grid_manager);
         }
@@ -282,14 +283,14 @@ void VtkWriterManager::WriteVtuGrid(const std::string& datafile_name,
     }
 }
 /**
-* @brief   function to write pieces of grids in vtu
-* @param[in]  fp   pointer to output file
-* @param[in]  vec_vtu_file_name name of vtu files
-* @param[in]  output_data_format output data (real or integer) format
+* @brief   function to write pieces of grids in vtu.
+* @param[in]  fp   pointer to output file.
+* @param[in]  vec_vtu_file_name name of vtu files.
+* @param[in]  output_data_format output data (real or integer) format.
 */
 void VtkWriterManager::WritePvtu(FILE* const fp,
     const std::vector<std::string> vec_vtu_file_name,
-    OutputDataFormat& output_data_format) {
+    const OutputDataFormat& output_data_format) {
     std::string str_temp;
     fprintf_s(fp, "<?xml version=\"1.0\"?>\n");
     str_temp.assign("<VTKFile type=\"PUnstructuredGrid\""
@@ -367,8 +368,8 @@ void VtkWriterManager::WritePvtu(FILE* const fp,
 void VtkWriterManager::WriteGridPieces(FILE* const fp, const bool bool_binary,
     const bool bool_overlap, const DefAmrUint overlap_flag,
     const GridInfoInterface& grid_info,
-    OutputDataFormat& output_data_format,
-    GridManagerInterface& grid_manager) {
+    const OutputDataFormat& output_data_format,
+    const GridManagerInterface& grid_manager) {
 
     std::string str_temp;
     DefAmrIndexUint dims = grid_manager.k0GridDims_;
@@ -377,7 +378,7 @@ void VtkWriterManager::WriteGridPieces(FILE* const fp, const bool bool_binary,
     if (dims == 2) {
 #ifndef DEBUG_DISABLE_2D_FUNCTIONS
         const GridManager2D& grid_manager2d =
-            dynamic_cast<GridManager2D&> (grid_manager);
+            dynamic_cast<const GridManager2D&> (grid_manager);
         node_and_cell_number = CalculateNumOfGridCells(
             bool_overlap, overlap_flag,
             grid_manager2d, grid_info.map_grid_node_, &map_node_index);
@@ -385,7 +386,7 @@ void VtkWriterManager::WriteGridPieces(FILE* const fp, const bool bool_binary,
     } else {
 #ifndef DEBUG_DISABLE_3D_FUNCTIONS
         const GridManager3D& grid_manager3d =
-            dynamic_cast<GridManager3D&> (grid_manager);
+            dynamic_cast<const GridManager3D&> (grid_manager);
         node_and_cell_number = CalculateNumOfGridCells(
             bool_overlap, overlap_flag,
             grid_manager3d, grid_info.map_grid_node_, &map_node_index);
@@ -398,11 +399,16 @@ void VtkWriterManager::WriteGridPieces(FILE* const fp, const bool bool_binary,
     fprintf_s(fp, str_temp.c_str());
 
     fprintf_s(fp, "    <PointData>\n");
-    // write node flag
+
     WriteGridNodeFlagStatus(fp, bool_binary, output_data_format,
         map_node_index, grid_info.map_grid_node_);
     WriteGridNodeVtkVisualization(fp, bool_binary, overlap_flag,
         output_data_format, map_node_index, grid_info.map_grid_node_);
+
+    // write grid type dependent variables for output;
+    grid_info.WriteOutputScalarAndVectors(fp, bool_binary, base64_instance_,
+        output_data_format, map_node_index);
+
     fprintf_s(fp, "    </PointData>\n");
 
     // write coordinates of vertices
@@ -414,14 +420,14 @@ void VtkWriterManager::WriteGridPieces(FILE* const fp, const bool bool_binary,
     if (dims == 2) {
 #ifndef DEBUG_DISABLE_2D_FUNCTIONS
         const GridManager2D& grid_manager2d =
-            dynamic_cast<GridManager2D&> (grid_manager);
+            dynamic_cast<const GridManager2D&> (grid_manager);
         WriteGridCoordinates(fp, bool_binary,
             output_data_format, grid_manager2d, grid_info, &map_node_index);
 #endif  // DEBUG_DISABLE_2D_FUNCTIONS
     } else {
 #ifndef DEBUG_DISABLE_3D_FUNCTIONS
         const GridManager3D& grid_manager3d =
-            dynamic_cast<GridManager3D&> (grid_manager);
+            dynamic_cast<const GridManager3D&> (grid_manager);
         WriteGridCoordinates(fp, bool_binary,
             output_data_format, grid_manager3d, grid_info, &map_node_index);
 #endif  // DEBUG_DISABLE_3D_FUNCTIONS
@@ -438,14 +444,14 @@ void VtkWriterManager::WriteGridPieces(FILE* const fp, const bool bool_binary,
     if (dims == 2) {
 #ifndef DEBUG_DISABLE_2D_FUNCTIONS
         const SFBitsetAux2D& bitset_aux2d =
-            dynamic_cast<SFBitsetAux2D&> (grid_manager);
+            dynamic_cast<const SFBitsetAux2D&> (grid_manager);
         WriteGridCellConnectivity(fp, bool_binary,
             output_data_format, bitset_aux2d, map_node_index);
 #endif  // DEBUG_DISABLE_2D_FUNCTIONS
     } else {
 #ifndef DEBUG_DISABLE_3D_FUNCTIONS
         const SFBitsetAux3D& bitset_aux3d =
-            dynamic_cast<SFBitsetAux3D&> (grid_manager);
+            dynamic_cast<const SFBitsetAux3D&> (grid_manager);
         WriteGridCellConnectivity(fp, bool_binary,
             output_data_format, bitset_aux3d, map_node_index);
 #endif  // DEBUG_DISABLE_3D_FUNCTIONS
@@ -481,7 +487,7 @@ void VtkWriterManager::WriteGridPieces(FILE* const fp, const bool bool_binary,
 */
 void VtkWriterManager::WriteGridCellOffsets(FILE* const fp,
     const bool bool_binary, const DefAmrIndexUint dims,
-    const DefSizet num_cell, OutputDataFormat& output_data_format) {
+    const DefSizet num_cell, const OutputDataFormat& output_data_format) {
 
     DefAmrUint num_offsets = 4;
     if (dims == 2) {
@@ -512,7 +518,7 @@ void VtkWriterManager::WriteGridCellOffsets(FILE* const fp,
 /**
 * @brief   function to write cell type.
 * @param[in]  fp   pointer to output file.
-* @param[in]  bool_binary write data in bindary or ascii format
+* @param[in]  bool_binary write data in binary or ascii format
 * @param[in]  dims dimension
 * @param[in]  num_cell   number of cells.
 */
@@ -542,15 +548,15 @@ void VtkWriterManager::WriteGridCellTypes(FILE* const fp,
     }
 }
 /**
-* @brief   function to write cell type.
+* @brief   function to write node status.
 * @param[in]  fp   pointer to output file.
-* @param[in]  bool_binary write data in bindary or ascii format
-* @param[in]  output_data_format output data (real or integer) format
-* @param[in]  map_node_index    indices of nodes for unstructure grid.
+* @param[in]  bool_binary write data in binary or ascii format.
+* @param[in]  output_data_format output data (real or integer) format.
+* @param[in]  map_node_index    indices of nodes for unstructured grid.
 * @param[in]  map_grid_node    grid nodes at the same refinement level.
 */
 void VtkWriterManager::WriteGridNodeFlagStatus(FILE* const fp,
-    const bool bool_binary, OutputDataFormat& output_data_format,
+    const bool bool_binary, const OutputDataFormat& output_data_format,
     const DefMap<DefSizet>& map_node_index,
     const DefMap<std::unique_ptr<GridNode>>& map_grid_node) {
     std::string str_temp;
@@ -589,16 +595,16 @@ void VtkWriterManager::WriteGridNodeFlagStatus(FILE* const fp,
 /**
 * @brief   function to write cell type.
 * @param[in]  fp   pointer to output file.
-* @param[in]  bool_binary write data in bindary or ascii format.
+* @param[in]  bool_binary write data in binary or ascii format.
 * @param[in]  flag_overlap_visual flag for vtk visualization.
 * @param[in]  output_data_format output data (real or integer) format
-* @param[in]  map_node_index    indices of nodes for unstructure grid.
+* @param[in]  map_node_index    indices of nodes for unstructured grid.
 * @param[in]  map_grid_node    grid nodes at the same refinement level.
 */
 void VtkWriterManager::WriteGridNodeVtkVisualization(
     FILE* const fp, const bool bool_binary,
     const DefAmrUint flag_overlap_visual,
-    OutputDataFormat& output_data_format,
+    const OutputDataFormat& output_data_format,
     const DefMap<DefSizet>& map_node_index,
     const DefMap<std::unique_ptr<GridNode>>& map_grid_node) {
     std::string str_temp;
@@ -638,7 +644,7 @@ void VtkWriterManager::WriteGridNodeVtkVisualization(
 /**
 * @brief   function to write pieces of geometries in vtu.
 * @param[in]  fp   pointer to output file.
-* @param[in]  bool_binary write data in bindary or ascii format
+* @param[in]  bool_binary write data in binary or ascii format
 * @param[in]  dims dimension of the mesh
 * @param[in]  grid_offset offset coordinates of the mesh.
 * @param[in]  output_data_format output data (real or integer) format
@@ -647,8 +653,8 @@ void VtkWriterManager::WriteGridNodeVtkVisualization(
 void VtkWriterManager::WriteGeometryPieces(
     FILE* const fp, const bool bool_binary,
     const DefAmrIndexUint dims, const std::array<DefReal, 3>& grid_offset,
-    OutputDataFormat& output_data_format,
-    GeometryInfoInterface& geo_info) {
+    const OutputDataFormat& output_data_format,
+    const GeometryInfoInterface& geo_info) {
     std::string str_temp;
     DefSizet cell_number = CalculateNumOfGeometryCells(geo_info);
     str_temp.assign("  <Piece NumberOfPoints=\""
@@ -668,7 +674,7 @@ void VtkWriterManager::WriteGeometryPieces(
 #ifndef DEBUG_DISABLE_2D_FUNCTIONS
     if (dims == 2) {
         const GeometryInfo2DInterface& geo_info_2d =
-            dynamic_cast<GeometryInfo2DInterface&> (geo_info);
+            dynamic_cast<const GeometryInfo2DInterface&> (geo_info);
         num_points = WriteGeometryCoordinates(fp, bool_binary, dims,
             grid_offset, output_data_format, geo_info_2d);
     }
@@ -676,7 +682,7 @@ void VtkWriterManager::WriteGeometryPieces(
 #ifndef DEBUG_DISABLE_3D_FUNCTIONS
     if (dims == 3) {
         const GeometryInfo3DInterface& geo_info_3d =
-            dynamic_cast<GeometryInfo3DInterface&> (geo_info);
+            dynamic_cast<const GeometryInfo3DInterface&> (geo_info);
         num_points = WriteGeometryCoordinates(fp, bool_binary, dims,
             grid_offset, output_data_format, geo_info_3d);
     }
@@ -693,12 +699,12 @@ void VtkWriterManager::WriteGeometryPieces(
     // write cell connectiveity
     DefSizet num_cell = 0;
     switch (geo_info.geometry_cell_type_) {
-    case   EGeometryCellType::kPolyLine: {
-        WriteGeometryCellConnectivitykPolyLine(
-            fp, bool_binary, num_points, output_data_format);
-        num_cell = num_points - 1;
+    case  EGeometryCellType::kPolyLine: {
+            WriteGeometryCellConnectivitykPolyLine(
+                fp, bool_binary, num_points, output_data_format);
+            num_cell = num_points - 1;
+        }
         break;
-    }
     default:
         break;
     }
@@ -757,7 +763,7 @@ DefSizet VtkWriterManager::CalculateNumOfGeometryCells(
 */
 void VtkWriterManager::WriteGeometryCellConnectivitykPolyLine(FILE* const fp,
     const bool bool_binary, const DefSizet num_points,
-    OutputDataFormat& output_data_format) {
+    const OutputDataFormat& output_data_format) {
     if (bool_binary) {
         std::vector<uint8_t> vec_uint8{}, vec_base64{};
         for (DefSizet i_vertex = 0; i_vertex < num_points - 1; ++i_vertex) {
@@ -794,7 +800,7 @@ void VtkWriterManager::WriteGeometryCellConnectivitykPolyLine(FILE* const fp,
 void VtkWriterManager::WriteGeometryCellOffset(FILE* const fp,
     const bool bool_binary, const DefSizet num_cell,
     const EGeometryCellType geometry_cell_type,
-    OutputDataFormat& output_data_format) {
+    const OutputDataFormat& output_data_format) {
     DefSizet num_offset = 0;
     switch (geometry_cell_type) {
     case EGeometryCellType::kPolyLine:
@@ -913,7 +919,7 @@ std::array<DefSizet, 2> VtkWriterManager::CalculateNumOfGridCells(
 */
 void VtkWriterManager::WriteGridCoordinates(FILE* const fp,
     const bool bool_binary,
-    OutputDataFormat& output_data_format,
+    const OutputDataFormat& output_data_format,
     const GridManager2D& grid_manager2d,
     const GridInfoInterface& grid_info,
     DefMap<DefSizet>* const ptr_map_node_index) {
@@ -985,7 +991,7 @@ void VtkWriterManager::WriteGridCoordinates(FILE* const fp,
 */
 void VtkWriterManager::WriteGridCellConnectivity(FILE* const fp,
     const bool bool_binary,
-    OutputDataFormat& output_data_format,
+    const OutputDataFormat& output_data_format,
     const SFBitsetAux2D& bitset_aux2d,
     const DefMap<DefSizet>& map_node_index) {
     DefSizet size_vec = TwoPowerN(static_cast<DefSizet>(2));
@@ -1039,7 +1045,7 @@ void VtkWriterManager::WriteGridCellConnectivity(FILE* const fp,
 DefSizet VtkWriterManager::WriteGeometryCoordinates(FILE* const fp,
     const bool bool_binary, const DefAmrIndexUint dims,
     const std::array<DefReal, 3>& grid_offset,
-    OutputDataFormat& output_data_format,
+    const OutputDataFormat& output_data_format,
     const GeometryInfo2DInterface& geo_info) {
 
     std::string str_format = "   "
@@ -1135,7 +1141,7 @@ std::array<DefSizet, 2> VtkWriterManager::CalculateNumOfGridCells(
 */
 void VtkWriterManager::WriteGridCoordinates(FILE* const fp,
     const bool bool_binary,
-    OutputDataFormat& output_data_format,
+    const OutputDataFormat& output_data_format,
     const GridManager3D& grid_manager3d,
     const GridInfoInterface& grid_info,
     DefMap<DefSizet>* const ptr_map_node_index) {
@@ -1208,7 +1214,7 @@ void VtkWriterManager::WriteGridCoordinates(FILE* const fp,
 */
 void VtkWriterManager::WriteGridCellConnectivity(FILE* const fp,
     const bool bool_binary,
-    OutputDataFormat& output_data_format,
+    const OutputDataFormat& output_data_format,
     const SFBitsetAux3D& bitset_aux3d,
     const DefMap<DefSizet>& map_node_index) {
     DefSizet size_vec = TwoPowerN(static_cast<DefSizet>(3));
@@ -1264,7 +1270,7 @@ void VtkWriterManager::WriteGridCellConnectivity(FILE* const fp,
 DefSizet VtkWriterManager::WriteGeometryCoordinates(FILE* const fp,
     const bool bool_binary, const DefAmrIndexUint dims,
     const std::array<DefReal, 3>& grid_offset,
-    OutputDataFormat& output_data_format,
+    const OutputDataFormat& output_data_format,
     const GeometryInfo3DInterface& geo_info) {
 
     std::string str_format = "   "

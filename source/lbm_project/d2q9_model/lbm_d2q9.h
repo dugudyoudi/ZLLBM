@@ -11,6 +11,7 @@
 #define ROOTPROJECT_SOURCE_LBM_LBM_D2Q9_H_
 #include <array>
 #include <memory>
+#include "d2q9_model/boundary_d2q9.h"
 #include "lbm_interface.h"
 namespace rootproject {
 namespace lbmproject {
@@ -42,13 +43,23 @@ class SolverLbmD2Q9 final :public SolverLbmInterface {
         { 1. / 9.,  1. / 18.,  1. / 36., -1. / 6., -1. / 12., -1. / 6., -1. / 12.,  0.     ,  1. / 4. },
         { 1. / 9.,  1. / 18.,  1. / 36.,  1. / 6.,  1. / 12., -1. / 6., -1. / 12.,  0.     , -1. / 4. }
         }};
-    void InitialSetIndices() final;
-    void Stream(const DefAmrUint flag_not_compute, const amrproject::SFBitsetAux2D& sfbitset_aux2d,
+    void InitialModelDependencies() final;
+    void Stream(const DefAmrUint flag_not_compute, const amrproject::SFBitsetAuxInterface& sfbitset_aux,
          DefMap<std::unique_ptr<GridNodeLbm>>* const ptr_map_grid_nodes) const final;
+
+    // std::unique_ptr<BoundaryConditionLbmInterface> BoundaryBounceBackCreator() const override {
+    //     return std::make_unique<BoundaryBounceBackD2Q9>();
+    // }
+
+ protected:
+    void CalMacroD2Q9Compressible(const DefReal dt_lbm, GridNodeLbm* const ptr_node) const;
+    void CalMacroD2Q9Incompressible(const DefReal dt_lbm, GridNodeLbm* const ptr_node) const;
+    void CalMacroForceD2Q9Compressible(const DefReal dt_lbm, GridNodeLbm* const ptr_node) const;
+    void CalMacroForceD2Q9Incompressible(const DefReal dt_lbm, GridNodeLbm* const ptr_node) const;
 };
 class SolverCreatorLbmD2Q9 final :public amrproject::SolverCreatorInterface {
  public:
-    std::shared_ptr<amrproject::SolverInterface> CreateSolver() override;
+    std::shared_ptr<amrproject::SolverInterface> CreateSolver() const override;
 };
 }  // end namespace lbmproject
 }  // end namespace rootproject

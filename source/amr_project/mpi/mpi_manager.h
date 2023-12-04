@@ -55,9 +55,8 @@ class MpiManager{
     //  o      o       o  outer layer (rank 0)            -      -      -  inner layer: interface (rank 1)
     //  o      o       o  outer layer (rank 0)            i      i      i  inner layer (rank 1)
 
-    void StartupMpi(int argc, char* argv[]);
+    void SetUpMpi();
     void FinalizeMpi();
-    void SetMpiParameters();
 
     void IniBroadcastBitsetBounds(std::vector<DefSFBitset>* const ptr_bitset_bounds);
 

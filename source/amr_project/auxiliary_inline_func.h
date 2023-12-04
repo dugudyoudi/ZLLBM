@@ -11,9 +11,9 @@
 #ifndef ROOTPROJECT_AMR_PROJECT_AUXILIARY_INLINE_FUNC_H_
 #define ROOTPROJECT_AMR_PROJECT_AUXILIARY_INLINE_FUNC_H_
 #include <array>
+#include <limits>
 #include "../defs_libs.h"
 namespace rootproject {
-namespace amrproject {
 inline DefReal Square(DefReal x) {
     return x * x;
 }
@@ -22,10 +22,17 @@ inline DefReal Square(DefReal x) {
 * @param[in]  n        power exponent.
 */
 inline DefSizet TwoPowerN(DefSizet n) {
-    DefSizet two = 1;
-    two <<= n;
-    return two;
+DefSizet two = 1;
+two <<= n;
+return two;
 }
+constexpr DefReal SqrtNewtonRaphson(DefReal x, DefReal current, DefReal previous) {
+    return current == previous ? current : SqrtNewtonRaphson(x, 0.5 * (current + x / current), current);
+}
+constexpr DefReal SqrtConstexpr(DefReal x) {
+    return x >= 0 && x < std::numeric_limits<DefReal>::infinity()
+        ? SqrtNewtonRaphson(x, x, 0)
+        : std::numeric_limits<DefReal>::quiet_NaN();
 }  // end namespace amrproject
 }  // end namespace rootproject
 #endif  // ROOTPROJECT_AMR_PROJECT_AUXILIARY_INLINE_FUNC_H_
