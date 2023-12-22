@@ -185,6 +185,48 @@ class GridInfoInterface {
     }
     virtual void SetPointerToCurrentNodeType() {}
 
+    // interpolation
+    template <typename Node_T>
+    requires std::is_base_of_v<GridNode, Node_T>
+    void NodeInfoCoarse2fine(const Node_T& coarse_node, Node_T* const ptr_fine_node) const {}
+    // linear interpolation
+    template <typename Node_T>
+    requires std::is_base_of_v<GridNode, Node_T>
+    int InterpolationLinear2D(const DefAmrIndexLUint region_length, const DefSFBitset& sfbitset_in,
+        const SFBitsetAux2D& sfbitset_aux, const std::vector<DefSFBitset>& sfbitset_region,
+        const DefMap<std::unique_ptr<Node_T>>& nodes_fine, const DefMap<std::unique_ptr<Node_T>>& nodes_coarse,
+        Node_T* const ptr_node);
+    template <typename Node_T>
+    requires std::is_base_of_v<GridNode, Node_T>
+    int InterpolationLinear3D(const DefAmrIndexLUint region_length, const DefSFBitset& sfbitset_in,
+        const SFBitsetAux3D& sfbitset_aux, const std::vector<DefSFBitset>& sfbitset_region,
+        const DefMap<std::unique_ptr<Node_T>>& nodes_fine, const DefMap<std::unique_ptr<Node_T>>& nodes_coarse,
+        Node_T* const ptr_node);
+    // lagrangian interpolation
+ private:
+    struct LagrangianCoeff {
+        std::vector<DefReal> coeff0, coeff1;
+    };
+    std::map<DefAmrIndexLUint, LagrangianCoeff> lagrangian_coefficients_;
+
+ public:
+    const LagrangianCoeff& CalculateLagrangianInterpCoeff(const DefAmrIndexLUint interp_half_length);
+    template <typename Node_T>
+    requires std::is_base_of_v<GridNode, Node_T>
+    int InterpolationLagrangian2D(const DefAmrIndexLUint interpolation_length,
+        const DefAmrIndexLUint region_length, const DefSFBitset& sfbitset_in,
+        const SFBitsetAux2D& sfbitset_aux, const std::vector<DefSFBitset>& sfbitset_region,
+        const DefMap<std::unique_ptr<Node_T>>& nodes_fine, const DefMap<std::unique_ptr<Node_T>>& nodes_coarse,
+        Node_T* const ptr_node);
+    template <typename Node_T>
+    requires std::is_base_of_v<GridNode, Node_T>
+    int InterpolationLagrangian3D(const DefAmrIndexLUint interpolation_length,
+        const DefAmrIndexLUint region_length, const DefSFBitset& sfbitset_in,
+        const SFBitsetAux3D& sfbitset_aux, const std::vector<DefSFBitset>& sfbitset_region,
+        const DefMap<std::unique_ptr<Node_T>>& nodes_fine, const DefMap<std::unique_ptr<Node_T>>& nodes_coarse,
+        Node_T* const ptr_node);
+
+
     virtual void InitialGridInfo() = 0;
     virtual ~GridInfoInterface() {}
 };
@@ -200,4 +242,5 @@ class GridInfoCreatorInterface {
 };
 }  // end namespace amrproject
 }  // end namespace rootproject
+#include "grid/grid_interpolation.hpp"
 #endif  // ROOTPROJECT_AMR_PROJECT_SOURCE_GRID_GRID_INFO_H_

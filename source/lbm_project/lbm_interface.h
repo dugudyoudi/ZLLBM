@@ -14,6 +14,7 @@
 #include <memory>
 #include <cmath>
 #include <functional>
+#include <algorithm>
 #include <map>
 #include <set>
 #include "../defs_libs.h"
@@ -37,10 +38,10 @@ enum class ELbmCollisionOperatorType {
 * @brief structure to store node information for LBM simulation
 */
 struct GridNodeLbm : public amrproject::GridNode {
-    std::vector<DefReal> f_collide_, f_;
-    DefReal rho_;
-    std::vector<DefReal> velocity_;
-    std::vector<DefReal> force_;
+    std::vector<DefReal> f_collide_{}, f_{};
+    DefReal rho_ = 0.;
+    std::vector<DefReal> velocity_{};
+    std::vector<DefReal> force_{};
     GridNodeLbm() {}
     GridNodeLbm(const DefReal rho0, const std::vector<DefReal>& velocity0,
         const std::vector<DefReal>& f, const std::vector<DefReal>& f_collide)
@@ -58,17 +59,115 @@ struct GridNodeLbm : public amrproject::GridNode {
             f_.shrink_to_fit();
             f_collide_.shrink_to_fit();
     }
+    GridNodeLbm& operator=(const GridNodeLbm& node_r) {
+        this->rho_ = node_r.rho_;
+        this->velocity_.resize(node_r.velocity_.size());
+        std::copy(node_r.velocity_.begin(), node_r.velocity_.end(), this->velocity_.begin());
+        this->f_collide_.resize(node_r.f_collide_.size());
+        std::copy(node_r.f_collide_.begin(), node_r.f_collide_.end(), this->f_collide_.begin());
+        return *this;
+    }
+    GridNodeLbm& operator+=(const GridNodeLbm& node_r) {
+        this->rho_ += node_r.rho_;
+        this->velocity_.resize(node_r.velocity_.size());
+        std::transform(node_r.velocity_.begin(), node_r.velocity_.end(),
+            this->velocity_.begin(), this->velocity_.begin(), std::plus<DefReal>());
+        this->f_collide_.resize(node_r.f_collide_.size());
+        std::transform(node_r.f_collide_.begin(), node_r.f_collide_.end(),
+            this->f_collide_.begin(), this->f_collide_.begin(), std::plus<DefReal>());
+        return *this;
+    }
+    GridNodeLbm operator+(const GridNodeLbm& node_r) const {
+        GridNodeLbm node_result;
+        node_result.rho_ = this->rho_ + node_r.rho_;
+        node_result.velocity_.resize(node_r.velocity_.size());
+        std::transform(node_r.velocity_.begin(), node_r.velocity_.end(),
+            this->velocity_.begin(), node_result.velocity_.begin(), std::plus<DefReal>());
+        node_result.f_collide_.resize(node_r.f_collide_.size());
+        std::transform(node_r.f_collide_.begin(), node_r.f_collide_.end(),
+            this->f_collide_.begin(), node_result.f_collide_.begin(), std::plus<DefReal>());
+        return node_result;
+    }
+    GridNodeLbm operator-(const GridNodeLbm& node_r) const {
+        GridNodeLbm node_result;
+        node_result.rho_ = this->rho_ - node_r.rho_;
+        node_result.velocity_.resize(node_r.velocity_.size());
+        std::transform(node_r.velocity_.begin(), node_r.velocity_.end(),
+            this->velocity_.begin(), node_result.velocity_.begin(), std::minus<DefReal>());
+        node_result.f_collide_.resize(node_r.f_collide_.size());
+        std::transform(node_r.f_collide_.begin(), node_r.f_collide_.end(),
+            this->f_collide_.begin(), node_result.f_collide_.begin(), std::minus<DefReal>());
+        return node_result;
+    }
+    GridNodeLbm operator*(const GridNodeLbm& node_r) const {
+        GridNodeLbm node_result;
+        node_result.rho_ = this->rho_ * node_r.rho_;
+        node_result.velocity_.resize(node_r.velocity_.size());
+        std::transform(node_r.velocity_.begin(), node_r.velocity_.end(),
+            this->velocity_.begin(), node_result.velocity_.begin(), std::multiplies<DefReal>());
+        node_result.f_collide_.resize(node_r.f_collide_.size());
+        std::transform(node_r.f_collide_.begin(), node_r.f_collide_.end(),
+            this->f_collide_.begin(), node_result.f_collide_.begin(), std::multiplies<DefReal>());
+        return node_result;
+    }
+    GridNodeLbm operator/(const GridNodeLbm& node_r) const {
+        GridNodeLbm node_result;
+        node_result.rho_ = this->rho_ / node_r.rho_;
+        node_result.velocity_.resize(node_r.velocity_.size());
+        std::transform(node_r.velocity_.begin(), node_r.velocity_.end(),
+            this->velocity_.begin(), node_result.velocity_.begin(), std::divides<DefReal>());
+        node_result.f_collide_.resize(node_r.f_collide_.size());
+        std::transform(node_r.f_collide_.begin(), node_r.f_collide_.end(),
+            this->f_collide_.begin(), node_result.f_collide_.begin(), std::divides<DefReal>());
+        return node_result;
+    }
+    GridNodeLbm fabs() const {
+        GridNodeLbm node_result;
+        node_result.rho_ = std::fabs(this->rho_);
+        node_result.velocity_.resize(this->velocity_.size());
+        std::transform(this->velocity_.begin(), this->velocity_.end(),
+            node_result.velocity_.begin(), [](DefReal num) { return std::abs(num); });
+        node_result.f_collide_.resize(this->f_collide_.size());
+        std::transform(this->f_collide_.begin(), this->f_collide_.end(),
+            node_result.f_collide_.begin(), [](DefReal num) { return std::abs(num); });
+        return node_result;
+    }
+    GridNodeLbm operator*(const DefReal real_r) const {
+        GridNodeLbm node_result;
+        node_result.rho_ = this->rho_ * real_r;
+        node_result.velocity_.resize(this->velocity_.size());
+        std::transform(this->velocity_.begin(), this->velocity_.end(),
+            node_result.velocity_.begin(), [real_r](DefReal num) { return real_r * num; });
+        node_result.f_collide_.resize(this->f_collide_.size());
+        std::transform(this->f_collide_.begin(), this->f_collide_.end(),
+            node_result.f_collide_.begin(), [real_r](DefReal num) { return real_r * num; });
+        return node_result;
+    }
 };
 /**
 * @brief interface class to manage LBM collision model 
 */
 class LbmCollisionOptInterface {
  public:
-    DefReal dt_lbm_, viscosity_lbm_;
+    DefReal dt_lbm_, viscosity_lbm_, tau_ratio_c2f_, tau_ratio_f2c_;
     bool cal_tau_each_node_ = false;
     virtual void CalRelaxationTime() = 0;
     virtual void CalRelaxationTimeNode(const GridNodeLbm& node) = 0;
     virtual void CollisionOperator(const SolverLbmInterface& lbm_solver, GridNodeLbm* const ptr_node) const = 0;
+    virtual void CalRelaxationTimeRatio();
+    virtual void Coarse2Fine(const DefReal dt_lbm, const std::vector<DefReal>& feq,
+        const GridNodeLbm& node_coarse, GridNodeLbm* const ptr_node_fine);
+    virtual void Fine2Coarse(const DefReal dt_lbm, const std::vector<DefReal>& feq,
+        const GridNodeLbm& node_fine, GridNodeLbm* const ptr_node_coarse);
+    virtual void Coarse2FineForce(const DefReal dt_lbm, const std::vector<DefReal>& feq,
+        const SolverLbmInterface& lbm_solver,
+        DefReal (SolverLbmInterface::*ptr_func_cal_force_iq)(const int, const GridNodeLbm&) const,
+        const GridNodeLbm& node_coarse, GridNodeLbm* const ptr_node_fine);
+    virtual void Fine2CoarseForce(const DefReal dt_lbm, const std::vector<DefReal>& feq,
+        const SolverLbmInterface& lbm_solver,
+        DefReal (SolverLbmInterface::*ptr_func_cal_force_iq)(const int, const GridNodeLbm&) const,
+        const GridNodeLbm& node_fine, GridNodeLbm* const ptr_node_coarse);
+
     explicit LbmCollisionOptInterface(const SolverLbmInterface& lbm_solver);
     virtual ~LbmCollisionOptInterface() {}
 };
@@ -132,6 +231,9 @@ class GridInfoLbmInteface : public amrproject::GridInfoInterface {
     /**< pointer to boundary conditions adopted for domain boundary */
     std::map<ELbmBoundaryType, std::unique_ptr<BoundaryConditionLbmInterface>> domain_boundary_condition_;
     void ComputeDomainBoundaryCondition();
+
+    // transfer node information between fine and coarse grids
+    void NodeInfoCoarse2fine(const GridNodeLbm& coarse_node, GridNodeLbm* const ptr_fine_node) const;
 
     // output related
     void SetupOutputVariables() override;
@@ -234,6 +336,9 @@ class SolverLbmInterface :public amrproject::SolverInterface {
         std::map<ELbmBoundaryType, std::unique_ptr<BoundaryConditionLbmInterface>>* const ptr_boundary_condition) const;
     virtual std::unique_ptr<BoundaryConditionLbmInterface> BoundaryBounceBackCreator() const;
     virtual std::unique_ptr<BoundaryConditionLbmInterface> BoundaryPeriodicCreator() const;
+
+    // interpolation
+    virtual void SetNodeAsZeroesForInterpolation(GridNodeLbm* const ptr_node) const;
 
  protected:
     DefAmrUint NodeFlagNotCompute_;

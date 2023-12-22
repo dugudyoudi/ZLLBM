@@ -35,6 +35,7 @@ void GridInfoLbmInteface::InitialGridInfo() {
     ptr_collision_operator_->viscosity_lbm_ = ptr_lbm_solver->k0LbmViscosity_;
     ptr_collision_operator_->dt_lbm_ = 1./ static_cast<DefReal>(TwoPowerN(i_level_));
     ptr_collision_operator_->CalRelaxationTime();
+    ptr_collision_operator_->CalRelaxationTimeRatio();
 }
 /**
 * @brief  function to reinterpret type of grid nodes as LBM node type.
@@ -148,6 +149,23 @@ void GridInfoLbmInteface::ComputeDomainBoundaryCondition() {
                 + "th maximum domain boundary in "+ std::string(__FILE__) + " at line " + std::to_string(__LINE__));
             break;
         }
+    }
+}
+/**
+ * @brief function to transfer information stored in coarse LBM node to fine node.
+ * @param[in]  coarse_node   reference of coarse LBM node.
+ * @param[in]  ptr_fine_node   pointer to fine LBM node.
+ */
+void GridInfoLbmInteface::NodeInfoCoarse2fine(const GridNodeLbm& coarse_node, GridNodeLbm* const ptr_fine_node) const {
+    std::vector<DefReal> feq;
+    const SolverLbmInterface& lbm_solver = *std::dynamic_pointer_cast<SolverLbmInterface>(ptr_solver_).get();
+    lbm_solver.func_cal_feq_(coarse_node.rho_, coarse_node.velocity_, &feq);
+    if (bool_forces_) {
+        ptr_collision_operator_->Coarse2FineForce(ptr_collision_operator_->dt_lbm_,
+            feq, lbm_solver, lbm_solver.ptr_func_cal_force_iq_, coarse_node,  ptr_fine_node);
+    } else {
+        ptr_collision_operator_->Coarse2Fine(ptr_collision_operator_->dt_lbm_,
+            feq, coarse_node,  ptr_fine_node);
     }
 }
 /**

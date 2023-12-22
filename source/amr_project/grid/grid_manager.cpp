@@ -809,7 +809,7 @@ void GridManagerInterface::InstantiateGridNodeAllLevelMpi(const int i_rank,
         if (grid_info.ptr_solver_ == nullptr) {
             LogManager::LogError("solver has not been assigned to grid info"
             " of refinement level " + std::to_string(i_level)
-            + " in "+ std::string(__FILE__) + " at line " + std::to_string(__LINE__));
+            + " in " + std::string(__FILE__) + " at line " + std::to_string(__LINE__));
         }
 
         // instantiate nodes on outer mpi communication layer and refinement interface

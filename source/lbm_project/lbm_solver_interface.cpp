@@ -53,8 +53,6 @@ void SolverLbmInterface::SetDefault2DFunctions() {
         };
     }
     this->ptr_func_cal_force_iq_ = &SolverLbmInterface::CalForceIq2D;
-    this->ptr_func_coarse2fine_ = &SolverLbmInterface::Coarse2FineSrt;
-    this->ptr_func_fine2coarse_ = &SolverLbmInterface::Fine2CoarseSrt;
 }
 /**
  * @brief function to set pointers to the default 3D member functions.
@@ -84,8 +82,6 @@ void SolverLbmInterface::SetDefault3DFunctions() {
         };
     }
     this->ptr_func_cal_force_iq_ = &SolverLbmInterface::CalForceIq3D;
-    this->ptr_func_coarse2fine_ = &SolverLbmInterface::Coarse2FineSrt;
-    this->ptr_func_fine2coarse_ = &SolverLbmInterface::Fine2CoarseSrt;
 }
 /**
  * @brief function to resize model related vectors for better performance.
@@ -225,7 +221,6 @@ void SolverLbmInterface::CalFeq2DIncompressible(const DefReal rho,
     for (int iq = 0; iq < this->k0NumQ_; ++iq) {
         c_uv = velocity.at(kXIndex) * k0Cx_.at(iq) + velocity.at(kYIndex) * k0Cy_.at(iq);
         ptr_feq->at(iq) = k0Weights_.at(iq) * (rho + 3. * c_uv + 4.5 * c_uv * c_uv - 1.5 * uv_sq);
-                //ptr_feq->at(iq) = k0Weights_.at(iq) * (rho + 3. * c_uv);
     }
 }
 /**
@@ -289,64 +284,6 @@ DefReal SolverLbmInterface::CalForceIq3D(const int iq, const GridNodeLbm& node) 
         + 9. * (node.velocity_.at(kXIndex) * k0Cx_.at(iq) + node.velocity_.at(kYIndex) * k0Cy_.at(iq)
             + node.velocity_.at(kZIndex) * k0Cz_.at(iq))
         * (k0Cx_[iq] * node.force_[kXIndex] + k0Cy_[iq] * node.force_[kYIndex] + k0Cz_[iq] * node.force_[kZIndex]));
-}
-/**
- * @brief function to convert distribution functions on coarse grid to fine grid.
- * @param[in] dt_lbm  LBM time step at current refinement level (coarse grid).
- * @param[in] matrix_c2f matrix store relaxation times for coarse to fine conversion.
- * @param[in] node_coarse  a node on coarse grid.
- * @param[out] ptr_node_fine pointer to a node on fine grid.
- */
-void SolverLbmInterface::Coarse2FineSrt(const DefReal dt_lbm, const std::vector<std::vector<DefReal>>& matrix_c2f,
-    const GridNodeLbm& node_coarse, GridNodeLbm* const ptr_node_fine) {
-    DefReal force_tmp;
-    ptr_node_fine->rho_ = node_coarse.rho_;
-    ptr_node_fine->velocity_ = node_coarse.velocity_;
-    std::vector<DefReal> feq(this->k0NumQ_);
-    func_cal_feq_(node_coarse.rho_, node_coarse.velocity_, &feq);
-    bool bool_forces_coarse = (node_coarse.force_.size() == k0SolverDims_);
-    //  DefReal relax_tau_f = k0LbmViscosity_ * kCsSqReciprocal / dt_lbm * 2. + 0.5;
-    //  DefReal relax_tau_c = k0LbmViscosity_ * kCsSqReciprocal / dt_lbm + 0.5;
-    //  DefReal tau_ratio = 0.5 * (relax_tau_f - 1)/ (relax_tau_c - 1);
-    //  DefReal relax_tau_c = k0LbmViscosity_ * kCsSqReciprocal / dt_lbm;
-    //  DefReal tau_ratio = 0.5 * (relax_tau_c * 2 - 0.5)/ (relax_tau_c - 0.5);
-    DefReal tau_ratio = matrix_c2f.at(0).at(0);
-    for (int iq = 0; iq < this->k0NumQ_; ++iq) {
-        ptr_node_fine->f_collide_[iq] = feq.at(iq) + tau_ratio * (node_coarse.f_collide_[iq] - feq.at(iq));
-        if (bool_forces_coarse) {
-            force_tmp = (this->*ptr_func_cal_force_iq_)(iq, node_coarse);
-            ptr_node_fine->f_collide_[iq] +=  dt_lbm * force_tmp / 4. - tau_ratio *force_tmp * dt_lbm / 2.;
-        }
-    }
-}
-/**
- * @brief function to convert distribution functions on fine grid to coarse grid.
- * @param[in] dt_lbm  LBM time step at current refinement level (fine grid).
- * @param[in] matrix_f2c matrix store relaxation times for fine to coarse conversion.
- * @param[in] node_fine  a node on fine grid.
- * @param[out] ptr_node_coarse pointer to a node on coarse grid.
- */
-void SolverLbmInterface::Fine2CoarseSrt(const DefReal dt_lbm, const std::vector<std::vector<DefReal>>& matrix_f2c,
-    const GridNodeLbm& node_fine, GridNodeLbm* const ptr_node_coarse) {
-    DefReal force_tmp;
-    ptr_node_coarse->rho_ = node_fine.rho_;
-    ptr_node_coarse->velocity_ = node_fine.velocity_;
-    std::vector<DefReal> feq(this->k0NumQ_);
-    func_cal_feq_(node_fine.rho_, node_fine.velocity_, &feq);
-    bool bool_forces_coarse = (node_fine.force_.size() == 2);
-    //  DefReal relax_tau_f = k0LbmViscosity_ * kCsSqReciprocal / dt_lbm + 0.5;
-    //  DefReal relax_tau_c = k0LbmViscosity_ * kCsSqReciprocal / dt_lbm / 2 + 0.5;
-    //  DefReal tau_ratio = 2 * (relax_tau_c - 1)/ (relax_tau_f - 1);
-    //  DefReal relax_tau_c = k0LbmViscosity_ * kCsSqReciprocal / dt_lbm;
-    //  DefReal tau_ratio = (relax_tau_f - 1)/ (relax_tau_f - 0.5);
-    DefReal tau_ratio = matrix_f2c.at(0).at(0);
-    for (int iq = 0; iq < this->k0NumQ_; ++iq) {
-        ptr_node_coarse->f_collide_[iq] = feq.at(iq) + tau_ratio * (node_fine.f_collide_[iq] - feq.at(iq));
-        if (bool_forces_coarse) {
-            force_tmp = (this->*ptr_func_cal_force_iq_)(iq, node_fine);
-            ptr_node_coarse->f_collide_[iq] +=  dt_lbm * force_tmp - tau_ratio * force_tmp * dt_lbm / 2.;
-        }
-    }
 }
 /**
  * @brief function to calculate macroscopic variables based on distribution functions (without forcing term).
@@ -469,7 +406,7 @@ void SolverLbmInterface::CalMacroForce3DCompressible(const DefReal dt_lbm, GridN
 /**
  * @brief function to calculate macroscopic variables based on distribution functions (incompressible with forcing term).
  * @param[in] dt_lbm time spacing of LBM at current refinement level.
- * @param ptr_node pointer to a grid node storing LBM related information.
+ * @param[out] ptr_node pointer to a grid node storing LBM related information.
  */
 void SolverLbmInterface::CalMacroForce3DIncompressible(const DefReal dt_lbm, GridNodeLbm* const ptr_node) const {
     ptr_node->rho_ = ptr_node->f_[0];
@@ -483,6 +420,15 @@ void SolverLbmInterface::CalMacroForce3DIncompressible(const DefReal dt_lbm, Gri
     ptr_node->velocity_[kXIndex] += 0.5 * ptr_node->force_[kXIndex] * dt_lbm;
     ptr_node->velocity_[kYIndex] += 0.5 * ptr_node->force_[kYIndex] * dt_lbm;
     ptr_node->velocity_[kZIndex] += 0.5 * ptr_node->force_[kZIndex] * dt_lbm;
+}
+/**
+ * @brief function to set the node information needed for interpolation as zeroes.
+ * @param[out] ptr_node pointer to a LBM node.
+ */
+void SolverLbmInterface::SetNodeAsZeroesForInterpolation(GridNodeLbm* const ptr_node) const {
+    ptr_node->rho_ = 0.;
+    ptr_node->velocity_.assign(k0SolverDims_, 0.);
+    ptr_node->f_collide_.assign(k0NumQ_, 0.);
 }
 }  // end namespace lbmproject
 }  // end namespace rootproject
