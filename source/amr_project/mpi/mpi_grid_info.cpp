@@ -1,4 +1,4 @@
-//  Copyright (c) 2021 - 2023, Zhengliang Liu
+//  Copyright (c) 2021 - 2024, Zhengliang Liu
 //  All rights reserved
 
 /**
@@ -14,6 +14,7 @@
 #include "mpi/mpi_manager.h"
 #ifdef ENABLE_MPI
 #include "io/log_write.h"
+#include "io/debug_write.h"
 namespace rootproject {
 namespace amrproject {
 struct CriterionIndexForMpi {
@@ -45,11 +46,11 @@ int MpiManager::CreateAndCommitCriterionIndexType(MPI_Datatype* ptr_mpi_tracking
 /**
  * @brief function to serializes a set of tracking nodes into a buffer.
  * @param[in] set_nodes a set of space filling code for tracking nodes to be serialized.
- * @param[out] buffer a pointer to a char array where the serialized data will be stored.
- * @return The size of the serialized data in bytes.
+ * @param[out] ptr_buffer_size pointer to size of the buffer in bytes.
+ * @return unique pointer to a char array to store the serialized data.
  */
-int MpiManager::IniSerializeTrackingNode(const std::set<DefSFCodeToUint>& set_nodes,
-        std::unique_ptr<char[]>& buffer) const {
+std::unique_ptr<char[]> MpiManager::IniSerializeTrackingNode(
+    const std::set<DefSFCodeToUint>& set_nodes, int* const ptr_buffer_size) const {
     int key_size = sizeof(DefSFBitset);
     int num_nodes = 0;
     if  (sizeof(int) + set_nodes.size() *key_size > 0x7FFFFFFF) {
@@ -59,9 +60,10 @@ int MpiManager::IniSerializeTrackingNode(const std::set<DefSFCodeToUint>& set_no
     } else {
         num_nodes = static_cast<int>(set_nodes.size());
     }
-    int buffer_size = sizeof(int) + key_size * num_nodes;
+    int& buffer_size = *ptr_buffer_size;
+    buffer_size = sizeof(int) + key_size * num_nodes;
     // allocation buffer to store the serialized data
-    buffer = std::make_unique<char[]>(buffer_size);
+    std::unique_ptr<char[]> buffer = std::make_unique<char[]>(buffer_size);
     char* ptr_buffer = buffer.get();
     int position = 0;
     std::memcpy(ptr_buffer + position, &num_nodes, sizeof(int));
@@ -72,7 +74,7 @@ int MpiManager::IniSerializeTrackingNode(const std::set<DefSFCodeToUint>& set_no
         std::memcpy(ptr_buffer + position, &iter, key_size);
         position += key_size;
     }
-    return buffer_size;
+    return buffer;
 }
 /**
  * @brief function to deserialize tracking node data and insert it into the associated map.
@@ -254,9 +256,8 @@ void MpiManager::IniSendNReceiveTracking(const DefAmrIndexUint dims, const DefAm
                 std::vector<std::unique_ptr<char[]>> vec_ptr_buffer(num_chunks);
                 std::vector<MPI_Request> reqs_send(num_chunks);
                 for (int i_chunk = 0; i_chunk < num_chunks; ++i_chunk) {
-                    buffer_size_send = IniSerializeTrackingNode(
-                        vec_nodes_ranks.at(iter_rank).at(i_chunk),
-                    vec_ptr_buffer.at(i_chunk));
+                    vec_ptr_buffer.at(i_chunk) = IniSerializeTrackingNode(
+                        vec_nodes_ranks.at(iter_rank).at(i_chunk), &buffer_size_send);
                     MPI_Send(&buffer_size_send, 1, MPI_INT, iter_rank, i_chunk, MPI_COMM_WORLD);
                     MPI_Isend(vec_ptr_buffer.at(i_chunk).get(), buffer_size_send, MPI_BYTE, iter_rank,
                     i_chunk, MPI_COMM_WORLD, &reqs_send[i_chunk]);

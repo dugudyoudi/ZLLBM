@@ -1,4 +1,4 @@
-//  Copyright (c) 2021 - 2023, Zhengliang Liu
+//  Copyright (c) 2021 - 2024, Zhengliang Liu
 //  All rights reserved
 
 /**
@@ -25,7 +25,7 @@ void BoundaryBounceBackD2Q9::CalBoundaryCondition(const ELbmBoundaryType boundar
     const SolverLbmD2Q9& lbm_solver = *(std::dynamic_pointer_cast<SolverLbmD2Q9>(ptr_grid_info->ptr_solver_));
     const DefReal rho0 = lbm_solver.k0Rho_;
     const std::array<DefReal, 2>& velocity = boundary_velocity_;
-    DefMap<std::unique_ptr<GridNodeLbm>>& grid_node = *ptr_grid_info->ptr_lbm_grid_;
+    DefMap<std::unique_ptr<GridNodeLbm>>& grid_node = *ptr_grid_info->ptr_lbm_grid_nodes_;
     switch (boundary_type) {
     case ELbmBoundaryType::kBoundaryXNeg:
         for (const auto& iter_node : boundary_nodes) {

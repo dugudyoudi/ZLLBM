@@ -1,4 +1,4 @@
-//  Copyright (c) 2021 - 2023, Zhengliang Liu
+//  Copyright (c) 2021 - 2024, Zhengliang Liu
 //  All rights reserved
 
 /**
@@ -44,10 +44,12 @@ class MpiManager{
 
     DefAmrIndexUint k0NumPartitionOuterLayers_ = 2;
     DefAmrIndexUint k0NumPartitionInnerLayers_ = k0NumPartitionOuterLayers_;
-    std::vector<DefMap<std::set<int>>> mpi_communication_inner_layers_;
+    std::vector<std::map<int, DefMap<DefAmrIndexUint>>> mpi_communication_inner_layers_;
+    ///< inner layers (for sending) for mpi communication of all refinement levels
     /** nodes not on the partition interface and whose spacing filling code is
      between the minimum and the maximum spacing filling codes of current rank*/
     std::vector<DefMap<DefAmrUint>> mpi_communication_outer_layers_;
+    ///< outer layers (for receiving) for mpi communication of all refinement levels
     /** nodes whose spacing filling code exceeds 
      the minimum and the maximum spacing filling codes of current rank*/
     //  i      i       i  inner layer (rank 0)            o      o      o  outer layer (rank 1)
@@ -225,8 +227,8 @@ class MpiManager{
     // criterion related functions
  public:
 #ifndef  DEBUG_DISABLE_2D_FUNCTIONS
-    int SerializeCoordiOrigin(const std::vector<GeometryCoordinate2D>& vec_points,
-        std::unique_ptr<char[]>& buffer) const;
+    std::unique_ptr<char[]> SerializeCoordiOrigin(
+        const std::vector<GeometryCoordinate2D>& vec_points, int* const ptr_buffer_size) const;
     void DeserializeCoordiOrigin(const std::unique_ptr<char[]>& buffer,
         std::vector<GeometryCoordinate2D>* const vec_points) const;
     void IniSendNReceivePartitionedGeoCoordi(const std::array<DefReal, 2>& background_space,
@@ -234,8 +236,8 @@ class MpiManager{
         std::vector<GeometryCoordinate2D>* ptr_vec_coordinate);
 #endif  // DEBUG_DISABLE_2D_FUNCTIONS
 #ifndef  DEBUG_DISABLE_3D_FUNCTION
-    int SerializeCoordiOrigin(const std::vector<GeometryCoordinate3D>& vec_points,
-        std::unique_ptr<char[]>& buffer) const;
+    std::unique_ptr<char[]> SerializeCoordiOrigin(
+        const std::vector<GeometryCoordinate3D>& vec_points, int* const ptr_buffer_size) const;
     void DeserializeCoordiOrigin(const std::unique_ptr<char[]>& buffer,
         std::vector<GeometryCoordinate3D>* const vec_points) const;
     void IniSendNReceivePartitionedGeoCoordi(const std::array<DefReal, 3>& background_space,
@@ -243,17 +245,25 @@ class MpiManager{
         std::vector<GeometryCoordinate3D>* ptr_vec_coordinate);
 #endif  // DEBUG_DISABLE_3D_FUNCTIONS
 
-
-// grid related functions
+    // functions to serialize and deserialize grid node information
  public:
-    int SerializeNodeStoreUint(const DefMap<DefAmrUint>& map_nodes,
-        std::unique_ptr<char[]>& buffer) const;
+    std::unique_ptr<char[]> SerializeNodeStoreUint(const DefMap<DefAmrUint>& map_nodes,
+        int* const ptr_buffer_size) const;
     void DeserializeNodeStoreUint(const std::unique_ptr<char[]>& buffer,
         DefMap<DefAmrUint>* const map_nodes) const;
-    int SerializeNodeSFBitset(const DefMap<DefAmrIndexUint>& map_nodes,
-        std::unique_ptr<char[]>& buffer) const;
+    std::unique_ptr<char[]> SerializeNodeSFBitset(const DefMap<DefAmrIndexUint>& map_nodes,
+        int* const ptr_buffer_size) const;
     void DeserializeNodeSFBitset(const DefAmrIndexUint flag_node, const std::unique_ptr<char[]>& buffer,
         DefMap<DefAmrIndexUint>* const map_nodes) const;
+
+ public:
+    inline bool CodeLargerThanMax(const DefSFCodeToUint code_in, const DefSFCodeToUint code_max) const {
+        return (code_in > code_max) ? true : false;
+    }
+    inline bool CodeSmallerThanMin(const DefSFCodeToUint code_in, const DefSFCodeToUint code_min) const {
+        return (code_in < code_min) ? true : false;
+    }
+    // functions for inital partition
     void IniSendNReceiveTracking(const DefAmrIndexUint dims, const DefAmrIndexUint i_level,
         const std::vector<DefSFBitset>& bitset_max, const SFBitsetAuxInterface& sfbitset_aux,
         const std::vector<std::unique_ptr<TrackingGridInfoCreatorInterface>>& vec_tracking_info_creator,
@@ -273,7 +283,7 @@ class MpiManager{
         std::vector<DefMap<DefAmrIndexUint>>* const ptr_sfbitset_each,
         std::vector<DefMap<DefAmrIndexUint>>* const ptr_sfbitset_ghost_each,
         std::vector<std::shared_ptr<GridInfoInterface>>* const ptr_vec_grid_info) const;
-    void SendNReceiveGridInfoAtGivenLevels(const DefAmrIndexUint flag_size0,
+    void IniSendNReceiveGridInfoAtGivenLevels(const DefAmrIndexUint flag_size0,
         const DefAmrUint flag_coarse2fine, const DefAmrIndexUint dims, const DefAmrIndexUint max_level,
         const DefSFBitset bitset_domain_min, const DefSFBitset bitset_domain_max,
         const std::vector<DefAmrIndexLUint>& indices_min, const std::vector<DefAmrIndexLUint>& indices_max,
@@ -286,10 +296,10 @@ class MpiManager{
         std::vector<std::shared_ptr<GridInfoInterface>>* const ptr_vec_grid_info);
 
  private:
-    DefAmrIndexUint kFlagNotOnInterface = 1, kFlagOnInterface = 2;
+    // functions to serialize and deserialize information for node types other than grid node
     int CreateAndCommitCriterionIndexType(MPI_Datatype *ptr_mpi_pair_type) const;
-    int IniSerializeTrackingNode(const std::set<DefSFCodeToUint>& set_nodes,
-        std::unique_ptr<char[]>& buffer) const;
+    std::unique_ptr<char[]> IniSerializeTrackingNode(
+        const std::set<DefSFCodeToUint>& set_nodes, int* const ptr_buffer_size) const;
     void IniDeserializeTrackingNode(const std::unique_ptr<char[]>& buffer,
         const TrackingNode& tracking_node_instance, DefMap<TrackingNode>* const ptr_map_tracking) const;
     int IniSerializeRefinementInterfaceNode(const DefMap<DefAmrUint>& interface_nodes,
@@ -300,14 +310,17 @@ class MpiManager{
         const DefAmrUint flag0, const DefMap<std::set<int>>& outmost_for_all_ranks,
         DefMap<DefAmrUint>* const ptr_map_interface_layer) const;
 
+    // communicate between different partitioned blocks
+    void SerializeNodeInformation(const GridInfoInterface& grid_info) const;
+
  public:
 #ifndef  DEBUG_DISABLE_2D_FUNCTION
-    void TraverseBackgroundForPartitionRank0(
+    void IniTraverseBackgroundForPartitionRank0(
         const DefSFBitset bitset_domain_min, const DefSFBitset bitset_domain_max,
         const std::vector<DefAmrIndexLUint>& vec_cost, const std::vector<DefMap<DefAmrIndexUint>>& vec_sfbitset,
         const SFBitsetAux2D& bitset_aux2d, std::vector<DefSFBitset>* const ptr_bitset_min,
         std::vector<DefSFBitset>* const ptr_bitset_max) const;
-    void FindInterfaceForPartitionFromMinNMax(const DefSFBitset& bitset_min,
+    void IniFindInterfaceForPartitionFromMinNMax(const DefSFBitset& bitset_min,
         const DefSFBitset& bitset_max, const std::array<DefAmrIndexLUint, 2>& code_domain_min,
         const std::array<DefAmrIndexLUint, 2>& code_domain_max, const SFBitsetAux2D& bitset_aux2d,
         DefMap<DefAmrIndexUint>* const ptr_partition_interface_background) const;
@@ -321,19 +334,20 @@ class MpiManager{
         const std::vector<DefSFBitset>& bitset_level_ones,
         const DefMap<DefAmrIndexUint>& partitioned_interface_background) const;
     void SearchForGhostLayerForMinNMax2D(const DefSFBitset bitset_in,
-        const DefAmrIndexUint num_of_ghost_layers, const DefSFCodeToUint code_min, const DefSFCodeToUint code_max,
+        const DefAmrIndexUint num_of_ghost_layers, const DefSFCodeToUint code_bound,
+        bool (MpiManager::*ptr_func_compare)(const DefSFCodeToUint, const DefSFCodeToUint) const,
         const DefAmrIndexUint flag_ini, const SFBitsetAux2D& bitset_aux2d,
         const std::vector<DefSFBitset>& domain_min_m1_n_level,
         const std::vector<DefSFBitset>& domain_max_p1_n_level,
         DefMap<DefAmrIndexUint>* const ptr_map_ghost_layer) const;
 #endif  // DEBUG_DISABLE_2D_FUNCTIONS
 #ifndef  DEBUG_DISABLE_3D_FUNCTION
-    void TraverseBackgroundForPartitionRank0(
+    void IniTraverseBackgroundForPartitionRank0(
         const DefSFBitset bitset_domain_min, const DefSFBitset bitset_domain_max,
         const std::vector<DefAmrIndexLUint>& vec_cost, const std::vector<DefMap<DefAmrIndexUint>>& vec_sfbitset,
         const SFBitsetAux3D& bitset_aux3d, std::vector<DefSFBitset>* const ptr_bitset_min,
         std::vector<DefSFBitset>* const ptr_bitset_max) const;
-    void FindInterfaceForPartitionFromMinNMax(const DefSFBitset& bitset_min,
+    void IniFindInterfaceForPartitionFromMinNMax(const DefSFBitset& bitset_min,
         const DefSFBitset& bitset_max, const std::array<DefAmrIndexLUint, 3>& code_domain_min,
         const std::array<DefAmrIndexLUint, 3>& code_domain_max, const SFBitsetAux3D& bitset_aux2d,
         DefMap<DefAmrIndexUint>* const ptr_partition_interface_background) const;
@@ -347,7 +361,8 @@ class MpiManager{
         const std::vector<DefSFBitset>& bitset_level_ones,
         const DefMap<DefAmrIndexUint>& partitioned_interface_background) const;
     void SearchForGhostLayerForMinNMax3D(const DefSFBitset bitset_in,
-        const DefAmrIndexUint num_of_ghost_layers, const DefSFCodeToUint code_min, const DefSFCodeToUint code_max,
+        const DefAmrIndexUint num_of_ghost_layers, const DefSFCodeToUint code_bound,
+        bool (MpiManager::*ptr_func_compare)(const DefSFCodeToUint, const DefSFCodeToUint) const,
         const DefAmrIndexUint flag_ini, const SFBitsetAux3D& bitset_aux3d,
         const std::vector<DefSFBitset>& domain_min_m1_n_level,
         const std::vector<DefSFBitset>& domain_max_p1_n_level,

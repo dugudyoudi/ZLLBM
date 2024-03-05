@@ -1,4 +1,4 @@
-//  Copyright (c) 2021 - 2023, Zhengliang Liu
+//  Copyright (c) 2021 - 2024, Zhengliang Liu
 //  All rights reserved
 
 /**
@@ -27,12 +27,14 @@ void SolverLbmInterface::SetDomainBoundaryCondition(
     case ELbmBoundaryConditionScheme::kBounceBack: {
             if (ptr_boundary_condition->find(which_boundary) == ptr_boundary_condition->end()) {
                 ptr_boundary_condition->insert({which_boundary, BoundaryBounceBackCreator()});
+                ptr_boundary_condition->at(which_boundary)->boundary_scheme_ = ELbmBoundaryConditionScheme::kBounceBack;
             }
         }
         break;
     case ELbmBoundaryConditionScheme::kPeriodic: {
             if (ptr_boundary_condition->find(which_boundary) == ptr_boundary_condition->end()) {
                 ptr_boundary_condition->insert({which_boundary, BoundaryPeriodicCreator()});
+                ptr_boundary_condition->at(which_boundary)->boundary_scheme_ = ELbmBoundaryConditionScheme::kPeriodic;
             }
         }
         break;

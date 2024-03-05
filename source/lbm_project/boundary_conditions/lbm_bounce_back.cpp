@@ -1,4 +1,4 @@
-//  Copyright (c) 2021 - 2023, Zhengliang Liu
+//  Copyright (c) 2021 - 2024, Zhengliang Liu
 //  All rights reserved
 
 /**
@@ -27,11 +27,11 @@ void BoundaryBounceBack2D::SetValues(const std::vector<DefReal> values) {
  */
 void BoundaryBounceBack2D::CalBoundaryCondition(const ELbmBoundaryType boundary_type,
     const DefMap<DefAmrIndexUint>& boundary_nodes,
-    GridInfoLbmInteface* const pr_grid_info) const {
-    const SolverLbmInterface& lbm_solver = *(std::dynamic_pointer_cast<SolverLbmInterface>(pr_grid_info->ptr_solver_));
+    GridInfoLbmInteface* const ptr_grid_info) const {
+    const SolverLbmInterface& lbm_solver = *(std::dynamic_pointer_cast<SolverLbmInterface>(ptr_grid_info->ptr_solver_));
     const DefReal rho0 = lbm_solver.k0Rho_;
     const std::array<DefReal, 2>& velocity = boundary_velocity_;
-    DefMap<std::unique_ptr<GridNodeLbm>>& grid_node = *pr_grid_info->ptr_lbm_grid_;
+    DefMap<std::unique_ptr<GridNodeLbm>>& grid_node = *ptr_grid_info->ptr_lbm_grid_nodes_;
     std::vector<DefAmrIndexUint> indices, inverse_indices;
     GetBoundaryNInverseIndices(boundary_type, lbm_solver, &indices, &inverse_indices);
     DefAmrIndexUint i, num_q_one_direction = static_cast<DefAmrIndexUint>(indices.size());
@@ -50,7 +50,7 @@ void BoundaryBounceBack3D::SetValues(const std::vector<DefReal> values) {
         amrproject::LogManager::LogWarning("Size of given values should be 3 in"
             + std::string(__FILE__) + " at line " + std::to_string(__LINE__));
     }
-    boundary_velocity_ = {values.at(0), values.at(1)};
+    boundary_velocity_ = {values.at(0), values.at(1), values.at(2)};
 }
 /**
  * @brief function to calculate bounce back boundary condition for 3 dimensional models.
@@ -60,11 +60,11 @@ void BoundaryBounceBack3D::SetValues(const std::vector<DefReal> values) {
  */
 void BoundaryBounceBack3D::CalBoundaryCondition(const ELbmBoundaryType boundary_type,
     const DefMap<DefAmrIndexUint>& boundary_nodes,
-    GridInfoLbmInteface* const pr_grid_info) const {
-    const SolverLbmInterface& lbm_solver = *(std::dynamic_pointer_cast<SolverLbmInterface>(pr_grid_info->ptr_solver_));
+    GridInfoLbmInteface* const ptr_grid_info) const {
+    const SolverLbmInterface& lbm_solver = *(std::dynamic_pointer_cast<SolverLbmInterface>(ptr_grid_info->ptr_solver_));
     const DefReal rho0 = lbm_solver.k0Rho_;
     const std::array<DefReal, 3>& velocity = boundary_velocity_;
-    DefMap<std::unique_ptr<GridNodeLbm>>& grid_node = *pr_grid_info->ptr_lbm_grid_;
+    DefMap<std::unique_ptr<GridNodeLbm>>& grid_node = *ptr_grid_info->ptr_lbm_grid_nodes_;
     std::vector<DefAmrIndexUint> indices, inverse_indices;
     GetBoundaryNInverseIndices(boundary_type, lbm_solver, &indices, &inverse_indices);
     DefAmrIndexUint i, num_q_one_direction = static_cast<DefAmrIndexUint>(indices.size());

@@ -1,4 +1,4 @@
-//  Copyright (c) 2021 - 2023, Zhengliang Liu
+//  Copyright (c) 2021 - 2024, Zhengliang Liu
 //  All rights reserved
 
 /**
@@ -7,8 +7,9 @@
 * @brief functions used for manage LBM solver interface.
 * @date  2023-9-30
 */
-#include "lbm_interface.h"
+#include "./lbm_interface.h"
 #include "grid/grid_manager.h"
+#include "grid/grid_info_interface.h"
 #include "io/log_write.h"
 namespace rootproject {
 namespace lbmproject {
@@ -114,51 +115,88 @@ void SolverLbmInterface::ResizeModelRelatedVectors() {
  * @brief function to set flag indicating the node don't need to be calculated during stream and collision.
  */
 void SolverLbmInterface::SetNodeFlagForSolver() {
-    NodeFlagNotCompute_ = ptr_grid_manager_->kNodeStatusCoarse2Fine0_
-        |ptr_grid_manager_->kNodeStatusFine2Coarse0_
-        |ptr_grid_manager_->kNodeStatusMpiPartitionOutside_;
+    // NodeFlagNotCompute_ = ptr_grid_manager_->kNodeStatusCoarse2Fine0_
+    //     |ptr_grid_manager_->kNodeStatusFine2Coarse0_
+    //     |ptr_grid_manager_->kNodeStatusMpiPartitionOutside_;
 }
 /**
  * @brief function for marching LBM time step at grid of a given refinement level.
- * @param[in] flag_not_compute flag indicating whether to compute or not.
- * @param[out] ptr_lbm_grid_info pointer to class storing LBM grid information.
+ * @param[in] time_scheme enum class to identify time stepping scheme used in computation.
+ * @param[in] time_step_current time step at current grid refinement level in one background step.
+ * @param[in] sfbitset_aux class to manage functions for space filling code computation.
+ * @param[out] ptr_grid_info pointer to class storing LBM grid information.
  */
-void SolverLbmInterface::RunSolver(const DefReal time_step_current,
-    const amrproject::SFBitsetAuxInterface& sfbitset_aux,
+void SolverLbmInterface::RunSolverOnGrid(const amrproject::ETimeSteppingScheme time_scheme,
+    const DefAmrIndexUint time_step_current, const amrproject::SFBitsetAuxInterface& sfbitset_aux,
     amrproject::GridInfoInterface* const ptr_grid_info) {
-    GridInfoLbmInteface* ptr_lbm_grid_info = dynamic_cast<GridInfoLbmInteface*>(ptr_grid_info);
-    DefMap<std::unique_ptr<GridNodeLbm>>& grid_nodes = *ptr_lbm_grid_info->GetPointerToLbmGrid();
+    DefAmrIndexUint i_level = ptr_grid_info->i_level_;
+    GridInfoLbmInteface* ptr_lbm_grid_nodes_info = dynamic_cast<GridInfoLbmInteface*>(ptr_grid_info);
+    if (ptr_lbm_grid_nodes_info->GetPointerToLbmGrid() != nullptr) {
+        DefMap<std::unique_ptr<GridNodeLbm>>& grid_nodes = *ptr_lbm_grid_nodes_info->GetPointerToLbmGrid();
+        Collision(NodeFlagNotCollision_, ptr_lbm_grid_nodes_info);
+        NodeFlagNotCollision_ = 0;
 
-    Collision(NodeFlagNotCompute_, ptr_lbm_grid_info);
-    Stream(NodeFlagNotCompute_, sfbitset_aux, &grid_nodes);
-    ptr_lbm_grid_info->ComputeDomainBoundaryCondition();
+        Stream(NodeFlagNotStream_, sfbitset_aux, &grid_nodes);
+        NodeFlagNotStream_ = 0;
+
+        ptr_lbm_grid_nodes_info->ComputeDomainBoundaryCondition();
+    }
+}
+/**
+ * @brief function for marching LBM time step at grid of a given refinement level.
+ * @param[in] timing indictior for timing in one time step.
+ * @param[in] time_scheme enum class to identify time stepping scheme used in computation.
+ * @param[in] time_step_current time step at current grid refinement level in one background step.
+ * @param[in] sfbitset_aux class to manage functions for space filling code computation.
+ * @param[out] ptr_grid_info pointer to class storing LBM grid information.
+ */
+void SolverLbmInterface::InformationFromGridOfDifferentLevel(
+    const amrproject::ETimingInOneStep timing, const amrproject::ETimeSteppingScheme time_scheme,
+    const DefAmrIndexUint time_step_current, const amrproject::SFBitsetAuxInterface& sfbitset_aux,
+    amrproject::GridInfoInterface* const ptr_grid_info) {
+    DefAmrIndexUint i_level = ptr_grid_info->i_level_;
+    if (i_level > 0 && ptr_grid_info->CheckNeedInfoFromCoarse(
+        amrproject::ETimingInOneStep::kStepBegin, time_scheme, time_step_current)) {
+        ptr_grid_info->TransferInfoFromCoarseGrid(*ptr_grid_manager_->GetSFBitsetAuxPtr(),
+            ptr_grid_manager_->kNodeStatusCoarse2Fine0_, *(ptr_grid_manager_->vec_ptr_grid_info_.at(i_level - 1)));
+        NodeFlagNotCollision_ |=
+            (ptr_grid_manager_->kNodeStatusFine2Coarse0_|ptr_grid_manager_->kNodeStatusFine2CoarseM1_);
+    }
+    if (i_level < ptr_grid_manager_->k0MaxLevel_ && ptr_grid_info->CheckNeedInfoFromFine(
+        amrproject::ETimingInOneStep::kStepBegin, time_scheme, time_step_current)) {
+        ptr_grid_info->TransferInfoFromFineGrid(*ptr_grid_manager_->GetSFBitsetAuxPtr(),
+            ptr_grid_manager_->kNodeStatusCoarse2Fine0_, *(ptr_grid_manager_->vec_ptr_grid_info_.at(i_level + 1)));
+        NodeFlagNotCollision_ |= ptr_grid_manager_->kNodeStatusCoarse2Fine0_;
+    }
 }
 /**
  * @brief function to perform collision step in the LBM simulation.
  * @param[in] flag_not_compute flag indicating whether to compute or not.
- * @param[out] ptr_lbm_grid_info pointer to class storing LBM grid information.
+ * @param[out] ptr_lbm_grid_nodes_info pointer to class storing LBM grid information.
  */
 void SolverLbmInterface::Collision(
-    const DefAmrUint flag_not_compute, GridInfoLbmInteface* const ptr_lbm_grid_info) const {
+    const DefAmrUint flag_not_compute, GridInfoLbmInteface* const ptr_lbm_grid_nodes_info) const {
     // choose function to compute macroscopic variables based on if the forces are considered
     std::function<void(const DefReal, GridNodeLbm* const)> func_macro;
-    DefReal dt_lbm = ptr_lbm_grid_info->ptr_collision_operator_->dt_lbm_;
-    DefMap<std::unique_ptr<GridNodeLbm>>& grid_nodes = *ptr_lbm_grid_info->GetPointerToLbmGrid();
-    if (ptr_lbm_grid_info->bool_forces_) {
-        if (grid_nodes.begin()->second->force_.size() != k0SolverDims_) {
-            amrproject::LogManager::LogError("Size of forces should be " + std::to_string(k0SolverDims_)
-                + "rather than " + std::to_string(grid_nodes.begin()->second->force_.size()) + " in "
-                + std::string(__FILE__) + " at line " + std::to_string(__LINE__));
-        }
-        func_macro = func_macro_force_;
-    } else {
-        func_macro = func_macro_;
-    }
-    for (auto& iter_node : grid_nodes) {
-        if (iter_node.second->flag_status_ & flag_not_compute) {
+    DefReal dt_lbm = ptr_lbm_grid_nodes_info->ptr_collision_operator_->dt_lbm_;
+    DefMap<std::unique_ptr<GridNodeLbm>>& grid_nodes = *ptr_lbm_grid_nodes_info->GetPointerToLbmGrid();
+    if (ptr_lbm_grid_nodes_info->ptr_lbm_grid_nodes_ != nullptr) {
+        if (ptr_lbm_grid_nodes_info->bool_forces_) {
+            if (grid_nodes.begin()->second->force_.size() != k0SolverDims_) {
+                amrproject::LogManager::LogError("Size of forces should be " + std::to_string(k0SolverDims_)
+                    + "rather than " + std::to_string(grid_nodes.begin()->second->force_.size()) + " in "
+                    + std::string(__FILE__) + " at line " + std::to_string(__LINE__));
+            }
+            func_macro = func_macro_force_;
         } else {
-            func_macro(dt_lbm, iter_node.second.get());
-            ptr_lbm_grid_info->ptr_collision_operator_->CollisionOperator(*this, iter_node.second.get());
+            func_macro = func_macro_;
+        }
+        for (auto& iter_node : grid_nodes) {
+            if (iter_node.second->flag_status_ & flag_not_compute) {
+            } else {
+                func_macro(dt_lbm, iter_node.second.get());
+                ptr_lbm_grid_nodes_info->ptr_collision_operator_->CollisionOperator(*this, iter_node.second.get());
+            }
         }
     }
 }
@@ -420,15 +458,6 @@ void SolverLbmInterface::CalMacroForce3DIncompressible(const DefReal dt_lbm, Gri
     ptr_node->velocity_[kXIndex] += 0.5 * ptr_node->force_[kXIndex] * dt_lbm;
     ptr_node->velocity_[kYIndex] += 0.5 * ptr_node->force_[kYIndex] * dt_lbm;
     ptr_node->velocity_[kZIndex] += 0.5 * ptr_node->force_[kZIndex] * dt_lbm;
-}
-/**
- * @brief function to set the node information needed for interpolation as zeroes.
- * @param[out] ptr_node pointer to a LBM node.
- */
-void SolverLbmInterface::SetNodeAsZeroesForInterpolation(GridNodeLbm* const ptr_node) const {
-    ptr_node->rho_ = 0.;
-    ptr_node->velocity_.assign(k0SolverDims_, 0.);
-    ptr_node->f_collide_.assign(k0NumQ_, 0.);
 }
 }  // end namespace lbmproject
 }  // end namespace rootproject

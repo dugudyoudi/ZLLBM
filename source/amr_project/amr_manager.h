@@ -1,4 +1,4 @@
-//  Copyright (c) 2021 - 2023, Zhengliang Liu
+//  Copyright (c) 2021 - 2024, Zhengliang Liu
 //  All rights reserved
 
 /**
@@ -50,6 +50,12 @@ class AmrManager {
     void InitializeMesh();
     void SetupSolverForGrids();
     void FinalizeSimulation();
+
+    // time stepping related
+    ETimeSteppingScheme k0TimeSteppingType_ = ETimeSteppingScheme::kMultiSteppingC2F;
+    std::unique_ptr<TimeSteppingSchemeInterface> ptr_time_stepping_scheme_;
+    void InstantiateTimeSteppingScheme();
+    void TimeMarching(const DefAmrIndexLUint time_step);
 
     void AddSolverToGridManager(const SolverCreatorInterface& solver_creator);
     void SetDependentInfoForAllLevelsTheSame(const std::shared_ptr<SolverInterface>& ptr_solver);

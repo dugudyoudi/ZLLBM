@@ -1,4 +1,4 @@
-//  Copyright (c) 2021 - 2023, Zhengliang Liu
+//  Copyright (c) 2021 - 2024, Zhengliang Liu
 //  All rights reserved
 
 /**
@@ -41,23 +41,15 @@ void GeometryInfoConnection3D::SetIndex() {
 }
 /**
 * @brief   function to initialize status of geometries
-* @return  0 successful, 1 geometry is undefined
+* @param[in] dx reference spatial step
+* @return  0 successful
 */
-int GeometryInfoConnection3D::InitialGeometry(
-    const DefReal dx,
-    const DefaultGeoShapeType shape_type,
-    const DefaultGeoManager& default_geo_manager) {
+int GeometryInfoConnection3D::InitialGeometry(const DefReal dx) {
     int return_status = 0;
     this->SetIndex();
     this->SetupConnectionParameters(this->geometry_cell_type_);
-    this->k0DefaultGeoShapeType_ = shape_type;
-    return_status = this->GeometryInfo3DInterface::InitialGeometry(
-        dx, shape_type, default_geo_manager);
+    return_status = this->GeometryInfo3DInterface::InitialGeometry(dx);
     return return_status;
-}
-int GeometryInfoConnection3D::UpdateGeometry(
-    const DefaultGeoManager& default_geo_manager) {
-    return 0;
 }
 /**
 * @brief   function to copy coordinates from vector of original coordinates
@@ -118,8 +110,7 @@ void GeometryInfoConnection3D::InitialCoordinateGivenLevel(
         vertex_temp.coordinates.at(0) = iter_vertex.coordinate.at(0);
         vertex_temp.coordinates.at(1) = iter_vertex.coordinate.at(1);
         vertex_temp.coordinates.at(2) = iter_vertex.coordinate.at(2);
-        vertex_given_level_.at(0).vec_vertex_coordinate
-            .push_back(vertex_temp);
+        vertex_given_level_.at(0).vec_vertex_coordinate.push_back(vertex_temp);
         connection_vertex_given_level_.at(0).insert({ 0, i_vertex });
         ++i_vertex;
     }

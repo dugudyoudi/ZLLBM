@@ -1,4 +1,4 @@
-//  Copyright (c) 2021 - 2023, Zhengliang Liu
+//  Copyright (c) 2021 - 2024, Zhengliang Liu
 //  All rights reserved
 
 /**
@@ -2736,9 +2736,9 @@ void SFBitsetAux3D::FindPartition3BlocksMin(const DefSFBitset& bitset_max_corner
         }
     } else {
         // top surface
-        for (DefAmrIndexLUint iy = 0;  iy <= i_max1; ++iy) {
+        for (DefAmrIndexLUint iy = 0; iy <= i_max1; ++iy) {
             bitset_tmp = bitset_tmp2;
-            for (DefAmrIndexLUint ix = 0;  ix <= i_max2; ++ix) {
+            for (DefAmrIndexLUint ix = 0; ix <= i_max2; ++ix) {
                 if (index_x >= code_domain_min[kXIndex] && index_x <= code_domain_max[kXIndex]
                     && index_y >= code_domain_min[kYIndex] && index_y <= code_domain_max[kYIndex]
                     && index_z >= code_domain_min[kZIndex] && index_z <= code_domain_max[kZIndex]
@@ -2777,7 +2777,7 @@ void SFBitsetAux3D::FindPartition3BlocksMin(const DefSFBitset& bitset_max_corner
         index_y = indices[kYIndex];
         bitset_tmp2 = bitset_max_corner;
         for (DefAmrIndexLUint iz = 1; iz < i_max1; ++iz) {
-            bitset_tmp2 =  FindZNeg(bitset_tmp2);
+            bitset_tmp2 = FindZNeg(bitset_tmp2);
             bitset_tmp = bitset_tmp2;
             --index_z;
             for (DefAmrIndexLUint ix = 0; ix < i_max2; ++ix) {
@@ -3337,7 +3337,7 @@ void SFBitsetAux3D::FindPartition5BlocksMin(const DefSFBitset& bitset_max_corner
             }
             bitset_tmp2 = FindYPos(bitset_tmp2);
             ++index_y;
-            index_x = indices[kXIndex];
+            index_x = indices2[kXIndex];
         }
     }
 }

@@ -1,4 +1,4 @@
-//  Copyright (c) 2021 - 2023, Zhengliang Liu
+//  Copyright (c) 2021 - 2024, Zhengliang Liu
 //  All rights reserved
 
 /**
@@ -34,6 +34,15 @@ enum class EGeometryCellType : DefAmrTypeUint {
     kUndefined = 0,
     kPolyLine = 4,
     kTriangle = 5
+};
+/**
+* @class EGeometryStatus
+* @brief enum class to identify geometry status whether it cause dynamic mesh adaptation
+*/
+enum class EGeometryStatus : DefAmrTypeUint {
+    kVirtual = 0,
+    kStatic = 1,
+    kMoving = 2
 };
 /**
 * @class DefaultGeometryShapeType

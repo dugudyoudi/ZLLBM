@@ -1,4 +1,4 @@
-//  Copyright (c) 2021 - 2023, Zhengliang Liu
+//  Copyright (c) 2021 - 2024, Zhengliang Liu
 //  All rights reserved
 
 /**
@@ -24,6 +24,11 @@ namespace amrproject {
 void GridManager3D::GenerateGridNodeNearTrackingNode(const DefAmrIndexUint i_level,
     const std::pair<ECriterionType, DefAmrIndexUint>& tracking_grid_key,
     DefMap<DefAmrUint>* const ptr_map_node_temp) const {
+    std::vector<DefSFCodeToUint> sfbitset_min(k0GridDims_), sfbitset_max(k0GridDims_);
+    for (DefAmrIndexUint i_dms = 0; i_dms < k0GridDims_; ++i_dms) {
+        sfbitset_min.at(i_dms) = this->vec_ptr_grid_info_.at(i_level)->k0VecBitsetDomainMin_.at(i_dms).to_ullong();
+        sfbitset_max.at(i_dms) = this->vec_ptr_grid_info_.at(i_level)->k0VecBitsetDomainMax_.at(i_dms).to_ullong();
+    }
     DefSFBitset bitset_lower_level;
     std::array<DefSFBitset, 27> bitset_of_a_cell;
     for (const auto& iter : this->vec_ptr_grid_info_.at(i_level)
@@ -32,8 +37,8 @@ void GridManager3D::GenerateGridNodeNearTrackingNode(const DefAmrIndexUint i_lev
         bitset_lower_level = SFBitsetToOneLowerLevel(iter.first);
         SFBitsetFindAllNeighbors(bitset_lower_level, &bitset_of_a_cell);
         for (const auto& iter_bitset : bitset_of_a_cell) {
-            if (ptr_map_node_temp->find(iter_bitset)
-                == ptr_map_node_temp->end()) {
+            if (ptr_map_node_temp->find(iter_bitset)== ptr_map_node_temp->end()
+                && CheckNodeNotOutsideDomainBoundary(iter_bitset, sfbitset_min, sfbitset_max)) {
                 ptr_map_node_temp->insert({ iter_bitset, kFlag0_ });
             }
         }
@@ -205,10 +210,8 @@ void GridManager3D::PushBackSFBitsetInFloodFill(const DefSFBitset& sfbitset_in,
     std::array<DefSFBitset, 27> array_neighbors;
     SFBitsetFindAllNeighbors(sfbitset_in, &array_neighbors);
     std::vector<DefSFBitset> vec_temp(27);
-    memcpy(vec_temp.data(), array_neighbors.data(),
-        27 * sizeof(DefSFBitset));
-    ptr_vec_stk->insert(ptr_vec_stk->end(), vec_temp.begin() + 1,
-        vec_temp.end());
+    memcpy(vec_temp.data(), array_neighbors.data(), 27*sizeof(DefSFBitset));
+    ptr_vec_stk->insert(ptr_vec_stk->end(), vec_temp.begin() + 1, vec_temp.end());
 }
 /**
 * @brief   function to extend the grid by one layer.
@@ -534,7 +537,7 @@ DefAmrUint GridManager3D::FindAllNeighborsWithSpecifiedDirection(
 * @param[out] ptr_layer_lower_level_outer outer nodes at the lower
 *             refinement level.
 */
-void  GridManager3D::FindInterfaceBetweenGrid(
+void  GridManager3D::FindOutmostLayerForFineGrid(
     const DefAmrIndexUint i_level, const DefMap<DefAmrUint>& map_outmost_layer,
     DefMap<DefAmrIndexUint>* const map_exist,
     DefMap<DefAmrUint>* const ptr_interface_outmost,

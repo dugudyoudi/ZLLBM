@@ -1,4 +1,4 @@
-//  Copyright (c) 2021 - 2023, Zhengliang Liu
+//  Copyright (c) 2021 - 2024, Zhengliang Liu
 //  All rights reserved
 
 /**
@@ -24,6 +24,12 @@ namespace amrproject {
 */
 class  SFBitsetAuxInterface {
  public:
+    static std::array<DefSFBitset, 2> k0SFBitsetTakeXRef_, k0SFBitsetTakeYRef_;
+#ifndef  DEBUG_DISABLE_3D_FUNCTION
+    static std::array<DefSFBitset, 2> k0SFBitsetTakeZRef_;
+#endif  // DEBUG_DISABLE_3D_FUNCTIONS
+    /**< reference bitset used to take digitals at a given direction
+          by bool operator.*/
     // for k0SFBitsetTakeXRef_, k0SFBitsetTakeYRef_ and k0SFBitsetTakeZRef_
     // .at(kRefCurrent) takes the given direction (x, y, or z) while
     // .at(kRefOthers) takes directions other than the given one (y z, x z, or x y)
@@ -88,9 +94,6 @@ class  SFBitsetAux2D : public SFBitsetAuxInterface {
      kNodeIndexXnYn_ = 5, kNodeIndexXnYp_ = 6, kNodeIndexXpYn_ = 7,
      kNodeIndexXpYp_ = 8;
     ///< indices of node and its 8 neighbors
-    static std::array<DefSFBitset, 2> k0SFBitsetTakeXRef_, k0SFBitsetTakeYRef_;
-    /**< reference bitset used to take digitals at a given direction
-          by bool operator.*/
     std::array<DefSFBitset, 2> SFBitsetMin_ = {~DefSFCodeToUint(0), ~DefSFCodeToUint(0)}, SFBitsetMax_ = {0, 0};
     /**< bitset corresponding to the minimum and maximum
      indices of the computational domain in each direction*/
@@ -255,10 +258,6 @@ class  SFBitsetAux3D : public SFBitsetAuxInterface {
      kNodeIndexXpYnZp_ = 20, kNodeIndexXpYpZn_ = 21, kNodeIndexXpYnZn_ = 22,
      kNodeIndexXnYpZp_ = 23, kNodeIndexXnYnZp_ = 24, kNodeIndexXnYpZn_ = 25,
      kNodeIndexXnYnZn_ = 26;  ///< indices of node and  its 26 neighbors
-    static std::array<DefSFBitset, 2>
-     k0SFBitsetTakeXRef_, k0SFBitsetTakeYRef_, k0SFBitsetTakeZRef_;
-    /**< reference bitset used to take digitals at a given direction
-          by bool operator.*/
     std::array<DefSFBitset, 3> SFBitsetMin_ = {~DefSFCodeToUint(0), ~DefSFCodeToUint(0), ~DefSFCodeToUint(0)},
         SFBitsetMax_ = {0, 0, 0};
     std::array<DefSFBitset, 3> k0SFBitsetDomainCoordMin_, k0SFBitsetDomainCoordMax_;

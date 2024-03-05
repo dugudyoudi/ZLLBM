@@ -1,4 +1,4 @@
-//  Copyright (c) 2021 - 2023, Zhengliang Liu
+//  Copyright (c) 2021 - 2024, Zhengliang Liu
 //  All rights reserved
 
 /**
@@ -170,7 +170,8 @@ void VtkWriterManager::WriteVtuAll(const std::string& folder_name,
                     " pvtu file in WriteVtuAll in "
                     + std::string(__FILE__) + " at line " + std::to_string(__LINE__));
             } else {
-                WritePvtu(fp, vec_pvtu_file_name, output_data_format);
+                WritePvtu(fp, vec_pvtu_file_name, output_data_format,
+                    grid_manager.vec_ptr_grid_info_.at(0)->output_variables_);
             }
         }
         break;
@@ -283,14 +284,15 @@ void VtkWriterManager::WriteVtuGrid(const std::string& datafile_name,
     }
 }
 /**
-* @brief   function to write pieces of grids in vtu.
+* @brief   function to write pvtu for given vtu files.
 * @param[in]  fp   pointer to output file.
 * @param[in]  vec_vtu_file_name name of vtu files.
 * @param[in]  output_data_format output data (real or integer) format.
+* @param[in]  output_variables information of output variables.
 */
-void VtkWriterManager::WritePvtu(FILE* const fp,
-    const std::vector<std::string> vec_vtu_file_name,
-    const OutputDataFormat& output_data_format) {
+void VtkWriterManager::WritePvtu(FILE* const fp, const std::vector<std::string> vec_vtu_file_name,
+    const OutputDataFormat& output_data_format,
+    const std::vector<std::unique_ptr<OutputNodeVariableInfoInterface>>& output_variables) {
     std::string str_temp;
     fprintf_s(fp, "<?xml version=\"1.0\"?>\n");
     str_temp.assign("<VTKFile type=\"PUnstructuredGrid\""
@@ -307,13 +309,24 @@ void VtkWriterManager::WritePvtu(FILE* const fp,
         + k0StrVtkAsciiOrBinary_ + "\">\n");
     fprintf_s(fp, str_temp.c_str());
     fprintf_s(fp, "      </PDataArray>\n");
+
+    // variables
+    for (const auto& iter_var : output_variables) {
+        str_temp.assign("      <PDataArray NumberOfComponents=\""
+        + std::to_string(iter_var->variable_dims_) + "\" type=\""
+        + output_data_format.output_real_.format_name_
+        + "\" Name=\"" + iter_var->output_name_ +"\" format=\""
+        + k0StrVtkAsciiOrBinary_ + "\">\n");
+        fprintf_s(fp, str_temp.c_str());
+        fprintf_s(fp, "      </PDataArray>\n");
+    }
+
     // vtkGhostType
     str_temp.assign("      <PDataArray type=\"UInt8\" Name=\"vtkGhostType\""
         " format=\"" + k0StrVtkAsciiOrBinary_ + "\">\n");
     fprintf_s(fp, str_temp.c_str());
     fprintf_s(fp, "      </PDataArray>\n");
     fprintf_s(fp, "    </PPointData>\n");
-
     fprintf_s(fp, "   <PPoints>\n");
     // node coordinates
     str_temp.assign("    <PDataArray type=\""

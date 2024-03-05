@@ -1,4 +1,4 @@
-//  Copyright (c) 2021 - 2023, Zhengliang Liu
+//  Copyright (c) 2021 - 2024, Zhengliang Liu
 //  All rights reserved
 
 /**
@@ -46,7 +46,7 @@ void BoundaryPeriodic2D::CalBoundaryCondition(const ELbmBoundaryType boundary_ty
     default:
         break;
     }
-    DefMap<std::unique_ptr<GridNodeLbm>>& grid_node = *ptr_grid_info->ptr_lbm_grid_;
+    DefMap<std::unique_ptr<GridNodeLbm>>& grid_node = *ptr_grid_info->ptr_lbm_grid_nodes_;
     std::vector<DefAmrIndexUint> indices, inverse_indices;
     GetBoundaryNInverseIndices(boundary_type, lbm_solver, &indices, &inverse_indices);
     DefSFBitset sfbitset_counterpart;
@@ -113,7 +113,7 @@ void BoundaryPeriodic3D::CalBoundaryCondition(const ELbmBoundaryType boundary_ty
     default:
         break;
     }
-    DefMap<std::unique_ptr<GridNodeLbm>>& grid_node = *ptr_grid_info->ptr_lbm_grid_;
+    DefMap<std::unique_ptr<GridNodeLbm>>& grid_node = *ptr_grid_info->ptr_lbm_grid_nodes_;
     std::vector<DefAmrIndexUint> indices, inverse_indices;
     GetBoundaryNInverseIndices(boundary_type, lbm_solver, &indices, &inverse_indices);
     DefSFBitset sfbitset_counterpart;

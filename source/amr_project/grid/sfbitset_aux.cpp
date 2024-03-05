@@ -1,4 +1,4 @@
-//  Copyright (c) 2021 - 2023, Zhengliang Liu
+//  Copyright (c) 2021 - 2024, Zhengliang Liu
 //  All rights reserved
 
 /**
@@ -16,13 +16,9 @@
 namespace rootproject {
 namespace amrproject {
 // static members
-#ifndef  DEBUG_DISABLE_2D_FUNCTION
-std::array<DefSFBitset, 2> SFBitsetAux2D::k0SFBitsetTakeXRef_,
-SFBitsetAux2D::k0SFBitsetTakeYRef_;
-#endif  // DEBUG_DISABLE_2D_FUNCTIONS
+std::array<DefSFBitset, 2> SFBitsetAuxInterface::k0SFBitsetTakeXRef_, SFBitsetAuxInterface::k0SFBitsetTakeYRef_;
 #ifndef  DEBUG_DISABLE_3D_FUNCTION
-std::array<DefSFBitset, 2> SFBitsetAux3D::k0SFBitsetTakeXRef_,
-SFBitsetAux3D::k0SFBitsetTakeYRef_, SFBitsetAux3D::k0SFBitsetTakeZRef_;
+std::array<DefSFBitset, 2> SFBitsetAuxInterface::k0SFBitsetTakeZRef_;
 #endif  // DEBUG_DISABLE_3D_FUNCTIONS
 
 #ifndef  DEBUG_DISABLE_2D_FUNCTIONS
@@ -1087,6 +1083,16 @@ void SFBitsetAux3D::FindNodesInReginOfGivenLength(const DefSFBitset& sfbitset_in
         }
     }
 }
+/**
+ * @brief function to search for the ghost layers near a given node based on min and max space fill codes.
+ * @param[in] sfbitset_in space fill code of the given node.
+ * @param[in] region_length half length of the given region.
+ * @param[in] periodic_min booleans indicating if the minimum domain boundaries are periodic.
+ * @param[in] periodic_max booleans indicating if the maximum domain boundaries are periodic.
+ * @param[in] domain_min_n_level minimum indicies of current refinement level.
+ * @param[in] domain_max_n_level maximum indicies of current refinement level.
+ * @param[out] ptr_sfbitset_nodes pointer to nodes in the given region.
+ */
 DefAmrIndexLUint SFBitsetAux3D::FindNodesInPeriodicReginOfGivenLength(const DefSFBitset& sfbitset_in,
     const DefAmrIndexLUint region_length,
     const std::vector<bool>& periodic_min, const std::vector<bool>& periodic_max,

@@ -51,7 +51,7 @@ void SetTestDependentParameters(DefAmrIndexUint max_level,
         ptr_amr_instance_->ptr_grid_manager_->vec_ptr_solver_.at(0).get());
     solver_ref.k0BoolCompressible_ = true;
     DefReal tau_0 = sqrt(3. / 16) + 0.5;  // BGK gives the exact solution
-    solver_ref.k0LbmViscosity_ = sqrt(3. / 16) * lbmproject::SolverLbmInterface::kCsSq;
+    solver_ref.k0LbmViscosity_ = sqrt(3. / 16) * lbmproject::SolverLbmInterface::kCs_Sq_;
     DefReal lbm_height = max_domain_height_ / dx_ + 1.;  // bounce back wall at 0.5 distance to the node
     DefSizet num_probes = static_cast<DefSizet>(max_domain_height_ / dx_ + 1. + kEps);
     u_analytical_.resize(num_probes);
@@ -96,7 +96,7 @@ int main(int argc, char* argv[]) {
     SetDomainBoundaryOtherThanPeriodic(lbmproject::ELbmBoundaryConditionScheme::kBounceBack);
 
     for (DefAmrIndexLUint it = 0; it < max_t_; ++it) {
-        ptr_amr_instance_->ptr_grid_manager_->TimeMarching(it);
+        ptr_amr_instance_->TimeMarching(it);
     }
 
     DefReal error_sum = 0., u_calculated;
@@ -106,8 +106,8 @@ int main(int argc, char* argv[]) {
         ptr_amr_instance_->ptr_grid_manager_->vec_ptr_grid_info_.at(0).get());
     DefSFBitset code_tmp = sfbitset_aux.SFBitsetEncoding({ DefAmrIndexLUint(max_domain_length_ / dx_ + kEps) + 1, 1 });
     DefAmrIndexUint i_y = 0;
-    while (grid_ref.ptr_lbm_grid_->find(code_tmp) != grid_ref.ptr_lbm_grid_->end()) {
-        u_calculated = grid_ref.ptr_lbm_grid_->at(code_tmp)->velocity_[kXIndex];
+    while (grid_ref.ptr_lbm_grid_nodes_->find(code_tmp) != grid_ref.ptr_lbm_grid_nodes_->end()) {
+        u_calculated = grid_ref.ptr_lbm_grid_nodes_->at(code_tmp)->velocity_[kXIndex];
         error_sum += Square(u_calculated - u_analytical_.at(i_y));
         code_tmp = sfbitset_aux.FindYPos(code_tmp);
         ++i_y;

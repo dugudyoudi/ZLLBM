@@ -1,4 +1,4 @@
-//  Copyright (c) 2021 - 2023, Zhengliang Liu
+//  Copyright (c) 2021 - 2024, Zhengliang Liu
 //  All rights reserved
 
 /**
@@ -12,17 +12,16 @@
 #include "grid/grid_manager.h"
 #ifdef ENABLE_MPI
 #include "io/log_write.h"
-#include "io/debug_write.h"
 namespace rootproject {
 namespace amrproject {
 /**
  * @brief function to serialize data (a DefSFBitset and a DefAmrUint) and save it to buffer
  * @param[in] map_nodes node information
- * @param[out] buffer buffer to send data
- * @return size of the buffer 
+ * @param[out] ptr_buffer_size pointer to size of the buffer in bytes.
+ * @return sunique pointer to a char array to store the serialized data.
  */
-int MpiManager::SerializeNodeStoreUint(const DefMap<DefAmrUint>& map_nodes,
-    std::unique_ptr<char[]>& buffer) const {
+std::unique_ptr<char[]> MpiManager::SerializeNodeStoreUint(const DefMap<DefAmrUint>& map_nodes,
+    int* const ptr_buffer_size) const {
     int key_size = sizeof(DefSFBitset), node_size = sizeof(DefAmrUint);
     int num_nodes = 1;
     if  (sizeof(int) + map_nodes.size() *(key_size + node_size) > 0x7FFFFFFF) {
@@ -31,9 +30,10 @@ int MpiManager::SerializeNodeStoreUint(const DefMap<DefAmrUint>& map_nodes,
     } else {
         num_nodes = static_cast<int>(map_nodes.size());
     }
-    int buffer_size = sizeof(int) + (key_size + node_size) * num_nodes;
+    int& buffer_size = *ptr_buffer_size;
+    buffer_size = sizeof(int) + (key_size + node_size) * num_nodes;
     // allocation buffer to store the serialized data
-    buffer = std::make_unique<char[]>(buffer_size);
+    std::unique_ptr<char[]> buffer = std::make_unique<char[]>(buffer_size);
     char* ptr_buffer = buffer.get();
     int position = 0;
     std::memcpy(ptr_buffer + position, &num_nodes, sizeof(int));
@@ -49,7 +49,7 @@ int MpiManager::SerializeNodeStoreUint(const DefMap<DefAmrUint>& map_nodes,
         std::memcpy(ptr_buffer + position, &iter.second, node_size);
         position += node_size;
     }
-    return buffer_size;
+    return buffer;
 }
 /**
  * @brief function to deserialize data (a DefSFBitset and a DefAmrUint) from a buffer
@@ -81,11 +81,11 @@ void MpiManager::DeserializeNodeStoreUint(
 /**
  * @brief function to serialize space filling code (DefSFBitset) and save it to buffer
  * @param[in] map_nodes node information
- * @param[out] buffer buffer to send data
- * @return size of the buffer 
+ * @param[out] ptr_buffer_size pointer to size of the buffer in bytes.
+ * @return unique pointer to a char array to store the serialized data.
  */
-int MpiManager::SerializeNodeSFBitset(const DefMap<DefAmrIndexUint>& map_nodes,
-    std::unique_ptr<char[]>& buffer) const {
+std::unique_ptr<char[]> MpiManager::SerializeNodeSFBitset(
+    const DefMap<DefAmrIndexUint>& map_nodes, int* const ptr_buffer_size) const {
     int key_size = sizeof(DefSFBitset);
     int num_nodes = 1;
     if  (sizeof(int) + map_nodes.size() *(key_size) > 0x7FFFFFFF) {
@@ -94,9 +94,10 @@ int MpiManager::SerializeNodeSFBitset(const DefMap<DefAmrIndexUint>& map_nodes,
     } else {
         num_nodes = static_cast<int>(map_nodes.size());
     }
-    int buffer_size = sizeof(int) + (key_size) * num_nodes;
+    int& buffer_size = *ptr_buffer_size;
+    buffer_size = sizeof(int) + (key_size) * num_nodes;
     // allocation buffer to store the serialized data
-    buffer = std::make_unique<char[]>(buffer_size);
+    std::unique_ptr<char[]> buffer = std::make_unique<char[]>(buffer_size);
     char* ptr_buffer = buffer.get();
     int position = 0;
     std::memcpy(ptr_buffer + position, &num_nodes, sizeof(int));
@@ -109,7 +110,7 @@ int MpiManager::SerializeNodeSFBitset(const DefMap<DefAmrIndexUint>& map_nodes,
         std::memcpy(ptr_buffer + position, &key_host, key_size);
         position += key_size;
     }
-    return buffer_size;
+    return buffer;
 }
 /**
  * @brief function to deserialize space filling code (DefSFBitset) from a buffer
@@ -137,7 +138,7 @@ void MpiManager::DeserializeNodeSFBitset(const DefAmrIndexUint flag_node,
     }
 }
 /**
- * @brief function to send and receive partitioned grid for each rank
+ * @brief function to send and receive partitioned grid for each rank.
  * @param[in] flag_size0 flag of existing node.
  * @param[in] flag_fine2coarse_outmost flag indicting node is on the outmost fine to coarse refinement layer.
  * @param[in] bitset_min minimum space filling code for each partition.
@@ -218,13 +219,13 @@ void MpiManager::IniSendNReceivePartitionedGrid(const DefAmrIndexUint dims,
         for (auto i_rank = 0; i_rank < num_ranks; ++i_rank) {
             if (dims == 2) {
 #ifndef  DEBUG_DISABLE_2D_FUNCTIONS
-                FindInterfaceForPartitionFromMinNMax(
+                IniFindInterfaceForPartitionFromMinNMax(
                      bitset_min.at(i_rank), bitset_max.at(i_rank), indices_min_2d, indices_max_2d,
                     dynamic_cast<const SFBitsetAux2D&>(sfbitset_aux), &partition_interface_background.at(i_rank));
 #endif  // DEBUG_DISABLE_2D_FUNCTIONS
             } else {
 #ifndef  DEBUG_DISABLE_3D_FUNCTIONS
-                FindInterfaceForPartitionFromMinNMax(
+                IniFindInterfaceForPartitionFromMinNMax(
                     bitset_min.at(i_rank), bitset_max.at(i_rank), indices_min_3d, indices_max_3d,
                     dynamic_cast<const SFBitsetAux3D&>(sfbitset_aux), &partition_interface_background.at(i_rank));
 #endif  // DEBUG_DISABLE_3D_FUNCTIONS
@@ -300,18 +301,19 @@ void MpiManager::IniSendNReceivePartitionedGrid(const DefAmrIndexUint dims,
                         code_min_current.at(i_rank), code_max_current.at(i_rank), iter_node.first,
                         dynamic_cast<const SFBitsetAux2D&>(sfbitset_aux), domain_min_m1_n_level,
                         domain_max_p1_n_level, corresponding_ones, partition_interface_background.at(i_rank));
-                    if (int_interface_status == 1) {  // lower interface
+                    if ((int_interface_status&1) == 1) {  // lower interface
                         if (num_ghost_lower == 0) {  // only one ghost layer at given level
                             map_ghost_lower_tmp_ranks.at(i_rank).insert({iter_node.first, flag_size0});
                         } else {
                             SearchForGhostLayerForMinNMax2D(iter_node.first, num_ghost_lower,
-                                code_min_current.at(i_rank), code_max_current.at(i_rank),
+                                code_min_current.at(i_rank), &MpiManager::CodeSmallerThanMin,
                                 flag_size0, dynamic_cast<const SFBitsetAux2D&>(sfbitset_aux),
                                 domain_min_m1_n_level, domain_max_p1_n_level, &map_ghost_lower_tmp_ranks.at(i_rank));
                         }
-                    } else if (int_interface_status == 2) {  // upper interface
+                    }
+                    if ((int_interface_status&2) == 2) {  // upper interface
                         SearchForGhostLayerForMinNMax2D(iter_node.first, num_ghost_upper,
-                            code_min_current.at(i_rank), code_max_current.at(i_rank),
+                            code_max_current.at(i_rank), &MpiManager::CodeLargerThanMax,
                             flag_size0, dynamic_cast<const SFBitsetAux2D&>(sfbitset_aux),
                             domain_min_m1_n_level, domain_max_p1_n_level, &map_ghost_upper_tmp_ranks.at(i_rank));
                     }
@@ -323,18 +325,15 @@ void MpiManager::IniSendNReceivePartitionedGrid(const DefAmrIndexUint dims,
                         code_min_current.at(i_rank), code_max_current.at(i_rank), iter_node.first,
                         dynamic_cast<const SFBitsetAux3D&>(sfbitset_aux), domain_min_m1_n_level,
                         domain_max_p1_n_level, corresponding_ones, partition_interface_background.at(i_rank));
-                    if (int_interface_status == 1) {  // lower interface
-                        if (num_ghost_lower == 0) {  // only one ghost layer at given level
-                            map_ghost_lower_tmp_ranks.at(i_rank).insert({iter_node.first, flag_size0});
-                        } else {
-                            SearchForGhostLayerForMinNMax3D(iter_node.first, num_ghost_lower,
-                                code_min_current.at(i_rank), code_max_current.at(i_rank),
-                                flag_size0, dynamic_cast<const SFBitsetAux3D&>(sfbitset_aux),
-                                domain_min_m1_n_level, domain_max_p1_n_level, &map_ghost_lower_tmp_ranks.at(i_rank));
-                        }
-                    } else if (int_interface_status == 2) {  // upper interface
+                    if ((int_interface_status&1) == 1) {  // lower interface
+                        SearchForGhostLayerForMinNMax3D(iter_node.first, num_ghost_lower,
+                            code_min_current.at(i_rank), &MpiManager::CodeSmallerThanMin,
+                            flag_size0, dynamic_cast<const SFBitsetAux3D&>(sfbitset_aux),
+                            domain_min_m1_n_level, domain_max_p1_n_level, &map_ghost_lower_tmp_ranks.at(i_rank));
+                    }
+                    if ((int_interface_status&2) == 2) {  // upper interface
                         SearchForGhostLayerForMinNMax3D(iter_node.first, num_ghost_upper,
-                            code_min_current.at(i_rank), code_max_current.at(i_rank),
+                            code_max_current.at(i_rank), &MpiManager::CodeLargerThanMax,
                             flag_size0, dynamic_cast<const SFBitsetAux3D&>(sfbitset_aux),
                             domain_min_m1_n_level, domain_max_p1_n_level, &map_ghost_upper_tmp_ranks.at(i_rank));
                     }
@@ -374,7 +373,7 @@ void MpiManager::IniSendNReceivePartitionedGrid(const DefAmrIndexUint dims,
                         }
                     }
                 }
-                // node on outmost coarse to fine refinement interface
+                // node on outmost fine to coarse refinement interface
                 if (iter_node.second & flag_fine2coarse_outmost) {
                     if (outmost_for_all_ranks.find(iter_node.first) == outmost_for_all_ranks.end()) {
                         outmost_for_all_ranks.insert({iter_node.first, {i_rank}});
@@ -513,14 +512,13 @@ void MpiManager::IniSendNReceivePartitionedGrid(const DefAmrIndexUint dims,
                 reqs_send.resize(num_chunks);
                 MPI_Send(&num_chunks, 1, MPI_INT, i_rank, i_level, MPI_COMM_WORLD);
                 for (int i_chunk = 0; i_chunk < num_chunks; ++i_chunk) {
-                    buffer_size_send = SerializeNodeSFBitset(vec_nodes_ranks.at(i_rank).at(i_chunk),
-                    vec_ptr_buffer.at(i_chunk));
+                    vec_ptr_buffer.at(i_chunk) = SerializeNodeSFBitset(vec_nodes_ranks.at(i_rank).at(i_chunk),
+                        &buffer_size_send);
                     MPI_Send(&buffer_size_send, 1, MPI_INT, i_rank, i_chunk, MPI_COMM_WORLD);
                     MPI_Isend(vec_ptr_buffer.at(i_chunk).get(), buffer_size_send, MPI_BYTE, i_rank,
                     i_chunk, MPI_COMM_WORLD, &reqs_send[i_chunk]);
                 }
                 MPI_Waitall(num_chunks, reqs_send.data(), MPI_STATUS_IGNORE);
-
                 // nodes used on both refinement layers and outer mpi communication layers
                 map_ghost_n_refinement.clear();
                 for (const auto& iter_ghost : map_interface_near_coarse2fine.at(i_rank)) {
@@ -559,8 +557,8 @@ void MpiManager::IniSendNReceivePartitionedGrid(const DefAmrIndexUint dims,
                 reqs_send.resize(num_chunks);
                 MPI_Send(&num_chunks, 1, MPI_INT, i_rank, i_level, MPI_COMM_WORLD);
                 for (int i_chunk = 0; i_chunk < num_chunks; ++i_chunk) {
-                    buffer_size_send = SerializeNodeSFBitset(vec_ghost_nodes_ranks.at(i_rank).at(i_chunk),
-                    vec_ptr_buffer.at(i_chunk));
+                    vec_ptr_buffer.at(i_chunk) = SerializeNodeSFBitset(
+                        vec_ghost_nodes_ranks.at(i_rank).at(i_chunk), &buffer_size_send);
                     MPI_Send(&buffer_size_send, 1, MPI_INT, i_rank, i_chunk, MPI_COMM_WORLD);
                     MPI_Isend(vec_ptr_buffer.at(i_chunk).get(), buffer_size_send, MPI_BYTE, i_rank,
                     i_chunk, MPI_COMM_WORLD, &reqs_send[i_chunk]);
@@ -571,8 +569,8 @@ void MpiManager::IniSendNReceivePartitionedGrid(const DefAmrIndexUint dims,
             int num_chunks = 0;
             // receive grid nodes
             MPI_Recv(&num_chunks, 1, MPI_INT, 0, i_level, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+            int buffer_size_receive;
             for (int i_chunk = 0; i_chunk < num_chunks; ++i_chunk) {
-                int buffer_size_receive;
                 MPI_Recv(&buffer_size_receive, sizeof(int), MPI_INT, 0, i_chunk, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
                 std::unique_ptr<char[]> vec_ptr_buffer = std::make_unique<char[]>(buffer_size_receive);
                 MPI_Recv(vec_ptr_buffer.get(), buffer_size_receive, MPI_BYTE, 0,
@@ -606,7 +604,7 @@ void MpiManager::IniSendNReceivePartitionedGrid(const DefAmrIndexUint dims,
  * @param[in] max_level the maximum level of the grid.
  * @param[in] bitset_domain_min the minimum space filling code of the computational domain
  * @param[in] bitset_domain_max the maximum space filling code of the computational domain
- * @param[in] vec_cost computational cost of the 
+ * @param[in] vec_cost computational cost of the each node for all refinement levels.
  * @param[in] bitset_aux An interface for manipulating bitsets.
  * @param[in] vec_tracking_creator creator for tracking grid information.
  * @param[in] ini_sfbitset_one_lower_level_rank0 pointer to initial mesh generated on rank 0.
@@ -616,7 +614,7 @@ void MpiManager::IniSendNReceivePartitionedGrid(const DefAmrIndexUint dims,
  *             near coarse to fine refinement interface at one level lower on the current rank.
  * @param[out] ptr_vec_grid_info pointer to vector of grid information.
  */
-void MpiManager::SendNReceiveGridInfoAtGivenLevels(const DefAmrIndexUint flag_size0,
+void MpiManager::IniSendNReceiveGridInfoAtGivenLevels(const DefAmrIndexUint flag_size0,
     const DefAmrUint flag_fine2coarse_outmost, const DefAmrIndexUint dims, const DefAmrIndexUint max_level,
     const DefSFBitset bitset_domain_min, const DefSFBitset bitset_domain_max,
     const std::vector<DefAmrIndexLUint>& indices_min, const std::vector<DefAmrIndexLUint>& indices_max,
@@ -632,18 +630,18 @@ void MpiManager::SendNReceiveGridInfoAtGivenLevels(const DefAmrIndexUint flag_si
         DefSizet vec_size = vec_cost.size();
         if (ini_sfbitset_one_lower_level_rank0.size() != vec_size) {
             LogManager::LogError("size of the input vector (vec_cost) is different from the size of the input vector "
-             "(ptr_ini_sfbitset_one_lower_level_rank0) in MpiManager::SendNReceiveGridInfoAtGivenLevels in "
+             "(ptr_ini_sfbitset_one_lower_level_rank0) in MpiManager::IniSendNReceiveGridInfoAtGivenLevels in "
              + std::string(__FILE__) + " at line " + std::to_string(__LINE__));
         }
         if (dims == 2) {
 #ifndef  DEBUG_DISABLE_2D_FUNCTION
-            TraverseBackgroundForPartitionRank0(bitset_domain_min, bitset_domain_max,
+            IniTraverseBackgroundForPartitionRank0(bitset_domain_min, bitset_domain_max,
                 vec_cost, ini_sfbitset_one_lower_level_rank0,
                 dynamic_cast<const SFBitsetAux2D&>(sfbitset_aux), &bitset_min, &bitset_max);
 #endif  // DEBUG_DISABLE_2D_FUNCTION
         } else {
 #ifndef  DEBUG_DISABLE_3D_FUNCTION
-            TraverseBackgroundForPartitionRank0(bitset_domain_min, bitset_domain_max,
+            IniTraverseBackgroundForPartitionRank0(bitset_domain_min, bitset_domain_max,
                 vec_cost, ini_sfbitset_one_lower_level_rank0,
                 dynamic_cast<const SFBitsetAux3D&>(sfbitset_aux), &bitset_min, &bitset_max);
 
@@ -661,6 +659,7 @@ void MpiManager::SendNReceiveGridInfoAtGivenLevels(const DefAmrIndexUint flag_si
 
     ptr_sfbitset_bound_current->at(0) = bitset_min.at(rank_id_);
     ptr_sfbitset_bound_current->at(1) = bitset_max.at(rank_id_);
+
     // send and receive grid nodes and nodes on the second outmost coarse to fine refinement interface
     IniSendNReceivePartitionedGrid(dims, flag_size0, flag_fine2coarse_outmost,
         bitset_min, bitset_max, indices_min, indices_max,

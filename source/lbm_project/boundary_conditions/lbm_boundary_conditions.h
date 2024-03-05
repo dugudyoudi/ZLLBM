@@ -1,4 +1,4 @@
-//  Copyright (c) 2021 - 2023, Zhengliang Liu
+//  Copyright (c) 2021 - 2024, Zhengliang Liu
 //  All rights reserved
 
 /**
@@ -42,6 +42,7 @@ class GridInfoLbmInteface;
 */
 class BoundaryConditionLbmInterface {
  public:
+    ELbmBoundaryConditionScheme boundary_scheme_ = ELbmBoundaryConditionScheme::kUndefined;
     void GetBoundaryNInverseIndices(const ELbmBoundaryType boundary_type,
         const SolverLbmInterface& lbm_solver,
         std::vector<DefAmrIndexUint>* const ptr_indices,

@@ -1,4 +1,4 @@
-//  Copyright (c) 2021 - 2023, Zhengliang Liu
+//  Copyright (c) 2021 - 2024, Zhengliang Liu
 //  All rights reserved
 
 /**
@@ -27,13 +27,8 @@ class CriterionManager {
     DefAmrIndexUint numb_of_geometry_ = 0;
     std::vector<std::shared_ptr<GeometryInfoInterface>> vec_ptr_geometries_;
 
-    std::unique_ptr<DefaultGeoManager> ptr_default_geo_manager_;
-
-    void InitialAllGeometrySerial(const DefAmrIndexUint dims, std::vector<DefReal> vec_real_offset);
-
-    CriterionManager() {
-        ptr_default_geo_manager_ = std::make_unique<DefaultGeoManager>();
-    }
+    void InitialAllGeometrySerial(const DefAmrIndexUint dims,
+        const DefReal reference_dx, std::vector<DefReal> vec_real_offset);
 };
 }  // end namespace amrproject
 }  // end namespace rootproject

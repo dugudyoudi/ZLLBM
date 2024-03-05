@@ -1,4 +1,4 @@
-//  Copyright (c) 2021 - 2023, Zhengliang Liu
+//  Copyright (c) 2021 - 2024, Zhengliang Liu
 //  All rights reserved
 
 /**
@@ -109,9 +109,9 @@ class VtkWriterManager {
     //    HIDDENPOINT : 2, // the point is needed to maintain connectivity, but the data values should be ignored.
     //  };
 
-    void WritePvtu(FILE* const fp,
-        const std::vector<std::string> vec_vtu_file_name,
-        const OutputDataFormat& output_data_format);
+    void WritePvtu(FILE* const fp, const std::vector<std::string> vec_vtu_file_name,
+        const OutputDataFormat& output_data_format,
+        const std::vector<std::unique_ptr<OutputNodeVariableInfoInterface>>& output_variables);
 
     void WriteGridPieces(FILE* const fp, const bool bool_binary,
         const bool bool_overlap, const DefAmrUint overlap_flag,

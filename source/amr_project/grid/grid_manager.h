@@ -1,4 +1,4 @@
-//  Copyright (c) 2021 - 2023, Zhengliang Liu
+//  Copyright (c) 2021 - 2024, Zhengliang Liu
 //  All rights reserved
 
 /**
@@ -32,12 +32,6 @@ template<typename InterfaceInfo>
 concept InterfaceInfoHasType = requires(
     InterfaceInfo type_interface) {
     type_interface.node_type_;
-};
-/**
-* @brief enumerate time stepping schemes
-*/
-enum class ETimeSteppingScheme {
-    kMultiSteppingC2F = 1,
 };
 /**
 * @class TimeSteppingSchemeInterface
@@ -90,16 +84,11 @@ class GridManagerInterface{
 
     // grid status
     const DefAmrUint kNodeStatus0_ = 0;
-        const DefAmrUint kNodeStatusCoarse2Fine0_ = 0;  ///< flag indicating node on the outmost fine layer
-    const DefAmrUint kNodeStatusCoarse2FineM1_ = 0;
-    const DefAmrUint kNodeStatusFine2Coarse0_ = 0;  ///< flag indicating node on the outmost coarse layer
-    const DefAmrUint kNodeStatusFine2CoarseM1_ = 0;
-    const DefAmrUint kNodeStatusMpiPartitionOutside_ = 0;
-    // const DefAmrUint kNodeStatusCoarse2Fine0_ = 1 << 1;  ///< flag indicating node on the outmost fine layer
-    // const DefAmrUint kNodeStatusCoarse2FineM1_ = 1 << 2;
-    // const DefAmrUint kNodeStatusFine2Coarse0_ = 1 << 3;  ///< flag indicating node on the outmost coarse layer
-    // const DefAmrUint kNodeStatusFine2CoarseM1_ = 1 << 4;
-    // const DefAmrUint kNodeStatusMpiPartitionOutside_ = 1 << 5;
+    const DefAmrUint kNodeStatusCoarse2Fine0_ = 1 << 1;  ///< flag indicating node on the outmost fine layer
+    const DefAmrUint kNodeStatusCoarse2FineM1_ = 1 << 2;
+    const DefAmrUint kNodeStatusFine2Coarse0_ = 1 << 3;  ///< flag indicating node on the outmost coarse layer
+    const DefAmrUint kNodeStatusFine2CoarseM1_ = 1 << 4;
+    const DefAmrUint kNodeStatusMpiPartitionOutside_ = 1 << 5;
     const DefAmrIndexUint kFlagSize0_ = 0;  // flag initialize size as 0
 
     //  o     o     o     o  // coarse grid
@@ -141,10 +130,9 @@ class GridManagerInterface{
     virtual void SetDomainGridSize(const std::vector<DefReal>& domain_grid_size) = 0;
 
     // function to check nodes should be on domain boundaries
-    void (GridManagerInterface::*ptr_func_insert_domain_boundary_)(
-        const DefSFBitset& bitset_in,
-        GridInfoInterface* const ptr_grid_info) const = nullptr;
-    void InsertCubicDomainBoundary(const DefSFBitset& bitset_in,
+    void (GridManagerInterface::*ptr_func_insert_domain_boundary_)(const int flag_node,
+        const DefSFBitset& bitset_in, GridInfoInterface* const ptr_grid_info) const = nullptr;
+    void InsertCubicDomainBoundary(const int flag_node, const DefSFBitset& bitset_in,
         GridInfoInterface* const ptr_grid_info) const;
 
     // node related functions
@@ -158,11 +146,14 @@ class GridManagerInterface{
         const std::array<DefReal, 3>& coordinate_max,
         const std::array<DefReal, 3>& domain_min,
         const std::array<DefReal, 3>& domain_max) const;
-    void InstantiateGridNode(const DefSFBitset& bitset_in,
+    bool InstantiateGridNode(const DefSFBitset& bitset_in,
         GridInfoInterface* const ptr_grid_info);
-    virtual DefAmrIndexUint CheckNodeOnDomainBoundary(const DefSFBitset& sfbitset_in,
+    virtual int CheckNodeOnDomainBoundary(const DefSFBitset& sfbitset_in,
         const std::vector<DefSFBitset>& sfbitset_min,
         const std::vector<DefSFBitset>& sfbitset_max) const = 0;
+    virtual bool CheckNodeNotOutsideDomainBoundary(const DefSFBitset& sfbitset_in,
+        const std::vector<DefSFCodeToUint>& sfbitset_min,
+        const std::vector<DefSFCodeToUint>& sfbitset_max) const = 0;
     virtual bool NodesBelongToOneCell(const DefSFBitset bitset_in,
         const DefMap<DefAmrIndexUint>& node_exist,
         std::vector<DefSFBitset>* const ptr_bitsets) const = 0;
@@ -200,14 +191,8 @@ class GridManagerInterface{
         const std::vector<DefMap<DefAmrIndexUint>>& sfbitset_one_lower_level,
         const std::vector<DefMap<DefAmrIndexUint>>& sfbitset_ghost_one_lower_level,
         const DefMap<DefAmrIndexUint>& sfbitset_partition_interface,
-        std::vector<DefMap<std::set<int>>>* const ptr_mpi_inner_layer,
+        std::vector<std::map<int, DefMap<DefAmrIndexUint>>>* const ptr_mpi_inner_layer,
         std::vector<DefMap<DefAmrUint>>* const ptr_mpi_outer_layer);
-
-    // time stepping related
-    ETimeSteppingScheme k0TimeSteppingType_ = ETimeSteppingScheme::kMultiSteppingC2F;
-    std::unique_ptr<TimeSteppingSchemeInterface> ptr_time_stepping_scheme_;
-    void InstantiateTimeSteppingScheme();
-    void TimeMarching(const DefAmrIndexLUint time_step);
 
     virtual ~GridManagerInterface() {}
     GridManagerInterface() {
@@ -302,7 +287,7 @@ class GridManagerInterface{
         DefMap<DefAmrUint>* const ptr_outmost_layer,
         std::vector<DefMap<DefAmrUint>>* const ptr_vector_boundary_min,
         std::vector<DefMap<DefAmrUint>>* const ptr_vector_boundary_max) const = 0;
-    virtual void FindInterfaceBetweenGrid(
+    virtual void FindOutmostLayerForFineGrid(
         const DefAmrIndexUint i_level, const DefMap<DefAmrUint>& map_outmost_layer,
         DefMap<DefAmrIndexUint>* const map_exist,
         DefMap<DefAmrUint>* const ptr_interface_outmost,
@@ -365,9 +350,12 @@ class GridManager2D :public  GridManagerInterface, public SFBitsetAux2D {
     void SetDomainGridSize(const std::vector<DefReal>& domain_grid_size) override;
 
     // node related function
-    DefAmrIndexUint CheckNodeOnDomainBoundary(const DefSFBitset& sfbitset_in,
+    int CheckNodeOnDomainBoundary(const DefSFBitset& sfbitset_in,
         const std::vector<DefSFBitset>& sfbitset_min,
         const std::vector<DefSFBitset>& sfbitset_max) const override;
+    bool CheckNodeNotOutsideDomainBoundary(const DefSFBitset& sfbitset_in,
+        const std::vector<DefSFCodeToUint>& sfbitset_min,
+        const std::vector<DefSFCodeToUint>& sfbitset_max) const override;
     bool NodesBelongToOneCell(const DefSFBitset bitset_in,
         const DefMap<DefAmrIndexUint>& node_exist,
         std::vector<DefSFBitset>* const ptr_bitsets) const override;
@@ -437,7 +425,7 @@ class GridManager2D :public  GridManagerInterface, public SFBitsetAux2D {
         std::vector<DefMap<DefAmrUint>>* const ptr_vector_boundary_min,
         std::vector<DefMap<DefAmrUint>>* const ptr_vector_boundary_max)
         const override;
-    void FindInterfaceBetweenGrid(
+    void FindOutmostLayerForFineGrid(
         const DefAmrIndexUint i_level, const DefMap<DefAmrUint>& map_outmost_layer,
         DefMap<DefAmrIndexUint>* const map_exist,
         DefMap<DefAmrUint>* const ptr_interface_outmost,
@@ -508,9 +496,12 @@ class GridManager3D :public  GridManagerInterface, public SFBitsetAux3D {
     void SetDomainGridSize(const std::vector<DefReal>& domain_grid_size) override;
 
     // node related function
-    DefAmrIndexUint CheckNodeOnDomainBoundary(const DefSFBitset& sfbitset_in,
+    int CheckNodeOnDomainBoundary(const DefSFBitset& sfbitset_in,
         const std::vector<DefSFBitset>& sfbitset_min,
         const std::vector<DefSFBitset>& sfbitset_max) const override;
+    bool CheckNodeNotOutsideDomainBoundary(const DefSFBitset& sfbitset_in,
+        const std::vector<DefSFCodeToUint>& sfbitset_min,
+        const std::vector<DefSFCodeToUint>& sfbitset_max) const override;
     bool NodesBelongToOneCell(const DefSFBitset bitset_in,
         const DefMap<DefAmrIndexUint>& node_exist,
         std::vector<DefSFBitset>* const ptr_bitsets) const override;
@@ -581,7 +572,7 @@ class GridManager3D :public  GridManagerInterface, public SFBitsetAux3D {
         std::vector<DefMap<DefAmrUint>>* const ptr_vector_boundary_min,
         std::vector<DefMap<DefAmrUint>>* const ptr_vector_boundary_max)
         const override;
-    void FindInterfaceBetweenGrid(
+    void FindOutmostLayerForFineGrid(
         const DefAmrIndexUint i_level, const DefMap<DefAmrUint>& map_outmost_layer,
         DefMap<DefAmrIndexUint>* const map_exist,
         DefMap<DefAmrUint>* const ptr_interface_outmost,

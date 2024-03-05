@@ -1,4 +1,4 @@
-//  Copyright (c) 2021 - 2023, Zhengliang Liu
+//  Copyright (c) 2021 - 2024, Zhengliang Liu
 //  All rights reserved
 
 /**
@@ -15,13 +15,13 @@ namespace amrproject {
 #ifndef  DEBUG_DISABLE_2D_FUNCTIONS
 /**
  * @brief function to serializes a vector of GeometryCoordinate2D objects into a char buffer.
- * @param vec_points vector of GeometryCoordinate2D objects to be serialized.
- * @param buffer unique pointer to a char array to store the serialized data.
- * @return size of the buffer in bytes.
+ * @param[in] vec_points vector of GeometryCoordinate2D objects to be serialized.
+ * @param[out] ptr_buffer_size pointer to size of the buffer in bytes.
+ * @return unique pointer to a char array to store the serialized data.
 */
-int MpiManager::SerializeCoordiOrigin(const std::vector<GeometryCoordinate2D>& vec_points,
-    std::unique_ptr<char[]>& buffer) const {
-    int num_points;
+std::unique_ptr<char[]> MpiManager::SerializeCoordiOrigin(
+    const std::vector<GeometryCoordinate2D>& vec_points, int* const ptr_buffer_size) const {
+    int num_points = 0;
     int real_size = sizeof(DefReal);
     if  (vec_points.size() * real_size* 2 > 0x7FFFFFFF) {
         LogManager::LogError("size of the buffer is greater than the maximum of int"
@@ -30,9 +30,10 @@ int MpiManager::SerializeCoordiOrigin(const std::vector<GeometryCoordinate2D>& v
     } else {
         num_points = static_cast<int>(vec_points.size());
     }
-    int buffer_size = num_points * real_size * 2 + sizeof(int);
+    int& buffer_size = *ptr_buffer_size;
+    buffer_size = num_points * real_size * 2 + sizeof(int);
     // allocation buffer to store the serialized data
-    buffer = std::make_unique<char[]>(buffer_size);
+    std::unique_ptr<char[]> buffer = std::make_unique<char[]>(buffer_size);
     char* ptr_buffer = buffer.get();
     int position = 0;
     std::memcpy(ptr_buffer + position, &num_points, sizeof(int));
@@ -43,7 +44,7 @@ int MpiManager::SerializeCoordiOrigin(const std::vector<GeometryCoordinate2D>& v
         std::memcpy(ptr_buffer + position, &iter.coordinate.at(kYIndex), real_size);
         position += real_size;
     }
-    return buffer_size;
+    return buffer;
 }
 /**
  * @brief function to deserializes data from a buffer into a vector of 2D geometry coordinates.
@@ -51,7 +52,7 @@ int MpiManager::SerializeCoordiOrigin(const std::vector<GeometryCoordinate2D>& v
  * @param[out] vec_points pointer to a vector store 2D geometry coordinates.
  */
 void MpiManager::DeserializeCoordiOrigin(const std::unique_ptr<char[]>& buffer,
-        std::vector<GeometryCoordinate2D>* const vec_points) const {
+    std::vector<GeometryCoordinate2D>* const vec_points) const {
     char* ptr_buffer = buffer.get();
     int real_size = sizeof(DefReal);
     int num_points;
@@ -135,8 +136,8 @@ void MpiManager::IniSendNReceivePartitionedGeoCoordi(const std::array<DefReal, 2
                 std::vector<std::unique_ptr<char[]>> vec_ptr_buffer(num_chunks);
                 std::vector<MPI_Request> reqs_send(num_chunks);
                 for (int i_chunk = 0; i_chunk < num_chunks; ++i_chunk) {
-                    buffer_size_send = SerializeCoordiOrigin(
-                           vec_points_ranks.at(iter_rank).at(i_chunk), vec_ptr_buffer.at(i_chunk));
+                    vec_ptr_buffer.at(i_chunk) = SerializeCoordiOrigin(
+                        vec_points_ranks.at(iter_rank).at(i_chunk), &buffer_size_send);
                     MPI_Send(&buffer_size_send, 1, MPI_INT, iter_rank, i_chunk, MPI_COMM_WORLD);
                     MPI_Isend(vec_ptr_buffer.at(i_chunk).get(), buffer_size_send, MPI_BYTE, iter_rank,
                     i_chunk, MPI_COMM_WORLD, &reqs_send[i_chunk]);
@@ -164,13 +165,13 @@ void MpiManager::IniSendNReceivePartitionedGeoCoordi(const std::array<DefReal, 2
 #ifndef  DEBUG_DISABLE_3D_FUNCTION
 /**
  * @brief function to serializes a vector of GeometryCoordinate2D objects into a char buffer.
- * @param vec_points vector of GeometryCoordinate2D objects to be serialized.
- * @param buffer unique pointer to a char array to store the serialized data.
- * @return size of the buffer in bytes.
+ * @param vec_points[in] vector of GeometryCoordinate2D objects to be serialized.
+ * @param[out] ptr_buffer_size pointer to size of the buffer in bytes.
+ * @return unique pointer to a char array to store the serialized data.
 */
-int MpiManager::SerializeCoordiOrigin(const std::vector<GeometryCoordinate3D>& vec_points,
-    std::unique_ptr<char[]>& buffer) const {
-    int num_points;
+std::unique_ptr<char[]> MpiManager::SerializeCoordiOrigin(
+    const std::vector<GeometryCoordinate3D>& vec_points, int* const ptr_buffer_size) const {
+    int num_points = 0;
     int real_size = sizeof(DefReal);
     if  (vec_points.size() * real_size* 2 > 0x7FFFFFFF) {
         LogManager::LogError("size of the buffer is greater than the maximum of int"
@@ -179,9 +180,10 @@ int MpiManager::SerializeCoordiOrigin(const std::vector<GeometryCoordinate3D>& v
     } else {
         num_points = static_cast<int>(vec_points.size());
     }
-    int buffer_size = num_points * real_size * 3 + sizeof(int);
+    int& buffer_size = *ptr_buffer_size;
+    buffer_size = num_points * real_size * 3 + sizeof(int);
     // allocation buffer to store the serialized data
-    buffer = std::make_unique<char[]>(buffer_size);
+    std::unique_ptr<char[]> buffer = std::make_unique<char[]>(buffer_size);
     char* ptr_buffer = buffer.get();
     int position = 0;
     std::memcpy(ptr_buffer + position, &num_points, sizeof(int));
@@ -194,7 +196,7 @@ int MpiManager::SerializeCoordiOrigin(const std::vector<GeometryCoordinate3D>& v
         std::memcpy(ptr_buffer + position, &iter.coordinate.at(kZIndex), real_size);
         position += real_size;
     }
-    return buffer_size;
+    return buffer;
 }
 /**
  * @brief function to deserializes data from a buffer into a vector of 2D geometry coordinates.
@@ -290,8 +292,8 @@ void MpiManager::IniSendNReceivePartitionedGeoCoordi(const std::array<DefReal, 3
                 std::vector<std::unique_ptr<char[]>> vec_ptr_buffer(num_chunks);
                 std::vector<MPI_Request> reqs_send(num_chunks);
                 for (int i_chunk = 0; i_chunk < num_chunks; ++i_chunk) {
-                    buffer_size_send = SerializeCoordiOrigin(
-                           vec_points_ranks.at(iter_rank).at(i_chunk), vec_ptr_buffer.at(i_chunk));
+                    vec_ptr_buffer.at(i_chunk) = SerializeCoordiOrigin(
+                        vec_points_ranks.at(iter_rank).at(i_chunk), &buffer_size_send);
                     MPI_Send(&buffer_size_send, 1, MPI_INT, iter_rank, i_chunk, MPI_COMM_WORLD);
                     MPI_Isend(vec_ptr_buffer.at(i_chunk).get(), buffer_size_send, MPI_BYTE, iter_rank,
                     i_chunk, MPI_COMM_WORLD, &reqs_send[i_chunk]);

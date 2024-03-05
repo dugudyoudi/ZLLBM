@@ -1,4 +1,4 @@
-//  Copyright (c) 2021 - 2023, Zhengliang Liu
+//  Copyright (c) 2021 - 2024, Zhengliang Liu
 //  All rights reserved
 
 /**
@@ -43,24 +43,15 @@ void GeometryInfoConnection2D::SetIndex() {
 }
 /**
 * @brief   function to initialize status of geometries
-* @return  0 successful, 1 geometry is undefined
-* @note
+* @param[in] dx reference spatial step
+* @return  0 successful
 */
-int GeometryInfoConnection2D::InitialGeometry(
-    const DefReal dx,
-    const DefaultGeoShapeType shape_type,
-    const DefaultGeoManager& default_geo_manager) {
+int GeometryInfoConnection2D::InitialGeometry(const DefReal dx) {
     int return_status = 0;
     this->SetIndex();
     this->SetupConnectionParameters(this->geometry_cell_type_);
-    this->k0DefaultGeoShapeType_ = shape_type;
-    return_status = this->GeometryInfo2DInterface::InitialGeometry(
-        dx, shape_type, default_geo_manager);
+    return_status = this->GeometryInfo2DInterface::InitialGeometry(dx);
     return return_status;
-}
-int GeometryInfoConnection2D::UpdateGeometry(
-    const DefaultGeoManager& default_geo_manager) {
-    return 0;
 }
 /**
 * @brief   function to copy coordinates from vector of original coordinates
@@ -105,12 +96,9 @@ void GeometryInfoConnection2D::InitialCoordinateGivenLevel(
             ptr_coordi_max->at(kYIndex) =
                 iter_vertex.coordinate.at(kYIndex);
         }
-        vertex_temp.coordinates.at(kXIndex) =
-            iter_vertex.coordinate.at(kXIndex);
-        vertex_temp.coordinates.at(kYIndex) =
-            iter_vertex.coordinate.at(kYIndex);
-        vertex_given_level_.at(0).vec_vertex_coordinate
-            .push_back(vertex_temp);
+        vertex_temp.coordinates.at(kXIndex) = iter_vertex.coordinate.at(kXIndex);
+        vertex_temp.coordinates.at(kYIndex) = iter_vertex.coordinate.at(kYIndex);
+        vertex_given_level_.at(0).vec_vertex_coordinate.push_back(vertex_temp);
         connection_vertex_given_level_.at(0).insert({ 0, i_vertex });
         vertex_given_level_.at(0).vec_vertex_coordinate.at(i_vertex)
             .map_linked_vertices_level.insert({});

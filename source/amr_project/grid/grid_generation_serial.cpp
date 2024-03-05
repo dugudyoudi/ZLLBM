@@ -1,4 +1,4 @@
-//  Copyright (c) 2021 - 2023, Zhengliang Liu
+//  Copyright (c) 2021 - 2024, Zhengliang Liu
 //  All rights reserved
 /**
 * @file grid_generation_serial.cpp
@@ -28,7 +28,6 @@ void GridManagerInterface::GenerateGridFromHighToLowLevelSerial(
             + "before calling the function: GenerateGridFromHighToLowLevelSerial"
             + " in "+ std::string(__FILE__) + " at line " + std::to_string(__LINE__));
     }
-
     // generate tracking and ghost nodes based on geometries
     DefAmrIndexUint i_geo = 0;
     for (auto& iter : vec_geo_info) {
@@ -145,11 +144,11 @@ void GridManagerInterface::GenerateGridFromHighToLowLevelSerial(
                 == innermost_layer_current.end()) {
                 innermost_layer_current.insert({ iter_inner.first, {} });
                 ExtendGivenNumbOfLayer(i_level,
-                 map_num_extend_inner_layer.at(iter_inner.first).neg,
-                 map_num_extend_inner_layer.at(iter_inner.first).pos,
-                 iter_inner.second,
-                 &ptr_sfbitset_one_lower_level->at(i_level),
-                 &innermost_layer_current.at(iter_inner.first));
+                    map_num_extend_inner_layer.at(iter_inner.first).neg,
+                    map_num_extend_inner_layer.at(iter_inner.first).pos,
+                    iter_inner.second,
+                    &ptr_sfbitset_one_lower_level->at(i_level),
+                    &innermost_layer_current.at(iter_inner.first));
             } else {
                 innermost_layer_current.clear();
             }
@@ -220,7 +219,7 @@ void GridManagerInterface::GenerateGridFromHighToLowLevelSerial(
                 vec_ptr_grid_info_.at(level_low)->k0NumCoarse2FineLayer_);
             ptr_interface_info->vec_outer_coarse2fine_.resize(
                 vec_ptr_grid_info_.at(level_low)->k0NumCoarse2FineLayer_);
-            FindInterfaceBetweenGrid(i_level, iter_inner.second,
+            FindOutmostLayerForFineGrid(i_level, iter_inner.second,
                 &ptr_sfbitset_one_lower_level->at(i_level),
                 &ptr_interface_info->vec_inner_coarse2fine_.back() - 1,
                 &ptr_sfbitset_one_lower_level->at(level_low),
@@ -240,7 +239,7 @@ void GridManagerInterface::GenerateGridFromHighToLowLevelSerial(
                 vec_ptr_grid_info_.at(level_low)->k0NumCoarse2FineLayer_);
             ptr_interface_info->vec_outer_coarse2fine_.resize(
                 vec_ptr_grid_info_.at(level_low)->k0NumCoarse2FineLayer_);
-            FindInterfaceBetweenGrid(i_level, iter_outer.second,
+            FindOutmostLayerForFineGrid(i_level, iter_outer.second,
                 &ptr_sfbitset_one_lower_level->at(i_level),
                 &ptr_interface_info->vec_outer_coarse2fine_.back() - 1,
                 &ptr_sfbitset_one_lower_level->at(level_low),

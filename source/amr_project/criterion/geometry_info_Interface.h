@@ -1,4 +1,4 @@
-//  Copyright (c) 2021 - 2023, Zhengliang Liu
+//  Copyright (c) 2021 - 2024, Zhengliang Liu
 //  All rights reserved
 
 /**
@@ -18,12 +18,14 @@
 #include "../defs_libs.h"
 #include "criterion/criterion_numerates.h"
 #include "criterion/geometry_coordi.h"
+#include "criterion/geometry_default_shape.h"
 namespace rootproject {
 namespace amrproject {
 class TrackingGridInfoCreatorInterface;
 class GhostGridInfoCreatorInterface;
 class SFBitsetAuxInterface;
 class GridInfoInterface;
+class GeoShapeInterface;
 /**
 * @struct GeometryVertexInfo
 * @brief struct used to store information of a geometry vertex
@@ -32,7 +34,6 @@ struct GeometryVertexInfo {
     std::vector<DefInt> vec_int{};
     std::vector<DefReal> vec_real{};
 };
-class DefaultGeoManager;
 /**
 * @class GeometryInfoInterface
 * @brief class used to store information of a geometry
@@ -46,6 +47,7 @@ class GeometryInfoInterface {
     DefAmrIndexUint i_geo_ = ~0;
     EGeometryCellType geometry_cell_type_ = EGeometryCellType::kUndefined;
     EGridExtendType grid_extend_type_ = EGridExtendType::kSameInAllDirections;
+    EGeometryStatus geometry_status_ = EGeometryStatus::kVirtual;
     std::string node_type_;
 
     // information stored on each vertex
@@ -56,8 +58,6 @@ class GeometryInfoInterface {
     TrackingGridInfoCreatorInterface* ptr_tracking_grid_info_creator_ = nullptr;
     GhostGridInfoCreatorInterface* ptr_ghost_grid_info_creator_ = nullptr;
 
-    // type of default geometry shape
-    DefaultGeoShapeType k0DefaultGeoShapeType_ = DefaultGeoShapeType::kUndefined;
 
     // number of extended layer based on geometry
     std::vector<DefAmrIndexUint> k0XIntExtendPositive_, k0XIntExtendNegative_,
@@ -70,10 +70,10 @@ class GeometryInfoInterface {
     ///< number of extened layers inside the geometry
 
     virtual void SetIndex() = 0;
-    virtual bool SetCenter(const std::vector<DefReal>& vec_offset) = 0;
-    virtual int InitialGeometry(const DefReal dx,
-     const DefaultGeoShapeType shape_type, const DefaultGeoManager& default_geo_manager) = 0;
-    virtual int UpdateGeometry(const DefaultGeoManager& default_geo_manager) = 0;
+    virtual bool SetOffset(const std::vector<DefReal>& vec_offset) = 0;
+    std::unique_ptr<GeoShapeInterface> ptr_geo_shape_;
+    virtual int InitialGeometry(const DefReal dx);
+    virtual int UpdateGeometry(const DefReal sum_t);
     virtual void FindTrackingNodeBasedOnGeo(
      const SFBitsetAuxInterface& sfbitset_aux, GridInfoInterface* const ptr_grid_info) = 0;
     virtual std::vector<DefReal> GetFloodFillOriginArrAsVec() const = 0;
@@ -105,7 +105,7 @@ class GeometryInfo2DInterface: virtual public GeometryInfoInterface {
     std::array<DefReal, 2> k0RealMin_{};
     std::vector<GeometryCoordinate2D> coordinate_origin_{};
 
-    bool SetCenter(const std::vector<DefReal>& vec_offset) final {
+    bool SetOffset(const std::vector<DefReal>& vec_offset) final {
         if (vec_offset.size() != 2) {
             return false;
         }
@@ -113,9 +113,6 @@ class GeometryInfo2DInterface: virtual public GeometryInfoInterface {
         k0RealMin_[kYIndex] = vec_offset.at(kYIndex);
         return true;
     }
-    int InitialGeometry(const DefReal dx, const DefaultGeoShapeType shape_type,
-     const DefaultGeoManager& default_geo_manager) override;
-    int UpdateGeometry(const DefaultGeoManager& default_geo_manager) override;
 
     virtual ~GeometryInfo2DInterface() {}
 };
@@ -133,7 +130,7 @@ class GeometryInfo3DInterface: virtual public GeometryInfoInterface {
     std::array<DefReal, 3> k0RealMin_{};
     std::vector<GeometryCoordinate3D> coordinate_origin_{};
 
-    bool SetCenter(const std::vector<DefReal>& vec_offset) final {
+    bool SetOffset(const std::vector<DefReal>& vec_offset) final {
         if (vec_offset.size() != 3) {
             return false;
         }
@@ -142,27 +139,10 @@ class GeometryInfo3DInterface: virtual public GeometryInfoInterface {
         k0RealMin_[kZIndex] = vec_offset.at(kZIndex);
         return true;
     }
-    int InitialGeometry(const DefReal dx, const DefaultGeoShapeType shape_type,
-     const DefaultGeoManager& default_geo_manager) override;
-    int UpdateGeometry(const DefaultGeoManager& default_geo_manager) override;
 
     virtual ~GeometryInfo3DInterface() {}
 };
 #endif  // DEBUG_DISABLE_3D_FUNCTIONS
-class DefaultGeoManager {
- public:
-#ifndef  DEBUG_DISABLE_2D_FUNCTIONS
-    void circle_initial(GeometryInfo2DInterface* const ptr_geo) const;
-    void circle_update(DefReal sum_t,
-        GeometryInfo2DInterface* const ptr_geo) const;
-#endif  // DEBUG_DISABLE_2D_FUNCTIONS
-#ifndef  DEBUG_DISABLE_3D_FUNCTIONS
-    void cube_initial(const DefReal dx,
-        GeometryInfo3DInterface* const ptr_geo) const;
-    void cube_update(const DefReal sum_t,
-        GeometryInfo3DInterface* const ptr_geo) const;
-#endif  // DEBUG_DISABLE_3D_FUNCTIONS
-};
 }  // end namespace amrproject
 }  // end namespace rootproject
 #endif  // ROOTPROJECT_AMR_PROJECT_CRITERION_GEOMETRY_INFO_INTERFACE_H_

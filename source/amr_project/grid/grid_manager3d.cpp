@@ -1,4 +1,4 @@
-//  Copyright (c) 2021 - 2023, Zhengliang Liu
+//  Copyright (c) 2021 - 2024, Zhengliang Liu
 //  All rights reserved
 
 /**
@@ -297,37 +297,64 @@ void GridManager3D::ResetExtendLayerBasedOnDomainSize(
 * @param[in]  sfbitset_in space filling code of a given node.
 * @param[in] sfbitset_min bitset corresponding to the minimum coordinate in each direction.
 * @param[in] sfbitset_max bitset corresponding to the maximum coordinate in each direction.
-* @return flag indicate node on which domain boundaries, 1: x min, 2: x max, 4: y min, 8: y max, 16: z min, 32: z max
+* @return flag indicate node on which domain boundaries, 1: x min, 8: x max, 2: y min, 16: y max, 4: z min, 32: z max
 */
-DefAmrIndexUint GridManager3D::CheckNodeOnDomainBoundary(const DefSFBitset& sfbitset_in,
+int GridManager3D::CheckNodeOnDomainBoundary(const DefSFBitset& sfbitset_in,
     const std::vector<DefSFBitset>& sfbitset_min,
     const std::vector<DefSFBitset>& sfbitset_max) const {
-    DefAmrIndexUint node_status = 0;
+    int node_status = 0;
     if ((sfbitset_in & k0SFBitsetTakeXRef_[kRefCurrent_])
         == sfbitset_min[kXIndex]) {
         node_status |= 1;
     }
     if ((sfbitset_in & k0SFBitsetTakeXRef_[kRefCurrent_])
         == sfbitset_max[kXIndex]) {
-        node_status |= 2;  // 1<< 1
+        node_status |= 8;
     }
     if ((sfbitset_in & k0SFBitsetTakeYRef_[kRefCurrent_])
         == sfbitset_min[kYIndex]) {
-        node_status |= 4;  // 1<< 2
+        node_status |= 2;
     }
     if ((sfbitset_in & k0SFBitsetTakeYRef_[kRefCurrent_])
         == sfbitset_max[kYIndex]) {
-        node_status |= 8;  // 1<< 3
+        node_status |= 16;
     }
     if ((sfbitset_in & k0SFBitsetTakeZRef_[kRefCurrent_])
         == sfbitset_min[kZIndex]) {
-        node_status |= 16;  // 1<< 4
+        node_status |= 4;
     }
     if ((sfbitset_in & k0SFBitsetTakeZRef_[kRefCurrent_])
         == sfbitset_max[kZIndex]) {
-        node_status |= 32;  // 1<< 5
+        node_status |= 32;
     }
     return node_status;
+}
+/**
+* @brief   function to check if node is not outside a cubic domain boundary.
+* @param[in] sfbitset_in space filling code of a given node.
+* @param[in] sfbitset_min bitset corresponding to the minimum coordinate in each direction.
+* @param[in] sfbitset_max bitset corresponding to the maximum coordinate in each direction.
+* @return  if false, node is outside a cubic domain boundary
+*/
+bool GridManager3D::CheckNodeNotOutsideDomainBoundary(const DefSFBitset& sfbitset_in,
+    const std::vector<DefSFCodeToUint>& sfbitset_min,
+    const std::vector<DefSFCodeToUint>& sfbitset_max) const {
+    if ((sfbitset_in&k0SFBitsetTakeXRef_[kRefCurrent_]).to_ullong() < sfbitset_min.at(kXIndex)) {
+        return false;
+    } else if ((sfbitset_in&k0SFBitsetTakeXRef_[kRefCurrent_]).to_ullong() > sfbitset_max.at(kXIndex)) {
+        return false;
+    }
+    if ((sfbitset_in&k0SFBitsetTakeYRef_[kRefCurrent_]).to_ullong() < sfbitset_min.at(kYIndex)) {
+        return false;
+    } else if ((sfbitset_in&k0SFBitsetTakeYRef_[kRefCurrent_]).to_ullong() > sfbitset_max.at(kYIndex)) {
+        return false;
+    }
+     if ((sfbitset_in&k0SFBitsetTakeZRef_[kRefCurrent_]).to_ullong() < sfbitset_min.at(kZIndex)) {
+        return false;
+    } else if ((sfbitset_in&k0SFBitsetTakeZRef_[kRefCurrent_]).to_ullong() > sfbitset_max.at(kZIndex)) {
+        return false;
+    }
+    return true;
 }
 /**
 * @brief   function to find space filling code of nodes on a cell (3D)

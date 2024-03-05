@@ -1,4 +1,4 @@
-//  Copyright (c) 2021 - 2023, Zhengliang Liu
+//  Copyright (c) 2021 - 2024, Zhengliang Liu
 //  All rights reserved
 
 /**
@@ -35,11 +35,11 @@ LbmCollisionOptInterface::LbmCollisionOptInterface(const SolverLbmInterface& lbm
  * @brief function to calculate relaxation time ratio between coarse and fine grid.
  */
 void LbmCollisionOptInterface::CalRelaxationTimeRatio() {
-    DefReal relax_tau_f = viscosity_lbm_ * SolverLbmInterface::kCsSqReciprocal / dt_lbm_ * 2. + 0.5;
-    DefReal relax_tau_c = viscosity_lbm_ * SolverLbmInterface::kCsSqReciprocal / dt_lbm_ + 0.5;
+    DefReal relax_tau_f = viscosity_lbm_ * SolverLbmInterface::kCs_Sq_Reciprocal_ / dt_lbm_ * 2. + 0.5;
+    DefReal relax_tau_c = viscosity_lbm_ * SolverLbmInterface::kCs_Sq_Reciprocal_ / dt_lbm_ + 0.5;
     tau_ratio_c2f_ = 0.5 * (relax_tau_f - 1)/ (relax_tau_c - 1);
-    relax_tau_f = viscosity_lbm_ * SolverLbmInterface::kCsSqReciprocal / dt_lbm_ + 0.5;
-    relax_tau_c = viscosity_lbm_ * SolverLbmInterface::kCsSqReciprocal / dt_lbm_ / 2 + 0.5;
+    relax_tau_f = viscosity_lbm_ * SolverLbmInterface::kCs_Sq_Reciprocal_ / dt_lbm_ + 0.5;
+    relax_tau_c = viscosity_lbm_ * SolverLbmInterface::kCs_Sq_Reciprocal_ / dt_lbm_ / 2 + 0.5;
     tau_ratio_f2c_ = 2. * (relax_tau_c - 1.)/ (relax_tau_f - 1.);
 }
 /**
@@ -54,12 +54,11 @@ void LbmCollisionOptInterface::Coarse2Fine(const DefReal dt_lbm, const std::vect
     ptr_node_fine->rho_ = node_coarse.rho_;
     ptr_node_fine->velocity_ = node_coarse.velocity_;
     DefSizet num_q = feq.size();
-    bool bool_forces_coarse = (node_coarse.force_.size() != 0);
-    //  DefReal relax_tau_f = k0LbmViscosity_ * kCsSqReciprocal / dt_lbm * 2. + 0.5;
-    //  DefReal relax_tau_c = k0LbmViscosity_ * kCsSqReciprocal / dt_lbm + 0.5;
+    ptr_node_fine->f_collide_.resize(num_q);
+    //  DefReal relax_tau_f = viscosity_lbm_ * SolverLbmInterface::kCs_Sq_Reciprocal_ / dt_lbm * 2. + 0.5;
+    //  DefReal relax_tau_c = viscosity_lbm_ * SolverLbmInterface::kCs_Sq_Reciprocal_ / dt_lbm + 0.5;
     //  DefReal tau_ratio = 0.5 * (relax_tau_f - 1)/ (relax_tau_c - 1);
-    //  DefReal relax_tau_c = k0LbmViscosity_ * kCsSqReciprocal / dt_lbm;
-    //  DefReal tau_ratio = 0.5 * (relax_tau_c * 2 - 0.5)/ (relax_tau_c - 0.5);
+
     for (int iq = 0; iq < num_q; ++iq) {
         ptr_node_fine->f_collide_[iq] = feq.at(iq) + tau_ratio_c2f_ * (node_coarse.f_collide_[iq] - feq.at(iq));
     }
@@ -76,11 +75,11 @@ void LbmCollisionOptInterface::Fine2Coarse(const DefReal dt_lbm, const std::vect
     ptr_node_coarse->rho_ = node_fine.rho_;
     ptr_node_coarse->velocity_ = node_fine.velocity_;
     DefSizet num_q = feq.size();
-    //  DefReal relax_tau_f = k0LbmViscosity_ * kCsSqReciprocal / dt_lbm + 0.5;
-    //  DefReal relax_tau_c = k0LbmViscosity_ * kCsSqReciprocal / dt_lbm / 2 + 0.5;
+    ptr_node_coarse->f_collide_.resize(num_q);
+    // DefReal relax_tau_f = viscosity_lbm_ * SolverLbmInterface::kCs_Sq_Reciprocal_ / dt_lbm + 0.5;
+    // DefReal relax_tau_c = viscosity_lbm_ * SolverLbmInterface::kCs_Sq_Reciprocal_ / dt_lbm / 2 + 0.5;
     //  DefReal tau_ratio = 2 * (relax_tau_c - 1)/ (relax_tau_f - 1);
-    //  DefReal relax_tau_c = k0LbmViscosity_ * kCsSqReciprocal / dt_lbm;
-    //  DefReal tau_ratio = (relax_tau_f - 1)/ (relax_tau_f - 0.5);
+
     for (int iq = 0; iq < num_q; ++iq) {
         ptr_node_coarse->f_collide_[iq] = feq.at(iq) + tau_ratio_f2c_ * (node_fine.f_collide_[iq] - feq.at(iq));
     }

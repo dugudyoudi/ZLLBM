@@ -1,4 +1,4 @@
-//  Copyright (c) 2021 - 2023, Zhengliang Liu
+//  Copyright (c) 2021 - 2024, Zhengliang Liu
 //  All rights reserved
 
 /**
@@ -87,10 +87,17 @@ void AmrManager::InitializeMesh() {
 
     std::array<DefSFBitset, 2> sfbitset_bound_current;
     std::vector<DefMap<DefAmrIndexUint>> sfbitset_one_lower_level(ptr_grid_manager_->k0MaxLevel_ + 1);
-    std::vector<DefReal> real_offset(ptr_grid_manager_->k0GridDims_);
     DefAmrIndexUint i_geo = 0;
     if (rank_id == 0) {
-        ptr_criterion_manager_->InitialAllGeometrySerial(ptr_grid_manager_->k0GridDims_, real_offset);
+        std::vector<DefReal> real_offset(ptr_grid_manager_->k0GridDims_);
+        std::vector<DefReal> domain_dx = ptr_grid_manager_->GetDomainDxArrAsVec();
+        std::vector<DefAmrIndexLUint> domain_min_index = ptr_grid_manager_->GetMinIndexOfBackgroundNodeArrAsVec();
+        for (DefAmrIndexUint i_dims = 0; i_dims < ptr_grid_manager_->k0GridDims_; ++i_dims) {
+            real_offset.at(i_dims) = domain_min_index[i_dims] * domain_dx[i_dims];
+        }
+
+        ptr_criterion_manager_->InitialAllGeometrySerial(ptr_grid_manager_->k0GridDims_,
+            domain_dx.at(kXIndex), real_offset);
     }
     for (const auto& iter_geo_info : ptr_criterion_manager_->vec_ptr_geometries_) {
         ptr_grid_manager_->CreateTrackingGridInstanceForAGeo(i_geo, *iter_geo_info);
@@ -98,9 +105,10 @@ void AmrManager::InitializeMesh() {
     }
     if (rank_id == 0) {
         ptr_grid_manager_->GenerateGridFromHighToLowLevelSerial(
-         ptr_criterion_manager_->vec_ptr_geometries_, &sfbitset_one_lower_level);
+            ptr_criterion_manager_->vec_ptr_geometries_, &sfbitset_one_lower_level);
         sfbitset_bound_current = {ptr_grid_manager_->k0SFBitsetDomainMin_, ptr_grid_manager_->k0SFBitsetDomainMax_};
     }
+
 #ifdef ENABLE_MPI
     // mpi partition sending and receiving nodes
     std::vector<DefAmrIndexLUint> vec_cost;
@@ -115,7 +123,7 @@ void AmrManager::InitializeMesh() {
     if (ptr_grid_manager_->k0GridDims_ == 2) {
 #ifndef  DEBUG_DISABLE_2D_FUNCTIONS
         GridManager2D* ptr_grid_manager_2d = dynamic_cast<GridManager2D*>(ptr_grid_manager_.get());
-        ptr_mpi_manager_->SendNReceiveGridInfoAtGivenLevels(ptr_grid_manager_->kFlagSize0_,
+        ptr_mpi_manager_->IniSendNReceiveGridInfoAtGivenLevels(ptr_grid_manager_->kFlagSize0_,
             ptr_grid_manager_->kNodeStatusCoarse2Fine0_,
             ptr_grid_manager_->k0GridDims_, ptr_grid_manager_->k0MaxLevel_,
             ptr_grid_manager_->k0SFBitsetDomainMin_, ptr_grid_manager_->k0SFBitsetDomainMax_,
@@ -126,12 +134,11 @@ void AmrManager::InitializeMesh() {
             vec_cost, *ptr_grid_manager_2d, ptr_grid_manager_->vec_ptr_tracking_info_creator_,
             sfbitset_one_lower_level, &sfbitset_bound_current, &sfbitset_one_lower_level_current_rank,
             &sfbitset_ghost_one_lower_level_current_rank, &(ptr_grid_manager_->vec_ptr_grid_info_));
-
         if (rank_id == 0) {
             sfbitset_one_lower_level.clear();
             sfbitset_one_lower_level.shrink_to_fit();
         }
-        ptr_mpi_manager_->FindInterfaceForPartitionFromMinNMax(
+        ptr_mpi_manager_->IniFindInterfaceForPartitionFromMinNMax(
             ptr_mpi_manager_->vec_sfbitset_min_all_ranks_.at(rank_id),
             ptr_mpi_manager_->vec_sfbitset_max_all_ranks_.at(rank_id),
             ptr_grid_manager_2d->k0MinIndexOfBackgroundNode_, ptr_grid_manager_2d->k0MaxIndexOfBackgroundNode_,
@@ -146,7 +153,7 @@ void AmrManager::InitializeMesh() {
     } else {
 #ifndef  DEBUG_DISABLE_3D_FUNCTIONS
         GridManager3D* ptr_grid_manager_3d = dynamic_cast<GridManager3D*>(ptr_grid_manager_.get());
-        ptr_mpi_manager_->SendNReceiveGridInfoAtGivenLevels(ptr_grid_manager_->kFlagSize0_,
+        ptr_mpi_manager_->IniSendNReceiveGridInfoAtGivenLevels(ptr_grid_manager_->kFlagSize0_,
             ptr_grid_manager_->kNodeStatusCoarse2Fine0_,
             ptr_grid_manager_->k0GridDims_, ptr_grid_manager_->k0MaxLevel_,
             ptr_grid_manager_->k0SFBitsetDomainMin_, ptr_grid_manager_->k0SFBitsetDomainMax_,
@@ -164,7 +171,7 @@ void AmrManager::InitializeMesh() {
             sfbitset_one_lower_level.clear();
             sfbitset_one_lower_level.shrink_to_fit();
         }
-        ptr_mpi_manager_->FindInterfaceForPartitionFromMinNMax(
+        ptr_mpi_manager_->IniFindInterfaceForPartitionFromMinNMax(
             ptr_mpi_manager_->vec_sfbitset_min_all_ranks_.at(rank_id),
             ptr_mpi_manager_->vec_sfbitset_max_all_ranks_.at(rank_id),
             ptr_grid_manager_3d->k0MinIndexOfBackgroundNode_, ptr_grid_manager_3d->k0MaxIndexOfBackgroundNode_,
@@ -182,7 +189,7 @@ void AmrManager::InitializeMesh() {
     const DefAmrIndexUint flag0 = ptr_grid_manager_->kFlagSize0_;
     for (DefAmrIndexUint i_level = 0; i_level < ptr_grid_manager_->k0MaxLevel_; ++i_level) {
         for (const auto & iter_interfaces :
-         ptr_grid_manager_->vec_ptr_grid_info_.at(i_level)->map_ptr_interface_layer_info_) {
+            ptr_grid_manager_->vec_ptr_grid_info_.at(i_level)->map_ptr_interface_layer_info_) {
             for (const auto & iter_coarse2fine : iter_interfaces.second->vec_outer_coarse2fine_) {
                 for (const auto & iter_node : iter_coarse2fine) {
                     if (ptr_grid_manager_->vec_ptr_grid_info_.at(i_level)->map_grid_node_.find(iter_node.first)
@@ -199,7 +206,61 @@ void AmrManager::InitializeMesh() {
      sfbitset_bound_current.at(0), sfbitset_bound_current.at(1), sfbitset_one_lower_level);
 #endif  // ENABLE_MPI
 
-    ptr_grid_manager_->InstantiateTimeSteppingScheme();
+    InstantiateTimeSteppingScheme();
+}
+/**
+* @brief function to setup default grid related parameters.
+* @param[in]  max_level  maximum refinement level.
+*/
+void AmrManager::InstantiateTimeSteppingScheme() {
+    switch (k0TimeSteppingType_) {
+    case ETimeSteppingScheme::kMultiSteppingC2F:
+        ptr_time_stepping_scheme_ = std::make_unique<MultiTimeSteppingC2F>(
+            ptr_grid_manager_->k0MaxLevel_);
+        break;
+    default:
+        LogManager::LogError("undefined time stepping type in "
+            + std::string(__FILE__) + " at line " + std::to_string(__LINE__));
+        break;
+    }
+}
+/**
+* @brief      function to manage grid information during one time step at the background refinement level.
+* @param[in]  time_step_background   current background time step.
+* @param[in]  sfbitset_aux   class manages space filling curves.
+*/
+void AmrManager::TimeMarching(const DefAmrIndexLUint time_step_background) {
+    // record number of time step at i_level
+    std::vector<DefAmrIndexUint> time_step_level(ptr_grid_manager_->k0MaxLevel_ + 1, 0);
+    DefAmrIndexUint i_level;
+    DefReal time_step_current;
+    for (auto iter_level = ptr_time_stepping_scheme_->k0TimeSteppingOrder_.begin();
+        iter_level != ptr_time_stepping_scheme_->k0TimeSteppingOrder_.end(); ++iter_level) {
+        i_level = *iter_level;
+        ++time_step_level[i_level];
+        time_step_current = ptr_time_stepping_scheme_->GetCurrentTimeStep(
+            i_level, time_step_background, time_step_level[i_level]);
+        GridInfoInterface& grid_ref = *(ptr_grid_manager_->vec_ptr_grid_info_.at(i_level));
+        grid_ref.SetUpGridAtBeginningOfTimeStep(time_step_level[i_level], ptr_grid_manager_.get());
+
+        grid_ref.ptr_solver_->InformationFromGridOfDifferentLevel(
+            amrproject::ETimingInOneStep::kStepBegin, k0TimeSteppingType_,
+            time_step_level[i_level], *ptr_grid_manager_->GetSFBitsetAuxPtr(), &grid_ref);
+
+        // update criterion information for tracking nodes
+        for (auto& iter : grid_ref.map_ptr_tracking_grid_info_) {
+            if (iter.first.first == ECriterionType::kGeometry) {
+                ptr_criterion_manager_->vec_ptr_geometries_.at(iter.first.second)->UpdateGeometry(time_step_current);
+            }
+        }
+
+        grid_ref.ptr_solver_->RunSolverOnGrid(k0TimeSteppingType_,
+            time_step_level[i_level], *ptr_grid_manager_->GetSFBitsetAuxPtr(), &grid_ref);
+
+        grid_ref.ptr_solver_->InformationFromGridOfDifferentLevel(
+            amrproject::ETimingInOneStep::kStepEnd, k0TimeSteppingType_,
+            time_step_level[i_level], *ptr_grid_manager_->GetSFBitsetAuxPtr(), &grid_ref);
+    }
 }
 /**
 * @brief   function to initialize solvers.

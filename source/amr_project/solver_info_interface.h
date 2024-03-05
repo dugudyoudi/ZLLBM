@@ -1,4 +1,4 @@
-//  Copyright (c) 2021 - 2023, Zhengliang Liu
+//  Copyright (c) 2021 - 2024, Zhengliang Liu
 //  All rights reserved
 
 /**
@@ -11,6 +11,7 @@
 #define ROOTPROJECT_AMR_PROJECT_SOLVER_INFO_INTERFACE_H_
 #include <string>
 #include <memory>
+#include "grid/grid_enumerates.h"
 namespace rootproject {
 namespace amrproject {
 class GridInfoCreatorInterface;
@@ -30,9 +31,13 @@ class SolverInterface {
     virtual std::string GetSolverMethod() = 0;
     virtual void SetNodeFlagForSolver() = 0;
     virtual void SolverInitial() = 0;
-    virtual void RunSolver(const DefReal time_step_current,
-        const SFBitsetAuxInterface& sfbitset_aux,
+    virtual void RunSolverOnGrid(const ETimeSteppingScheme time_scheme,
+        const DefAmrIndexUint time_step_current, const SFBitsetAuxInterface& sfbitset_aux,
         GridInfoInterface* const ptr_grid_info) = 0;
+    virtual void InformationFromGridOfDifferentLevel(
+        const ETimingInOneStep timing, const ETimeSteppingScheme time_scheme,
+        const DefAmrIndexUint time_step_current, const SFBitsetAuxInterface& sfbitset_aux,
+        GridInfoInterface* const ptr_grid_info) {}
 };
 /**
 * @class SolverCreatorInterface

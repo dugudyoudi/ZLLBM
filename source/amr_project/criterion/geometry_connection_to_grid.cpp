@@ -1,4 +1,4 @@
-//  Copyright (c) 2021 - 2023, Zhengliang Liu
+//  Copyright (c) 2021 - 2024, Zhengliang Liu
 //  All rights reserved
 
 /**
@@ -29,11 +29,12 @@ namespace amrproject {
 void GeometryConnectionInterface::FindTrackingNodeBasedOnGeo(DefAmrIndexUint i_geo, DefAmrIndexUint i_level,
     const EGridExtendType grid_extend_type, const SFBitsetAuxInterface& sfbitset_aux,
     GridInfoInterface* const ptr_grid_info) {
+    DefAmrIndexUint dims = DefAmrIndexUint(ptr_grid_info->grid_space_.size());
     if (ptr_grid_info->grid_space_.size() != vertex_given_level_.at(0)
         .vec_vertex_coordinate.at(0).coordinates.size()) {
         LogManager::LogError("Size of grid_space ("
             + std::to_string(ptr_grid_info->grid_space_.size()) +
-            ") is not equal to size of coordinates("
+            ") is not equal to size of coordinates ("
             + std::to_string(vertex_given_level_.at(0).vec_vertex_coordinate
             .at(0).coordinates.size()) + ") in vertex_given_level_ "
             + " in "+ std::string(__FILE__) + " at line " + std::to_string(__LINE__));
@@ -44,8 +45,7 @@ void GeometryConnectionInterface::FindTrackingNodeBasedOnGeo(DefAmrIndexUint i_g
     ptr_grid_info->map_ptr_tracking_grid_info_
         .at(key_tracking_grid).get()->grid_extend_type_ = grid_extend_type;
     DefMap<TrackingNode>* ptr_tracking_node = &(ptr_grid_info
-        ->map_ptr_tracking_grid_info_.at(key_tracking_grid).get()
-        ->map_tracking_node_);
+        ->map_ptr_tracking_grid_info_.at(key_tracking_grid).get()->map_tracking_node_);
 
     DefSFBitset bitset_temp;
     for (auto& iter : connection_vertex_given_level_.at(level_diff)) {
@@ -55,10 +55,25 @@ void GeometryConnectionInterface::FindTrackingNodeBasedOnGeo(DefAmrIndexUint i_g
         vertex_given_level_.at(iter.first).vec_vertex_coordinate
             .at(iter.second).map_bitset_ref
             .insert({ ptr_grid_info->i_level_, bitset_temp });
-        if (ptr_tracking_node->find(bitset_temp) == ptr_tracking_node->end()) {
-            ptr_tracking_node->insert({ bitset_temp, (ptr_grid_info
-            ->map_ptr_tracking_grid_info_.at(key_tracking_grid).get())
-            ->k0TrackNodeInstance_ });
+        if (ptr_grid_info->CheckIfNodeOutsideCubicDomain(dims, bitset_temp, sfbitset_aux) >= 0) {
+            if (ptr_tracking_node->find(bitset_temp) == ptr_tracking_node->end()) {
+                ptr_tracking_node->insert({ bitset_temp, (ptr_grid_info
+                ->map_ptr_tracking_grid_info_.at(key_tracking_grid).get())
+                ->k0TrackNodeInstance_ });
+            }
+        } else {
+            std::vector<DefReal>& coordi = vertex_given_level_.at(iter.first)
+                .vec_vertex_coordinate.at(iter.second).coordinates;
+            if (dims == 2) {
+                LogManager::LogError("coordinate (" + std::to_string(coordi[kXIndex]) + ", "
+                + std::to_string(coordi[kYIndex]) + ") is outside the computational domain in "
+                + std::string(__FILE__) + " at line " + std::to_string(__LINE__));
+            } else {
+                LogManager::LogError("coordinate (" + std::to_string(coordi[kXIndex]) + ", "
+                + std::to_string(coordi[kYIndex]) + ", "
+                + std::to_string(coordi[kZIndex]) + ") is outside the computational domain in "
+                + std::string(__FILE__) + " at line " + std::to_string(__LINE__));
+            }
         }
         ptr_tracking_node->at(bitset_temp).set_point_index.insert(iter);
     }

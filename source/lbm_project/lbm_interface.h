@@ -1,4 +1,4 @@
-//  Copyright (c) 2021 - 2023, Zhengliang Liu
+//  Copyright (c) 2021 - 2024, Zhengliang Liu
 //  All rights reserved
 
 /**
@@ -22,6 +22,7 @@
 #include "solver_info_interface.h"
 #include "grid/sfbitset_aux.h"
 #include "grid/grid_info_interface.h"
+#include "immersed_boundary/immersed_boundary.h"
 #include "boundary_conditions/lbm_boundary_conditions.h"
 namespace rootproject {
 namespace lbmproject {
@@ -39,7 +40,7 @@ enum class ELbmCollisionOperatorType {
 */
 struct GridNodeLbm : public amrproject::GridNode {
     std::vector<DefReal> f_collide_{}, f_{};
-    DefReal rho_ = 0.;
+    DefReal rho_ = 1.;
     std::vector<DefReal> velocity_{};
     std::vector<DefReal> force_{};
     GridNodeLbm() {}
@@ -192,10 +193,8 @@ class LbmStrForceCollisionOpt : public LbmStrCollisionOpt {
     explicit LbmStrForceCollisionOpt(const SolverLbmInterface& lbm_solver)
         : LbmStrCollisionOpt(lbm_solver) {}
 };
-struct OutputLBMNodeVariableInfo {
+struct OutputLBMNodeVariableInfo : public amrproject::OutputNodeVariableInfoInterface {
     std::function<std::vector<DefReal>(const GridNodeLbm&)> func_get_var_;
-    DefAmrIndexUint variable_dims_;
-    std::string output_name_;
 };
 /**
 * @brief  class to store LBM grid information at each refinement level
@@ -207,12 +206,13 @@ class GridInfoLbmInteface : public amrproject::GridInfoInterface {
     void InitialGridInfo() override;
 
     // convert pointer to current type
-    DefMap<std::unique_ptr<GridNodeLbm>>* ptr_lbm_grid_ = nullptr;
+    DefMap<std::unique_ptr<GridNodeLbm>>* ptr_lbm_grid_nodes_ = nullptr;
     void SetPointerToCurrentNodeType() override;
     DefMap<std::unique_ptr<GridNodeLbm>>* GetPointerToLbmGrid();
 
     // node related
     std::unique_ptr<amrproject::GridNode> GridNodeCreator() override;
+    void SetNodeVariablesAsZeros(amrproject::GridNode* const ptr_node) override;
 
     //  collision models
     ELbmCollisionOperatorType k0CollisionOperatorType_ = ELbmCollisionOperatorType::kLbmSrt;
@@ -232,8 +232,27 @@ class GridInfoLbmInteface : public amrproject::GridInfoInterface {
     std::map<ELbmBoundaryType, std::unique_ptr<BoundaryConditionLbmInterface>> domain_boundary_condition_;
     void ComputeDomainBoundaryCondition();
 
+    // time marching related
+    void SetUpGridAtBeginningOfTimeStep(const DefAmrIndexUint time_step,
+        amrproject::GridManagerInterface* const ptr_grid_manager) override;
+
+    // communication between grid of different refinement levels
+    int TransferInfoFromCoarseGrid(const amrproject::SFBitsetAuxInterface& sfbitset_aux,
+        const DefAmrUint node_flag_not_interp, const amrproject::GridInfoInterface& grid_info_coarse) override;
+    int TransferInfoFromFineGrid(const amrproject::SFBitsetAuxInterface& sfbitset_aux,
+        const DefAmrUint node_flag, const amrproject::GridInfoInterface& grid_info_fine) override;
+
     // transfer node information between fine and coarse grids
-    void NodeInfoCoarse2fine(const GridNodeLbm& coarse_node, GridNodeLbm* const ptr_fine_node) const;
+    void NodeInfoCoarse2fine(const amrproject::GridNode& coarse_node,
+        amrproject::GridNode* const ptr_fine_node) const override;
+    void NodeInfoFine2Coarse(const amrproject::GridNode& fine_node,
+        amrproject::GridNode* const ptr_coarse_node) const override;
+
+    // interpolation
+    std::function<int(const DefAmrIndexLUint, const DefAmrIndexLUint, const DefAmrUint, const DefSFBitset&,
+        const amrproject::SFBitsetAuxInterface&, const std::vector<DefSFBitset>&,
+        const DefMap<std::unique_ptr<GridNodeLbm>>& nodes_fine, const amrproject::GridInfoInterface& coarse_grid_info,
+        const DefMap<std::unique_ptr<GridNodeLbm>>& nodes_coarse, GridNodeLbm* const ptr_node)> func_node_interp_;
 
     // output related
     void SetupOutputVariables() override;
@@ -242,7 +261,6 @@ class GridInfoLbmInteface : public amrproject::GridInfoInterface {
         const amrproject::OutputDataFormat& output_data_format,
         const DefMap<DefSizet>& map_node_index) const override;
     std::set<std::string> output_variable_name_ = {"rho", "velocity"};
-    std::vector<OutputLBMNodeVariableInfo> output_variables_;
     int OutputOneVariable(FILE* const fp, const bool bool_binary,
         const amrproject::Base64Utility& base64_instance,
         const OutputLBMNodeVariableInfo& output_info,
@@ -268,8 +286,8 @@ class SolverLbmInterface :public amrproject::SolverInterface {
     DefReal k0LbmViscosity_ = 0.;  // the lbm viscosity at background level, where dt_lbm is 1
     DefReal k0Rho_ = 1.;  // default density
     std::vector<DefReal> k0Velocity_, k0Force_;  // default velocity and forces
-    static constexpr DefReal kCsReciprocal = SqrtConstexpr(3.), kCsSqReciprocal = 3.,
-        kCs = 1. / SqrtConstexpr(3.), kCsSq = 1./ 3.;           ///< Lattice sound speed related
+    static constexpr DefReal kCs_Reciprocal_ = SqrtConstexpr(3.), kCs_Sq_Reciprocal_ = 3.,
+        kCs_ = 1. / SqrtConstexpr(3.), kCs_Sq_ = 1./ 3.;           ///< Lattice sound speed related
     std::string GetSolverMethod() final {
         return  "Solver LBM D" + std::to_string(k0SolverDims_)
             + "Q" + std::to_string(k0NumQ_) + " Model is active.";
@@ -280,8 +298,12 @@ class SolverLbmInterface :public amrproject::SolverInterface {
     }
     void SolverInitial() override;
     void SetNodeFlagForSolver() override;
-    void RunSolver(const DefReal time_step_current,
-        const amrproject::SFBitsetAuxInterface& sfbitset_aux,
+    void RunSolverOnGrid(const amrproject::ETimeSteppingScheme time_scheme,
+        const DefAmrIndexUint time_step_current, const amrproject::SFBitsetAuxInterface& sfbitset_aux,
+        amrproject::GridInfoInterface* const ptr_grid_info) override;
+    void InformationFromGridOfDifferentLevel(
+        const amrproject::ETimingInOneStep timing, const amrproject::ETimeSteppingScheme time_scheme,
+        const DefAmrIndexUint time_step_current, const amrproject::SFBitsetAuxInterface& sfbitset_aux,
         amrproject::GridInfoInterface* const ptr_grid_info) override;
 
     virtual void InitialModelDependencies() = 0;
@@ -318,18 +340,6 @@ class SolverLbmInterface :public amrproject::SolverInterface {
     DefReal CalForceIq2D(const int iq, const GridNodeLbm& node) const;
     DefReal CalForceIq3D(const int iq, const GridNodeLbm& node) const;
 
-    // function to conduct conversion for distribution functions between fine and coarse grids
-    void (SolverLbmInterface::*ptr_func_coarse2fine_)(
-        const DefReal dt_lbm, const std::vector<std::vector<DefReal>>& matrix_c2f,
-        const GridNodeLbm& node_coarse, GridNodeLbm* const ptr_node_fine) = nullptr;
-    void Coarse2FineSrt(const DefReal dt_lbm, const std::vector<std::vector<DefReal>>& matrix_c2f,
-        const GridNodeLbm& node_coarse, GridNodeLbm* const ptr_node_fine);
-    void (SolverLbmInterface::*ptr_func_fine2coarse_)(
-        const DefReal dt_lbm, const std::vector<std::vector<DefReal>>& matrix_f2c,
-        const GridNodeLbm& node_coarse, GridNodeLbm* const ptr_node_fine) = nullptr;
-    void Fine2CoarseSrt(const DefReal dt_lbm, const std::vector<std::vector<DefReal>>& matrix_f2c,
-        const GridNodeLbm& node_fine, GridNodeLbm* const ptr_node_coarse);
-
     // boundary conditions
     void SetDomainBoundaryCondition(const ELbmBoundaryType which_boundary,
         const ELbmBoundaryConditionScheme which_boundary_condition,
@@ -337,12 +347,8 @@ class SolverLbmInterface :public amrproject::SolverInterface {
     virtual std::unique_ptr<BoundaryConditionLbmInterface> BoundaryBounceBackCreator() const;
     virtual std::unique_ptr<BoundaryConditionLbmInterface> BoundaryPeriodicCreator() const;
 
-    // interpolation
-    virtual void SetNodeAsZeroesForInterpolation(GridNodeLbm* const ptr_node) const;
-
  protected:
-    DefAmrUint NodeFlagNotCompute_;
-    inline DefReal Square(DefReal x) const {return x * x;}
+    DefAmrUint NodeFlagNotStream_ = 0, NodeFlagNotCollision_ = 0;
 
     void CalMacro2DCompressible(const DefReal dt_lbm, GridNodeLbm* const ptr_node) const;
     void CalMacro2DIncompressible(const DefReal dt_lbm, GridNodeLbm* const ptr_node) const;

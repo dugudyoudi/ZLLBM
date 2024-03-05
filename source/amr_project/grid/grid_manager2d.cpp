@@ -1,4 +1,4 @@
-//  Copyright (c) 2021 - 2023, Zhengliang Liu
+//  Copyright (c) 2021 - 2024, Zhengliang Liu
 //  All rights reserved
 
 /**
@@ -178,12 +178,11 @@ void GridManager2D::PrintGridInfo(void) const {
 *            of the center node.
 */
 void GridManager2D::GridFindAllNeighborsVir(const DefSFBitset& bitset_in,
-        std::vector<DefSFBitset>*const ptr_vec_neighbors) const {
+    std::vector<DefSFBitset>* const ptr_vec_neighbors) const {
     std::array<DefSFBitset, 9> array_neighbors;
     SFBitsetFindAllNeighbors(bitset_in, &array_neighbors);
     ptr_vec_neighbors->resize(9);
-    memcpy(ptr_vec_neighbors->data(), array_neighbors.data(),
-        9 * sizeof(DefSFBitset));
+    memcpy(ptr_vec_neighbors->data(), array_neighbors.data(), 9 * sizeof(DefSFBitset));
 }
 /**
 * @brief   function to reset number of extended layers.
@@ -232,10 +231,10 @@ void GridManager2D::ResetExtendLayerBasedOnDomainSize(
 * @param[in] sfbitset_max bitset corresponding to the maximum coordinate in each direction.
 * @return flag indicate node on which domain boundaries, 1: x min, 2: x max, 4: y min, 8: y max
 */
-DefAmrIndexUint GridManager2D::CheckNodeOnDomainBoundary(const DefSFBitset& sfbitset_in,
+int GridManager2D::CheckNodeOnDomainBoundary(const DefSFBitset& sfbitset_in,
     const std::vector<DefSFBitset>& sfbitset_min,
     const std::vector<DefSFBitset>& sfbitset_max) const {
-    DefAmrIndexUint node_status = 0;
+    int node_status = 0;
     if ((sfbitset_in & k0SFBitsetTakeXRef_[kRefCurrent_])
         == sfbitset_min[kXIndex]) {
         node_status |= 1;
@@ -253,6 +252,28 @@ DefAmrIndexUint GridManager2D::CheckNodeOnDomainBoundary(const DefSFBitset& sfbi
         node_status |= 8;  // 1<< 3
     }
     return node_status;
+}
+/**
+* @brief   function to check if node is not outside a cubic domain boundary.
+* @param[in] sfbitset_in space filling code of a given node.
+* @param[in] sfbitset_min bitset corresponding to the minimum coordinate in each direction.
+* @param[in] sfbitset_max bitset corresponding to the maximum coordinate in each direction.
+* @return  if false, node is outside a cubic domain boundary
+*/
+bool GridManager2D::CheckNodeNotOutsideDomainBoundary(const DefSFBitset& sfbitset_in,
+    const std::vector<DefSFCodeToUint>& sfbitset_min,
+    const std::vector<DefSFCodeToUint>& sfbitset_max) const {
+    if ((sfbitset_in&k0SFBitsetTakeXRef_[kRefCurrent_]).to_ullong() < sfbitset_min.at(kXIndex)) {
+        return false;
+    } else if ((sfbitset_in&k0SFBitsetTakeXRef_[kRefCurrent_]).to_ullong() > sfbitset_max.at(kXIndex)) {
+        return false;
+    }
+    if ((sfbitset_in&k0SFBitsetTakeYRef_[kRefCurrent_]).to_ullong() < sfbitset_min.at(kYIndex)) {
+        return false;
+    } else if ((sfbitset_in&k0SFBitsetTakeYRef_[kRefCurrent_]).to_ullong() > sfbitset_max.at(kYIndex)) {
+        return false;
+    }
+    return true;
 }
 /**
 * @brief   function to find space filling code of nodes on a cell (2D)

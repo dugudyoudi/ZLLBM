@@ -1,4 +1,4 @@
-//  Copyright (c) 2021 - 2023, Zhengliang Liu
+//  Copyright (c) 2021 - 2024, Zhengliang Liu
 //  All rights reserved
 
 /**
@@ -70,7 +70,7 @@ struct GeometryConnectionCoordinate {
 };
 /**
 * @struct GeometryConnectionCoordinateLevel
-* @brief structure to store all vertex formation for a level
+* @brief structure to store all vertex formation for a given level
 */
 struct GeometryConnectionCoordinateLevel {
     std::vector<GeometryConnectionCoordinate> vec_vertex_coordinate;
@@ -106,7 +106,7 @@ class GeometryConnectionInterface {
     std::vector<GeometryConnectionSurfaceLevel>
         connection_surface_given_level_{};  ///< surfaces at the given level (ith element)
     // connection_vertex_given_level_ records the vertices at a given level since vertices may exist simultaneously
-    // at lower and higher levels, while vertex_given_level_ only store vertices at the lowest levels to
+    // at lower and higher levels, while vertex_given_level_ only store vertices at the lowest levels
     // to reduce memory cost
     std::vector<std::set<std::pair<DefAmrIndexUint, DefSizet>>>
         connection_vertex_given_level_{};
@@ -137,8 +137,8 @@ class GeometryConnectionInterface {
         const ptr_surface_remain_for_bisect, DefMap<DefAmrUint>* const ptr_sfbitset_ref_added);
 
     void FindTrackingNodeBasedOnGeo(DefAmrIndexUint i_geo, DefAmrIndexUint i_level,
-     const EGridExtendType grid_extend_type, const SFBitsetAuxInterface& sfbitset_aux,
-     GridInfoInterface* const ptr_grid_info);
+        const EGridExtendType grid_extend_type, const SFBitsetAuxInterface& sfbitset_aux,
+        GridInfoInterface* const ptr_grid_info);
 
  protected:
     GeometryConnectionCoordinate vertex_instance_;
@@ -167,11 +167,9 @@ class GeometryInfoConnection2D : public GeometryInfo2DInterface, public Geometry
 
     // virtual functions for GeometryInfo2DInterface
     void SetIndex() override;
-    int InitialGeometry(const DefReal dx, const DefaultGeoShapeType shape_type,
-     const DefaultGeoManager& default_geo_managerr) override;
-    int UpdateGeometry(const DefaultGeoManager& default_geo_manager) override;
+    int InitialGeometry(const DefReal dx) override;
     void FindTrackingNodeBasedOnGeo(const SFBitsetAuxInterface& sfbitset_aux,
-      GridInfoInterface* const ptr_grid_info) override {
+        GridInfoInterface* const ptr_grid_info) override {
         GeometryConnectionInterface::FindTrackingNodeBasedOnGeo(i_geo_, i_level_,
          grid_extend_type_, sfbitset_aux, ptr_grid_info);
     }
@@ -213,11 +211,7 @@ class GeometryInfoConnection3D : public GeometryInfo3DInterface, public Geometry
 
     // virtual functions for GeometryInfo3DInterface
     void SetIndex() override;
-    int InitialGeometry(const DefReal dx,
-        const DefaultGeoShapeType shape_type,
-        const DefaultGeoManager& default_geo_manager) override;
-    int UpdateGeometry(
-        const DefaultGeoManager& default_geo_manager) override;
+    int InitialGeometry(const DefReal dx) override;
     void FindTrackingNodeBasedOnGeo(const SFBitsetAuxInterface& sfbitset_aux,
       GridInfoInterface* const ptr_grid_info) override {
         GeometryConnectionInterface::FindTrackingNodeBasedOnGeo(i_geo_, i_level_,

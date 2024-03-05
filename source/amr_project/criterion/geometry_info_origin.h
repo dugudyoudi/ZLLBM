@@ -1,4 +1,4 @@
-//  Copyright (c) 2021 - 2023, Zhengliang Liu
+//  Copyright (c) 2021 - 2024, Zhengliang Liu
 //  All rights reserved
 
 /**
@@ -29,9 +29,7 @@ class  SFBitsetAux3D;
 class GeometryInfoOrigin2D : public GeometryInfo2DInterface {
  public:
     void SetIndex() override;
-    int InitialGeometry(const DefReal dx, const DefaultGeoShapeType shape_type,
-     const DefaultGeoManager& default_geo_manager) override;
-    int UpdateGeometry(const DefaultGeoManager& default_geo_manager) override;
+    int InitialGeometry(const DefReal dx) override;
     void FindTrackingNodeBasedOnGeo(
         const SFBitsetAuxInterface& sfbitset_aux, GridInfoInterface* const ptr_grid_info) override;
     std::vector<DefReal> GetFloodFillOriginArrAsVec() const final {
@@ -59,9 +57,7 @@ class GeometryInfoOrigin2DCreator :public GeometryInfoCreatorInterface {
 class GeometryInfoOrigin3D : public GeometryInfo3DInterface {
  public:
     void SetIndex() override;
-    int InitialGeometry(const DefReal dx, const DefaultGeoShapeType shape_type,
-        const DefaultGeoManager& default_geo_manager) override;
-    int UpdateGeometry(const DefaultGeoManager& default_geo_manager) override;
+    int InitialGeometry(const DefReal dx) override;
     void FindTrackingNodeBasedOnGeo(
         const SFBitsetAuxInterface& sfbitset_aux, GridInfoInterface* const ptr_grid_info) override;
     std::vector<DefReal> GetFloodFillOriginArrAsVec() const final {

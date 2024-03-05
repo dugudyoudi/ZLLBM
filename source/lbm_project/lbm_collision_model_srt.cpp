@@ -1,4 +1,4 @@
-//  Copyright (c) 2021 - 2023, Zhengliang Liu
+//  Copyright (c) 2021 - 2024, Zhengliang Liu
 //  All rights reserved
 
 /**
@@ -12,10 +12,10 @@
 namespace rootproject {
 namespace lbmproject {
 void LbmStrCollisionOpt::CalRelaxationTime() {
-    tau_srt_ = viscosity_lbm_ * SolverLbmInterface::kCsSqReciprocal / dt_lbm_ + 0.5;
+    tau_srt_ = viscosity_lbm_ * SolverLbmInterface::kCs_Sq_Reciprocal_ / dt_lbm_ + 0.5;
 }
 void LbmStrCollisionOpt::CalRelaxationTimeNode(const GridNodeLbm& node) {
-    tau_srt_ = viscosity_lbm_ * SolverLbmInterface::kCsSqReciprocal / dt_lbm_ + 0.5;
+    tau_srt_ = viscosity_lbm_ * SolverLbmInterface::kCs_Sq_Reciprocal_ / dt_lbm_ + 0.5;
 }
 void LbmStrCollisionOpt::CollisionOperator(
     const SolverLbmInterface& lbm_solver, GridNodeLbm* const ptr_node) const {
@@ -34,9 +34,8 @@ void LbmStrForceCollisionOpt::CollisionOperator(
     DefReal forcing_term;
     for (DefAmrIndexUint iq = 0; iq < num_q; ++iq) {
         forcing_term = (lbm_solver.*(lbm_solver.ptr_func_cal_force_iq_))(iq, *ptr_node);
-        ptr_node->f_collide_[iq] = (1. - 1./ tau_srt_) * ptr_node->f_[iq] + feq[iq] / tau_srt_
+        ptr_node->f_collide_[iq] = ptr_node->f_[iq] - (ptr_node->f_[iq] - feq[iq]) / tau_srt_
              + (1. - 0.5 / tau_srt_) * forcing_term * dt_lbm_;
-
     }
 }
 }  // end namespace lbmproject

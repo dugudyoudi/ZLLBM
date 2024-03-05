@@ -1,4 +1,4 @@
-//  Copyright (c) 2021 - 2023, Zhengliang Liu
+//  Copyright (c) 2021 - 2024, Zhengliang Liu
 //  All rights reserved
 
 /**
@@ -39,6 +39,5 @@ const GridInfoInterface::LagrangianCoeff& GridInfoInterface::CalculateLagrangian
     }
     return lagrangian_coefficients_.at(interp_half_length);
 }
-
 }  // end namespace amrproject
 }  // end namespace rootproject
