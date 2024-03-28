@@ -54,6 +54,12 @@ class  SFBitsetAuxInterface {
         const std::vector<DefSFBitset>& domain_min_n_level,
         const std::vector<DefSFBitset>& domain_max_n_level,
         std::vector<DefSFBitset>* const ptr_sfbitset_node) const = 0;
+    virtual DefAmrIndexLUint FindNodesInPeriodicReginNearby(const DefSFBitset& sfbitset_in,
+        const DefAmrIndexLUint region_length,
+        const std::vector<bool>& periodic_min, const std::vector<bool>& periodic_max,
+        const std::vector<DefSFBitset>& domain_min_n_level,
+        const std::vector<DefSFBitset>& domain_max_n_level,
+        std::vector<DefSFBitset>* const ptr_sfbitset_node) const = 0;
     virtual void GetMinM1AtGivenLevel(const DefAmrIndexUint i_level,
         std::vector<DefAmrIndexLUint> indices_min,
         std::vector<DefSFBitset>* const ptr_min_m1_bitsets) const = 0;
@@ -174,6 +180,12 @@ class  SFBitsetAux2D : public SFBitsetAuxInterface {
         const std::vector<DefSFBitset>& domain_max_p1_n_level,
         std::vector<DefSFBitset>* const ptr_sfbitset_nodes) const final;
     DefAmrIndexLUint FindNodesInPeriodicReginOfGivenLength(const DefSFBitset& sfbitset_in,
+        const DefAmrIndexLUint region_length,
+        const std::vector<bool>& periodic_min, const std::vector<bool>& periodic_max,
+        const std::vector<DefSFBitset>& domain_min_n_level,
+        const std::vector<DefSFBitset>& domain_max_n_level,
+        std::vector<DefSFBitset>* const ptr_sfbitset_node) const final;
+    DefAmrIndexLUint FindNodesInPeriodicReginNearby(const DefSFBitset& sfbitset_in,
         const DefAmrIndexLUint region_length,
         const std::vector<bool>& periodic_min, const std::vector<bool>& periodic_max,
         const std::vector<DefSFBitset>& domain_min_n_level,
@@ -335,6 +347,12 @@ class  SFBitsetAux3D : public SFBitsetAuxInterface {
         const std::vector<DefSFBitset>& domain_max_p1_n_level,
         std::vector<DefSFBitset>* const ptr_sfbitset_nodes) const final;
     DefAmrIndexLUint FindNodesInPeriodicReginOfGivenLength(const DefSFBitset& sfbitset_in,
+        const DefAmrIndexLUint region_length,
+        const std::vector<bool>& periodic_min, const std::vector<bool>& periodic_max,
+        const std::vector<DefSFBitset>& domain_min_n_level,
+        const std::vector<DefSFBitset>& domain_max_n_level,
+        std::vector<DefSFBitset>* const ptr_sfbitset_node) const final;
+    DefAmrIndexLUint FindNodesInPeriodicReginNearby(const DefSFBitset& sfbitset_in,
         const DefAmrIndexLUint region_length,
         const std::vector<bool>& periodic_min, const std::vector<bool>& periodic_max,
         const std::vector<DefSFBitset>& domain_min_n_level,

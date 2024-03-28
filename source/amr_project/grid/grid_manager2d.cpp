@@ -25,7 +25,7 @@ void GridManager2D::SetDomainSize(const std::vector<DefReal>& domain_size) {
         k0DomainSize_.at(kXIndex) = domain_size.at(kXIndex);
         k0DomainSize_.at(kYIndex) = domain_size.at(kYIndex);
     } else {
-        LogManager::LogError("size of the input vector should be 2"
+        LogManager::LogError("size of the input vector should be 2 in "
             + std::string(__FILE__) + " at line " + std::to_string(__LINE__));
     }
 }
@@ -40,7 +40,7 @@ void GridManager2D::SetDomainGridSize(const std::vector<DefReal>& domain_grid_si
         k0DomainDx_.at(kXIndex) = domain_grid_size.at(kXIndex);
         k0DomainDx_.at(kYIndex) = domain_grid_size.at(kYIndex);
     } else {
-        LogManager::LogError("size of the input vector should be 1 or 2"
+        LogManager::LogError("size of the input vector should be 1 or 2 in "
             + std::string(__FILE__) + " at line " + std::to_string(__LINE__));
     }
 }

@@ -2,9 +2,9 @@
 //  All rights reserved
 
 /**
-* @file mpi_morton_aux.cpp
+* @file mpi_sfbitset_aux.cpp
 * @author Zhengliang Liu
-* @brief functions used to manipulate morton codes for MPI partition.
+* @brief functions used to manipulate space filling codes for MPI partition.
 * @date  2023-7-16
 */
 #include <string>

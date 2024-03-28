@@ -11,6 +11,7 @@
 #include "grid/grid_manager.h"
 #include "grid/grid_info_interface.h"
 #include "io/log_write.h"
+#include "mpi/mpi_manager.h"
 namespace rootproject {
 namespace lbmproject {
 void SolverLbmInterface::SolverInitial() {
@@ -111,33 +112,88 @@ void SolverLbmInterface::ResizeModelRelatedVectors() {
         k0QIndicesPos_.at(i).shrink_to_fit();
     }
 }
-/**
- * @brief function to set flag indicating the node don't need to be calculated during stream and collision.
- */
-void SolverLbmInterface::SetNodeFlagForSolver() {
-    // NodeFlagNotCompute_ = ptr_grid_manager_->kNodeStatusCoarse2Fine0_
-    //     |ptr_grid_manager_->kNodeStatusFine2Coarse0_
-    //     |ptr_grid_manager_->kNodeStatusMpiPartitionOutside_;
-}
+
 /**
  * @brief function for marching LBM time step at grid of a given refinement level.
  * @param[in] time_scheme enum class to identify time stepping scheme used in computation.
  * @param[in] time_step_current time step at current grid refinement level in one background step.
  * @param[in] sfbitset_aux class to manage functions for space filling code computation.
- * @param[out] ptr_grid_info pointer to class storing LBM grid information.
+ * @param[out] ptr_grid_info pointer to class storing grid information.
  */
 void SolverLbmInterface::RunSolverOnGrid(const amrproject::ETimeSteppingScheme time_scheme,
     const DefAmrIndexUint time_step_current, const amrproject::SFBitsetAuxInterface& sfbitset_aux,
-    amrproject::GridInfoInterface* const ptr_grid_info) {
+    amrproject::GridInfoInterface* const ptr_grid_info, amrproject::MpiManager* const ptr_mpi_manager) {
     DefAmrIndexUint i_level = ptr_grid_info->i_level_;
     GridInfoLbmInteface* ptr_lbm_grid_nodes_info = dynamic_cast<GridInfoLbmInteface*>(ptr_grid_info);
     if (ptr_lbm_grid_nodes_info->GetPointerToLbmGrid() != nullptr) {
         DefMap<std::unique_ptr<GridNodeLbm>>& grid_nodes = *ptr_lbm_grid_nodes_info->GetPointerToLbmGrid();
-        Collision(NodeFlagNotCollision_, ptr_lbm_grid_nodes_info);
-        NodeFlagNotCollision_ = 0;
 
-        Stream(NodeFlagNotStream_, sfbitset_aux, &grid_nodes);
-        NodeFlagNotStream_ = 0;
+#ifdef ENABLE_MPI
+        std::vector<amrproject::MpiManager::BufferSizeInfo> send_buffer_info, receive_buffer_info;
+        std::vector<std::vector<MPI_Request>> vec_vec_reqs_send, vec_vec_reqs_receive;
+        std::vector<std::unique_ptr<char[]>> vec_ptr_buffer_receive, vec_ptr_buffer_send;
+        if (ptr_mpi_manager == nullptr) {
+            amrproject::LogManager::LogWarning("pointer to MPI manager is nullptr in "
+                + std::string(__FILE__) + " at line " + std::to_string(__LINE__));
+        } else {
+            // send and receive grid nodes using non-blocking communication
+            int num_of_ranks = ptr_mpi_manager->num_of_ranks_;
+            std::vector<bool> vec_receive_ranks(ptr_mpi_manager->IdentifyRanksReceivingGridNode(i_level));
+            ptr_mpi_manager->SendNReceiveGridNodeBufferSize(0, vec_receive_ranks,
+                *ptr_grid_info, &send_buffer_info, &receive_buffer_info);
+            for (int i_rank = 0; i_rank < num_of_ranks; ++i_rank) {
+                if (receive_buffer_info.at(i_rank).bool_exist_) {
+                    vec_vec_reqs_receive.push_back({});
+                    vec_ptr_buffer_receive.push_back(ptr_mpi_manager->ReceiveGridNodeInformation(
+                        i_rank, ptr_grid_info->SizeOfGridNodeInfoForMpiCommunication(),
+                        receive_buffer_info.at(i_rank), &vec_vec_reqs_receive.back()));
+                }
+            }
+            for (int i_rank = 0; i_rank < num_of_ranks; ++i_rank) {
+                if (send_buffer_info.at(i_rank).bool_exist_) {
+                    vec_vec_reqs_send.push_back({});
+                    vec_ptr_buffer_send.push_back(std::make_unique<char[]>(
+                        ptr_mpi_manager->CalculateBufferSizeForGridNode(i_rank, *ptr_grid_info)));
+                    ptr_mpi_manager->SendGridNodeInformation(i_rank, send_buffer_info.at(i_rank),
+                        ptr_grid_info, vec_ptr_buffer_send.back().get(), &vec_vec_reqs_send.back());
+                }
+            }
+        }
+#endif  //  ENABLE_MPI
+
+        Collision(ptr_lbm_grid_nodes_info->NodeFlagNotCollision_, ptr_lbm_grid_nodes_info);
+
+        Stream(ptr_lbm_grid_nodes_info->NodeFlagNotStream_, sfbitset_aux, &grid_nodes);
+
+#ifdef ENABLE_MPI
+        if (ptr_mpi_manager != nullptr) {
+            int i_rev = 0;
+            for (int i_rank = 0; i_rank < ptr_mpi_manager->num_of_ranks_; ++i_rank) {
+                if (receive_buffer_info.at(i_rank).bool_exist_) {
+                    MPI_Waitall(static_cast<int>(vec_vec_reqs_receive.at(i_rev).size()),
+                        vec_vec_reqs_receive.at(i_rev).data(), MPI_STATUSES_IGNORE);
+                    DefSizet buffer_size = receive_buffer_info.at(i_rank).array_buffer_size_.at(1)
+                        + (receive_buffer_info.at(i_rank).num_chunks_ - 1)
+                        *receive_buffer_info.at(i_rank).array_buffer_size_.at(0);
+                    ptr_grid_info->ReadNodeInfoFromBuffer(buffer_size, vec_ptr_buffer_receive.at(i_rev));
+                    ++i_rev;
+                }
+            }
+            int i_send = 0;
+            for (int i_rank = 0; i_rank < ptr_mpi_manager->num_of_ranks_; ++i_rank) {
+                if (send_buffer_info.at(i_rank).bool_exist_) {
+                    MPI_Waitall(static_cast<int>(vec_vec_reqs_send.at(i_send).size()),
+                        vec_vec_reqs_send.at(i_send).data(), MPI_STATUSES_IGNORE);
+                    ++i_send;
+                }
+            }
+        }
+#endif  //  ENABLE_MPI
+
+        // this function is used to reset flags that have change in InformationFromGridOfDifferentLevel
+        // since some nodes should not be calculated after transferring information between different levels
+        // otherwise the calculated ones will overwrite correct ones
+        ptr_lbm_grid_nodes_info->InitialNotComputeNodeFlag(*ptr_grid_manager_);
 
         ptr_lbm_grid_nodes_info->ComputeDomainBoundaryCondition();
     }
@@ -155,18 +211,19 @@ void SolverLbmInterface::InformationFromGridOfDifferentLevel(
     const DefAmrIndexUint time_step_current, const amrproject::SFBitsetAuxInterface& sfbitset_aux,
     amrproject::GridInfoInterface* const ptr_grid_info) {
     DefAmrIndexUint i_level = ptr_grid_info->i_level_;
+    GridInfoLbmInteface* ptr_lbm_grid_nodes_info = dynamic_cast<GridInfoLbmInteface*>(ptr_grid_info);
     if (i_level > 0 && ptr_grid_info->CheckNeedInfoFromCoarse(
-        amrproject::ETimingInOneStep::kStepBegin, time_scheme, time_step_current)) {
+        timing, time_scheme, time_step_current)) {
         ptr_grid_info->TransferInfoFromCoarseGrid(*ptr_grid_manager_->GetSFBitsetAuxPtr(),
             ptr_grid_manager_->kNodeStatusCoarse2Fine0_, *(ptr_grid_manager_->vec_ptr_grid_info_.at(i_level - 1)));
-        NodeFlagNotCollision_ |=
+        ptr_lbm_grid_nodes_info->NodeFlagNotCollision_ |=
             (ptr_grid_manager_->kNodeStatusFine2Coarse0_|ptr_grid_manager_->kNodeStatusFine2CoarseM1_);
     }
     if (i_level < ptr_grid_manager_->k0MaxLevel_ && ptr_grid_info->CheckNeedInfoFromFine(
-        amrproject::ETimingInOneStep::kStepBegin, time_scheme, time_step_current)) {
+        timing, time_scheme, time_step_current)) {
         ptr_grid_info->TransferInfoFromFineGrid(*ptr_grid_manager_->GetSFBitsetAuxPtr(),
             ptr_grid_manager_->kNodeStatusCoarse2Fine0_, *(ptr_grid_manager_->vec_ptr_grid_info_.at(i_level + 1)));
-        NodeFlagNotCollision_ |= ptr_grid_manager_->kNodeStatusCoarse2Fine0_;
+        ptr_lbm_grid_nodes_info->NodeFlagNotCollision_ |= ptr_grid_manager_->kNodeStatusCoarse2Fine0_;
     }
 }
 /**

@@ -164,10 +164,10 @@ int GridInfoInterface::InterpolationLagrangian2D(const DefAmrIndexLUint interpol
         DefAmrIndexLUint index_x, index_y, num_elements = 2 * region_length;
         DefSFBitset sfbitset_fine;
         Node_T node_coarse2fine;
-        for (DefAmrIndexLUint iy = 0; iy <= num_coeff; ++iy) {
+        for (DefAmrIndexLUint iy = 0; iy < num_coeff; ++iy) {
             index_y = (iy + region_length - interpolation_length)* (2 * region_length)
                 + region_length - interpolation_length;
-            for (DefAmrIndexLUint ix = 0; ix <= num_coeff; ++ix) {
+            for (DefAmrIndexLUint ix = 0; ix < num_coeff; ++ix) {
                 index_x = index_y + ix;
                 if (std::fabs(coeffi_x[ix] * coeffi_y[iy]) > kEps) {
                     if (nodes_coarse.find(sfbitset_coarse_region.at(index_x)) != nodes_coarse.end()&&(
@@ -366,12 +366,12 @@ int GridInfoInterface::InterpolationLagrangian3D(const DefAmrIndexLUint interpol
         DefAmrIndexLUint index_x, index_y, index_z, num_elements = 2 * region_length;
         DefSFBitset sfbitset_fine;
         Node_T node_coarse2fine;
-        for (DefAmrIndexLUint iz = 0; iz <= num_coeff; ++iz) {
+        for (DefAmrIndexLUint iz = 0; iz < num_coeff; ++iz) {
             index_z =(iz + region_length - interpolation_length)* (2 * region_length)
                 + region_length - interpolation_length;
-            for (DefAmrIndexLUint iy = 0; iy <= num_coeff; ++iy) {
+            for (DefAmrIndexLUint iy = 0; iy < num_coeff; ++iy) {
                 index_y = (index_z + iy)*(2 * region_length) + region_length - interpolation_length;
-                for (DefAmrIndexLUint ix = 0; ix <= num_coeff; ++ix) {
+                for (DefAmrIndexLUint ix = 0; ix < num_coeff; ++ix) {
                     index_x = index_y + ix;
                     if (std::fabs(coeffi_x[ix] * coeffi_y[iy]* coeffi_z[iz]) > kEps) {
                         if (nodes_coarse.find(sfbitset_coarse_region.at(index_x)) != nodes_coarse.end()

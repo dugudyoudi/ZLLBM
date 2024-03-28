@@ -66,19 +66,18 @@ else()
     set(CURRENT_SYSTEM "Other system")
 endif()
 
-if( CMAKE_SIZEOF_VOID_P EQUAL 8 )
-  # 64-bit project
-  set(CURRENT_PLATFORM "x64")
-  set(CMAKE_GENERATOR_PLATFORM "x64" CACHE INTERNAL "" FORCE)
-else()
-  # 32-bit project
-  set(CURRENT_PLATFORM "x86")
-  set(CMAKE_GENERATOR_PLATFORM "Win32" CACHE INTERNAL "" FORCE)
-endif()
-message(STATUS "Current Platform is ${CURRENT_SYSTEM} ${CURRENT_PLATFORM}")
-
 # Compiler
 if(${CMAKE_CXX_COMPILER_ID} STREQUAL MSVC)
+    if( CMAKE_SIZEOF_VOID_P EQUAL 8 )
+    # 64-bit project
+    set(CURRENT_PLATFORM "x64")
+    set(CMAKE_GENERATOR_PLATFORM "x64" CACHE INTERNAL "" FORCE)
+    else()
+    # 32-bit project
+    set(CURRENT_PLATFORM "x86")
+    set(CMAKE_GENERATOR_PLATFORM "Win32" CACHE INTERNAL "" FORCE)
+    endif()
+    message(STATUS "Current Platform is ${CURRENT_SYSTEM} ${CURRENT_PLATFORM}")
     message("Compiler: MSVC")
     set(CMAKE_CXX_FLAGS "/std:${CXX_STANDARD}")
     set(CMAKE_CXX_FLAGS_RELEASE "/Ox /Ot /GS- /GL")

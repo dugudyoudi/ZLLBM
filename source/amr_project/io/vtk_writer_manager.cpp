@@ -172,6 +172,7 @@ void VtkWriterManager::WriteVtuAll(const std::string& folder_name,
             } else {
                 WritePvtu(fp, vec_pvtu_file_name, output_data_format,
                     grid_manager.vec_ptr_grid_info_.at(0)->output_variables_);
+                fclose(fp);
             }
         }
         break;
@@ -277,7 +278,6 @@ void VtkWriterManager::WriteVtuGrid(const std::string& datafile_name,
             WriteGridPieces(fp, bool_binary, bool_overlap, overlap_flag,
                 *grid_manager.vec_ptr_grid_info_.at(iter_level), output_data_format, grid_manager);
         }
-
         fprintf_s(fp, " </UnstructuredGrid>\n");
         fprintf_s(fp, "</VTKFile>");
         fclose(fp);

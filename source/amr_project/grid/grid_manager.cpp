@@ -53,14 +53,20 @@ void GridManagerInterface::CreateTrackingGridInstanceForAGeo(const DefAmrIndexUi
 void GridManagerInterface::CreateSameGridInstanceForAllLevel(const std::shared_ptr<SolverInterface>& ptr_solver,
     const GridInfoCreatorInterface& grid_creator) {
     ptr_solver->ptr_grid_manager_ = this;
-    ptr_solver->SetNodeFlagForSolver();
     for (DefAmrIndexUint i_level = 0; i_level < k0MaxLevel_ + 1; ++i_level) {
         vec_ptr_grid_info_.emplace_back(grid_creator.CreateGridInfo());
         GridInfoInterface& grid_ref = *(vec_ptr_grid_info_).back();
         grid_ref.i_level_ = i_level;
         grid_ref.ptr_solver_ = ptr_solver;
+        if (k0GridDims_ == 2) {
+            grid_ref.ptr_sfbitset_aux_ = dynamic_cast<GridManager2D*>(this);
+        } else {
+            grid_ref.ptr_sfbitset_aux_ = dynamic_cast<GridManager3D*>(this);
+        }
+
         // set computational cost for each node 2^i_level
         grid_ref.computational_cost_ = static_cast<DefAmrUint>(TwoPowerN(i_level));
+        grid_ref.InitialNotComputeNodeFlag(*this);
 
         // grid spacing
         grid_ref.grid_space_ = std::vector<DefReal>(k0GridDims_, 0.);

@@ -162,6 +162,7 @@ class GridInfoInterface {
     std::string node_type_;
     std::vector<DefReal> grid_space_;
     std::shared_ptr<SolverInterface> ptr_solver_ = nullptr;
+    SFBitsetAuxInterface* ptr_sfbitset_aux_ = nullptr;
 
     std::map<std::pair<ECriterionType, DefAmrIndexUint>,
         std::shared_ptr<TrackingGridInfoInterface>> map_ptr_tracking_grid_info_;
@@ -197,6 +198,7 @@ class GridInfoInterface {
         const DefMap<DefSizet>& map_node_index) const {}
 
     // node type
+    virtual void InitialNotComputeNodeFlag(const GridManagerInterface& grid_manager) {}
     virtual std::unique_ptr<GridNode> GridNodeCreator() {
         return std::make_unique<GridNode>();
     }
@@ -267,9 +269,9 @@ class GridInfoInterface {
 
     // mpi related
  public:
-    virtual int SizeOfGridNodeForMpiCommunication() const {return 0;}
-    virtual void CopyNodeInfoToBuffer(const DefSFBitset sfbitset,
-        const int position, char* const ptr_buffer) {}
+    virtual int SizeOfGridNodeInfoForMpiCommunication() const {return 0;}
+    virtual void CopyNodeInfoToBuffer(const DefMap<DefAmrIndexUint>& map_nodes, char* const ptr_buffer) {}
+    virtual void ReadNodeInfoFromBuffer(const DefSizet buffer_size, const std::unique_ptr<char[]>& buffer) {}
 
     // general purpose functions
     virtual void InitialGridInfo() = 0;

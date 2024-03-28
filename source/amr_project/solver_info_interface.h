@@ -18,6 +18,7 @@ class GridInfoCreatorInterface;
 class GridInfoInterface;
 class GridManagerInterface;
 class SFBitsetAuxInterface;
+class MpiManager;
 /**
 * @class SolverInterface
 * @brief abstract class used to manager solver.
@@ -29,11 +30,10 @@ class SolverInterface {
     std::unique_ptr<GridInfoCreatorInterface> ptr_grid_info_creator_;
     GridManagerInterface* ptr_grid_manager_ = nullptr;
     virtual std::string GetSolverMethod() = 0;
-    virtual void SetNodeFlagForSolver() = 0;
     virtual void SolverInitial() = 0;
     virtual void RunSolverOnGrid(const ETimeSteppingScheme time_scheme,
         const DefAmrIndexUint time_step_current, const SFBitsetAuxInterface& sfbitset_aux,
-        GridInfoInterface* const ptr_grid_info) = 0;
+        GridInfoInterface* const ptr_grid_info, MpiManager* const ptr_mpi_manager) = 0;
     virtual void InformationFromGridOfDifferentLevel(
         const ETimingInOneStep timing, const ETimeSteppingScheme time_scheme,
         const DefAmrIndexUint time_step_current, const SFBitsetAuxInterface& sfbitset_aux,

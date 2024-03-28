@@ -15,7 +15,7 @@
 #include "lbm_interface.h"
 namespace rootproject {
 namespace lbmproject {
-class SolverLbmD2Q9 final :public SolverLbmInterface {
+class SolverLbmD2Q9 :public SolverLbmInterface {
  public:
     // f
     static constexpr DefAmrIndexUint kFX0Y0Z0 = 0, kFXnY0Z0 = 3, kFXpY0Z0 = 1, kFX0YnZ0 = 4, kFX0YpZ0 = 2,
@@ -46,6 +46,8 @@ class SolverLbmD2Q9 final :public SolverLbmInterface {
     void InitialModelDependencies() final;
     void Stream(const DefAmrUint flag_not_compute, const amrproject::SFBitsetAuxInterface& sfbitset_aux,
          DefMap<std::unique_ptr<GridNodeLbm>>* const ptr_map_grid_nodes) const final;
+    void StreamForAGivenNode(const DefSFBitset sfbitset_in, const amrproject::SFBitsetAuxInterface& sfbitset_aux,
+        DefMap<std::unique_ptr<GridNodeLbm>>* const ptr_map_grid_nodes) const final;
 
     // std::unique_ptr<BoundaryConditionLbmInterface> BoundaryBounceBackCreator() const override {
     //     return std::make_unique<BoundaryBounceBackD2Q9>();

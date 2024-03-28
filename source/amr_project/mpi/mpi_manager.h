@@ -13,6 +13,7 @@
 #include <set>
 #include <vector>
 #include <map>
+#include <limits>
 #include <utility>
 #include <memory>
 #include "../defs_libs.h"
@@ -27,6 +28,10 @@
 #include "criterion/geometry_coordi.h"
 #include "grid/sfbitset_aux.h"
 #include "grid/grid_info_interface.h"
+#include "grid/grid_manager.h"
+#ifdef DEBUG_UNIT_TEST
+#include "../../googletest-main/googletest/include/gtest/gtest_prod.h"
+#endif  // DEBUG_UNIT_TEST
 namespace rootproject {
 namespace amrproject {
 /**
@@ -83,9 +88,9 @@ class MpiManager{
     inline uint64_t HtoNUint(uint64_t val_host) const {
         if constexpr (std::endian::native == std::endian::little) {
 #ifdef WIN32
-        return htonll(val_host);
+            return htonll(val_host);
 #elif __linux__
-        return htobe64(val_host);
+            return htobe64(val_host);
 #endif
         } else {
             return val_host;
@@ -295,15 +300,15 @@ class MpiManager{
         std::vector<DefMap<DefAmrIndexUint>>* const  ptr_sfbitset_ghost_one_lower_level_current_rank,
         std::vector<std::shared_ptr<GridInfoInterface>>* const ptr_vec_grid_info);
 
+// functions to serialize and deserialize information for node types other than grid node
  private:
-    // functions to serialize and deserialize information for node types other than grid node
     int CreateAndCommitCriterionIndexType(MPI_Datatype *ptr_mpi_pair_type) const;
     std::unique_ptr<char[]> IniSerializeTrackingNode(
         const std::set<DefSFCodeToUint>& set_nodes, int* const ptr_buffer_size) const;
     void IniDeserializeTrackingNode(const std::unique_ptr<char[]>& buffer,
         const TrackingNode& tracking_node_instance, DefMap<TrackingNode>* const ptr_map_tracking) const;
-    int IniSerializeRefinementInterfaceNode(const DefMap<DefAmrUint>& interface_nodes,
-        std::unique_ptr<char[]>& buffer) const;
+    std::unique_ptr<char[]> IniSerializeRefinementInterfaceNode(const DefMap<DefAmrUint>& interface_nodes,
+        int* const ptr_buffer_size) const;
     void IniDeserializeRefinementInterfaceNode(const DefAmrUint flag0,
         const std::unique_ptr<char[]>& buffer, DefMap<DefAmrUint>* ptr_map_interface_layer) const;
     void IniSendNReiveOneLayerRefinementInterface(
@@ -311,7 +316,39 @@ class MpiManager{
         DefMap<DefAmrUint>* const ptr_map_interface_layer) const;
 
     // communicate between different partitioned blocks
-    void SerializeNodeInformation(const GridInfoInterface& grid_info) const;
+ private:
+    inline bool CheckBufferSizeNotExceedMax(DefSizet buffer_size) const {
+        if (buffer_size > (std::numeric_limits<int>::max)()) {
+            return false;
+        } else {
+            return true;
+        }
+    }
+
+ public:
+    std::vector<bool> IdentifyRanksReceivingGridNode(const DefAmrIndexUint i_level) const;
+    struct BufferSizeInfo {
+        bool bool_exist_ = false;
+        int num_chunks_ = 0;
+        std::array<int, 2> array_buffer_size_ = {0, 0};
+    };
+    void SendNReceiveGridNodeBufferSize(const DefAmrIndexUint i_level_receive,
+        const std::vector<bool>& rank_id_sent, const GridInfoInterface& grid_info,
+        std::vector<BufferSizeInfo>* const ptr_send_buffer_info,
+        std::vector<BufferSizeInfo>* const ptr_receive_buffer_info) const;
+    DefSizet CalculateBufferSizeForGridNode(const int rank_send,
+        const GridInfoInterface& grid_inf) const;
+    void SendGridNodeInformation(const int i_rank, const BufferSizeInfo& send_buffer_info,
+        GridInfoInterface* ptr_grid_info, char* const ptr_buffer_send,
+        std::vector<MPI_Request>* const ptr_reqs_send);
+    std::unique_ptr<char[]> ReceiveGridNodeInformation(const int rank_receive, const int node_info_size,
+        const BufferSizeInfo& receive_buffer_info, std::vector<MPI_Request>* const ptr_reqs_receive) const;
+    void SetCommunicationRegionForPeriodicBoundary(const SFBitsetAuxInterface& sfbitset_aux,
+        const GridManagerInterface& grid_manager,
+        const std::vector<bool>& bool_periodic_min, const std::vector<bool>& bool_periodic_max,
+        const std::vector<DefMap<DefAmrIndexUint>>& domain_boundary_min,
+        const std::vector<DefMap<DefAmrIndexUint>>& domain_boundary_max,
+        GridInfoInterface* const ptr_grid_info);
 
  public:
 #ifndef  DEBUG_DISABLE_2D_FUNCTION
@@ -368,6 +405,19 @@ class MpiManager{
         const std::vector<DefSFBitset>& domain_max_p1_n_level,
         DefMap<DefAmrIndexUint>* const ptr_map_ghost_layer) const;
 #endif  // DEBUG_DISABLE_3D_FUNCTIONS
+};
+}  //  end namespace amrproject
+}  //  end namespace rootproject
+#else  //  not define  ENABLE_MPI
+namespace rootproject {
+namespace amrproject {
+/**
+* @class MpiManager
+* @brief class used to manage the mpi processes (empty).
+*/
+class MpiManager {
+    // this is an empty class when mpi is not enabled.
+    // used for argument passing in some functions.
 };
 }  //  end namespace amrproject
 }  //  end namespace rootproject

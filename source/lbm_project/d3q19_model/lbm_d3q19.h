@@ -36,7 +36,7 @@ namespace lbmproject {
 // lattice 16: (0 - 1 + 1)
 // lattice 17: (0 + 1 - 1)
 // lattice 18: (0 - 1 - 1)
-class SolverLbmD3Q19 final :public SolverLbmInterface {
+class SolverLbmD3Q19 :public SolverLbmInterface {
  public:
     // f
     static constexpr DefAmrIndexUint kFX0Y0Z0 = 0,
@@ -108,6 +108,8 @@ class SolverLbmD3Q19 final :public SolverLbmInterface {
     void InitialModelDependencies() final;
     void Stream(const DefAmrUint flag_not_compute, const amrproject::SFBitsetAuxInterface& sfbitset_aux,
          DefMap<std::unique_ptr<GridNodeLbm>>* const ptr_map_grid_nodes) const final;
+    void StreamForAGivenNode(const DefSFBitset sfbitset_in, const amrproject::SFBitsetAuxInterface& sfbitset_aux,
+        DefMap<std::unique_ptr<GridNodeLbm>>* const ptr_map_grid_nodes) const final;
 };
 class SolverCreatorLbmD3Q19 final :public amrproject::SolverCreatorInterface {
  public:

@@ -255,11 +255,15 @@ void AmrManager::TimeMarching(const DefAmrIndexLUint time_step_background) {
         }
 
         grid_ref.ptr_solver_->RunSolverOnGrid(k0TimeSteppingType_,
-            time_step_level[i_level], *ptr_grid_manager_->GetSFBitsetAuxPtr(), &grid_ref);
+            time_step_level[i_level], *ptr_grid_manager_->GetSFBitsetAuxPtr(), &grid_ref, ptr_mpi_manager_.get());
 
         grid_ref.ptr_solver_->InformationFromGridOfDifferentLevel(
             amrproject::ETimingInOneStep::kStepEnd, k0TimeSteppingType_,
             time_step_level[i_level], *ptr_grid_manager_->GetSFBitsetAuxPtr(), &grid_ref);
+
+#ifdef ENABLE_MPI
+        MPI_Barrier(MPI_COMM_WORLD);
+#endif  //  ENABLE_MPI
     }
 }
 /**

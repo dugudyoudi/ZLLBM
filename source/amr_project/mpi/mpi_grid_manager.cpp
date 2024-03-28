@@ -24,7 +24,7 @@ std::unique_ptr<char[]> MpiManager::SerializeNodeStoreUint(const DefMap<DefAmrUi
     int* const ptr_buffer_size) const {
     int key_size = sizeof(DefSFBitset), node_size = sizeof(DefAmrUint);
     int num_nodes = 1;
-    if  (sizeof(int) + map_nodes.size() *(key_size + node_size) > 0x7FFFFFFF) {
+    if  (sizeof(int) + map_nodes.size()*(key_size + node_size) > (std::numeric_limits<int>::max)()) {
         LogManager::LogError("size of the buffer is greater"
          " than the maximum of int in MpiManager::SerializeData(DefMap<DefAmrUint>)");
     } else {
@@ -52,9 +52,9 @@ std::unique_ptr<char[]> MpiManager::SerializeNodeStoreUint(const DefMap<DefAmrUi
     return buffer;
 }
 /**
- * @brief function to deserialize data (a DefSFBitset and a DefAmrUint) from a buffer
- * @param[in] buffer buffer has received data
- * @param[out] map_nodes node information
+ * @brief function to deserialize data (a DefSFBitset and a DefAmrUint) from a buffer.
+ * @param[in] buffer buffer has received data.
+ * @param[out] map_nodes node information.
  */
 void MpiManager::DeserializeNodeStoreUint(
     const std::unique_ptr<char[]>& buffer, DefMap<DefAmrUint>* const map_nodes) const {
@@ -67,11 +67,11 @@ void MpiManager::DeserializeNodeStoreUint(
     DefAmrUint node_data;
     // deserialize data stored in buffer
     position += sizeof(int);
-    DefSFCodeToUint key_net;
+    DefSFCodeToUint key_code;
     DefSFBitset key_host;
     for (int i_node = 0; i_node < num_nodes; ++i_node) {
-        std::memcpy(&key_net, ptr_buffer + position, key_size);
-        key_host = static_cast<DefSFBitset>(key_net);
+        std::memcpy(&key_code, ptr_buffer + position, key_size);
+        key_host = static_cast<DefSFBitset>(key_code);
         position += key_size;
         std::memcpy(&node_data, ptr_buffer + position, node_size);
         position += node_size;
@@ -88,7 +88,7 @@ std::unique_ptr<char[]> MpiManager::SerializeNodeSFBitset(
     const DefMap<DefAmrIndexUint>& map_nodes, int* const ptr_buffer_size) const {
     int key_size = sizeof(DefSFBitset);
     int num_nodes = 1;
-    if  (sizeof(int) + map_nodes.size() *(key_size) > 0x7FFFFFFF) {
+    if  (sizeof(int) + map_nodes.size() *(key_size) > (std::numeric_limits<int>::max)()) {
         LogManager::LogError("size of the buffer is greater than the"
          " maximum of int in MpiManager::SerializeData(DefMap<DefAmrUint>)");
     } else {
@@ -128,11 +128,11 @@ void MpiManager::DeserializeNodeSFBitset(const DefAmrIndexUint flag_node,
     std::memcpy(&num_nodes, ptr_buffer, sizeof(int));
     // deserialize data stored in buffer
     position += sizeof(int);
-    DefSFCodeToUint key_net;
+    DefSFCodeToUint key_code;
     DefSFBitset key_host;
     for (int i_node = 0; i_node < num_nodes; ++i_node) {
-        std::memcpy(&key_net, ptr_buffer + position, key_size);
-        key_host = static_cast<DefSFBitset>(key_net);
+        std::memcpy(&key_code, ptr_buffer + position, key_size);
+        key_host = static_cast<DefSFBitset>(key_code);
         position += key_size;
         map_nodes->insert({ key_host, flag_node });
     }
@@ -561,7 +561,7 @@ void MpiManager::IniSendNReceivePartitionedGrid(const DefAmrIndexUint dims,
                         vec_ghost_nodes_ranks.at(i_rank).at(i_chunk), &buffer_size_send);
                     MPI_Send(&buffer_size_send, 1, MPI_INT, i_rank, i_chunk, MPI_COMM_WORLD);
                     MPI_Isend(vec_ptr_buffer.at(i_chunk).get(), buffer_size_send, MPI_BYTE, i_rank,
-                    i_chunk, MPI_COMM_WORLD, &reqs_send[i_chunk]);
+                        i_chunk, MPI_COMM_WORLD, &reqs_send[i_chunk]);
                 }
                 MPI_Waitall(num_chunks, reqs_send.data(), MPI_STATUS_IGNORE);
             }

@@ -37,8 +37,9 @@ class AmrManager {
     // modules
 #ifdef ENABLE_MPI
     int SetUpProgramFeature(int argc, char* argv[]);
-    std::unique_ptr<MpiManager> ptr_mpi_manager_;
 #endif  // ENABLE_MPI
+    std::unique_ptr<MpiManager> ptr_mpi_manager_;  // when MPI is not enabled, this point to an empty class
+
     std::unique_ptr<GridManagerInterface> ptr_grid_manager_;
     std::unique_ptr<IoManager> ptr_io_manager_;
     std::unique_ptr<CriterionManager> ptr_criterion_manager_;
@@ -61,6 +62,16 @@ class AmrManager {
     void SetDependentInfoForAllLevelsTheSame(const std::shared_ptr<SolverInterface>& ptr_solver);
 
  private:
+    // mpi
+    MpiManager* GetPointerToMpiManager() const {
+        if (ptr_mpi_manager_ != nullptr) {
+            return ptr_mpi_manager_.get();
+        } else {
+            return nullptr;
+        }
+    }
+
+
     static AmrManager* amr_instance_;
     AmrManager(void) {}
     ~AmrManager(void) {}

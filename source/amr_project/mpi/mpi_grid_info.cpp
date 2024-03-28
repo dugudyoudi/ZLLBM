@@ -53,7 +53,7 @@ std::unique_ptr<char[]> MpiManager::IniSerializeTrackingNode(
     const std::set<DefSFCodeToUint>& set_nodes, int* const ptr_buffer_size) const {
     int key_size = sizeof(DefSFBitset);
     int num_nodes = 0;
-    if  (sizeof(int) + set_nodes.size() *key_size > 0x7FFFFFFF) {
+    if  (sizeof(int) + set_nodes.size() *key_size > (std::numeric_limits<int>::max)()) {
         LogManager::LogError("size of the buffer is greater than"
          " the maximum of int in MpiManager::IniSerializeTrackingNode in "
          + std::string(__FILE__) + " at line " + std::to_string(__LINE__));
@@ -93,11 +93,11 @@ void MpiManager::IniDeserializeTrackingNode(const std::unique_ptr<char[]>& buffe
     std::memcpy(&num_nodes, ptr_buffer, sizeof(int));
     // deserialize data stored in buffer
     position += sizeof(int);
-    DefSFCodeToUint key_net;
+    DefSFCodeToUint key_code;
     for (int i_node = 0; i_node < num_nodes; ++i_node) {
-        std::memcpy(&key_net, ptr_buffer + position, key_size);
+        std::memcpy(&key_code, ptr_buffer + position, key_size);
         position += key_size;
-        ptr_map_tracking->insert({static_cast<DefSFBitset>(key_net), tracking_node_instance});
+        ptr_map_tracking->insert({static_cast<DefSFBitset>(key_code), tracking_node_instance});
     }
 }
 /**
@@ -287,23 +287,24 @@ void MpiManager::IniSendNReceiveTracking(const DefAmrIndexUint dims, const DefAm
 /**
  * @brief function to serializes a set of tracking nodes into a buffer.
  * @param[in] interface_nodes space filling code for nodes on refinement interface to be serialized.
- * @param[out] buffer a pointer to a char array where the serialized data will be stored.
- * @return The size of the serialized data in bytes.
+ * @param[out] ptr_buffer_size pointer to size of the buffer in bytes.
+ * @return unique pointer to a char array to store the serialized data.
  */
-int MpiManager::IniSerializeRefinementInterfaceNode(const DefMap<DefAmrUint>& interface_nodes,
-        std::unique_ptr<char[]>& buffer) const {
+std::unique_ptr<char[]> MpiManager::IniSerializeRefinementInterfaceNode(
+    const DefMap<DefAmrUint>& interface_nodes, int* const ptr_buffer_size) const {
     int key_size = sizeof(DefSFBitset);
     int num_nodes = 0;
-    if  (sizeof(int) + interface_nodes.size() *key_size > 0x7FFFFFFF) {
+    if  (sizeof(int) + interface_nodes.size() *key_size > (std::numeric_limits<int>::max)()) {
         LogManager::LogError("size of the buffer is greater than"
          " the maximum of int in GridInfoInterface::SerializeTrackingNode in "
          + std::string(__FILE__) + " at line " + std::to_string(__LINE__));
     } else {
         num_nodes = static_cast<int>(interface_nodes.size());
     }
-    int buffer_size = sizeof(int) + key_size * num_nodes;
+    int& buffer_size = *ptr_buffer_size;
+    buffer_size = sizeof(int) + key_size * num_nodes;
     // allocation buffer to store the serialized data
-    buffer = std::make_unique<char[]>(buffer_size);
+    std::unique_ptr<char[]> buffer = std::make_unique<char[]>(buffer_size);
     char* ptr_buffer = buffer.get();
     int position = 0;
     std::memcpy(ptr_buffer + position, &num_nodes, sizeof(int));
@@ -314,7 +315,7 @@ int MpiManager::IniSerializeRefinementInterfaceNode(const DefMap<DefAmrUint>& in
         std::memcpy(ptr_buffer + position, &iter.first, key_size);
         position += key_size;
     }
-    return buffer_size;
+    return buffer;
 }
 /**
  * @brief function to deserialize tracking node data and insert it into the associated map.
@@ -332,11 +333,11 @@ void MpiManager::IniDeserializeRefinementInterfaceNode(const DefAmrUint flag0,
     std::memcpy(&num_nodes, ptr_buffer, sizeof(int));
     // deserialize data stored in buffer
     position += sizeof(int);
-    DefSFCodeToUint key_net;
+    DefSFCodeToUint key_code;
     for (int i_node = 0; i_node < num_nodes; ++i_node) {
-        std::memcpy(&key_net, ptr_buffer + position, key_size);
+        std::memcpy(&key_code, ptr_buffer + position, key_size);
         position += key_size;
-        ptr_map_interface_layer->insert({key_net, flag0});
+        ptr_map_interface_layer->insert({key_code, flag0});
     }
 }
 /**
@@ -394,8 +395,8 @@ void MpiManager::IniSendNReiveOneLayerRefinementInterface(
             std::vector<std::unique_ptr<char[]>> vec_ptr_buffer(num_chunks);
             std::vector<MPI_Request> reqs_send(num_chunks);
             for (int i_chunk = 0; i_chunk < num_chunks; ++i_chunk) {
-                buffer_size_send = IniSerializeRefinementInterfaceNode(
-                    vec_nodes_ranks.at(iter_rank).at(i_chunk), vec_ptr_buffer.at(i_chunk));
+                vec_ptr_buffer.at(i_chunk) = IniSerializeRefinementInterfaceNode(
+                    vec_nodes_ranks.at(iter_rank).at(i_chunk), &buffer_size_send);
                 MPI_Send(&buffer_size_send, 1, MPI_INT, iter_rank, i_chunk, MPI_COMM_WORLD);
                 MPI_Isend(vec_ptr_buffer.at(i_chunk).get(), buffer_size_send, MPI_BYTE, iter_rank,
                 i_chunk, MPI_COMM_WORLD, &reqs_send[i_chunk]);
@@ -538,6 +539,41 @@ void MpiManager::IniSendNReceiveCoarse2Fine0Interface(const DefAmrIndexUint dims
     }
 
     MPI_Type_free(&mpi_interface_index_type);
+}
+void MpiManager::SetCommunicationRegionForPeriodicBoundary(const SFBitsetAuxInterface& sfbitset_aux,
+    const GridManagerInterface& grid_manager,
+    const std::vector<bool>& bool_periodic_min, const std::vector<bool>& bool_periodic_max,
+    const std::vector<DefMap<DefAmrIndexUint>>& domain_boundary_min,
+    const std::vector<DefMap<DefAmrIndexUint>>& domain_boundary_max,
+    GridInfoInterface* const ptr_grid_info) {
+    DefAmrIndexUint dims = grid_manager.k0GridDims_, i_level = ptr_grid_info->i_level_;
+    if (bool_periodic_min.size() != dims) {
+        LogManager::LogError("size of bool_periodic_min " + std::to_string(bool_periodic_min.size())
+            + " is not equal to the grid dimension " + std::to_string(dims) + "in "
+            + std::string(__FILE__) + " at line " + std::to_string(__LINE__));
+    }
+    if (bool_periodic_max.size() != dims) {
+        LogManager::LogError("size of bool_periodic_max " + std::to_string(bool_periodic_min.size())
+            + " is not equal to the grid dimension " + std::to_string(dims) + "in "
+            + std::string(__FILE__) + " at line " + std::to_string(__LINE__));
+    }
+    std::vector<DefSFBitset> nodes_in_region;
+    for (DefAmrIndexUint i_dims = 0; i_dims < dims; ++i_dims) {
+        if (bool_periodic_min.at(i_dims)) {
+            for (const auto& iter_node : domain_boundary_min.at(i_dims)) {
+                if (mpi_communication_outer_layers_.at(i_level).find(iter_node.first)
+                    == mpi_communication_outer_layers_.at(i_level).end()) {
+                    sfbitset_aux.FindNodesInPeriodicReginOfGivenLength(iter_node.first,
+                        k0NumPartitionOuterLayers_, bool_periodic_min, bool_periodic_max,
+                        ptr_grid_info->k0VecBitsetDomainMin_, ptr_grid_info->k0VecBitsetDomainMax_,
+                        &nodes_in_region);
+                       // grid_manager.InstantiateGridNode
+                }
+            }
+        }
+    }
+
+
 }
 }  // end namespace amrproject
 }  // end namespace rootproject
