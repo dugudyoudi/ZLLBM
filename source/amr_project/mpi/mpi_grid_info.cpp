@@ -217,10 +217,11 @@ void MpiManager::IniSendNReceiveTracking(const DefAmrIndexUint dims, const DefAm
             std::vector<std::vector<std::set<DefSFCodeToUint>>> vec_nodes_ranks(num_ranks);
             vec_nodes_ranks.at(0).push_back({});
             int index;
+            std::vector<DefSFCodeToUint>::iterator iter_index;
             std::vector<int> i_chunk_each_rank(num_ranks, -1), i_counts(num_ranks, 0);
             for (const auto& iter_node : ptr_tracking_info->map_tracking_node_) {
                 background_code = (bitset_aux.SFBitsetToNLowerLevelVir(i_level, iter_node.first)).to_ullong();
-                auto iter_index = std::lower_bound(ull_max.begin(),
+                iter_index = std::lower_bound(ull_max.begin(),
                     ull_max.end(), background_code);
                 index = static_cast<int>(iter_index - ull_max.begin());
                 key_ull = iter_node.first.to_ullong();
@@ -539,41 +540,6 @@ void MpiManager::IniSendNReceiveCoarse2Fine0Interface(const DefAmrIndexUint dims
     }
 
     MPI_Type_free(&mpi_interface_index_type);
-}
-void MpiManager::SetCommunicationRegionForPeriodicBoundary(const SFBitsetAuxInterface& sfbitset_aux,
-    const GridManagerInterface& grid_manager,
-    const std::vector<bool>& bool_periodic_min, const std::vector<bool>& bool_periodic_max,
-    const std::vector<DefMap<DefAmrIndexUint>>& domain_boundary_min,
-    const std::vector<DefMap<DefAmrIndexUint>>& domain_boundary_max,
-    GridInfoInterface* const ptr_grid_info) {
-    DefAmrIndexUint dims = grid_manager.k0GridDims_, i_level = ptr_grid_info->i_level_;
-    if (bool_periodic_min.size() != dims) {
-        LogManager::LogError("size of bool_periodic_min " + std::to_string(bool_periodic_min.size())
-            + " is not equal to the grid dimension " + std::to_string(dims) + "in "
-            + std::string(__FILE__) + " at line " + std::to_string(__LINE__));
-    }
-    if (bool_periodic_max.size() != dims) {
-        LogManager::LogError("size of bool_periodic_max " + std::to_string(bool_periodic_min.size())
-            + " is not equal to the grid dimension " + std::to_string(dims) + "in "
-            + std::string(__FILE__) + " at line " + std::to_string(__LINE__));
-    }
-    std::vector<DefSFBitset> nodes_in_region;
-    for (DefAmrIndexUint i_dims = 0; i_dims < dims; ++i_dims) {
-        if (bool_periodic_min.at(i_dims)) {
-            for (const auto& iter_node : domain_boundary_min.at(i_dims)) {
-                if (mpi_communication_outer_layers_.at(i_level).find(iter_node.first)
-                    == mpi_communication_outer_layers_.at(i_level).end()) {
-                    sfbitset_aux.FindNodesInPeriodicReginOfGivenLength(iter_node.first,
-                        k0NumPartitionOuterLayers_, bool_periodic_min, bool_periodic_max,
-                        ptr_grid_info->k0VecBitsetDomainMin_, ptr_grid_info->k0VecBitsetDomainMax_,
-                        &nodes_in_region);
-                       // grid_manager.InstantiateGridNode
-                }
-            }
-        }
-    }
-
-
 }
 }  // end namespace amrproject
 }  // end namespace rootproject

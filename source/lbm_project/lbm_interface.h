@@ -211,7 +211,7 @@ class GridInfoLbmInteface : public amrproject::GridInfoInterface {
     DefMap<std::unique_ptr<GridNodeLbm>>* GetPointerToLbmGrid();
 
     // node related
-    void InitialNotComputeNodeFlag(const amrproject::GridManagerInterface& grid_manager) override;
+    void InitialNotComputeNodeFlag() override;
     std::unique_ptr<amrproject::GridNode> GridNodeCreator() override;
     void SetNodeVariablesAsZeros(amrproject::GridNode* const ptr_node) override;
 
@@ -231,6 +231,8 @@ class GridInfoLbmInteface : public amrproject::GridInfoInterface {
     // domain boundaries
     /**< pointer to boundary conditions adopted for domain boundary */
     std::map<ELbmBoundaryType, std::unique_ptr<BoundaryConditionLbmInterface>> domain_boundary_condition_;
+    bool CheckIfPeriodicDomainRequired(const DefAmrIndexUint dims,
+        std::vector<bool>* const ptr_periodic_min, std::vector<bool>* const ptr_periodic_max) const override;
     void ComputeDomainBoundaryCondition();
 
     // time marching related
@@ -273,6 +275,9 @@ class GridInfoLbmInteface : public amrproject::GridInfoInterface {
     int k0SizeOfAllDistributionFunctions_ = 0;
     int SizeOfGridNodeInfoForMpiCommunication() const override;
     void CopyNodeInfoToBuffer(const DefMap<DefAmrIndexUint>& map_nodes, char* const ptr_buffer) override;
+    void ComputeLocalInfoOnMpiLayers(
+        const std::map<int, DefMap<DefAmrIndexUint>>& map_inner_nodes,
+        const DefMap<DefAmrIndexUint>& map_outer_nodes) override;
     void ReadNodeInfoFromBuffer(const DefSizet buffer_size, const std::unique_ptr<char[]>& buffer) override;
     virtual void ComputeNodeInfoBeforeMpiCommunication(const DefSFBitset sfbitset_in,
         const SolverLbmInterface& lbm_solver);
@@ -311,7 +316,10 @@ class SolverLbmInterface :public amrproject::SolverInterface {
     void SolverInitial() override;
     void RunSolverOnGrid(const amrproject::ETimeSteppingScheme time_scheme,
         const DefAmrIndexUint time_step_current, const amrproject::SFBitsetAuxInterface& sfbitset_aux,
-        amrproject::GridInfoInterface* const ptr_grid_info, amrproject::MpiManager* const ptr_mpi_manager) override;
+        amrproject::GridInfoInterface* const ptr_grid_info) override;
+    void FinalizeAtTimeStepEnd(const amrproject::ETimeSteppingScheme time_scheme,
+        const DefAmrIndexUint time_step_current, const amrproject::SFBitsetAuxInterface& sfbitset_aux,
+        amrproject::GridInfoInterface* const ptr_grid_info) override;
     void InformationFromGridOfDifferentLevel(
         const amrproject::ETimingInOneStep timing, const amrproject::ETimeSteppingScheme time_scheme,
         const DefAmrIndexUint time_step_current, const amrproject::SFBitsetAuxInterface& sfbitset_aux,
@@ -319,8 +327,11 @@ class SolverLbmInterface :public amrproject::SolverInterface {
 
     virtual void InitialModelDependencies() = 0;
     virtual void Stream(const DefAmrUint flag_not_compute, const amrproject::SFBitsetAuxInterface& sfbitset_aux,
+        DefMap<std::unique_ptr<GridNodeLbm>>* const ptr_map_grid_nodes) const;
+    virtual void StreamInForAGivenNode(const DefSFBitset sfbitset_in,
+        const amrproject::SFBitsetAuxInterface& sfbitset_aux,
         DefMap<std::unique_ptr<GridNodeLbm>>* const ptr_map_grid_nodes) const = 0;
-    virtual void StreamForAGivenNode(const DefSFBitset sfbitset_in,
+    virtual void StreamOutForAGivenNode(const DefSFBitset sfbitset_in,
         const amrproject::SFBitsetAuxInterface& sfbitset_aux,
         DefMap<std::unique_ptr<GridNodeLbm>>* const ptr_map_grid_nodes) const = 0;
 
@@ -363,7 +374,8 @@ class SolverLbmInterface :public amrproject::SolverInterface {
     virtual std::unique_ptr<BoundaryConditionLbmInterface> BoundaryPeriodicCreator() const;
 
     // pointer to function calculate macroscopic variables
-    std::function<void(const DefReal, GridNodeLbm* const)> func_macro_, func_macro_force_;
+    // declare with std::function rather than pointer to function is used for implementations in derived class
+    std::function<void(const DefReal, GridNodeLbm* const)> func_macro_without_force_, func_macro_with_force_;
 
  protected:
     void CalMacro2DCompressible(const DefReal dt_lbm, GridNodeLbm* const ptr_node) const;

@@ -2,13 +2,12 @@
 //  All rights reserved
 
 /**
-* @file grid_manager.cpp
+* @file grid_info.cpp
 * @author Zhengliang Liu
-* @brief functions used to manage grid related processes.
+* @brief functions used to manage grid information.
 * @date  2022-6-7
 */
 #include <string>
-#include <mpi.h>
 #include "grid/grid_info_interface.h"
 #include "io/log_write.h"
 namespace rootproject {
@@ -49,66 +48,108 @@ int GridInfoInterface::CheckIfNodeOutsideCubicDomain(const DefAmrIndexUint dims,
     // x min
     code_one_dim = (bitset_in&sfbitset_aux.k0SFBitsetTakeXRef_[current_bit]).to_ullong();
     code_boundary = k0VecBitsetDomainMin_[kXIndex].to_ullong();
-    if (code_one_dim <= code_boundary) {
-        if (code_one_dim == code_boundary) {
-            flag_node |= 1;
-        } else {
-            return -1;
-        }
+    if (code_one_dim < code_boundary) {
+        return -1;
+    } else if (code_one_dim == code_boundary) {
+        flag_node |= 1;
     }
     // x max
     code_one_dim = (bitset_in&sfbitset_aux.k0SFBitsetTakeXRef_[current_bit]).to_ullong();
     code_boundary = k0VecBitsetDomainMax_[kXIndex].to_ullong();
-    if (code_one_dim >= code_boundary) {
-        if (code_one_dim == code_boundary) {
-            flag_node |= 8;
-        } else {
-            return -1;
-        }
+    if (code_one_dim > code_boundary) {
+        return -1;
+    } else if (code_one_dim == code_boundary) {
+        flag_node |= 8;
     }
     // y min
     code_one_dim = (bitset_in&sfbitset_aux.k0SFBitsetTakeYRef_[current_bit]).to_ullong();
     code_boundary = k0VecBitsetDomainMin_[kYIndex].to_ullong();
-    if (code_one_dim <= code_boundary) {
-        if (code_one_dim == code_boundary) {
-            flag_node |= 2;
-        } else {
-            return -1;
-        }
+    if (code_one_dim < code_boundary) {
+        return -1;
+    } else if (code_one_dim == code_boundary) {
+        flag_node |= 2;
     }
     // y max
     code_one_dim = (bitset_in&sfbitset_aux.k0SFBitsetTakeYRef_[current_bit]).to_ullong();
     code_boundary = k0VecBitsetDomainMax_[kYIndex].to_ullong();
-    if (code_one_dim >= code_boundary) {
-        if (code_one_dim == code_boundary) {
-            flag_node |= 16;
-        } else {
-            return -1;
-        }
+    if (code_one_dim > code_boundary) {
+        return -1;
+    } else if (code_one_dim == code_boundary) {
+        flag_node |= 16;
     }
     if (dims == 3) {
         // z min
         code_one_dim = (bitset_in&sfbitset_aux.k0SFBitsetTakeZRef_[current_bit]).to_ullong();
         code_boundary = k0VecBitsetDomainMin_[kZIndex].to_ullong();
-        if (code_one_dim <= code_boundary) {
-            if (code_one_dim == code_boundary) {
-                flag_node |= 4;
-            } else {
-                return -1;
-            }
+        if (code_one_dim < code_boundary) {
+            return -1;
+        } else if (code_one_dim == code_boundary) {
+            flag_node |= 4;
         }
         // z max
         code_one_dim = (bitset_in&sfbitset_aux.k0SFBitsetTakeZRef_[current_bit]).to_ullong();
         code_boundary = k0VecBitsetDomainMax_[kZIndex].to_ullong();
-        if (code_one_dim >= code_boundary) {
-            if (code_one_dim == code_boundary) {
-                flag_node |= 32;
-            } else {
-                return -1;
-            }
+        if (code_one_dim > code_boundary) {
+            return -1;
+        } else if (code_one_dim == code_boundary) {
+            flag_node |= 32;
         }
     }
     return flag_node;
+}
+/**
+ * @brief function to check if there are nodes on periodic boundaries of a cubic domain.
+ * @param[in] dims dimension of the grid.
+ * @param[in] bitset_in spacing filling code of a grid node.
+ * @param[in] periodic_min booleans indicating if the boundary is periodic at maximum domain boundaries.
+ * @param[in] periodic_max booleans indicating if the boundary is periodic at maximum domain boundaries.
+ * @param[in] sfbitset_aux class to manage functions for space filling code computation.
+ * @param[out] ptr_nodes_periodic pointer to counterpart nodes on the periodic boundaries.
+ */
+void GridInfoInterface::CheckNodesOnCubicPeriodicBoundary(const DefAmrIndexUint dims, const DefSFBitset& bitset_in,
+    const std::vector<bool>& periodic_min, const std::vector<bool>& periodic_max,
+    const SFBitsetAuxInterface& sfbitset_aux, std::vector<DefSFBitset>* const ptr_nodes_periodic) const {
+    ptr_nodes_periodic->clear();
+    DefAmrIndexUint current_bit = sfbitset_aux.kRefCurrent_;
+    DefAmrIndexUint other_bit = sfbitset_aux.kRefOthers_;
+    // x min
+    if (periodic_min.at(kXIndex)
+        && ((bitset_in&sfbitset_aux.k0SFBitsetTakeXRef_[current_bit]) == k0VecBitsetDomainMin_[kXIndex])) {
+        ptr_nodes_periodic->push_back((bitset_in&sfbitset_aux.k0SFBitsetTakeXRef_[other_bit])
+            |k0VecBitsetDomainMax_[kXIndex]);
+    }
+    // x max
+    if (periodic_max.at(kXIndex)
+        && ((bitset_in&sfbitset_aux.k0SFBitsetTakeXRef_[current_bit]) == k0VecBitsetDomainMax_[kXIndex])) {
+        ptr_nodes_periodic->push_back((bitset_in&sfbitset_aux.k0SFBitsetTakeXRef_[other_bit])
+            |k0VecBitsetDomainMin_[kXIndex]);
+    }
+    // y min
+    if (periodic_min.at(kYIndex)
+        && ((bitset_in&sfbitset_aux.k0SFBitsetTakeYRef_[current_bit]) == k0VecBitsetDomainMin_[kYIndex])) {
+        ptr_nodes_periodic->push_back((bitset_in&sfbitset_aux.k0SFBitsetTakeYRef_[other_bit])
+            |k0VecBitsetDomainMax_[kYIndex]);
+    }
+    // y max
+    if (periodic_max.at(kYIndex)
+        && ((bitset_in&sfbitset_aux.k0SFBitsetTakeYRef_[current_bit]) == k0VecBitsetDomainMax_[kYIndex])) {
+        ptr_nodes_periodic->push_back((bitset_in&sfbitset_aux.k0SFBitsetTakeYRef_[other_bit])
+            |k0VecBitsetDomainMin_[kYIndex]);
+    }
+    if (dims == 3) {
+        // z min
+        if (periodic_min.at(kZIndex)
+            && ((bitset_in&sfbitset_aux.k0SFBitsetTakeZRef_[current_bit]) == k0VecBitsetDomainMin_[kZIndex])) {
+            ptr_nodes_periodic->push_back((bitset_in&sfbitset_aux.k0SFBitsetTakeZRef_[other_bit])
+                |k0VecBitsetDomainMax_[kZIndex]);
+        }
+        // z max
+        if (periodic_max.at(kZIndex)
+            && ((bitset_in&sfbitset_aux.k0SFBitsetTakeZRef_[current_bit]) == k0VecBitsetDomainMax_[kZIndex])) {
+            ptr_nodes_periodic->push_back((bitset_in&sfbitset_aux.k0SFBitsetTakeYRef_[other_bit])
+                |k0VecBitsetDomainMin_[kZIndex]);
+        }
+    }
 }
 /**
  * @brief function to check if information from coarse node is needed.

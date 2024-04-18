@@ -188,6 +188,9 @@ class GridInfoInterface {
     ///< map storing spacing filling codes of bounds (min and max in each coordinate) for computational domain
     int CheckIfNodeOutsideCubicDomain(const DefAmrIndexUint dims,
         const DefSFBitset& bitset_in, const SFBitsetAuxInterface& sfbitset_aux) const;
+    void CheckNodesOnCubicPeriodicBoundary(const DefAmrIndexUint dims, const DefSFBitset& bitset_in,
+        const std::vector<bool>& periodic_min, const std::vector<bool>& periodic_max,
+        const SFBitsetAuxInterface& sfbitset_aux, std::vector<DefSFBitset>* const ptr_nodes_periodic) const;
 
     // output related
     std::vector<std::unique_ptr<OutputNodeVariableInfoInterface>> output_variables_;
@@ -198,7 +201,7 @@ class GridInfoInterface {
         const DefMap<DefSizet>& map_node_index) const {}
 
     // node type
-    virtual void InitialNotComputeNodeFlag(const GridManagerInterface& grid_manager) {}
+    virtual void InitialNotComputeNodeFlag() {}
     virtual std::unique_ptr<GridNode> GridNodeCreator() {
         return std::make_unique<GridNode>();
     }
@@ -269,9 +272,21 @@ class GridInfoInterface {
 
     // mpi related
  public:
+    virtual bool CheckIfPeriodicDomainRequired(const DefAmrIndexUint dims,
+        std::vector<bool>* const ptr_periodic_min, std::vector<bool>* const ptr_periodic_max) const {
+        ptr_periodic_min->assign(dims, false);
+        ptr_periodic_max->assign(dims, false);
+        return false;
+    }
     virtual int SizeOfGridNodeInfoForMpiCommunication() const {return 0;}
     virtual void CopyNodeInfoToBuffer(const DefMap<DefAmrIndexUint>& map_nodes, char* const ptr_buffer) {}
+    virtual void ComputeLocalInfoOnMpiLayers(
+        const std::map<int, DefMap<DefAmrIndexUint>>& map_inner_nodes,
+        const DefMap<DefAmrIndexUint>& map_outer_nodes) {}
     virtual void ReadNodeInfoFromBuffer(const DefSizet buffer_size, const std::unique_ptr<char[]>& buffer) {}
+    void SetPeriodicBoundaryAsPartitionInterface(DefAmrIndexUint dims, const SFBitsetAuxInterface& sfbitset_aux,
+        const std::vector<bool>& bool_periodic_min, const std::vector<bool>& bool_periodic_max,
+        DefMap<DefAmrIndexUint>* const ptr_partition_interface);
 
     // general purpose functions
     virtual void InitialGridInfo() = 0;

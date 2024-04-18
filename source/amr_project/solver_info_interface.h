@@ -11,6 +11,7 @@
 #define ROOTPROJECT_AMR_PROJECT_SOLVER_INFO_INTERFACE_H_
 #include <string>
 #include <memory>
+#include <vector>
 #include "grid/grid_enumerates.h"
 namespace rootproject {
 namespace amrproject {
@@ -33,7 +34,10 @@ class SolverInterface {
     virtual void SolverInitial() = 0;
     virtual void RunSolverOnGrid(const ETimeSteppingScheme time_scheme,
         const DefAmrIndexUint time_step_current, const SFBitsetAuxInterface& sfbitset_aux,
-        GridInfoInterface* const ptr_grid_info, MpiManager* const ptr_mpi_manager) = 0;
+        GridInfoInterface* const ptr_grid_info) = 0;
+    virtual void FinalizeAtTimeStepEnd(const ETimeSteppingScheme time_scheme,
+        const DefAmrIndexUint time_step_current, const SFBitsetAuxInterface& sfbitset_aux,
+        GridInfoInterface* const ptr_grid_info) {}
     virtual void InformationFromGridOfDifferentLevel(
         const ETimingInOneStep timing, const ETimeSteppingScheme time_scheme,
         const DefAmrIndexUint time_step_current, const SFBitsetAuxInterface& sfbitset_aux,

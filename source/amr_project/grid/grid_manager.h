@@ -58,6 +58,18 @@ class MultiTimeSteppingC2F : public TimeSteppingSchemeInterface {
     explicit MultiTimeSteppingC2F(const DefAmrIndexUint max_level);
 };
 /**
+* @struct NodeBitStatus
+* @brief struct declaration for node status (constants).
+*/
+struct NodeBitStatus {
+    inline static DefAmrUint kNodeStatus0_ = 0;
+    inline static DefAmrUint kNodeStatusCoarse2Fine0_ = 1 << 1;  ///< flag indicating node on the outmost fine layer
+    inline static DefAmrUint kNodeStatusCoarse2FineM1_ = 1 << 2;
+    inline static DefAmrUint kNodeStatusFine2Coarse0_ = 1 << 3;  ///< flag indicating node on outmost coarse layer
+    inline static DefAmrUint kNodeStatusFine2CoarseM1_ = 1 << 4;
+    inline static DefAmrUint kNodeStatusMpiPartitionOutside_ = 1 << 5;
+};
+/**
 * @class GridManagerInterface
 * @brief class used to manage adaptive mesh refinement.
 * @note parameters with prefix 'k0'will be considered
@@ -83,12 +95,6 @@ class GridManagerInterface{
     e.g. solid boundary and free surface*/
 
     // grid status
-    const DefAmrUint kNodeStatus0_ = 0;
-    const DefAmrUint kNodeStatusCoarse2Fine0_ = 1 << 1;  ///< flag indicating node on the outmost fine layer
-    const DefAmrUint kNodeStatusCoarse2FineM1_ = 1 << 2;
-    const DefAmrUint kNodeStatusFine2Coarse0_ = 1 << 3;  ///< flag indicating node on the outmost coarse layer
-    const DefAmrUint kNodeStatusFine2CoarseM1_ = 1 << 4;
-    const DefAmrUint kNodeStatusMpiPartitionOutside_ = 1 << 5;
     const DefAmrIndexUint kFlagSize0_ = 0;  // flag initialize size as 0
 
     //  o     o     o     o  // coarse grid
@@ -159,7 +165,7 @@ class GridManagerInterface{
         std::vector<DefSFBitset>* const ptr_bitsets) const = 0;
     virtual void GridFindAllNeighborsVir(const DefSFBitset& bitset_in,
         std::vector<DefSFBitset>* const ptr_vec_neighbors) const = 0;
-    virtual void FindAllNodesInACellAtLowerLevel(
+    virtual void FindAllNodesInACellAtOneLevelLower(
         const std::vector<DefSFBitset> bitset_cell,
         std::vector<DefSFBitset>* const ptr_bitset_all) const = 0;
     virtual DefSFBitset NodeAtNLowerLevel(
@@ -167,7 +173,7 @@ class GridManagerInterface{
     virtual DefAmrIndexLUint CalNumOfBackgroundNode() const = 0;
     virtual bool CheckBackgroundOffset(const DefSFBitset& sfbitset_in) const = 0;
 
-    // generate grid (static)
+    // generate grid (initialization)
     /*the method is used to create grid instance for all refinement levels.
       Give different methods for each grid is possible by using other functions*/
     void CreateSameGridInstanceForAllLevel(const std::shared_ptr<SolverInterface>& ptr_solver,
@@ -184,15 +190,6 @@ class GridManagerInterface{
         std::vector<DefMap<DefAmrIndexUint>>* const ptr_sfbitset_one_lower_level);
     void InstantiateGridNodeAllLevel(const DefSFBitset sfbitset_min, const DefSFBitset sfbitset_max,
         const std::vector<DefMap<DefAmrIndexUint>>& sfbitset_one_lower_level);
-    void InstantiateGridNodeAllLevelMpi(const int i_rank,
-        const DefAmrIndexUint num_partition_inner_layer, const DefAmrIndexUint num_partition_outer_layer,
-        const std::vector<DefSFBitset>& vec_sfbitset_min,
-        const std::vector<DefSFBitset>& vec_sfbitset_max, const SFBitsetAuxInterface& sfbitset_aux,
-        const std::vector<DefMap<DefAmrIndexUint>>& sfbitset_one_lower_level,
-        const std::vector<DefMap<DefAmrIndexUint>>& sfbitset_ghost_one_lower_level,
-        const DefMap<DefAmrIndexUint>& sfbitset_partition_interface,
-        std::vector<std::map<int, DefMap<DefAmrIndexUint>>>* const ptr_mpi_inner_layer,
-        std::vector<DefMap<DefAmrUint>>* const ptr_mpi_outer_layer);
 
     virtual ~GridManagerInterface() {}
     GridManagerInterface() {
@@ -208,14 +205,6 @@ class GridManagerInterface{
     // functions to generate grid
     void InstantiateOverlapLayerOfRefinementInterface(
         const std::vector<DefMap<DefAmrIndexUint>>& sfbitset_one_lower_level);
-    void InstantiateOverlapLayerOfRefinementInterfaceMpi(
-        const DefAmrIndexUint i_level, const DefAmrIndexUint num_partition_outer_layer,
-        const DefAmrUint flag_refinement,
-        const DefSFCodeToUint code_min, const DefSFCodeToUint code_max,
-        const SFBitsetAuxInterface& sfbitset_aux, const DefMap<DefAmrIndexUint>& map_sfbitset_one_lower_level,
-        const DefMap<DefAmrIndexUint>& sfbitset_partition_interface_background,
-        DefMap<DefAmrUint>* const ptr_outer_layer_current_level,
-        DefMap<DefAmrUint>* const ptr_outer_layer_lower_level);
 
     virtual void OverlapLayerFromHighToLow(
         const DefMap<DefAmrUint>& layer_high_level,
@@ -294,6 +283,32 @@ class GridManagerInterface{
         DefMap<DefAmrIndexUint>* const ptr_layer_lower_level,
         DefMap<DefAmrUint>* const ptr_layer_lower_level_outer) = 0;
 
+    // used for mpi only
+ public:
+    void InstantiateGridNodeAllLevelMpi(const int i_rank,
+        const DefAmrIndexUint num_partition_inner_layer, const DefAmrIndexUint num_partition_outer_layer,
+        const std::vector<DefSFCodeToUint>& vec_code_min, const std::vector<DefSFCodeToUint>& vec_code_max,
+        const SFBitsetAuxInterface& sfbitset_aux,
+        const std::vector<DefMap<DefAmrIndexUint>>& sfbitset_one_lower_level,
+        const std::vector<DefMap<DefAmrIndexUint>>& sfbitset_ghost_one_lower_level,
+        const DefMap<DefAmrIndexUint>& sfbitset_partition_interface,
+        std::vector<std::map<int, DefMap<DefAmrIndexUint>>>* const ptr_mpi_inner_layer,
+        std::vector<DefMap<DefAmrIndexUint>>* const ptr_mpi_outer_layer);
+    void SetUpRanksSentForMpiInnerLayer(int i_rank,
+        const DefSFCodeToUint interface_code_background_level, const std::vector<DefSFBitset>& vec_nodes_in_region,
+        const std::vector<DefSFCodeToUint>& ull_max, const DefMap<DefAmrIndexUint>& mpi_inner_layer_tmp,
+        std::map<int, DefMap<DefAmrIndexUint>>* const ptr_mpi_inner_layer);
+
+ protected:
+    void InstantiateOverlapLayerOfRefinementInterfaceMpi(
+        const DefAmrIndexUint i_level, const DefAmrIndexUint num_partition_outer_layer,
+        const DefAmrUint flag_outmost_refinement_n_outer_mpi,
+        const DefSFCodeToUint code_min, const DefSFCodeToUint code_max,
+        const SFBitsetAuxInterface& sfbitset_aux, const DefMap<DefAmrIndexUint>& map_sfbitset_one_lower_level,
+        const DefMap<DefAmrIndexUint>& sfbitset_partition_interface_background,
+        DefMap<DefAmrIndexUint>* const ptr_outer_layer_current_level,
+        DefMap<DefAmrIndexUint>* const ptr_outer_layer_lower_level);
+
 #ifdef DEBUG_UNIT_TEST
 
  private:
@@ -315,19 +330,6 @@ class GridManagerInterface{
 */
 class GridManager2D :public  GridManagerInterface, public SFBitsetAux2D {
  public:
-    /* give an offset to avoid exceeding the boundary limits when searching nodes.
-    The offset distance is (k0MinIndexOfBackgroundNode_ * kDomainDx),
-    and the default value is 1. */
-    std::array<DefAmrIndexLUint, 2> k0MinIndexOfBackgroundNode_ = {1, 1};
-    ///< the minimum index of background nodes in each direction*/
-    std::array<DefAmrIndexLUint, 2> k0MaxIndexOfBackgroundNode_{};
-    ///< the maximum index of background nodes in each direction*/
-    // k0MinIndexOfBackgroundNode_ is included in k0MaxIndexOfBackgroundNode_
-    // k0DomainSize_ is k0DomainDx_ * (k0MaxIndexOfBackgroundNode_ - k0MinIndexOfBackgroundNode_)
-    std::array<DefReal, 2> k0DomainSize_{};  ///< domain size
-    std::array<DefReal, 2> k0DomainDx_{};  ///< grid space
-    std::array<DefReal, 2> k0RealMin_{};  ///< k0MinIndexOfBackgroundNode_ * kDomainDx
-
     void PrintGridInfo(void) const override;
     void SetGridParameters(void) override;
     SFBitsetAuxInterface* GetSFBitsetAuxPtr() override {
@@ -361,7 +363,7 @@ class GridManager2D :public  GridManagerInterface, public SFBitsetAux2D {
         std::vector<DefSFBitset>* const ptr_bitsets) const override;
     void GridFindAllNeighborsVir(const DefSFBitset& bitset_in,
         std::vector<DefSFBitset>* const ptr_vec_neighbors) const override;
-    void FindAllNodesInACellAtLowerLevel(
+    void FindAllNodesInACellAtOneLevelLower(
         const std::vector<DefSFBitset> bitset_cell,
         std::vector<DefSFBitset>* const ptr_bitset_all) const override;
     DefSFBitset NodeAtNLowerLevel(
@@ -459,18 +461,6 @@ class GridManager2D :public  GridManagerInterface, public SFBitsetAux2D {
 #ifndef  DEBUG_DISABLE_3D_FUNCTIONS
 class GridManager3D :public  GridManagerInterface, public SFBitsetAux3D {
  public:
-   /* give an offset to avoid exceeding the boundary limits when searching nodes.
-    The offset distance is (k0MinIndexOfBackgroundNode_ * kDomainDx),
-    and the default value is 1. */
-    std::array<DefAmrIndexLUint, 3> k0MinIndexOfBackgroundNode_ = {1, 1, 1};
-    ///< the minimum index of background nodes in each direction*/
-    std::array<DefAmrIndexLUint, 3> k0MaxIndexOfBackgroundNode_{};
-    ///< the maximum index of background nodes in each direction*/
-    // k0MinIndexOfBackgroundNode_ is included in k0MaxIndexOfBackgroundNode_
-    std::array<DefReal, 3> k0DomainSize_{};  ///< domain size
-    std::array<DefReal, 3> k0DomainDx_{};  ///< grid space
-    std::array<DefReal, 3> k0RealMin_{};  ///< k0MinIndexOfBackgroundNode_ * kDomainDx
-
     void PrintGridInfo(void) const override;
     void SetGridParameters(void) override;
 
@@ -507,7 +497,7 @@ class GridManager3D :public  GridManagerInterface, public SFBitsetAux3D {
         std::vector<DefSFBitset>* const ptr_bitsets) const override;
     void GridFindAllNeighborsVir(const DefSFBitset& bitset_in,
         std::vector<DefSFBitset>* const ptr_vec_neighbors) const override;
-    void FindAllNodesInACellAtLowerLevel(
+    void FindAllNodesInACellAtOneLevelLower(
         const std::vector<DefSFBitset> bitset_cell,
         std::vector<DefSFBitset>* const ptr_bitset_all) const override;
     DefSFBitset NodeAtNLowerLevel(

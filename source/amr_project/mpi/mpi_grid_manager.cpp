@@ -212,7 +212,7 @@ void MpiManager::IniSendNReceivePartitionedGrid(const DefAmrIndexUint dims,
     DefSFCodeToUint background_code;
     int int_interface_status;
     DefAmrIndexUint num_ghost_lower = k0NumPartitionOuterLayers_/2,
-     num_ghost_upper = (k0NumPartitionOuterLayers_ + 1)/2;
+        num_ghost_upper = (k0NumPartitionOuterLayers_ + 1)/2;
     DefSizet num_max = ull_max.size();
     std::vector<DefMap<DefAmrIndexUint>> partition_interface_background(num_ranks);
     if (rank_id == 0) {  // partition nodes on rank 0
@@ -220,13 +220,13 @@ void MpiManager::IniSendNReceivePartitionedGrid(const DefAmrIndexUint dims,
             if (dims == 2) {
 #ifndef  DEBUG_DISABLE_2D_FUNCTIONS
                 IniFindInterfaceForPartitionFromMinNMax(
-                     bitset_min.at(i_rank), bitset_max.at(i_rank), indices_min_2d, indices_max_2d,
+                     ull_min.at(i_rank), ull_max.at(i_rank), indices_min_2d, indices_max_2d,
                     dynamic_cast<const SFBitsetAux2D&>(sfbitset_aux), &partition_interface_background.at(i_rank));
 #endif  // DEBUG_DISABLE_2D_FUNCTIONS
             } else {
 #ifndef  DEBUG_DISABLE_3D_FUNCTIONS
                 IniFindInterfaceForPartitionFromMinNMax(
-                    bitset_min.at(i_rank), bitset_max.at(i_rank), indices_min_3d, indices_max_3d,
+                    ull_min.at(i_rank), ull_max.at(i_rank), indices_min_3d, indices_max_3d,
                     dynamic_cast<const SFBitsetAux3D&>(sfbitset_aux), &partition_interface_background.at(i_rank));
 #endif  // DEBUG_DISABLE_3D_FUNCTIONS
             }
@@ -241,10 +241,17 @@ void MpiManager::IniSendNReceivePartitionedGrid(const DefAmrIndexUint dims,
             // min and max code at i_level_lower refinement level
             std::vector<DefSFCodeToUint> code_min_current(num_ranks), code_max_current(num_ranks);
             std::vector<DefSFBitset> bitset_cell_lower_ghost, bitset_all_ghost;
-            std::vector<DefSFBitset> corresponding_ones(dims),
-                domain_min_m1_n_level(dims), domain_max_p1_n_level(dims);
+            std::vector<DefSFBitset> corresponding_ones(dims), domain_min_n_level(dims), domain_max_n_level(dims),
+                domain_min_m1_n_level(dims), domain_max_p1_n_level(dims), vec_periodic;
             std::vector<DefMap<DefAmrIndexUint>> map_ghost_lower_tmp_ranks(num_ranks),
                 map_ghost_upper_tmp_ranks(num_ranks);
+            std::vector<bool> periodic_min, periodic_max;
+            bool bool_has_periodic_boundary =
+                ptr_vec_grid_info->at(i_level)->CheckIfPeriodicDomainRequired(dims, &periodic_min, &periodic_max);
+            if (periodic_min.size() != dims || periodic_max.size() != dims) {
+                LogManager::LogError("dimension of periodic boundary indicator is incorrect "
+                    + std::string(__FILE__) + " at line " + std::to_string(__LINE__));
+            }
             if (dims == 2) {
 #ifndef  DEBUG_DISABLE_2D_FUNCTIONS
                 const SFBitsetAux2D sfbitset_aux_2d = dynamic_cast<const SFBitsetAux2D&>(sfbitset_aux);
@@ -270,6 +277,8 @@ void MpiManager::IniSendNReceivePartitionedGrid(const DefAmrIndexUint dims,
             }
             sfbitset_aux.GetMinM1AtGivenLevel(i_level_lower, indices_min, &domain_min_m1_n_level);
             sfbitset_aux.GetMaxP1AtGivenLevel(i_level_lower, indices_max, &domain_max_p1_n_level);
+            sfbitset_aux.GetMinAtGivenLevel(i_level_lower, indices_min, &domain_min_n_level);
+            sfbitset_aux.GetMaxAtGivenLevel(i_level_lower, indices_max, &domain_max_n_level);
             std::vector<int> i_chunk_each_rank(num_ranks, -1), i_counts(num_ranks, 0);
             std::vector<DefSFCodeToUint>::iterator iter_index;
             std::vector<DefSFBitset> nodes_in_region;
@@ -281,6 +290,7 @@ void MpiManager::IniSendNReceivePartitionedGrid(const DefAmrIndexUint dims,
             }
             std::vector<DefMap<DefAmrIndexUint>> map_interface_near_coarse2fine(num_ranks);
             bool bool_near_coarse2fine;
+
             for (auto& iter_node : vec_sfbitset_rank0.at(i_level)) {
                 background_code = (sfbitset_aux.SFBitsetToNLowerLevelVir(i_level_lower, iter_node.first)).to_ullong();
                 iter_index = std::lower_bound(ull_max.begin(), ull_max.end(), background_code);
@@ -296,53 +306,69 @@ void MpiManager::IniSendNReceivePartitionedGrid(const DefAmrIndexUint dims,
 #endif  // DEBUG_CHECK_GRID
                 if (dims == 2) {
 #ifndef  DEBUG_DISABLE_2D_FUNCTIONS
-                    // search potential ghost nodes near partition interface
-                    int_interface_status = CheckNodeOnOuterBoundaryOfBackgroundCell2D(i_level_lower,
+                    // search nodes non partition interface
+                    int_interface_status = CheckNodeOnPartitionInterface2D(i_level_lower,
                         code_min_current.at(i_rank), code_max_current.at(i_rank), iter_node.first,
                         dynamic_cast<const SFBitsetAux2D&>(sfbitset_aux), domain_min_m1_n_level,
                         domain_max_p1_n_level, corresponding_ones, partition_interface_background.at(i_rank));
-                    if ((int_interface_status&1) == 1) {  // lower interface
-                        if (num_ghost_lower == 0) {  // only one ghost layer at given level
-                            map_ghost_lower_tmp_ranks.at(i_rank).insert({iter_node.first, flag_size0});
-                        } else {
-                            SearchForGhostLayerForMinNMax2D(iter_node.first, num_ghost_lower,
-                                code_min_current.at(i_rank), &MpiManager::CodeSmallerThanMin,
-                                flag_size0, dynamic_cast<const SFBitsetAux2D&>(sfbitset_aux),
-                                domain_min_m1_n_level, domain_max_p1_n_level, &map_ghost_lower_tmp_ranks.at(i_rank));
-                        }
-                    }
-                    if ((int_interface_status&2) == 2) {  // upper interface
-                        SearchForGhostLayerForMinNMax2D(iter_node.first, num_ghost_upper,
-                            code_max_current.at(i_rank), &MpiManager::CodeLargerThanMax,
-                            flag_size0, dynamic_cast<const SFBitsetAux2D&>(sfbitset_aux),
-                            domain_min_m1_n_level, domain_max_p1_n_level, &map_ghost_upper_tmp_ranks.at(i_rank));
-                    }
 #endif  // DEBUG_DISABLE_2D_FUNCTIONS
                 } else {
 #ifndef  DEBUG_DISABLE_3D_FUNCTIONS
-                    // search potential ghost nodes near partition interface
-                    int_interface_status = CheckNodeOnOuterBoundaryOfBackgroundCell3D(i_level_lower,
+                    // search nodes on partition interface
+                    int_interface_status = CheckNodeOnPartitionInterface3D(i_level_lower,
                         code_min_current.at(i_rank), code_max_current.at(i_rank), iter_node.first,
                         dynamic_cast<const SFBitsetAux3D&>(sfbitset_aux), domain_min_m1_n_level,
                         domain_max_p1_n_level, corresponding_ones, partition_interface_background.at(i_rank));
-                    if ((int_interface_status&1) == 1) {  // lower interface
-                        SearchForGhostLayerForMinNMax3D(iter_node.first, num_ghost_lower,
-                            code_min_current.at(i_rank), &MpiManager::CodeSmallerThanMin,
-                            flag_size0, dynamic_cast<const SFBitsetAux3D&>(sfbitset_aux),
-                            domain_min_m1_n_level, domain_max_p1_n_level, &map_ghost_lower_tmp_ranks.at(i_rank));
-                    }
-                    if ((int_interface_status&2) == 2) {  // upper interface
-                        SearchForGhostLayerForMinNMax3D(iter_node.first, num_ghost_upper,
-                            code_max_current.at(i_rank), &MpiManager::CodeLargerThanMax,
-                            flag_size0, dynamic_cast<const SFBitsetAux3D&>(sfbitset_aux),
-                            domain_min_m1_n_level, domain_max_p1_n_level, &map_ghost_upper_tmp_ranks.at(i_rank));
-                    }
 #endif  // DEBUG_DISABLE_3D_FUNCTIONS
                 }
+                if (bool_has_periodic_boundary) {
+                    ptr_vec_grid_info->at(i_level_lower)->CheckNodesOnCubicPeriodicBoundary(
+                        dims, iter_node.first, periodic_min, periodic_max, sfbitset_aux, &vec_periodic);
+                    for (const auto& iter_periodic : vec_periodic) {
+                        sfbitset_aux.FindNodesInPeriodicReginNearby(iter_periodic,
+                            num_ghost_lower, periodic_min, periodic_max,
+                            domain_min_n_level, domain_max_n_level, &nodes_in_region);
+                        for (const auto& iter_node_in_region : nodes_in_region) {
+                            if (iter_node_in_region != sfbitset_aux.kInvalidSFbitset
+                                &&(iter_node_in_region.to_ullong() > code_max_current.at(i_rank)
+                                ||iter_node_in_region.to_ullong() < code_min_current.at(i_rank))) {
+                                map_ghost_lower_tmp_ranks.at(i_rank).insert({iter_node_in_region, flag_size0});
+                            }
+                        }
+                    }
+                }
+                // find ghost layers for mpi communication in the outer layer based on lower interface
+                if ((int_interface_status&1) == 1) {
+                    if (num_ghost_lower == 0) {  // only one ghost layer at given level
+                        map_ghost_lower_tmp_ranks.at(i_rank).insert({iter_node.first, flag_size0});
+                    } else {
+                        sfbitset_aux.FindNodesInPeriodicReginNearby(iter_node.first,
+                            num_ghost_lower, periodic_min, periodic_max,
+                            domain_min_n_level, domain_max_n_level, &nodes_in_region);
+                        for (const auto& iter_node_in_region : nodes_in_region) {
+                            if (iter_node_in_region != sfbitset_aux.kInvalidSFbitset
+                                &&iter_node_in_region.to_ullong() < code_min_current.at(i_rank)) {
+                                map_ghost_lower_tmp_ranks.at(i_rank).insert({iter_node_in_region, flag_size0});
+                            }
+                        }
+                    }
+                }
+                // find ghost layers for mpi communication in the outer layer based on upper interface
+                if ((int_interface_status&2) == 2) {
+                    sfbitset_aux.FindNodesInPeriodicReginNearby(iter_node.first,
+                        num_ghost_upper, periodic_min, periodic_max,
+                        domain_min_n_level, domain_max_n_level, &nodes_in_region);
+                    for (const auto& iter_node_in_region : nodes_in_region) {
+                        if (iter_node_in_region != sfbitset_aux.kInvalidSFbitset
+                            &&iter_node_in_region.to_ullong() > code_max_current.at(i_rank)) {
+                            map_ghost_upper_tmp_ranks.at(i_rank).insert({iter_node_in_region, flag_size0});
+                        }
+                    }
+                }
                 if (int_interface_status) {
-                    sfbitset_aux.FindNodesInReginOfGivenLength(iter_node.first,
-                        num_layer_near_interface, domain_min_m1_n_level, domain_max_p1_n_level,
-                        &nodes_in_region);
+                    sfbitset_aux.FindNodesInPeriodicReginOfGivenLength(iter_node.first,
+                        num_layer_near_interface, periodic_min, periodic_max,
+                        domain_min_n_level, domain_max_n_level, &nodes_in_region);
                     bool_near_coarse2fine = false;
                     for (const auto& iter_node_in_region : nodes_in_region) {
                         if ((vec_sfbitset_rank0.at(i_level).find(iter_node_in_region)
@@ -381,9 +407,9 @@ void MpiManager::IniSendNReceivePartitionedGrid(const DefAmrIndexUint dims,
                         outmost_for_all_ranks.at(iter_node.first).insert(i_rank);
                     }
                     // find nodes in all coarse to fine layers
-                    sfbitset_aux.FindNodesInReginOfGivenLength(iter_node.first,
-                        num_extend_coarse2fine, domain_min_m1_n_level, domain_max_p1_n_level,
-                        &nodes_in_region);
+                    sfbitset_aux.FindNodesInPeriodicReginOfGivenLength(iter_node.first,
+                        num_extend_coarse2fine, periodic_min, periodic_max,
+                        domain_min_n_level, domain_max_n_level, &nodes_in_region);
                     for (const auto& iter_region : nodes_in_region) {
                         if (map_extend_coarse2fine.find(iter_region) == map_extend_coarse2fine.end()
                             && vec_sfbitset_rank0.at(i_level).find(iter_region)
@@ -425,13 +451,14 @@ void MpiManager::IniSendNReceivePartitionedGrid(const DefAmrIndexUint dims,
                     }
                 }
             }
+
             // nodes in both refinement and mpi communication layers
             DefMap<DefAmrIndexUint> map_ghost_n_refinement;
             DefSFCodeToUint code_tmp;
             for (const auto& iter_ghost : map_interface_near_coarse2fine.at(0)) {
-                sfbitset_aux.FindNodesInReginOfGivenLength(iter_ghost.first,
-                    k0NumPartitionOuterLayers_, domain_min_m1_n_level, domain_max_p1_n_level,
-                    &nodes_in_region);
+                sfbitset_aux.FindNodesInPeriodicReginOfGivenLength(iter_ghost.first,
+                    k0NumPartitionOuterLayers_, periodic_min, periodic_max,
+                    domain_min_n_level, domain_max_n_level, &nodes_in_region);
                 for (const auto& iter_region : nodes_in_region) {
                     code_tmp = iter_region.to_ullong();
                     if ((code_tmp < code_min_current.at(0)
@@ -519,12 +546,12 @@ void MpiManager::IniSendNReceivePartitionedGrid(const DefAmrIndexUint dims,
                     i_chunk, MPI_COMM_WORLD, &reqs_send[i_chunk]);
                 }
                 MPI_Waitall(num_chunks, reqs_send.data(), MPI_STATUS_IGNORE);
-                // nodes used on both refinement layers and outer mpi communication layers
+                // nodes on both refinement layers and outer mpi communication layers
                 map_ghost_n_refinement.clear();
                 for (const auto& iter_ghost : map_interface_near_coarse2fine.at(i_rank)) {
-                    sfbitset_aux.FindNodesInReginOfGivenLength(iter_ghost.first,
-                        k0NumPartitionOuterLayers_, domain_min_m1_n_level, domain_max_p1_n_level,
-                        &nodes_in_region);
+                    sfbitset_aux.FindNodesInPeriodicReginOfGivenLength(iter_ghost.first,
+                        k0NumPartitionOuterLayers_, periodic_min, periodic_max,
+                        domain_min_n_level, domain_max_n_level, &nodes_in_region);
                     for (const auto& iter_region : nodes_in_region) {
                         code_tmp = iter_region.to_ullong();
                         if ((code_tmp < code_min_current.at(i_rank)
@@ -604,6 +631,8 @@ void MpiManager::IniSendNReceivePartitionedGrid(const DefAmrIndexUint dims,
  * @param[in] max_level the maximum level of the grid.
  * @param[in] bitset_domain_min the minimum space filling code of the computational domain
  * @param[in] bitset_domain_max the maximum space filling code of the computational domain
+ * @param[in] indices_min minimum indices of the computational domain.
+ * @param[in] indices_max maximum indices of the computational domain.
  * @param[in] vec_cost computational cost of the each node for all refinement levels.
  * @param[in] bitset_aux An interface for manipulating bitsets.
  * @param[in] vec_tracking_creator creator for tracking grid information.
@@ -614,7 +643,7 @@ void MpiManager::IniSendNReceivePartitionedGrid(const DefAmrIndexUint dims,
  *             near coarse to fine refinement interface at one level lower on the current rank.
  * @param[out] ptr_vec_grid_info pointer to vector of grid information.
  */
-void MpiManager::IniSendNReceiveGridInfoAtGivenLevels(const DefAmrIndexUint flag_size0,
+void MpiManager::IniSendNReceiveGridInfoAtAllLevels(const DefAmrIndexUint flag_size0,
     const DefAmrUint flag_fine2coarse_outmost, const DefAmrIndexUint dims, const DefAmrIndexUint max_level,
     const DefSFBitset bitset_domain_min, const DefSFBitset bitset_domain_max,
     const std::vector<DefAmrIndexLUint>& indices_min, const std::vector<DefAmrIndexLUint>& indices_max,
@@ -630,7 +659,7 @@ void MpiManager::IniSendNReceiveGridInfoAtGivenLevels(const DefAmrIndexUint flag
         DefSizet vec_size = vec_cost.size();
         if (ini_sfbitset_one_lower_level_rank0.size() != vec_size) {
             LogManager::LogError("size of the input vector (vec_cost) is different from the size of the input vector "
-             "(ptr_ini_sfbitset_one_lower_level_rank0) in MpiManager::IniSendNReceiveGridInfoAtGivenLevels in "
+             "(ptr_ini_sfbitset_one_lower_level_rank0) in MpiManager::IniSendNReceiveGridInfoAtAllLevels in "
              + std::string(__FILE__) + " at line " + std::to_string(__LINE__));
         }
         if (dims == 2) {
@@ -652,8 +681,14 @@ void MpiManager::IniSendNReceiveGridInfoAtGivenLevels(const DefAmrIndexUint flag
     // broadcast minimum and maximum space filling code of all ranks to each rank
     MPI_Bcast(&bitset_min[0], static_cast<int>(num_of_ranks_), MPI_CODE_UINT_TYPE, 0, MPI_COMM_WORLD);
     MPI_Bcast(&bitset_max[0], static_cast<int>(num_of_ranks_), MPI_CODE_UINT_TYPE, 0, MPI_COMM_WORLD);
-    vec_sfbitset_min_all_ranks_ = bitset_min;
-    vec_sfbitset_max_all_ranks_ = bitset_max;
+    vec_sfcode_min_all_ranks_.resize(bitset_min.size());
+    vec_sfcode_max_all_ranks_.resize(bitset_max.size());
+    for (DefSizet i = 0; i < bitset_max.size(); ++i) {
+            vec_sfcode_min_all_ranks_.at(i) = bitset_min.at(i).to_ullong();
+    }
+    for (DefSizet i = 0; i < bitset_max.size(); ++i) {
+            vec_sfcode_max_all_ranks_.at(i) = bitset_max.at(i).to_ullong();
+    }
     sfbitset_min_current_rank_ = bitset_min.at(rank_id_);
     sfbitset_max_current_rank_ = bitset_max.at(rank_id_);
 

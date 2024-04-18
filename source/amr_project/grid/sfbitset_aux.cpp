@@ -196,14 +196,15 @@ void SFBitsetAux2D::SFBitsetFindAllNeighbors(
 /**
 * @brief   function to find all neighboring nodes bonded by lower and upper limits.
 * @param[in]  sfbitset_center sfbitset at the center.
+* @param[in] bool_periodic_min booleans indicating if the boundary is periodic at maximum domain boundaries.
+* @param[in] bool_periodic_max booleans indicating if the boundary is periodic at maximum domain boundaries.
 * @param[in]  domain_min_n_level   lower bound.
 * @param[in]  domain_max_n_level   upper bound.
 * @param[out]  ptr_bitset_neighbors   space fill code for neighbors of the give node.
 */
-void SFBitsetAux2D::SFBitsetFindAllBondedNeighborsVir(
-    const DefSFBitset& bitset_in,
-    const std::vector<DefSFBitset>& domain_min_n_level,
-    const std::vector<DefSFBitset>& domain_max_n_level,
+void SFBitsetAux2D::SFBitsetFindAllBondedNeighborsVir(const DefSFBitset& bitset_in,
+    const std::vector<bool>& bool_periodic_min, const std::vector<bool>& bool_periodic_max,
+    const std::vector<DefSFBitset>& domain_min_n_level, const std::vector<DefSFBitset>& domain_max_n_level,
     std::vector<DefSFBitset>* const ptr_bitset_neighbors) const {
     DefSFBitset sfbitset_temp0 = bitset_in;
     ptr_bitset_neighbors->clear();
@@ -216,35 +217,61 @@ void SFBitsetAux2D::SFBitsetFindAllBondedNeighborsVir(
         sfbitset_temp0 = FindXNeg(bitset_in);
         // node at (-x, 0, 0)
         ptr_bitset_neighbors->push_back(sfbitset_temp0);
-        if (bool_not_y_min) {
-            // node at (-x, -y, 0)
-            ptr_bitset_neighbors->push_back(FindYNeg(sfbitset_temp0));
-        }
-        if (bool_not_y_max) {
-            // node at (-x, +y, 0)
-            ptr_bitset_neighbors->push_back(FindYPos(sfbitset_temp0));
-        }
+    } else if (bool_periodic_min.at(kXIndex)) {
+        sfbitset_temp0 = (bitset_in&k0SFBitsetTakeXRef_.at(kRefOthers_))|domain_max_n_level.at(kXIndex);
+        ptr_bitset_neighbors->push_back(sfbitset_temp0);
     }
+    if (bool_not_y_min) {
+        // node at (-x, -y, 0)
+        ptr_bitset_neighbors->push_back(FindYNeg(sfbitset_temp0));
+    } else if (bool_periodic_min.at(kYIndex)) {
+        ptr_bitset_neighbors->push_back(
+            (sfbitset_temp0&k0SFBitsetTakeYRef_.at(kRefOthers_))|domain_max_n_level.at(kYIndex));
+    }
+    if (bool_not_y_max) {
+        // node at (-x, +y, 0)
+        ptr_bitset_neighbors->push_back(FindYPos(sfbitset_temp0));
+    } else if (bool_periodic_max.at(kYIndex)) {
+        ptr_bitset_neighbors->push_back(
+            (sfbitset_temp0&k0SFBitsetTakeYRef_.at(kRefOthers_))|domain_min_n_level.at(kYIndex));
+    }
+
     if (bool_not_x_max) {
         sfbitset_temp0 = FindXPos(bitset_in);
         // node at (+x, 0, 0)
         ptr_bitset_neighbors->push_back(sfbitset_temp0);
-        if (bool_not_y_min) {
-            // node at (+x, -y, 0)
-            ptr_bitset_neighbors->push_back(FindYNeg(sfbitset_temp0));
-        }
-        if (bool_not_y_max) {
-            // node at (+x, +y, 0)
-            ptr_bitset_neighbors->push_back(FindYPos(sfbitset_temp0));
-        }
+    } else if (bool_periodic_max.at(kXIndex)) {
+        sfbitset_temp0 = (bitset_in&k0SFBitsetTakeXRef_.at(kRefOthers_))|domain_min_n_level.at(kXIndex);
+        ptr_bitset_neighbors->push_back(sfbitset_temp0);
     }
+    if (bool_not_y_min) {
+        // node at (+x, -y, 0)
+        ptr_bitset_neighbors->push_back(FindYNeg(sfbitset_temp0));
+    } else if (bool_periodic_min.at(kYIndex)) {
+        ptr_bitset_neighbors->push_back(
+            (sfbitset_temp0&k0SFBitsetTakeYRef_.at(kRefOthers_))|domain_max_n_level.at(kYIndex));
+    }
+    if (bool_not_y_max) {
+        // node at (+x, +y, 0)
+        ptr_bitset_neighbors->push_back(FindYPos(sfbitset_temp0));
+    } else if (bool_periodic_max.at(kYIndex)) {
+        ptr_bitset_neighbors->push_back(
+            (sfbitset_temp0&k0SFBitsetTakeYRef_.at(kRefOthers_))|domain_min_n_level.at(kYIndex));
+    }
+
     if (bool_not_y_min) {
         // node at (0, -y, 0)
         ptr_bitset_neighbors->push_back(FindYNeg(bitset_in));
+    } else if (bool_periodic_min.at(kYIndex)) {
+        ptr_bitset_neighbors->push_back(
+            (bitset_in&k0SFBitsetTakeYRef_.at(kRefOthers_))|domain_max_n_level.at(kYIndex));
     }
     if (bool_not_y_max) {
         // node at (0, +y, 0)
         ptr_bitset_neighbors->push_back(FindYPos(bitset_in));
+    } else if (bool_periodic_max.at(kYIndex)) {
+        ptr_bitset_neighbors->push_back(
+            (bitset_in&k0SFBitsetTakeYRef_.at(kRefOthers_))|domain_min_n_level.at(kYIndex));
     }
 }
 /**
@@ -328,13 +355,13 @@ void SFBitsetAux2D::FindNodesInReginOfGivenLength(const DefSFBitset& sfbitset_in
 }
 /**
  * @brief function to find nodes in the region of a given length.
- * @param sfbitset_in the input node.
- * @param region_length the length of the region.
- * @param periodic_min  booleans indicating if the region is periodic in the minimum direction.
- * @param periodic_max booleans indicating if the region is periodic in the maximum direction.
- * @param domain_min_n_level space filling codes representing the minimum domain at each level.
- * @param domain_max_n_level space filling codes representing the maximum domain at each level.
- * @param ptr_sfbitset_nodes pointer to found nodes.
+ * @param[in] sfbitset_in the input node.
+ * @param[in] region_length the length of the region.
+ * @param[in] periodic_min booleans indicating if the minimum domain boundaries are periodic.
+ * @param[in] periodic_max booleans indicating if the maximum domain boundaries are periodic.
+ * @param[in] domain_min_n_level space filling codes representing the minimum domain at each level.
+ * @param[in] domain_max_n_level space filling codes representing the maximum domain at each level.
+ * @param[out] ptr_sfbitset_nodes pointer to found nodes.
  * @return number of node in each direction within the region and domain range.
  * @note only indics within the return values are valid, otherwise may be undefined.
  */
@@ -351,7 +378,7 @@ DefAmrIndexLUint SFBitsetAux2D::FindNodesInPeriodicReginOfGivenLength(const DefS
     std::vector<DefSFBitset>* const ptr_sfbitset_nodes) const {
     DefAmrIndexLUint total_length = 2 * region_length;
     ptr_sfbitset_nodes->resize(total_length * total_length);
-    ptr_sfbitset_nodes->assign(total_length * total_length, 0);
+    ptr_sfbitset_nodes->assign(total_length * total_length, kInvalidSFbitset);
     DefSFBitset sfbitset_tmp_y = sfbitset_in, sfbitset_tmp_x;
     DefAmrIndexLUint vec_index_x, vec_index_y, index_min = region_length;
     bool bool_not_x_max, bool_not_y_max;
@@ -516,13 +543,13 @@ DefAmrIndexLUint SFBitsetAux2D::FindNodesInPeriodicReginOfGivenLength(const DefS
 }
 /**
  * @brief function to find nodes nearby within a given distance.
- * @param sfbitset_in the input node.
- * @param region_length the length of the region.
- * @param periodic_min  booleans indicating if the region is periodic in the minimum direction.
- * @param periodic_max booleans indicating if the region is periodic in the maximum direction.
- * @param domain_min_n_level space filling codes representing the minimum domain at each level.
- * @param domain_max_n_level space filling codes representing the maximum domain at each level.
- * @param ptr_sfbitset_nodes pointer to found nodes.
+ * @param[in] sfbitset_in the input node.
+ * @param[in] region_length the length of the region.
+ * @param[in] periodic_min booleans indicating if the minimum domain boundaries are periodic.
+ * @param[in] periodic_max booleans indicating if the maximum domain boundaries are periodic.
+ * @param[in] domain_min_n_level space filling codes representing the minimum domain at each level.
+ * @param[in] domain_max_n_level space filling codes representing the maximum domain at each level.
+ * @param[out] ptr_sfbitset_nodes pointer to found nodes.
  * @return number of node in each direction within the region and domain range.
  * @note only indics within the return values are valid, otherwise may be undefined.
  */
@@ -540,7 +567,7 @@ DefAmrIndexLUint SFBitsetAux2D::FindNodesInPeriodicReginNearby(const DefSFBitset
     std::vector<DefSFBitset>* const ptr_sfbitset_nodes) const {
     DefAmrIndexLUint total_length = 2 * region_length + 1;
     ptr_sfbitset_nodes->resize(total_length * total_length);
-    ptr_sfbitset_nodes->assign(total_length * total_length, 0);
+    ptr_sfbitset_nodes->assign(total_length * total_length, kInvalidSFbitset);
     DefSFBitset sfbitset_tmp_y = sfbitset_in, sfbitset_tmp_x;
     DefAmrIndexLUint vec_index_x, vec_index_y, index_min = region_length;
     bool bool_not_x_max, bool_not_y_max;
@@ -990,14 +1017,15 @@ void SFBitsetAux3D::SFBitsetFindAllNeighbors(
 /**
 * @brief   function to find all neighboring nodes bonded by lower and upper limits.
 * @param[in]  sfbitset_center sfbitset at the center.
+* @param[in] bool_periodic_min booleans indicating if the boundary is periodic at maximum domain boundaries.
+* @param[in] bool_periodic_max booleans indicating if the boundary is periodic at maximum domain boundaries.
 * @param[in]  domain_min_n_level   lower bound.
 * @param[in]  domain_max_n_level   upper bound.
 * @param[out]  ptr_bitset_neighbors   space fill code for neighbors of the give node.
 */
-void SFBitsetAux3D::SFBitsetFindAllBondedNeighborsVir(
-    const DefSFBitset& bitset_in,
-    const std::vector<DefSFBitset>& domain_min_n_level,
-    const std::vector<DefSFBitset>& domain_max_n_level,
+void SFBitsetAux3D::SFBitsetFindAllBondedNeighborsVir(const DefSFBitset& bitset_in,
+    const std::vector<bool>& bool_periodic_min, const std::vector<bool>& bool_periodic_max,
+    const std::vector<DefSFBitset>& domain_min_n_level, const std::vector<DefSFBitset>& domain_max_n_level,
     std::vector<DefSFBitset>* const ptr_bitset_neighbors) const {
     DefSFBitset sfbitset_temp0 = bitset_in, sfbitset_temp1;
     ptr_bitset_neighbors->clear();
@@ -1012,113 +1040,195 @@ void SFBitsetAux3D::SFBitsetFindAllBondedNeighborsVir(
         sfbitset_temp0 = FindXNeg(bitset_in);
         // node at (-x, 0, 0)
         ptr_bitset_neighbors->push_back(sfbitset_temp0);
-        if (bool_not_y_min) {
-            // node at (-x, -y, 0)
-            sfbitset_temp1 = FindYNeg(sfbitset_temp0);
-            ptr_bitset_neighbors->push_back(sfbitset_temp1);
-            if (bool_not_z_min) {
-                // node at (-x, -y, -z)
-                ptr_bitset_neighbors->push_back(FindZNeg(sfbitset_temp1));
-            }
-            if (bool_not_z_max) {
-                // node at (-x, -y, +z)
-                ptr_bitset_neighbors->push_back(FindZPos(sfbitset_temp1));
-            }
-        }
-        if (bool_not_y_max) {
-            // node at (-x, +y, 0)
-            sfbitset_temp1 = FindYPos(sfbitset_temp0);
-            ptr_bitset_neighbors->push_back(sfbitset_temp1);
-            if (bool_not_z_min) {
-                // node at (-x, +y, -z)
-                ptr_bitset_neighbors->push_back(FindZNeg(sfbitset_temp1));
-            }
-            if (bool_not_z_max) {
-                // node at (-x, +y, +z)
-                ptr_bitset_neighbors->push_back(FindZPos(sfbitset_temp1));
-            }
-        }
-        if (bool_not_z_min) {
-                // node at (-x, 0, -z)
-            ptr_bitset_neighbors->push_back(FindZNeg(sfbitset_temp0));
-        }
-        if (bool_not_z_max) {
-                // node at (-x, 0, +z)
-            ptr_bitset_neighbors->push_back(FindZPos(sfbitset_temp0));
-        }
+    } else if (bool_periodic_min.at(kXIndex)) {
+        sfbitset_temp0 = (bitset_in&k0SFBitsetTakeXRef_.at(kRefOthers_))|domain_max_n_level.at(kXIndex);
+        ptr_bitset_neighbors->push_back(sfbitset_temp0);
     }
+    if (bool_not_y_min) {
+        // node at (-x, -y, 0)
+        sfbitset_temp1 = FindYNeg(sfbitset_temp0);
+        ptr_bitset_neighbors->push_back(sfbitset_temp1);
+    } else if (bool_periodic_min.at(kYIndex)) {
+        sfbitset_temp1 = (sfbitset_temp0&k0SFBitsetTakeYRef_.at(kRefOthers_))|domain_max_n_level.at(kYIndex);
+        ptr_bitset_neighbors->push_back(sfbitset_temp1);
+    }
+    if (bool_not_z_min) {
+        // node at (-x, -y, -z)
+        ptr_bitset_neighbors->push_back(FindZNeg(sfbitset_temp1));
+    } else if (bool_periodic_min.at(kZIndex)) {
+        ptr_bitset_neighbors->push_back(
+            (sfbitset_temp1&k0SFBitsetTakeZRef_.at(kRefOthers_))|domain_max_n_level.at(kZIndex));
+    }
+    if (bool_not_z_max) {
+        // node at (-x, -y, +z)
+        ptr_bitset_neighbors->push_back(FindZPos(sfbitset_temp1));
+    } else if (bool_periodic_max.at(kZIndex)) {
+        ptr_bitset_neighbors->push_back(
+            (sfbitset_temp1&k0SFBitsetTakeZRef_.at(kRefOthers_))|domain_min_n_level.at(kZIndex));
+    }
+    if (bool_not_y_max) {
+        // node at (-x, +y, 0)
+        sfbitset_temp1 = FindYPos(sfbitset_temp0);
+        ptr_bitset_neighbors->push_back(sfbitset_temp1);
+    } else if (bool_periodic_max.at(kYIndex)) {
+        sfbitset_temp1 = (sfbitset_temp0&k0SFBitsetTakeYRef_.at(kRefOthers_))|domain_min_n_level.at(kYIndex);
+        ptr_bitset_neighbors->push_back(sfbitset_temp1);
+    }
+    if (bool_not_z_min) {
+        // node at (-x, +y, -z)
+        ptr_bitset_neighbors->push_back(FindZNeg(sfbitset_temp1));
+    } else if (bool_periodic_min.at(kZIndex)) {
+        ptr_bitset_neighbors->push_back(
+            (sfbitset_temp1&k0SFBitsetTakeZRef_.at(kRefOthers_))|domain_max_n_level.at(kZIndex));
+    }
+    if (bool_not_z_max) {
+        // node at (-x, +y, +z)
+        ptr_bitset_neighbors->push_back(FindZPos(sfbitset_temp1));
+    } else if (bool_periodic_max.at(kZIndex)) {
+        ptr_bitset_neighbors->push_back(
+            (sfbitset_temp1&k0SFBitsetTakeZRef_.at(kRefOthers_))|domain_min_n_level.at(kZIndex));
+    }
+    if (bool_not_z_min) {
+        // node at (-x, 0, -z)
+        ptr_bitset_neighbors->push_back(FindZNeg(sfbitset_temp0));
+    } else if (bool_periodic_min.at(kZIndex)) {
+        ptr_bitset_neighbors->push_back(
+            (sfbitset_temp0&k0SFBitsetTakeZRef_.at(kRefOthers_))|domain_max_n_level.at(kZIndex));
+    }
+    if (bool_not_z_max) {
+        // node at (-x, 0, +z)
+        ptr_bitset_neighbors->push_back(FindZPos(sfbitset_temp0));
+    } else if (bool_periodic_max.at(kZIndex)) {
+        ptr_bitset_neighbors->push_back(
+            (sfbitset_temp0&k0SFBitsetTakeZRef_.at(kRefOthers_))|domain_min_n_level.at(kZIndex));
+    }
+
     if (bool_not_x_max) {
         sfbitset_temp0 = FindXPos(bitset_in);
         // node at (+x, 0, 0)
         ptr_bitset_neighbors->push_back(sfbitset_temp0);
-        if (bool_not_y_min) {
-            // node at (+x, -y, 0)
-            sfbitset_temp1 = FindYNeg(sfbitset_temp0);
-            ptr_bitset_neighbors->push_back(sfbitset_temp1);
-            if (bool_not_z_min) {
-                // node at (+x, -y, -z)
-                ptr_bitset_neighbors->push_back(FindZNeg(sfbitset_temp1));
-            }
-            if (bool_not_z_max) {
-                // node at (+-x, -y, +z)
-                ptr_bitset_neighbors->push_back(FindZPos(sfbitset_temp1));
-            }
-        }
-        if (bool_not_y_max) {
-            // node at (+x, +y, 0)
-            sfbitset_temp1 = FindYPos(sfbitset_temp0);
-            ptr_bitset_neighbors->push_back(sfbitset_temp1);
-            if (bool_not_z_min) {
-                // node at (+x, +y, -z)
-                ptr_bitset_neighbors->push_back(FindZNeg(sfbitset_temp1));
-            }
-            if (bool_not_z_max) {
-                // node at (+x, +y, +z)
-                ptr_bitset_neighbors->push_back(FindZPos(sfbitset_temp1));
-            }
-        }
-        if (bool_not_z_min) {
-                // node at (+x, 0, -z)
-            ptr_bitset_neighbors->push_back(FindZNeg(sfbitset_temp0));
-        }
-        if (bool_not_z_max) {
-                // node at (+x, 0, +z)
-            ptr_bitset_neighbors->push_back(FindZPos(sfbitset_temp0));
-        }
+    } else if (bool_periodic_max.at(kXIndex)) {
+        sfbitset_temp0 = (bitset_in&k0SFBitsetTakeXRef_.at(kRefOthers_))|domain_min_n_level.at(kXIndex);
+        ptr_bitset_neighbors->push_back(sfbitset_temp0);
     }
     if (bool_not_y_min) {
-        // node at (0, -y, 0)
-        sfbitset_temp1 = FindYNeg(bitset_in);
+        // node at (+x, -y, 0)
+        sfbitset_temp1 = FindYNeg(sfbitset_temp0);
         ptr_bitset_neighbors->push_back(sfbitset_temp1);
-        if (bool_not_z_min) {
-            // node at (0, -y, -z)
-            ptr_bitset_neighbors->push_back(FindZNeg(sfbitset_temp1));
-        }
-        if (bool_not_z_max) {
-            // node at (0, -y, +z)
-            ptr_bitset_neighbors->push_back(FindZPos(sfbitset_temp1));
-        }
+    } else if (bool_periodic_min.at(kYIndex)) {
+        sfbitset_temp1 = (sfbitset_temp0&k0SFBitsetTakeYRef_.at(kRefOthers_))|domain_max_n_level.at(kYIndex);
+        ptr_bitset_neighbors->push_back(sfbitset_temp1);
+    }
+    if (bool_not_z_min) {
+        // node at (+x, -y, -z)
+        ptr_bitset_neighbors->push_back(FindZNeg(sfbitset_temp1));
+    } else if (bool_periodic_min.at(kZIndex)) {
+        ptr_bitset_neighbors->push_back(
+            (sfbitset_temp1&k0SFBitsetTakeZRef_.at(kRefOthers_))|domain_max_n_level.at(kZIndex));
+    }
+    if (bool_not_z_max) {
+        // node at (+x, -y, +z)
+        ptr_bitset_neighbors->push_back(FindZPos(sfbitset_temp1));
+    } else if (bool_periodic_max.at(kZIndex)) {
+        ptr_bitset_neighbors->push_back(
+            (sfbitset_temp1&k0SFBitsetTakeZRef_.at(kRefOthers_))|domain_min_n_level.at(kZIndex));
     }
     if (bool_not_y_max) {
-        // node at (0, +y, 0)
-        sfbitset_temp1 = FindYPos(bitset_in);
+        // node at (+x, +y, 0)
+        sfbitset_temp1 = FindYPos(sfbitset_temp0);
         ptr_bitset_neighbors->push_back(sfbitset_temp1);
-        if (bool_not_z_min) {
-            // node at (0, +y, -z)
-            ptr_bitset_neighbors->push_back(FindZNeg(sfbitset_temp1));
-        }
-        if (bool_not_z_max) {
-            // node at (0, +y, +z)
-            ptr_bitset_neighbors->push_back(FindZPos(sfbitset_temp1));
-        }
+    } else if (bool_periodic_max.at(kYIndex)) {
+        sfbitset_temp1 = (sfbitset_temp0&k0SFBitsetTakeYRef_.at(kRefOthers_))|domain_min_n_level.at(kYIndex);
+        ptr_bitset_neighbors->push_back(sfbitset_temp1);
     }
+    if (bool_not_z_min) {
+        // node at (+x, +y, -z)
+        ptr_bitset_neighbors->push_back(FindZNeg(sfbitset_temp1));
+    } else if (bool_periodic_min.at(kZIndex)) {
+        ptr_bitset_neighbors->push_back(
+            (sfbitset_temp1&k0SFBitsetTakeZRef_.at(kRefOthers_))|domain_max_n_level.at(kZIndex));
+    }
+    if (bool_not_z_max) {
+        // node at (+x, +y, +z)
+        ptr_bitset_neighbors->push_back(FindZPos(sfbitset_temp1));
+    } else if (bool_periodic_max.at(kZIndex)) {
+        ptr_bitset_neighbors->push_back(
+            (sfbitset_temp1&k0SFBitsetTakeZRef_.at(kRefOthers_))|domain_min_n_level.at(kZIndex));
+    }
+    if (bool_not_z_min) {
+        // node at (+x, 0, -z)
+        ptr_bitset_neighbors->push_back(FindZNeg(sfbitset_temp0));
+    } else if (bool_periodic_min.at(kZIndex)) {
+        ptr_bitset_neighbors->push_back(
+            (sfbitset_temp0&k0SFBitsetTakeZRef_.at(kRefOthers_))|domain_max_n_level.at(kZIndex));
+    }
+    if (bool_not_z_max) {
+        // node at (+x, 0, +z)
+        ptr_bitset_neighbors->push_back(FindZPos(sfbitset_temp0));
+    } else if (bool_periodic_max.at(kZIndex)) {
+        ptr_bitset_neighbors->push_back(
+            (sfbitset_temp0&k0SFBitsetTakeZRef_.at(kRefOthers_))|domain_min_n_level.at(kZIndex));
+    }
+
+    if (bool_not_y_min) {
+        // node at (0, -y, 0)
+        sfbitset_temp0 = FindYNeg(bitset_in);
+        ptr_bitset_neighbors->push_back(bitset_in);
+    } else if (bool_periodic_min.at(kYIndex)) {
+        sfbitset_temp0 = (bitset_in&k0SFBitsetTakeYRef_.at(kRefOthers_))|domain_max_n_level.at(kYIndex);
+        ptr_bitset_neighbors->push_back(sfbitset_temp0);
+    }
+    if (bool_not_z_min) {
+        // node at (0, -y, -z)
+        ptr_bitset_neighbors->push_back(FindZNeg(sfbitset_temp0));
+    } else if (bool_periodic_min.at(kZIndex)) {
+        ptr_bitset_neighbors->push_back(
+            (sfbitset_temp0&k0SFBitsetTakeZRef_.at(kRefOthers_))|domain_max_n_level.at(kZIndex));
+    }
+    if (bool_not_z_max) {
+        // node at (0, -y, +z)
+        ptr_bitset_neighbors->push_back(FindZPos(sfbitset_temp0));
+    } else if (bool_periodic_max.at(kZIndex)) {
+        ptr_bitset_neighbors->push_back(
+            (sfbitset_temp0&k0SFBitsetTakeZRef_.at(kRefOthers_))|domain_min_n_level.at(kZIndex));
+    }
+
+    if (bool_not_y_max) {
+        // node at (0, +y, 0)
+        sfbitset_temp0 = FindYPos(bitset_in);
+        ptr_bitset_neighbors->push_back(sfbitset_temp0);
+    } else if (bool_periodic_max.at(kYIndex)) {
+        sfbitset_temp0 = (bitset_in&k0SFBitsetTakeYRef_.at(kRefOthers_))|domain_min_n_level.at(kYIndex);
+        ptr_bitset_neighbors->push_back(sfbitset_temp0);
+    }
+    if (bool_not_z_min) {
+        // node at (0, +y, -z)
+        ptr_bitset_neighbors->push_back(FindZNeg(sfbitset_temp0));
+    } else if (bool_periodic_min.at(kZIndex)) {
+        ptr_bitset_neighbors->push_back(
+            (sfbitset_temp0&k0SFBitsetTakeZRef_.at(kRefOthers_))|domain_max_n_level.at(kZIndex));
+    }
+    if (bool_not_z_max) {
+        // node at (0, +y, +z)
+        ptr_bitset_neighbors->push_back(FindZPos(sfbitset_temp0));
+    } else if (bool_periodic_max.at(kZIndex)) {
+        ptr_bitset_neighbors->push_back(
+            (sfbitset_temp0&k0SFBitsetTakeZRef_.at(kRefOthers_))|domain_min_n_level.at(kZIndex));
+    }
+
     if (bool_not_z_min) {
         // node at (0, 0, -z)
         ptr_bitset_neighbors->push_back(FindZNeg(bitset_in));
+    } else if (bool_periodic_min.at(kZIndex)) {
+        sfbitset_temp0 = (bitset_in&k0SFBitsetTakeZRef_.at(kRefOthers_))|domain_max_n_level.at(kZIndex);
+        ptr_bitset_neighbors->push_back(sfbitset_temp0);
     }
     if (bool_not_z_max) {
         // node at (0, 0, +z)
         ptr_bitset_neighbors->push_back(FindZPos(bitset_in));
+    } else if (bool_periodic_max.at(kZIndex)) {
+        sfbitset_temp0 = (bitset_in&k0SFBitsetTakeZRef_.at(kRefOthers_))|domain_min_n_level.at(kZIndex);
+        ptr_bitset_neighbors->push_back(sfbitset_temp0);
     }
 }
 /**
@@ -1292,7 +1402,7 @@ DefAmrIndexLUint SFBitsetAux3D::FindNodesInPeriodicReginOfGivenLength(const DefS
     std::vector<DefSFBitset>* const ptr_sfbitset_nodes) const {
     DefAmrIndexLUint total_length = 2 * region_length;
     ptr_sfbitset_nodes->resize(total_length * total_length * total_length);
-    ptr_sfbitset_nodes->assign(total_length * total_length * total_length, 0);
+    ptr_sfbitset_nodes->assign(total_length * total_length * total_length, kInvalidSFbitset);
     DefSFBitset sfbitset_tmp_z = sfbitset_in, sfbitset_tmp_y, sfbitset_tmp_x;
     DefAmrIndexLUint vec_index_x, vec_index_y, vec_index_z, index_min = region_length;
     bool bool_not_x_max, bool_not_y_max, bool_not_z_max;
@@ -1665,13 +1775,13 @@ DefAmrIndexLUint SFBitsetAux3D::FindNodesInPeriodicReginOfGivenLength(const DefS
 }
 /**
  * @brief function to find nodes nearby within a given distance.
- * @param sfbitset_in the input node.
- * @param region_length the length of the region.
- * @param periodic_min  booleans indicating if the region is periodic in the minimum direction.
- * @param periodic_max booleans indicating if the region is periodic in the maximum direction.
- * @param domain_min_n_level space filling codes representing the minimum domain at each level.
- * @param domain_max_n_level space filling codes representing the maximum domain at each level.
- * @param ptr_sfbitset_nodes pointer to found nodes.
+ * @param[in] sfbitset_in the input node.
+ * @param[in] region_length the length of the region.
+ * @param[in] periodic_min booleans indicating if the minimum domain boundaries are periodic.
+ * @param[in] periodic_max booleans indicating if the maximum domain boundaries are periodic.
+ * @param[in] domain_min_n_level space filling codes representing the minimum domain at each level.
+ * @param[in] domain_max_n_level space filling codes representing the maximum domain at each level.
+ * @param[out[]] ptr_sfbitset_nodes pointer to found nodes.
  * @return number of node in each direction within the region and domain range.
  * @note only indics within the return values are valid, otherwise may be undefined.
  */
@@ -1683,7 +1793,7 @@ DefAmrIndexLUint SFBitsetAux3D::FindNodesInPeriodicReginNearby(const DefSFBitset
     std::vector<DefSFBitset>* const ptr_sfbitset_nodes) const {
     DefAmrIndexLUint total_length = 2 * region_length + 1;
     ptr_sfbitset_nodes->resize(total_length * total_length * total_length);
-    ptr_sfbitset_nodes->assign(total_length * total_length * total_length, 0);
+    ptr_sfbitset_nodes->assign(total_length * total_length * total_length, kInvalidSFbitset);
     DefSFBitset sfbitset_tmp_z = sfbitset_in, sfbitset_tmp_y, sfbitset_tmp_x;
     DefAmrIndexLUint vec_index_x, vec_index_y, vec_index_z, index_min = region_length;
     bool bool_not_x_max, bool_not_y_max, bool_not_z_max;

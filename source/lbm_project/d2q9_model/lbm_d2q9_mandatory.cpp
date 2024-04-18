@@ -39,28 +39,28 @@ void SolverLbmD2Q9::InitialModelDependencies() {
              + " in "+ std::string(__FILE__) + " at line " + std::to_string(__LINE__));
     }
     if (k0BoolCompressible_) {
-        this->func_macro_ = [this](const DefReal dt_lbm, GridNodeLbm* const ptr_node) {
+        this->func_macro_without_force_ = [this](const DefReal dt_lbm, GridNodeLbm* const ptr_node) {
             this->CalMacroD2Q9Compressible(dt_lbm, ptr_node);
         };
-        this->func_macro_force_ = [this](const DefReal dt_lbm, GridNodeLbm* const ptr_node) {
+        this->func_macro_with_force_ = [this](const DefReal dt_lbm, GridNodeLbm* const ptr_node) {
             this->CalMacroForceD2Q9Compressible(dt_lbm, ptr_node);
         };
     } else {
-        this->func_macro_ = [this](const DefReal dt_lbm, GridNodeLbm* const ptr_node) {
+        this->func_macro_without_force_ = [this](const DefReal dt_lbm, GridNodeLbm* const ptr_node) {
             this->CalMacroD2Q9Incompressible(dt_lbm, ptr_node);
         };
-        this->func_macro_force_ = [this](const DefReal dt_lbm, GridNodeLbm* const ptr_node) {
+        this->func_macro_with_force_ = [this](const DefReal dt_lbm, GridNodeLbm* const ptr_node) {
             this->CalMacroForceD2Q9Incompressible(dt_lbm, ptr_node);
         };
     }
 }
 /**
- * @brief function to perform streaming step for a node in the LBM simulation.
+ * @brief function to perform propagation of a node to others in the LBM simulation.
  * @param[in] sfbitset_in space filling code of the current node.
  * @param[in]  sfbitset_aux class to manage functions of spacing filling code related manipulations.
  * @param[out] ptr_map_grid_nodes pointer to grid nodes for LBM simulation.
  */
-void SolverLbmD2Q9::StreamForAGivenNode(const DefSFBitset sfbitset_in,
+void SolverLbmD2Q9::StreamOutForAGivenNode(const DefSFBitset sfbitset_in,
     const amrproject::SFBitsetAuxInterface& sfbitset_aux,
     DefMap<std::unique_ptr<GridNodeLbm>>* const ptr_map_grid_nodes) const {
     const amrproject::SFBitsetAux2D sfbitset_aux2d = dynamic_cast<const amrproject::SFBitsetAux2D&>(sfbitset_aux);
@@ -117,63 +117,65 @@ void SolverLbmD2Q9::StreamForAGivenNode(const DefSFBitset sfbitset_in,
     }
 }
 /**
- * @brief function to perform streaming step in the LBM simulation.
- * @param[in] flag_not_compute flag indicating whether to compute or not.
+ * @brief function to perform propagation from other nodes to the given node in the LBM simulation.
+ * @param[in] sfbitset_in space filling code of the current node.
  * @param[in]  sfbitset_aux class to manage functions of spacing filling code related manipulations.
  * @param[out] ptr_map_grid_nodes pointer to grid nodes for LBM simulation.
  */
-void SolverLbmD2Q9::Stream(const DefAmrUint flag_not_compute, const amrproject::SFBitsetAuxInterface& sfbitset_aux,
+void SolverLbmD2Q9::StreamInForAGivenNode(const DefSFBitset sfbitset_in,
+    const amrproject::SFBitsetAuxInterface& sfbitset_aux,
     DefMap<std::unique_ptr<GridNodeLbm>>* const ptr_map_grid_nodes) const {
-    if (ptr_map_grid_nodes != nullptr) {
-        DefSFBitset sfbitset_tmp, sfbitset_tmp1;
-        const amrproject::SFBitsetAux2D sfbitset_aux2d = dynamic_cast<const amrproject::SFBitsetAux2D&>(sfbitset_aux);
-        for (auto& iter_node : *ptr_map_grid_nodes) {
-            if (iter_node.second->flag_status_ & flag_not_compute) {
-            } else {
-                // f(0, 0)
-                iter_node.second->f_.at(kFX0Y0Z0) = iter_node.second->f_collide_.at(kFX0Y0Z0);
-                // f(-x, 0)
-                sfbitset_tmp = sfbitset_aux2d.FindXNeg(iter_node.first);
-                if (ptr_map_grid_nodes->find(sfbitset_tmp) != ptr_map_grid_nodes->end()) {
-                    ptr_map_grid_nodes->at(sfbitset_tmp)->f_.at(kFXnY0Z0) = iter_node.second->f_collide_.at(kFXnY0Z0);
-                }
-                // f(-x, -y)
-                sfbitset_tmp1 = sfbitset_aux2d.FindYNeg(sfbitset_tmp);
-                if (ptr_map_grid_nodes->find(sfbitset_tmp1) != ptr_map_grid_nodes->end()) {
-                    ptr_map_grid_nodes->at(sfbitset_tmp1)->f_.at(kFXnYnZ0) = iter_node.second->f_collide_.at(kFXnYnZ0);
-                }
-                // f(-x, +y)
-                sfbitset_tmp1 = sfbitset_aux2d.FindYPos(sfbitset_tmp);
-                if (ptr_map_grid_nodes->find(sfbitset_tmp1) != ptr_map_grid_nodes->end()) {
-                    ptr_map_grid_nodes->at(sfbitset_tmp1)->f_.at(kFXnYpZ0) = iter_node.second->f_collide_.at(kFXnYpZ0);
-                }
-                // f(+x, 0)
-                sfbitset_tmp = sfbitset_aux2d.FindXPos(iter_node.first);
-                if (ptr_map_grid_nodes->find(sfbitset_tmp) != ptr_map_grid_nodes->end()) {
-                    ptr_map_grid_nodes->at(sfbitset_tmp)->f_.at(kFXpY0Z0) = iter_node.second->f_collide_.at(kFXpY0Z0);
-                }
-                // f(+x, -y)
-                sfbitset_tmp1 = sfbitset_aux2d.FindYNeg(sfbitset_tmp);
-                if (ptr_map_grid_nodes->find(sfbitset_tmp1) != ptr_map_grid_nodes->end()) {
-                    ptr_map_grid_nodes->at(sfbitset_tmp1)->f_.at(kFXpYnZ0) = iter_node.second->f_collide_.at(kFXpYnZ0);
-                }
-                // f(+x, +y)
-                sfbitset_tmp1 = sfbitset_aux2d.FindYPos(sfbitset_tmp);
-                if (ptr_map_grid_nodes->find(sfbitset_tmp1) != ptr_map_grid_nodes->end()) {
-                    ptr_map_grid_nodes->at(sfbitset_tmp1)->f_.at(kFXpYpZ0) = iter_node.second->f_collide_.at(kFXpYpZ0);
-                }
-                // f(0, -y)
-                sfbitset_tmp = sfbitset_aux2d.FindYNeg(iter_node.first);
-                if (ptr_map_grid_nodes->find(sfbitset_tmp) != ptr_map_grid_nodes->end()) {
-                    ptr_map_grid_nodes->at(sfbitset_tmp)->f_.at(kFX0YnZ0) = iter_node.second->f_collide_.at(kFX0YnZ0);
-                }
-                // f(0, +y)
-                sfbitset_tmp = sfbitset_aux2d.FindYPos(iter_node.first);
-                if (ptr_map_grid_nodes->find(sfbitset_tmp) != ptr_map_grid_nodes->end()) {
-                    ptr_map_grid_nodes->at(sfbitset_tmp)->f_.at(kFX0YpZ0) = iter_node.second->f_collide_.at(kFX0YpZ0);
-                }
-            }
-        }
+    const amrproject::SFBitsetAux2D sfbitset_aux2d = dynamic_cast<const amrproject::SFBitsetAux2D&>(sfbitset_aux);
+    DefSFBitset sfbitset_tmp, sfbitset_tmp1;
+    ptr_map_grid_nodes->at(sfbitset_in)->f_.at(kFX0Y0Z0) =
+        ptr_map_grid_nodes->at(sfbitset_in)->f_collide_.at(kFX0Y0Z0);
+    // f(-x, 0)
+    sfbitset_tmp = sfbitset_aux2d.FindXPos(sfbitset_in);
+    if (ptr_map_grid_nodes->find(sfbitset_tmp) != ptr_map_grid_nodes->end()) {
+        ptr_map_grid_nodes->at(sfbitset_in)->f_.at(kFXnY0Z0) =
+            ptr_map_grid_nodes->at(sfbitset_tmp)->f_collide_.at(kFXnY0Z0);
+    }
+    // f(-x, -y)
+    sfbitset_tmp1 = sfbitset_aux2d.FindYPos(sfbitset_tmp);
+    if (ptr_map_grid_nodes->find(sfbitset_tmp1) != ptr_map_grid_nodes->end()) {
+        ptr_map_grid_nodes->at(sfbitset_in)->f_.at(kFXnYnZ0) =
+            ptr_map_grid_nodes->at(sfbitset_tmp1)->f_collide_.at(kFXnYnZ0);
+    }
+    // f(-x, +y)
+    sfbitset_tmp1 = sfbitset_aux2d.FindYNeg(sfbitset_tmp);
+    if (ptr_map_grid_nodes->find(sfbitset_tmp1) != ptr_map_grid_nodes->end()) {
+        ptr_map_grid_nodes->at(sfbitset_in)->f_.at(kFXnYpZ0) =
+            ptr_map_grid_nodes->at(sfbitset_tmp1)->f_collide_.at(kFXnYpZ0);
+    }
+    // f(+x, 0)
+    sfbitset_tmp = sfbitset_aux2d.FindXNeg(sfbitset_in);
+    if (ptr_map_grid_nodes->find(sfbitset_tmp) != ptr_map_grid_nodes->end()) {
+        ptr_map_grid_nodes->at(sfbitset_in)->f_.at(kFXpY0Z0) =
+            ptr_map_grid_nodes->at(sfbitset_tmp)->f_collide_.at(kFXpY0Z0);
+    }
+    // f(+x, -y)
+    sfbitset_tmp1 = sfbitset_aux2d.FindYPos(sfbitset_tmp);
+    if (ptr_map_grid_nodes->find(sfbitset_tmp1) != ptr_map_grid_nodes->end()) {
+        ptr_map_grid_nodes->at(sfbitset_in)->f_.at(kFXpYnZ0) =
+            ptr_map_grid_nodes->at(sfbitset_tmp1)->f_collide_.at(kFXpYnZ0);
+    }
+    // f(+x, +y)
+    sfbitset_tmp1 = sfbitset_aux2d.FindYNeg(sfbitset_tmp);
+    if (ptr_map_grid_nodes->find(sfbitset_tmp1) != ptr_map_grid_nodes->end()) {
+        ptr_map_grid_nodes->at(sfbitset_in)->f_.at(kFXpYpZ0) =
+            ptr_map_grid_nodes->at(sfbitset_tmp1)->f_collide_.at(kFXpYpZ0);
+    }
+    // f(0, -y)
+    sfbitset_tmp = sfbitset_aux2d.FindYPos(sfbitset_in);
+    if (ptr_map_grid_nodes->find(sfbitset_tmp) != ptr_map_grid_nodes->end()) {
+        ptr_map_grid_nodes->at(sfbitset_in)->f_.at(kFX0YnZ0) =
+            ptr_map_grid_nodes->at(sfbitset_tmp)->f_collide_.at(kFX0YnZ0);
+    }
+    // f(0, +y)
+    sfbitset_tmp = sfbitset_aux2d.FindYNeg(sfbitset_in);
+    if (ptr_map_grid_nodes->find(sfbitset_tmp) != ptr_map_grid_nodes->end()) {
+        ptr_map_grid_nodes->at(sfbitset_in)->f_.at(kFX0YpZ0) =
+            ptr_map_grid_nodes->at(sfbitset_tmp)->f_collide_.at(kFX0YpZ0);
     }
 }
 }  // end namespace lbmproject

@@ -138,8 +138,8 @@ void VtkWriterManager::WriteVtuAll(const std::string& folder_name,
     switch (vtk_ghost_cell_option_) {
     case EVtkWriterGhostCellOption::kOutputEntirety : {
             bool_overlap = false;
-            overlap_flag = grid_manager.kNodeStatusFine2Coarse0_
-                | grid_manager.kNodeStatusFine2Coarse0_ | grid_manager.kNodeStatusMpiPartitionOutside_;
+            overlap_flag = NodeBitStatus::kNodeStatusFine2Coarse0_
+                | NodeBitStatus::kNodeStatusFine2Coarse0_ | NodeBitStatus::kNodeStatusMpiPartitionOutside_;
             std::vector<DefAmrIndexUint> output_levels;
             for (DefAmrIndexUint i = 0; i < grid_manager.k0MaxLevel_ + 1; ++i) {
                 output_levels.push_back(i);
@@ -152,8 +152,8 @@ void VtkWriterManager::WriteVtuAll(const std::string& folder_name,
     case EVtkWriterGhostCellOption::kPartitionMultiBlock: {
             std::vector<DefAmrIndexUint> output_levels;
             bool_overlap = true;
-            overlap_flag = grid_manager.kNodeStatusCoarse2FineM1_
-                | grid_manager.kNodeStatusCoarse2FineM1_ | grid_manager.kNodeStatusMpiPartitionOutside_;
+            overlap_flag = NodeBitStatus::kNodeStatusCoarse2FineM1_
+                | NodeBitStatus::kNodeStatusCoarse2FineM1_ | NodeBitStatus::kNodeStatusMpiPartitionOutside_;
             std::vector<std::string> vec_pvtu_file_name;
             for (DefAmrIndexUint i = 0; i < grid_manager.k0MaxLevel_ + 1; ++i) {
                 std::string grid_file_name = proj_and_rank + "grid_level_" + std::to_string(i);
@@ -161,7 +161,6 @@ void VtkWriterManager::WriteVtuAll(const std::string& folder_name,
                     {i}, output_data_format, grid_manager);
                 vec_pvtu_file_name.push_back(name_rank + "grid_level_" + std::to_string(i));
             }
-
             // write pvtu
             FILE* fp = nullptr;
             errno_t err = fopen_s(&fp, (proj_and_rank + ".pvtu").c_str(), "w");
@@ -185,8 +184,7 @@ void VtkWriterManager::WriteVtuAll(const std::string& folder_name,
     for (DefAmrIndexUint i = 0; i < criterion_manager.vec_ptr_geometries_.size(); ++i) {
         output_geos.push_back(i);
     }
-    std::string geo_file_name = proj_and_rank + "geo_"
-        + std::to_string(1);
+    std::string geo_file_name = proj_and_rank + "geo_" + std::to_string(1);
     WriteVtuGeo(geo_file_name, bool_binary, bool_overlap, overlap_flag,
         grid_manager.k0GridDims_, output_geos, grid_offset,
         output_data_format, criterion_manager);
@@ -230,8 +228,7 @@ void VtkWriterManager::WriteVtuGeo(const std::string& datafile_name,
 
         for (const auto& iter_geo : vec_geo_in_one_vtu) {
             WriteGeometryPieces(fp, bool_binary, dims, grid_offset,
-                output_data_format,
-                *criterion_manager.vec_ptr_geometries_.at(iter_geo));
+                output_data_format, *criterion_manager.vec_ptr_geometries_.at(iter_geo));
         }
 
         fprintf_s(fp, " </UnstructuredGrid>\n");
@@ -709,13 +706,16 @@ void VtkWriterManager::WriteGeometryPieces(
         + "\" Name=\"connectivity\" format=\""
         + k0StrVtkAsciiOrBinary_ + "\">\n");
     fprintf_s(fp, str_temp.c_str());
-    // write cell connectiveity
+
+    // write cell connectivity
     DefSizet num_cell = 0;
     switch (geo_info.geometry_cell_type_) {
     case  EGeometryCellType::kPolyLine: {
             WriteGeometryCellConnectivitykPolyLine(
                 fp, bool_binary, num_points, output_data_format);
-            num_cell = num_points - 1;
+            if (num_points > 0) {
+                num_cell = num_points - 1;
+            }
         }
         break;
     default:
@@ -779,13 +779,15 @@ void VtkWriterManager::WriteGeometryCellConnectivitykPolyLine(FILE* const fp,
     const OutputDataFormat& output_data_format) {
     if (bool_binary) {
         std::vector<uint8_t> vec_uint8{}, vec_base64{};
-        for (DefSizet i_vertex = 0; i_vertex < num_points - 1; ++i_vertex) {
-            base64_instance_.AddToVecChar(
-                output_data_format.output_sizet_.CastType(
-                    i_vertex), &vec_uint8);
-            base64_instance_.AddToVecChar(
-                output_data_format.output_sizet_.CastType(
-                    i_vertex + 1), &vec_uint8);
+        if (num_points > 0) {
+            for (DefSizet i_vertex = 0; i_vertex < num_points - 1; ++i_vertex) {
+                base64_instance_.AddToVecChar(
+                    output_data_format.output_sizet_.CastType(
+                        i_vertex), &vec_uint8);
+                base64_instance_.AddToVecChar(
+                    output_data_format.output_sizet_.CastType(
+                        i_vertex + 1), &vec_uint8);
+            }
         }
         base64_instance_.Encode(&vec_uint8, &vec_base64);
         for (const auto& iter : vec_base64) {
@@ -796,16 +798,17 @@ void VtkWriterManager::WriteGeometryCellConnectivitykPolyLine(FILE* const fp,
         std::string str_format = "   "
             + output_data_format.output_sizet_.printf_format_ + " "
             + output_data_format.output_sizet_.printf_format_ + "\n";
-        for (DefSizet i_vertex = 0; i_vertex < num_points - 1; ++i_vertex) {
-            fprintf_s(fp, str_format.c_str(), i_vertex,
-                i_vertex + 1);
+        if (num_points > 0) {
+            for (DefSizet i_vertex = 0; i_vertex < num_points - 1; ++i_vertex) {
+                fprintf_s(fp, str_format.c_str(), i_vertex, i_vertex + 1);
+            }
         }
     }
 }
 /**
-* @brief   function to write offset of each cell for polyline.
+* @brief   function to write offset of each cell for poly line.
 * @param[in]  fp   pointer to output file.
-* @param[in]  bool_binary write data in bindary or ascii format.
+* @param[in]  bool_binary write data in binary or ascii format.
 * @param[in]  geometry_cell_type cell type of geometry.
 * @param[in]  num_cell number of geometry cells.
 * @param[in]  output_data_format output data (real or integer) format.
@@ -859,19 +862,23 @@ void VtkWriterManager::WriteGeometryCellType(
 
     if (bool_binary) {
         std::vector<uint8_t> vec_uint8{}, vec_base64{};
-        for (DefSizet i_vertex = 0; i_vertex < num_points - 1; ++i_vertex) {
-            base64_instance_.AddToVecChar(static_cast<std::uint8_t>(
-                geometry_cell_type), &vec_uint8);
+        if (num_points > 0) {
+            for (DefSizet i_vertex = 0; i_vertex < num_points - 1; ++i_vertex) {
+                base64_instance_.AddToVecChar(static_cast<std::uint8_t>(
+                    geometry_cell_type), &vec_uint8);
+            }
+            base64_instance_.Encode(&vec_uint8, &vec_base64);
+            for (const auto& iter : vec_base64) {
+                fprintf_s(fp, "%c", iter);
+            }
+            fprintf_s(fp, "\n");
         }
-        base64_instance_.Encode(&vec_uint8, &vec_base64);
-        for (const auto& iter : vec_base64) {
-            fprintf_s(fp, "%c", iter);
-        }
-        fprintf_s(fp, "\n");
     } else {
-        for (DefSizet i_vertex = 0; i_vertex < num_points - 1; ++i_vertex) {
-            fprintf_s(fp, "   %u\n",
-                static_cast<std::uint8_t>(geometry_cell_type));
+        if (num_points > 0) {
+            for (DefSizet i_vertex = 0; i_vertex < num_points - 1; ++i_vertex) {
+                fprintf_s(fp, "   %u\n",
+                    static_cast<std::uint8_t>(geometry_cell_type));
+            }
         }
     }
 }

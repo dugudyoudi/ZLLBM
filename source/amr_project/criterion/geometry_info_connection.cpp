@@ -1085,8 +1085,7 @@ void GeometryConnectionInterface::ReconstructSurfaceBasedOnExistingVertex(
                         .at(i_input_level).vec_surface_connection
                         .at(i_surface).vertex_connection.at(i) };
                 }
-                if (edge_of_midpoint.find(edge_key_temp)
-                    != edge_of_midpoint.end()
+                if (edge_of_midpoint.find(edge_key_temp) != edge_of_midpoint.end()
                     && edge_key_temp < edge_key_min) {
                     edge_key_min = edge_key_temp;
                     count_vertex0 = i;

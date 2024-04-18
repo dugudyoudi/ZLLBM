@@ -46,7 +46,9 @@ class SolverLbmD2Q9 :public SolverLbmInterface {
     void InitialModelDependencies() final;
     void Stream(const DefAmrUint flag_not_compute, const amrproject::SFBitsetAuxInterface& sfbitset_aux,
          DefMap<std::unique_ptr<GridNodeLbm>>* const ptr_map_grid_nodes) const final;
-    void StreamForAGivenNode(const DefSFBitset sfbitset_in, const amrproject::SFBitsetAuxInterface& sfbitset_aux,
+    void StreamOutForAGivenNode(const DefSFBitset sfbitset_in, const amrproject::SFBitsetAuxInterface& sfbitset_aux,
+        DefMap<std::unique_ptr<GridNodeLbm>>* const ptr_map_grid_nodes) const final;
+    void StreamInForAGivenNode(const DefSFBitset sfbitset_in, const amrproject::SFBitsetAuxInterface& sfbitset_aux,
         DefMap<std::unique_ptr<GridNodeLbm>>* const ptr_map_grid_nodes) const final;
 
     // std::unique_ptr<BoundaryConditionLbmInterface> BoundaryBounceBackCreator() const override {

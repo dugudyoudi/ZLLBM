@@ -436,7 +436,7 @@ void  GridManager2D::FindOutmostLayerForFineGrid(
         for (const auto& iter_neighbour : vec_neighbors) {
             if (map_exist->find(iter_neighbour) == map_exist->end()) {
                 ptr_interface_outmost->insert({ iter.first, kFlag0_ });
-                map_exist->at(iter.first) |= kNodeStatusCoarse2Fine0_;
+                map_exist->at(iter.first) |= NodeBitStatus::kNodeStatusCoarse2Fine0_;
                 // find interface at lower level
                 bitset_lower_level = SFBitsetToOneLowerLevel(iter.first);
                 if (ptr_layer_lower_level->find(bitset_lower_level)

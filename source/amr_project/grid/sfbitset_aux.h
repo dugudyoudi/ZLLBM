@@ -25,6 +25,7 @@ namespace amrproject {
 class  SFBitsetAuxInterface {
  public:
     static std::array<DefSFBitset, 2> k0SFBitsetTakeXRef_, k0SFBitsetTakeYRef_;
+    static constexpr DefSFBitset kInvalidSFbitset = ~0;
 #ifndef  DEBUG_DISABLE_3D_FUNCTION
     static std::array<DefSFBitset, 2> k0SFBitsetTakeZRef_;
 #endif  // DEBUG_DISABLE_3D_FUNCTIONS
@@ -81,6 +82,7 @@ class  SFBitsetAuxInterface {
     virtual void SFBitsetFindAllNeighborsVir(const DefSFBitset& bitset_in,
         std::vector<DefSFBitset>* const ptr_vec_neighbors) const = 0;
     virtual void SFBitsetFindAllBondedNeighborsVir(const DefSFBitset& bitset_in,
+        const std::vector<bool>& bool_periodic_min, const std::vector<bool>& bool_periodic_max,
         const std::vector<DefSFBitset>& domain_min_m1_n_level,
         const std::vector<DefSFBitset>& domain_max_p1_n_level,
         std::vector<DefSFBitset>* const ptr_vec_neighbors) const = 0;
@@ -106,6 +108,19 @@ class  SFBitsetAux2D : public SFBitsetAuxInterface {
     std::array<DefSFBitset, 2> k0SFBitsetDomainCoordMin_, k0SFBitsetDomainCoordMax_;
     /**< bitset corresponding to the minimum and maximum
      coordinates of the computational domain in each direction*/
+
+    /* give an offset to avoid exceeding the boundary limits when searching nodes.
+    The offset distance is (k0MinIndexOfBackgroundNode_ * kDomainDx),
+    and the default value is 1. */
+    std::array<DefAmrIndexLUint, 2> k0MinIndexOfBackgroundNode_ = {1, 1};
+    ///< the minimum index of background nodes in each direction*/
+    std::array<DefAmrIndexLUint, 2> k0MaxIndexOfBackgroundNode_{};
+    ///< the maximum index of background nodes in each direction*/
+    // k0MinIndexOfBackgroundNode_ is included in k0MaxIndexOfBackgroundNode_
+    // k0DomainSize_ is k0DomainDx_ * (k0MaxIndexOfBackgroundNode_ - k0MinIndexOfBackgroundNode_)
+    std::array<DefReal, 2> k0DomainSize_{};  ///< domain size
+    std::array<DefReal, 2> k0DomainDx_{};  ///< grid space
+    std::array<DefReal, 2> k0RealMin_{};  ///< k0MinIndexOfBackgroundNode_ * kDomainDx
 
     /* space filling code related functions: when use code other than morton
     code, need to rewrite the following functions and those in
@@ -138,6 +153,7 @@ class  SFBitsetAux2D : public SFBitsetAuxInterface {
     void SFBitsetFindAllNeighbors(const DefSFBitset& sfbitset_center,
         std::array<DefSFBitset, 9>* const ptr_bitset_neighbour) const;
     void SFBitsetFindAllBondedNeighborsVir(const DefSFBitset& bitset_in,
+        const std::vector<bool>& bool_periodic_min, const std::vector<bool>& bool_periodic_max,
         const std::vector<DefSFBitset>& domain_min_m1_n_level,
         const std::vector<DefSFBitset>& domain_max_p1_n_level,
         std::vector<DefSFBitset>* const ptr_vec_neighbors) const;
@@ -275,6 +291,20 @@ class  SFBitsetAux3D : public SFBitsetAuxInterface {
     std::array<DefSFBitset, 3> k0SFBitsetDomainCoordMin_, k0SFBitsetDomainCoordMax_;
     /**< bitset corresponding to the minimum and maximum
      coordinates of the computational domain in each direction*/
+
+    /* give an offset to avoid exceeding the boundary limits when searching nodes.
+    The offset distance is (k0MinIndexOfBackgroundNode_ * kDomainDx),
+    and the default value is 1. */
+    std::array<DefAmrIndexLUint, 3> k0MinIndexOfBackgroundNode_ = {1, 1, 1};
+    ///< the minimum index of background nodes in each direction*/
+    std::array<DefAmrIndexLUint, 3> k0MaxIndexOfBackgroundNode_{};
+    ///< the maximum index of background nodes in each direction*/
+    // k0MinIndexOfBackgroundNode_ is included in k0MaxIndexOfBackgroundNode_
+    std::array<DefReal, 3> k0DomainSize_{};  ///< domain size
+    std::array<DefReal, 3> k0DomainDx_{};  ///< grid space
+    std::array<DefReal, 3> k0RealMin_{};  ///< k0MinIndexOfBackgroundNode_ * kDomainDx
+
+
     inline DefSFBitset SFBitsetToOneLowerLevel(const DefSFBitset& morton_in) const;
     inline DefSFBitset SFBitsetToOneHigherLevel(const DefSFBitset& morton_in) const;
     inline DefSFBitset SFBitsetToNLowerLevel(const DefAmrIndexUint n_level, const DefSFBitset& morton_in) const;
@@ -305,6 +335,7 @@ class  SFBitsetAux3D : public SFBitsetAuxInterface {
     void SFBitsetFindCellNeighbors(const DefSFBitset& sfbitset_corner,
         std::array<DefSFBitset, 8>* const ptr_vec_bitset_neighbour) const;
     void SFBitsetFindAllBondedNeighborsVir(const DefSFBitset& bitset_in,
+        const std::vector<bool>& bool_periodic_min, const std::vector<bool>& bool_periodic_max,
         const std::vector<DefSFBitset>& domain_min_m1_n_level,
         const std::vector<DefSFBitset>& domain_max_p1_n_level,
         std::vector<DefSFBitset>* const ptr_vec_neighbors) const;

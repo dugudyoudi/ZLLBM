@@ -137,12 +137,12 @@ DefSizet MpiManager::CalculateBufferSizeForGridNode(const int rank_send,
  * @param[out] ptr_grid_info pointer to class storting grid node information on current rank.
  * @param[out] ptr_buffer_send pointer to buffer storing nodes need to be sent
  * @param[out] ptr_reqs_send pointer to status of mpi sending for each splitted chunks of the target rank.
- * @note information will only be sent to ranks existing in mpi_communication_inner_layers_.
+ * @note information will only be sent of nodes existing in mpi_communication_inner_layers_.
  */
-// Information sends in an periodic iteration pattern for all ranks.
+// Information sends in a periodic iteration pattern for all ranks.
 void MpiManager::SendGridNodeInformation(const int rank_send, const BufferSizeInfo& send_buffer_info,
     GridInfoInterface* const ptr_grid_info, char* const ptr_buffer_send,
-    std::vector<MPI_Request>* const ptr_reqs_send) {
+    std::vector<MPI_Request>* const ptr_reqs_send) const {
     DefAmrIndexUint i_level = ptr_grid_info->i_level_;
 
     if (mpi_communication_inner_layers_.at(i_level).find(rank_send)
@@ -199,6 +199,70 @@ std::unique_ptr<char[]> MpiManager::ReceiveGridNodeInformation(const int rank_re
     } else {
         std::unique_ptr<char[]> buffer = std::make_unique<char[]>(0);
         return buffer;
+    }
+}
+void MpiManager::SendNReceiveGridNodes(
+    std::vector<BufferSizeInfo>* const ptr_send_buffer_info,
+    std::vector<BufferSizeInfo>* const ptr_receive_buffer_info,
+    std::vector<std::vector<MPI_Request>>* const ptr_vec_vec_reqs_send,
+    std::vector<std::vector<MPI_Request>>* const ptr_vec_vec_reqs_receive,
+    std::vector<std::unique_ptr<char[]>>* const ptr_vec_ptr_buffer_send,
+    std::vector<std::unique_ptr<char[]>>* const ptr_vec_ptr_buffer_receive,
+    GridInfoInterface* ptr_grid_info) const {
+    ptr_vec_vec_reqs_send->clear();
+    ptr_vec_ptr_buffer_send->clear();
+    ptr_vec_vec_reqs_receive->clear();
+    ptr_vec_ptr_buffer_receive->clear();
+    DefAmrIndexUint i_level = ptr_grid_info->i_level_;
+    ptr_grid_info->ComputeLocalInfoOnMpiLayers(mpi_communication_inner_layers_.at(i_level),
+        mpi_communication_outer_layers_.at(i_level));
+    std::vector<bool> vec_receive_ranks(IdentifyRanksReceivingGridNode(i_level));
+    SendNReceiveGridNodeBufferSize(i_level, vec_receive_ranks,
+        *ptr_grid_info, ptr_send_buffer_info, ptr_receive_buffer_info);
+    for (int i_rank = 0; i_rank < num_of_ranks_; ++i_rank) {
+        if (ptr_receive_buffer_info->at(i_rank).bool_exist_) {
+            ptr_vec_vec_reqs_receive->push_back({});
+            ptr_vec_ptr_buffer_receive->push_back(ReceiveGridNodeInformation(
+                i_rank, ptr_grid_info->SizeOfGridNodeInfoForMpiCommunication(),
+                ptr_receive_buffer_info->at(i_rank), &ptr_vec_vec_reqs_receive->back()));
+        }
+    }
+
+    for (int i_rank = 0; i_rank < num_of_ranks_; ++i_rank) {
+        if (ptr_send_buffer_info->at(i_rank).bool_exist_) {
+            ptr_vec_vec_reqs_send->push_back({});
+            ptr_vec_ptr_buffer_send->push_back(std::make_unique<char[]>(
+                CalculateBufferSizeForGridNode(i_rank, *ptr_grid_info)));
+            SendGridNodeInformation(i_rank, ptr_send_buffer_info->at(i_rank),
+                ptr_grid_info, ptr_vec_ptr_buffer_send->back().get(), &ptr_vec_vec_reqs_send->back());
+        }
+    }
+}
+void MpiManager::WaitAndReadGridNodesFromBuffer(const std::vector<BufferSizeInfo>& send_buffer_info,
+    const std::vector<BufferSizeInfo>& receive_buffer_info,
+    const std::vector<std::unique_ptr<char[]>>& vec_ptr_buffer_receive,
+    std::vector<std::vector<MPI_Request>>* const ptr_vec_vec_reqs_send,
+    std::vector<std::vector<MPI_Request>>* const ptr_vec_vec_reqs_receive,
+    GridInfoInterface* ptr_grid_info) const {
+    int i_rev = 0;
+    for (int i_rank = 0; i_rank < num_of_ranks_; ++i_rank) {
+        if (receive_buffer_info.at(i_rank).bool_exist_) {
+            MPI_Waitall(static_cast<int>(ptr_vec_vec_reqs_receive->at(i_rev).size()),
+                ptr_vec_vec_reqs_receive->at(i_rev).data(), MPI_STATUSES_IGNORE);
+            DefSizet buffer_size = receive_buffer_info.at(i_rank).array_buffer_size_.at(1)
+                + (receive_buffer_info.at(i_rank).num_chunks_ - 1)
+                *receive_buffer_info.at(i_rank).array_buffer_size_.at(0);
+            ptr_grid_info->ReadNodeInfoFromBuffer(buffer_size, vec_ptr_buffer_receive.at(i_rev));
+            ++i_rev;
+        }
+    }
+    int i_send = 0;
+    for (int i_rank = 0; i_rank < num_of_ranks_; ++i_rank) {
+        if (send_buffer_info.at(i_rank).bool_exist_) {
+            MPI_Waitall(static_cast<int>(ptr_vec_vec_reqs_send->at(i_send).size()),
+                ptr_vec_vec_reqs_send->at(i_send).data(), MPI_STATUSES_IGNORE);
+            ++i_send;
+        }
     }
 }
 }  // end namespace amrproject

@@ -44,7 +44,7 @@ void MpiManager::GetNLevelCorrespondingOnes2D(const DefAmrIndexUint i_level,
  * @param[out] partitioned_interface_background  background nodes on the partitioned interface.
  * @return 0 is not on the partitioned interface; 1 is on the lower interface; and 2 on the upper interface
  */
-int MpiManager::CheckNodeOnOuterBoundaryOfBackgroundCell2D(DefAmrIndexUint i_level,
+int MpiManager::CheckNodeOnPartitionInterface2D(DefAmrIndexUint i_level,
     const DefSFCodeToUint code_min, const DefSFCodeToUint code_max,
     const DefSFBitset bitset_in, const SFBitsetAux2D& bitset_aux2d,
     const std::vector<DefSFBitset>& domain_min_m1_n_level, const std::vector<DefSFBitset>& domain_max_p1_n_level,
@@ -116,7 +116,7 @@ void MpiManager::SearchForGhostLayerForMinNMax2D(const DefSFBitset sfbitset_in,
     // negative y direction
     for (DefAmrIndexUint iy = 0; iy <= num_of_ghost_layers; ++iy) {
         if ((sfbitset_tmp_y&bitset_aux2d.k0SFBitsetTakeYRef_.at(bitset_aux2d.kRefCurrent_))
-         != domain_min_m1_n_level.at(kYIndex)) {
+            != domain_min_m1_n_level.at(kYIndex)) {
             sfbitset_tmp_x = sfbitset_tmp_y;
             for (DefAmrIndexUint ix = 0; ix <= num_of_ghost_layers; ++ix) {
                 if ((sfbitset_tmp_x&bitset_aux2d.k0SFBitsetTakeXRef_.at(bitset_aux2d.kRefCurrent_))
@@ -134,7 +134,7 @@ void MpiManager::SearchForGhostLayerForMinNMax2D(const DefSFBitset sfbitset_in,
             for (DefAmrIndexUint ix = 0; ix < num_of_ghost_layers; ++ix) {
                 sfbitset_tmp_x = bitset_aux2d.FindXPos(sfbitset_tmp_x);
                 if ((sfbitset_tmp_x&bitset_aux2d.k0SFBitsetTakeXRef_.at(bitset_aux2d.kRefCurrent_))
-                 != domain_max_p1_n_level.at(kXIndex)) {
+                    != domain_max_p1_n_level.at(kXIndex)) {
                     code_tmp = sfbitset_tmp_x.to_ullong();
                     if ((this->*ptr_func_compare)(code_tmp, code_bound)) {
                         ptr_map_ghost_layer->insert({sfbitset_tmp_x, flag_ini});
@@ -273,18 +273,17 @@ void MpiManager::IniTraverseBackgroundForPartitionRank0(
 }
 /**
  * @brief function to find interface of partitioned blocks
- * @param[in] bitset_min   minimum space filling code for each partition.
- * @param[in] bitset_max   maximum space filling code for each partition.
+ * @param[in] code_min   minimum space filling code for each partition.
+ * @param[in] code_max   maximum space filling code for each partition.
  * @param[in] array_domain_min minimum code of the computational domain.
  * @param[in] array_domain_max minimum code of the computational domain.
  * @param[in] bitset_aux2d class manage 2D space filling curves.
  * @param[out] ptr_partition_interface_background pointer to nodes on the interface of partitioned blocks at the background level. 
  */
-void MpiManager::IniFindInterfaceForPartitionFromMinNMax(const DefSFBitset& bitset_min,
-    const DefSFBitset& bitset_max, const std::array<DefAmrIndexLUint, 2>& array_domain_min,
+void MpiManager::IniFindInterfaceForPartitionFromMinNMax(const DefSFCodeToUint& code_min,
+    const DefSFCodeToUint& code_max, const std::array<DefAmrIndexLUint, 2>& array_domain_min,
     const std::array<DefAmrIndexLUint, 2>& array_domain_max, const SFBitsetAux2D& bitset_aux2d,
     DefMap<DefAmrIndexUint>* const ptr_partition_interface_background) const {
-    const DefSFCodeToUint code_min =  bitset_min.to_ullong(), code_max =  bitset_max.to_ullong();
     DefSFCodeToUint code_tmp = code_max + 1;
     DefAmrIndexLUint block_length = 1;  // block size of space filling code
     DefSFCodeToUint code_cri = ((code_tmp + 1) / 4) *block_length *block_length *4;

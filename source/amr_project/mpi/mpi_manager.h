@@ -45,7 +45,7 @@ class MpiManager{
 
     DefSFBitset sfbitset_min_current_rank_, sfbitset_max_current_rank_;
     ///< space filling codes of background nodes on the interfaces of partitioned grid
-    std::vector<DefSFBitset> vec_sfbitset_min_all_ranks_, vec_sfbitset_max_all_ranks_;
+    std::vector<DefSFCodeToUint> vec_sfcode_min_all_ranks_, vec_sfcode_max_all_ranks_;
 
     DefAmrIndexUint k0NumPartitionOuterLayers_ = 2;
     DefAmrIndexUint k0NumPartitionInnerLayers_ = k0NumPartitionOuterLayers_;
@@ -53,7 +53,7 @@ class MpiManager{
     ///< inner layers (for sending) for mpi communication of all refinement levels
     /** nodes not on the partition interface and whose spacing filling code is
      between the minimum and the maximum spacing filling codes of current rank*/
-    std::vector<DefMap<DefAmrUint>> mpi_communication_outer_layers_;
+    std::vector<DefMap<DefAmrIndexUint>> mpi_communication_outer_layers_;
     ///< outer layers (for receiving) for mpi communication of all refinement levels
     /** nodes whose spacing filling code exceeds 
      the minimum and the maximum spacing filling codes of current rank*/
@@ -66,6 +66,10 @@ class MpiManager{
     void FinalizeMpi();
 
     void IniBroadcastBitsetBounds(std::vector<DefSFBitset>* const ptr_bitset_bounds);
+    inline int CheckNodeInWhichRank(const DefSFCodeToUint& sfcode_in) const {
+        return static_cast<int>(std::lower_bound(vec_sfcode_max_all_ranks_.begin(),
+            vec_sfcode_max_all_ranks_.end(), sfcode_in) - vec_sfcode_max_all_ranks_.begin());
+    }
 
     // functions to convert host unsigned integer to network one
     inline uint8_t HtoNUint(uint8_t val_host) const {
@@ -288,7 +292,7 @@ class MpiManager{
         std::vector<DefMap<DefAmrIndexUint>>* const ptr_sfbitset_each,
         std::vector<DefMap<DefAmrIndexUint>>* const ptr_sfbitset_ghost_each,
         std::vector<std::shared_ptr<GridInfoInterface>>* const ptr_vec_grid_info) const;
-    void IniSendNReceiveGridInfoAtGivenLevels(const DefAmrIndexUint flag_size0,
+    void IniSendNReceiveGridInfoAtAllLevels(const DefAmrIndexUint flag_size0,
         const DefAmrUint flag_coarse2fine, const DefAmrIndexUint dims, const DefAmrIndexUint max_level,
         const DefSFBitset bitset_domain_min, const DefSFBitset bitset_domain_max,
         const std::vector<DefAmrIndexLUint>& indices_min, const std::vector<DefAmrIndexLUint>& indices_max,
@@ -299,6 +303,9 @@ class MpiManager{
         std::vector<DefMap<DefAmrIndexUint>>* const ptr_sfbitset_one_lower_level_current_rank,
         std::vector<DefMap<DefAmrIndexUint>>* const  ptr_sfbitset_ghost_one_lower_level_current_rank,
         std::vector<std::shared_ptr<GridInfoInterface>>* const ptr_vec_grid_info);
+
+ private:
+        void GridPartitionOnASingleRank(const DefMap<DefAmrIndexUint>& sfbitset_current_level);
 
 // functions to serialize and deserialize information for node types other than grid node
  private:
@@ -316,6 +323,39 @@ class MpiManager{
         DefMap<DefAmrUint>* const ptr_map_interface_layer) const;
 
     // communicate between different partitioned blocks
+ public:
+    struct BufferSizeInfo {
+        bool bool_exist_ = false;
+        int num_chunks_ = 0;
+        std::array<int, 2> array_buffer_size_ = {0, 0};
+    };
+    std::vector<bool> IdentifyRanksReceivingGridNode(const DefAmrIndexUint i_level) const;
+    void SendNReceiveGridNodeBufferSize(const DefAmrIndexUint i_level_receive,
+        const std::vector<bool>& rank_id_sent, const GridInfoInterface& grid_info,
+        std::vector<BufferSizeInfo>* const ptr_send_buffer_info,
+        std::vector<BufferSizeInfo>* const ptr_receive_buffer_info) const;
+    DefSizet CalculateBufferSizeForGridNode(const int rank_send,
+        const GridInfoInterface& grid_inf) const;
+    void SendGridNodeInformation(const int i_rank, const BufferSizeInfo& send_buffer_info,
+        GridInfoInterface* ptr_grid_info, char* const ptr_buffer_send,
+        std::vector<MPI_Request>* const ptr_reqs_send) const;
+    std::unique_ptr<char[]> ReceiveGridNodeInformation(const int rank_receive, const int node_info_size,
+        const BufferSizeInfo& receive_buffer_info, std::vector<MPI_Request>* const ptr_reqs_receive) const;
+    void SendNReceiveGridNodes(
+        std::vector<BufferSizeInfo>* const ptr_send_buffer_info,
+        std::vector<BufferSizeInfo>* const ptr_receive_buffer_info,
+        std::vector<std::vector<MPI_Request>>* const ptr_vec_vec_reqs_send,
+        std::vector<std::vector<MPI_Request>>* const ptr_vec_vec_reqs_receive,
+        std::vector<std::unique_ptr<char[]>>* const ptr_vec_ptr_buffer_send,
+        std::vector<std::unique_ptr<char[]>>* const ptr_vec_ptr_buffer_receive,
+        GridInfoInterface* ptr_grid_info) const;
+    void WaitAndReadGridNodesFromBuffer(const std::vector<BufferSizeInfo>& send_buffer_info,
+        const std::vector<BufferSizeInfo>& receive_buffer_info,
+        const std::vector<std::unique_ptr<char[]>>& vec_ptr_buffer_receive,
+        std::vector<std::vector<MPI_Request>>* const ptr_vec_vec_reqs_send,
+        std::vector<std::vector<MPI_Request>>* const ptr_vec_vec_reqs_receive,
+        GridInfoInterface* ptr_grid_info) const;
+
  private:
     inline bool CheckBufferSizeNotExceedMax(DefSizet buffer_size) const {
         if (buffer_size > (std::numeric_limits<int>::max)()) {
@@ -326,44 +366,19 @@ class MpiManager{
     }
 
  public:
-    std::vector<bool> IdentifyRanksReceivingGridNode(const DefAmrIndexUint i_level) const;
-    struct BufferSizeInfo {
-        bool bool_exist_ = false;
-        int num_chunks_ = 0;
-        std::array<int, 2> array_buffer_size_ = {0, 0};
-    };
-    void SendNReceiveGridNodeBufferSize(const DefAmrIndexUint i_level_receive,
-        const std::vector<bool>& rank_id_sent, const GridInfoInterface& grid_info,
-        std::vector<BufferSizeInfo>* const ptr_send_buffer_info,
-        std::vector<BufferSizeInfo>* const ptr_receive_buffer_info) const;
-    DefSizet CalculateBufferSizeForGridNode(const int rank_send,
-        const GridInfoInterface& grid_inf) const;
-    void SendGridNodeInformation(const int i_rank, const BufferSizeInfo& send_buffer_info,
-        GridInfoInterface* ptr_grid_info, char* const ptr_buffer_send,
-        std::vector<MPI_Request>* const ptr_reqs_send);
-    std::unique_ptr<char[]> ReceiveGridNodeInformation(const int rank_receive, const int node_info_size,
-        const BufferSizeInfo& receive_buffer_info, std::vector<MPI_Request>* const ptr_reqs_receive) const;
-    void SetCommunicationRegionForPeriodicBoundary(const SFBitsetAuxInterface& sfbitset_aux,
-        const GridManagerInterface& grid_manager,
-        const std::vector<bool>& bool_periodic_min, const std::vector<bool>& bool_periodic_max,
-        const std::vector<DefMap<DefAmrIndexUint>>& domain_boundary_min,
-        const std::vector<DefMap<DefAmrIndexUint>>& domain_boundary_max,
-        GridInfoInterface* const ptr_grid_info);
-
- public:
 #ifndef  DEBUG_DISABLE_2D_FUNCTION
     void IniTraverseBackgroundForPartitionRank0(
         const DefSFBitset bitset_domain_min, const DefSFBitset bitset_domain_max,
         const std::vector<DefAmrIndexLUint>& vec_cost, const std::vector<DefMap<DefAmrIndexUint>>& vec_sfbitset,
         const SFBitsetAux2D& bitset_aux2d, std::vector<DefSFBitset>* const ptr_bitset_min,
         std::vector<DefSFBitset>* const ptr_bitset_max) const;
-    void IniFindInterfaceForPartitionFromMinNMax(const DefSFBitset& bitset_min,
-        const DefSFBitset& bitset_max, const std::array<DefAmrIndexLUint, 2>& code_domain_min,
+    void IniFindInterfaceForPartitionFromMinNMax(const DefSFCodeToUint& code_min,
+        const DefSFCodeToUint& code_max, const std::array<DefAmrIndexLUint, 2>& code_domain_min,
         const std::array<DefAmrIndexLUint, 2>& code_domain_max, const SFBitsetAux2D& bitset_aux2d,
         DefMap<DefAmrIndexUint>* const ptr_partition_interface_background) const;
     void GetNLevelCorrespondingOnes2D(const DefAmrIndexUint i_level,
         const SFBitsetAux2D& bitset_aux2d, std::vector<DefSFBitset>* const ptr_last_ones) const;
-    int CheckNodeOnOuterBoundaryOfBackgroundCell2D(DefAmrIndexUint i_level,
+    int CheckNodeOnPartitionInterface2D(DefAmrIndexUint i_level,
         const DefSFCodeToUint code_min, const DefSFCodeToUint code_max,
         const DefSFBitset bitset_in, const SFBitsetAux2D& bitset_aux2d,
         const std::vector<DefSFBitset>& domain_min_m1_n_level,
@@ -384,13 +399,13 @@ class MpiManager{
         const std::vector<DefAmrIndexLUint>& vec_cost, const std::vector<DefMap<DefAmrIndexUint>>& vec_sfbitset,
         const SFBitsetAux3D& bitset_aux3d, std::vector<DefSFBitset>* const ptr_bitset_min,
         std::vector<DefSFBitset>* const ptr_bitset_max) const;
-    void IniFindInterfaceForPartitionFromMinNMax(const DefSFBitset& bitset_min,
-        const DefSFBitset& bitset_max, const std::array<DefAmrIndexLUint, 3>& code_domain_min,
+    void IniFindInterfaceForPartitionFromMinNMax(const DefSFCodeToUint& bitset_min,
+        const DefSFCodeToUint& bitset_max, const std::array<DefAmrIndexLUint, 3>& code_domain_min,
         const std::array<DefAmrIndexLUint, 3>& code_domain_max, const SFBitsetAux3D& bitset_aux2d,
         DefMap<DefAmrIndexUint>* const ptr_partition_interface_background) const;
     void GetNLevelCorrespondingOnes3D(const DefAmrIndexUint i_level,
         const SFBitsetAux3D& bitset_aux3d, std::vector<DefSFBitset>* const ptr_last_ones) const;
-    int CheckNodeOnOuterBoundaryOfBackgroundCell3D(DefAmrIndexUint i_level,
+    int CheckNodeOnPartitionInterface3D(DefAmrIndexUint i_level,
         const DefSFCodeToUint code_min, const DefSFCodeToUint code_max,
         const DefSFBitset bitset_in, const SFBitsetAux3D& bitset_aux3d,
         const std::vector<DefSFBitset>& domain_min_m1_n_level,

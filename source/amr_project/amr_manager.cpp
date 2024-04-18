@@ -84,7 +84,6 @@ void AmrManager::InitializeMesh() {
 #ifdef ENABLE_MPI
     rank_id = ptr_mpi_manager_->rank_id_;
 #endif  // ENABLE_MPI
-
     std::array<DefSFBitset, 2> sfbitset_bound_current;
     std::vector<DefMap<DefAmrIndexUint>> sfbitset_one_lower_level(ptr_grid_manager_->k0MaxLevel_ + 1);
     DefAmrIndexUint i_geo = 0;
@@ -123,8 +122,8 @@ void AmrManager::InitializeMesh() {
     if (ptr_grid_manager_->k0GridDims_ == 2) {
 #ifndef  DEBUG_DISABLE_2D_FUNCTIONS
         GridManager2D* ptr_grid_manager_2d = dynamic_cast<GridManager2D*>(ptr_grid_manager_.get());
-        ptr_mpi_manager_->IniSendNReceiveGridInfoAtGivenLevels(ptr_grid_manager_->kFlagSize0_,
-            ptr_grid_manager_->kNodeStatusCoarse2Fine0_,
+        ptr_mpi_manager_->IniSendNReceiveGridInfoAtAllLevels(ptr_grid_manager_->kFlagSize0_,
+            NodeBitStatus::kNodeStatusCoarse2Fine0_,
             ptr_grid_manager_->k0GridDims_, ptr_grid_manager_->k0MaxLevel_,
             ptr_grid_manager_->k0SFBitsetDomainMin_, ptr_grid_manager_->k0SFBitsetDomainMax_,
             {ptr_grid_manager_2d->k0MinIndexOfBackgroundNode_[kXIndex],
@@ -139,22 +138,23 @@ void AmrManager::InitializeMesh() {
             sfbitset_one_lower_level.shrink_to_fit();
         }
         ptr_mpi_manager_->IniFindInterfaceForPartitionFromMinNMax(
-            ptr_mpi_manager_->vec_sfbitset_min_all_ranks_.at(rank_id),
-            ptr_mpi_manager_->vec_sfbitset_max_all_ranks_.at(rank_id),
+            ptr_mpi_manager_->vec_sfcode_min_all_ranks_.at(rank_id),
+            ptr_mpi_manager_->vec_sfcode_max_all_ranks_.at(rank_id),
             ptr_grid_manager_2d->k0MinIndexOfBackgroundNode_, ptr_grid_manager_2d->k0MaxIndexOfBackgroundNode_,
             *ptr_grid_manager_2d, &partition_interface_background);
 
         ptr_grid_manager_->InstantiateGridNodeAllLevelMpi(rank_id, ptr_mpi_manager_->k0NumPartitionInnerLayers_,
-            ptr_mpi_manager_->k0NumPartitionOuterLayers_, ptr_mpi_manager_->vec_sfbitset_min_all_ranks_,
-            ptr_mpi_manager_->vec_sfbitset_max_all_ranks_, *ptr_grid_manager_2d, sfbitset_one_lower_level_current_rank,
+            ptr_mpi_manager_->k0NumPartitionOuterLayers_, ptr_mpi_manager_->vec_sfcode_min_all_ranks_,
+            ptr_mpi_manager_->vec_sfcode_max_all_ranks_,
+            *ptr_grid_manager_2d, sfbitset_one_lower_level_current_rank,
             sfbitset_ghost_one_lower_level_current_rank, partition_interface_background,
             &ptr_mpi_manager_->mpi_communication_inner_layers_, &ptr_mpi_manager_->mpi_communication_outer_layers_);
 #endif  // DEBUG_DISABLE_3D_FUNCTIONS
     } else {
 #ifndef  DEBUG_DISABLE_3D_FUNCTIONS
         GridManager3D* ptr_grid_manager_3d = dynamic_cast<GridManager3D*>(ptr_grid_manager_.get());
-        ptr_mpi_manager_->IniSendNReceiveGridInfoAtGivenLevels(ptr_grid_manager_->kFlagSize0_,
-            ptr_grid_manager_->kNodeStatusCoarse2Fine0_,
+        ptr_mpi_manager_->IniSendNReceiveGridInfoAtAllLevels(ptr_grid_manager_->kFlagSize0_,
+            NodeBitStatus::kNodeStatusCoarse2Fine0_,
             ptr_grid_manager_->k0GridDims_, ptr_grid_manager_->k0MaxLevel_,
             ptr_grid_manager_->k0SFBitsetDomainMin_, ptr_grid_manager_->k0SFBitsetDomainMax_,
             {ptr_grid_manager_3d->k0MinIndexOfBackgroundNode_[kXIndex],
@@ -172,14 +172,15 @@ void AmrManager::InitializeMesh() {
             sfbitset_one_lower_level.shrink_to_fit();
         }
         ptr_mpi_manager_->IniFindInterfaceForPartitionFromMinNMax(
-            ptr_mpi_manager_->vec_sfbitset_min_all_ranks_.at(rank_id),
-            ptr_mpi_manager_->vec_sfbitset_max_all_ranks_.at(rank_id),
+            ptr_mpi_manager_->vec_sfcode_min_all_ranks_.at(rank_id),
+            ptr_mpi_manager_->vec_sfcode_max_all_ranks_.at(rank_id),
             ptr_grid_manager_3d->k0MinIndexOfBackgroundNode_, ptr_grid_manager_3d->k0MaxIndexOfBackgroundNode_,
             *ptr_grid_manager_3d, &partition_interface_background);
 
         ptr_grid_manager_->InstantiateGridNodeAllLevelMpi(rank_id, ptr_mpi_manager_->k0NumPartitionInnerLayers_,
-            ptr_mpi_manager_->k0NumPartitionOuterLayers_, ptr_mpi_manager_->vec_sfbitset_min_all_ranks_,
-            ptr_mpi_manager_->vec_sfbitset_max_all_ranks_, *ptr_grid_manager_3d, sfbitset_one_lower_level_current_rank,
+            ptr_mpi_manager_->k0NumPartitionOuterLayers_, ptr_mpi_manager_->vec_sfcode_min_all_ranks_,
+            ptr_mpi_manager_->vec_sfcode_max_all_ranks_,
+            *ptr_grid_manager_3d, sfbitset_one_lower_level_current_rank,
             sfbitset_ghost_one_lower_level_current_rank, partition_interface_background,
             &ptr_mpi_manager_->mpi_communication_inner_layers_, &ptr_mpi_manager_->mpi_communication_outer_layers_);
 #endif  // DEBUG_DISABLE_3D_FUNCTIONS
@@ -243,9 +244,19 @@ void AmrManager::TimeMarching(const DefAmrIndexLUint time_step_background) {
         GridInfoInterface& grid_ref = *(ptr_grid_manager_->vec_ptr_grid_info_.at(i_level));
         grid_ref.SetUpGridAtBeginningOfTimeStep(time_step_level[i_level], ptr_grid_manager_.get());
 
+        // use information from previous time step
         grid_ref.ptr_solver_->InformationFromGridOfDifferentLevel(
-            amrproject::ETimingInOneStep::kStepBegin, k0TimeSteppingType_,
+            ETimingInOneStep::kStepBegin, k0TimeSteppingType_,
             time_step_level[i_level], *ptr_grid_manager_->GetSFBitsetAuxPtr(), &grid_ref);
+
+#ifdef ENABLE_MPI
+        std::vector<MpiManager::BufferSizeInfo> send_buffer_info, receive_buffer_info;
+        std::vector<std::vector<MPI_Request>> vec_vec_reqs_send, vec_vec_reqs_receive;
+        std::vector<std::unique_ptr<char[]>> vec_ptr_buffer_receive, vec_ptr_buffer_send;
+        ptr_mpi_manager_->SendNReceiveGridNodes(&send_buffer_info, &receive_buffer_info,
+            &vec_vec_reqs_send, &vec_vec_reqs_receive, &vec_ptr_buffer_send, &vec_ptr_buffer_receive, &grid_ref);
+#endif  //  ENABLE_MPI
+
 
         // update criterion information for tracking nodes
         for (auto& iter : grid_ref.map_ptr_tracking_grid_info_) {
@@ -255,15 +266,22 @@ void AmrManager::TimeMarching(const DefAmrIndexLUint time_step_background) {
         }
 
         grid_ref.ptr_solver_->RunSolverOnGrid(k0TimeSteppingType_,
-            time_step_level[i_level], *ptr_grid_manager_->GetSFBitsetAuxPtr(), &grid_ref, ptr_mpi_manager_.get());
-
-        grid_ref.ptr_solver_->InformationFromGridOfDifferentLevel(
-            amrproject::ETimingInOneStep::kStepEnd, k0TimeSteppingType_,
             time_step_level[i_level], *ptr_grid_manager_->GetSFBitsetAuxPtr(), &grid_ref);
 
 #ifdef ENABLE_MPI
+        ptr_mpi_manager_->WaitAndReadGridNodesFromBuffer(send_buffer_info,
+            receive_buffer_info, vec_ptr_buffer_receive,
+            &vec_vec_reqs_send, &vec_vec_reqs_receive, &grid_ref);
         MPI_Barrier(MPI_COMM_WORLD);
 #endif  //  ENABLE_MPI
+
+        // use information in current time step
+        grid_ref.ptr_solver_->InformationFromGridOfDifferentLevel(
+            ETimingInOneStep::kStepEnd, k0TimeSteppingType_,
+            time_step_level[i_level], *ptr_grid_manager_->GetSFBitsetAuxPtr(), &grid_ref);
+
+        grid_ref.ptr_solver_->FinalizeAtTimeStepEnd(k0TimeSteppingType_,
+            time_step_level[i_level], *ptr_grid_manager_->GetSFBitsetAuxPtr(), &grid_ref);
     }
 }
 /**

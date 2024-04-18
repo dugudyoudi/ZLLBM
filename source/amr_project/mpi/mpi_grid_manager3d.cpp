@@ -46,7 +46,7 @@ void MpiManager::GetNLevelCorrespondingOnes3D(const DefAmrIndexUint i_level,
  * @param[out] partitioned_interface_background  background nodes on the partitioned interface.
  * @return 0 is not on the partitioned interface; 1 is on the lower interface; and 2 on the upper interface
  */
-int MpiManager::CheckNodeOnOuterBoundaryOfBackgroundCell3D(DefAmrIndexUint i_level,
+int MpiManager::CheckNodeOnPartitionInterface3D(DefAmrIndexUint i_level,
     const DefSFCodeToUint code_min, const DefSFCodeToUint code_max,
     const DefSFBitset bitset_in, const SFBitsetAux3D& bitset_aux3d,
     const std::vector<DefSFBitset>& domain_min_m1_n_level, const std::vector<DefSFBitset>& domain_max_p1_n_level,
@@ -374,18 +374,17 @@ void MpiManager::IniTraverseBackgroundForPartitionRank0(
 }
 /**
  * @brief function to find interface of partitioned blocks
- * @param[in] bitset_min   minimum space filling code for each partition.
- * @param[in] bitset_max   maximum space filling code for each partition.
+ * @param[in] code_min   minimum space filling code for each partition.
+ * @param[in] code_max   maximum space filling code for each partition.
  * @param[in] array_domain_min minimum code of the computational domain.
  * @param[in] array_domain_max minimum code of the computational domain.
  * @param[in] bitset_aux3d class manage 3D space filling curves.
  * @param[out] ptr_partition_interface_background pointer to nodes on the interface of partitioned blocks at the background level. 
  */
-void MpiManager::IniFindInterfaceForPartitionFromMinNMax(const DefSFBitset& bitset_min,
-    const DefSFBitset& bitset_max, const std::array<DefAmrIndexLUint, 3>& array_domain_min,
+void MpiManager::IniFindInterfaceForPartitionFromMinNMax(const DefSFCodeToUint& code_min,
+    const DefSFCodeToUint& code_max, const std::array<DefAmrIndexLUint, 3>& array_domain_min,
     const std::array<DefAmrIndexLUint, 3>& array_domain_max, const SFBitsetAux3D& bitset_aux3d,
     DefMap<DefAmrIndexUint>* const ptr_partition_interface_background) const {
-    const DefSFCodeToUint code_min =  bitset_min.to_ullong(), code_max =  bitset_max.to_ullong();
     DefSFCodeToUint code_tmp = code_max + 1;
     DefAmrIndexUint block_level = 0;
     DefAmrIndexLUint block_length = 1 << block_level;  // block size of space filling code

@@ -434,7 +434,7 @@ bool GridManager2D::CheckCoincideBackground(const DefAmrIndexUint i_level,
 *                              refinement level in the given cell at 
 *                              one lower level
 */
-void GridManager2D::FindAllNodesInACellAtLowerLevel(
+void GridManager2D::FindAllNodesInACellAtOneLevelLower(
     const std::vector<DefSFBitset> bitset_cell,
     std::vector<DefSFBitset>* const ptr_bitset_all) const {
     ptr_bitset_all->resize(9);
@@ -483,9 +483,9 @@ void GridManager2D::OverlapLayerFromHighToLow(
     }
 }
 /**
-* @brief   function to find background node in the offset region.
+* @brief   function to find if a background node is in the offset region.
 * @param[in] bitset_in space filling code of the node
-* @return if node is in the offset region
+* @return true if node is in the offset region, others false
 */
 bool GridManager2D::CheckBackgroundOffset(const DefSFBitset& bitset_in) const {
     std::array<DefAmrIndexLUint, 2> indices;
@@ -508,11 +508,13 @@ void GridManager2D::InstantiateBackgroundGrid(const DefSFCodeToUint code_min,
     DefSFBitset bitset_temp;
     GridInfoInterface& grid_info = *(vec_ptr_grid_info_.at(0));
     DefSFCodeToUint i_code = code_min;
-
+    int flag_node;
     while (i_code <= code_max) {
         ResetIndicesExceedingDomain(k0MinIndexOfBackgroundNode_, k0MaxIndexOfBackgroundNode_, &i_code, &bitset_temp);
         if (map_occupied.find(bitset_temp) == map_occupied.end()) {
             InstantiateGridNode(bitset_temp, &grid_info);
+            flag_node = grid_info.CheckIfNodeOutsideCubicDomain(k0GridDims_, bitset_temp, *this);
+            (this->*ptr_func_insert_domain_boundary_)(flag_node, bitset_temp, &grid_info);
         }
         ++i_code;
     }

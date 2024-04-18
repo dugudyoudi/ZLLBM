@@ -95,12 +95,13 @@ void MpiManager::IniSendNReceivePartitionedGeoCoordi(const std::array<DefReal, 2
         std::vector<std::vector<std::vector<GeometryCoordinate2D>>> vec_points_ranks(num_ranks);
         int index;
         std::vector<int> i_chunk_each_rank(num_ranks, -1), i_counts(num_ranks, 0);
+        std::vector<DefSFCodeToUint>::iterator iter_index;
         for (const auto& i_point : *ptr_vec_coordinate) {
             coordinate_index =
             { static_cast<DefAmrIndexLUint>(i_point.coordinate.at(kXIndex) / background_space[kXIndex] + kEps),
               static_cast<DefAmrIndexLUint>(i_point.coordinate.at(kYIndex) / background_space[kYIndex] + kEps)};
             bitset_temp = bitset_aux.SFBitsetEncoding(coordinate_index);
-            auto iter_index = std::lower_bound(ull_max.begin(),
+            iter_index = std::lower_bound(ull_max.begin(),
             ull_max.end(), bitset_temp.to_ullong());
             index = static_cast<int>(iter_index - ull_max.begin());
 #ifdef DEBUG_CHECK_GRID
@@ -249,13 +250,14 @@ void MpiManager::IniSendNReceivePartitionedGeoCoordi(const std::array<DefReal, 3
         std::vector<std::vector<std::vector<GeometryCoordinate3D>>> vec_points_ranks(num_ranks);
         int index;
         std::vector<int> i_chunk_each_rank(num_ranks, -1), i_counts(num_ranks, 0);
+        std::vector<DefSFCodeToUint>::iterator iter_index;
         for (const auto& i_point : *ptr_vec_coordinate) {
             coordinate_index =
             { static_cast<DefAmrIndexLUint>(i_point.coordinate.at(kXIndex) / background_space[kXIndex] + kEps),
               static_cast<DefAmrIndexLUint>(i_point.coordinate.at(kYIndex) / background_space[kYIndex] + kEps),
               static_cast<DefAmrIndexLUint>(i_point.coordinate.at(kZIndex) / background_space[kZIndex] + kEps)};
             bitset_temp = sfbitset_aux.SFBitsetEncoding(coordinate_index);
-            auto iter_index = std::lower_bound(ull_max.begin(),
+            iter_index = std::lower_bound(ull_max.begin(),
             ull_max.end(), bitset_temp.to_ullong());
             index = static_cast<int>(iter_index - ull_max.begin());
 #ifdef DEBUG_CHECK_GRID

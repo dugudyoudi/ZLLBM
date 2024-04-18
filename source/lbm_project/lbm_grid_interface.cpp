@@ -51,6 +51,7 @@ void GridInfoLbmInteface::InitialGridInfo() {
     ptr_collision_operator_->CalRelaxationTimeRatio();
     switch (interp_method_) {
     case amrproject::EInterpolationMethod::kLinear:
+        max_interp_length_ = 1;
         if (ptr_lbm_solver->k0SolverDims_ == 2) {
             func_node_interp_ = [this](const DefAmrIndexLUint interp_length, const DefAmrIndexLUint region_length,
                 const DefAmrUint flag_not_for_interp_coarse,
@@ -122,6 +123,9 @@ void GridInfoLbmInteface::SetPointerToCurrentNodeType() {
             + std::string(__FILE__) + " at line " + std::to_string(__LINE__);
             amrproject::LogManager::LogError(msg);
         }
+    } else {
+        // noting that the map is empty
+        ptr_lbm_grid_nodes_ = reinterpret_cast<DefMap<std::unique_ptr<GridNodeLbm>>*>(&map_grid_node_);
     }
 }
 /**
@@ -241,9 +245,9 @@ void GridInfoLbmInteface::SetUpGridAtBeginningOfTimeStep(const DefAmrIndexUint t
  * @brief function to initialize node that does not need to be computed.
  * @param[in] grid_manager class manages mesh containing flags to classify nodes.
  */
-void GridInfoLbmInteface::InitialNotComputeNodeFlag(const amrproject::GridManagerInterface& grid_manager) {
-    NodeFlagNotCollision_ = grid_manager.kNodeStatusMpiPartitionOutside_;
-    NodeFlagNotStream_ = grid_manager.kNodeStatusMpiPartitionOutside_;
+void GridInfoLbmInteface::InitialNotComputeNodeFlag() {
+    NodeFlagNotCollision_ = amrproject::NodeBitStatus::kNodeStatusMpiPartitionOutside_;
+    NodeFlagNotStream_ = amrproject::NodeBitStatus::kNodeStatusMpiPartitionOutside_;
 }
 /**
  * @brief function to transfer information on the interface from the coarse grid to fine grid.
@@ -522,124 +526,6 @@ int GridInfoLbmInteface::OutputOneVariable(
     }
     fprintf_s(fp, "      </DataArray>\n");
     return 0;
-}
-/**
- * @brief function to calculate the size of the grid node information needed for MPI communication.
- * @return size of the grid node information for MPI communication.
- */
-int GridInfoLbmInteface::SizeOfGridNodeInfoForMpiCommunication() const {
-    int size_info = k0SizeOfAllDistributionFunctions_;
-    if (bool_forces_) {
-        size_info += ptr_solver_->k0SolverDims_*sizeof(DefReal);
-    }
-    return size_info;
-}
-/**
- * @brief function to compute information of node in inner mpi layer before communication.
- * @param[in] sfbitset_in space filling code of the input node.
- * @param[in] lbm_solver class to manage LBM solver.
- */
-void GridInfoLbmInteface::ComputeNodeInfoBeforeMpiCommunication(
-    const DefSFBitset sfbitset_in, const SolverLbmInterface& lbm_solver) {
-    ptr_collision_operator_->CollisionOperator(lbm_solver,
-        ptr_lbm_grid_nodes_->at(sfbitset_in).get());
-}
-/**
- * @brief function to copy node information to a buffer.
- * @param map_nodes container storing space filling codes of the nodes need to be copied.
- * @param ptr_buffer pointer to the buffer storing node information.
- */
-void GridInfoLbmInteface::CopyNodeInfoToBuffer(
-    const DefMap<DefAmrIndexUint>& map_nodes, char* const ptr_buffer) {
-    if (ptr_lbm_grid_nodes_ == nullptr) {
-        std::string msg = "pointer to lbm grid nodes is null in "
-            + std::string(__FILE__) + " at line " + std::to_string(__LINE__);
-        amrproject::LogManager::LogError(msg);
-    } else  {
-        DefSizet position = 0;
-        std::function<void(const DefReal, GridNodeLbm* const)> func_macro;
-        DefReal dt_lbm = ptr_collision_operator_->dt_lbm_;
-        SolverLbmInterface* ptr_lbm_solver = std::dynamic_pointer_cast<SolverLbmInterface>(ptr_solver_).get();
-        if (bool_forces_) {
-            if (ptr_lbm_grid_nodes_->begin()->second->force_.size() != ptr_solver_->k0SolverDims_) {
-                amrproject::LogManager::LogError("Size of forces should be "
-                    + std::to_string(ptr_solver_->k0SolverDims_)
-                    + "rather than " + std::to_string(ptr_lbm_grid_nodes_->begin()->second->force_.size()) + " in "
-                    + std::string(__FILE__) + " at line " + std::to_string(__LINE__));
-            }
-            func_macro = ptr_lbm_solver->func_macro_force_;
-        } else {
-            func_macro = ptr_lbm_solver->func_macro_;
-        }
-        for (const auto& iter : map_nodes) {
-            if (ptr_lbm_grid_nodes_->find(iter.first) != ptr_lbm_grid_nodes_->end()) {
-                // calculate distribution functions before copy
-                func_macro(dt_lbm, ptr_lbm_grid_nodes_->at(iter.first).get());
-                ComputeNodeInfoBeforeMpiCommunication(iter.first, *ptr_lbm_solver);
-
-                std::memcpy(ptr_buffer + position, &(iter.first), sizeof(DefSFBitset));
-                position+=sizeof(DefSFBitset);
-                std::memcpy(ptr_buffer + position, ptr_lbm_grid_nodes_->at(iter.first)->f_collide_.data(),
-                    k0SizeOfAllDistributionFunctions_);
-                position+=k0SizeOfAllDistributionFunctions_;
-                if (bool_forces_) {
-                    int force_size = ptr_solver_->k0SolverDims_*sizeof(DefReal);
-                    std::memcpy(ptr_buffer + position, ptr_lbm_grid_nodes_->at(iter.first)->force_.data(), force_size);
-                    position += force_size;
-                }
-            } else {
-                std::string msg = "grid node does not exist for copying to a buffer in "
-                    + std::string(__FILE__) + " at line " + std::to_string(__LINE__);
-                amrproject::LogManager::LogError(msg);
-            }
-        }
-    }
-}
-/**
- * @brief function to compute information of node in inner mpi layer after communication.
- * @param[in] sfbitset_in space filling code of the input node.
- * @param[in] lbm_solver class to manage LBM solver.
- */
-void GridInfoLbmInteface::ComputeNodeInfoAfterMpiCommunication(
-    const DefSFBitset sfbitset_in, const SolverLbmInterface& lbm_solver) {
-    lbm_solver.StreamForAGivenNode(sfbitset_in, *ptr_sfbitset_aux_, ptr_lbm_grid_nodes_);
-}
-/**
- * @brief function to read node information from a buffer consisting all chunks.
- * @param buffer_size total size of the buffer.
- * @param buffer  pointer to the buffer storing node information.
- */
-void GridInfoLbmInteface::ReadNodeInfoFromBuffer(
-    const DefSizet buffer_size, const std::unique_ptr<char[]>& buffer) {
-    char* ptr_buffer = buffer.get();
-    int key_size = sizeof(DefSFBitset);
-    int node_info_size = SizeOfGridNodeInfoForMpiCommunication();
-    DefSizet num_nodes = buffer_size/(key_size + node_info_size);
-    int force_size = ptr_solver_->k0SolverDims_*sizeof(DefReal);
-    // deserialize data stored in buffer
-    DefSizet position = 0;
-    DefSFBitset key_code;
-    SolverLbmInterface* ptr_lbm_solver = std::dynamic_pointer_cast<SolverLbmInterface>(ptr_solver_).get();
-
-    for (DefSizet i_node = 0; i_node < num_nodes; ++i_node) {
-        std::memcpy(&key_code, ptr_buffer + position, key_size);
-        position += key_size;
-        if (ptr_lbm_grid_nodes_->find(key_code) != ptr_lbm_grid_nodes_->end()) {
-            std::memcpy(ptr_lbm_grid_nodes_->at(key_code)->f_collide_.data(),
-                ptr_buffer + position, k0SizeOfAllDistributionFunctions_);
-            position += k0SizeOfAllDistributionFunctions_;
-            if (bool_forces_) {
-                std::memcpy(ptr_lbm_grid_nodes_->at(key_code)->force_.data(),
-                    ptr_buffer + position, force_size);
-                 position += force_size;
-            }
-            ComputeNodeInfoAfterMpiCommunication(key_code, *ptr_lbm_solver);
-        } else {
-            std::string msg = "grid node does not exist for copying from a buffer in "
-            + std::string(__FILE__) + " at line " + std::to_string(__LINE__);
-            amrproject::LogManager::LogError(msg);
-        }
-    }
 }
 }  // end namespace lbmproject
 }  // end namespace rootproject

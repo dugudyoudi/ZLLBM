@@ -71,7 +71,6 @@ class AmrManager {
         }
     }
 
-
     static AmrManager* amr_instance_;
     AmrManager(void) {}
     ~AmrManager(void) {}
