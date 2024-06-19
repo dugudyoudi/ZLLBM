@@ -139,7 +139,7 @@ void VtkWriterManager::WriteVtuAll(const std::string& folder_name,
     case EVtkWriterGhostCellOption::kOutputEntirety : {
             bool_overlap = false;
             overlap_flag = NodeBitStatus::kNodeStatusFine2Coarse0_
-                | NodeBitStatus::kNodeStatusFine2Coarse0_ | NodeBitStatus::kNodeStatusMpiPartitionOutside_;
+                | NodeBitStatus::kNodeStatusFine2Coarse0_ | NodeBitStatus::kNodeStatusMpiPartitionOuter_;
             std::vector<DefAmrIndexUint> output_levels;
             for (DefAmrIndexUint i = 0; i < grid_manager.k0MaxLevel_ + 1; ++i) {
                 output_levels.push_back(i);
@@ -152,8 +152,9 @@ void VtkWriterManager::WriteVtuAll(const std::string& folder_name,
     case EVtkWriterGhostCellOption::kPartitionMultiBlock: {
             std::vector<DefAmrIndexUint> output_levels;
             bool_overlap = true;
-            overlap_flag = NodeBitStatus::kNodeStatusCoarse2FineM1_
-                | NodeBitStatus::kNodeStatusCoarse2FineM1_ | NodeBitStatus::kNodeStatusMpiPartitionOutside_;
+            overlap_flag = NodeBitStatus::kNodeStatusCoarse2Fine0_
+                | NodeBitStatus::kNodeStatusCoarse2FineGhost_ | NodeBitStatus::kNodeStatusMpiPartitionOuter_
+                | NodeBitStatus::kNodeStatusFine2Coarse0_ | NodeBitStatus::kNodeStatusFine2CoarseGhost_;
             std::vector<std::string> vec_pvtu_file_name;
             for (DefAmrIndexUint i = 0; i < grid_manager.k0MaxLevel_ + 1; ++i) {
                 std::string grid_file_name = proj_and_rank + "grid_level_" + std::to_string(i);

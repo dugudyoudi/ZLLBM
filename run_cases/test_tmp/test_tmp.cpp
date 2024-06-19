@@ -12,20 +12,18 @@
 using namespace rootproject;
 using namespace rootproject::amrproject;
 amrproject::AmrManager* ptr_amr_instance_;
-DefReal u_max_ = 0.1, dx_ = 0.2, max_domain_height_ = 1., max_domain_length_ = 1.;
-DefAmrIndexLUint max_t_ = 1000;
+const DefReal u_max_ = 0.1, dx_ = 0.2, max_domain_height_ = 1., max_domain_length_ = 1.6;
 std::vector<DefReal> u_analytical_;
 DefReal u_analytical_sum_;
-void SetTestDependentParameters(DefAmrIndexUint max_level,
+void SetTestDependentParameters(
     const amrproject::SolverCreatorInterface& solver_creator) {
-    ptr_amr_instance_->DefaultInitialization(2, max_level);
     ptr_amr_instance_->ptr_io_manager_->bool_binary_ = false;
     ptr_amr_instance_->ptr_io_manager_->vtk_instance_.vtk_ghost_cell_option_ =
         amrproject::EVtkWriterGhostCellOption::kPartitionMultiBlock;
 
     // grid related parameters //
-    ptr_amr_instance_->ptr_grid_manager_->SetDomainSize({ max_domain_length_, max_domain_height_ });
-    ptr_amr_instance_->ptr_grid_manager_->SetDomainGridSize({ dx_ });
+    ptr_amr_instance_->ptr_grid_manager_->SetDomainSize({max_domain_length_, max_domain_height_});
+    ptr_amr_instance_->ptr_grid_manager_->SetDomainGridSize({dx_});
     // end grid related parameters //
 
     ptr_amr_instance_->SetupParameters();
@@ -40,31 +38,27 @@ void SetTestDependentParameters(DefAmrIndexUint max_level,
         grid_ref.bool_forces_ = false;
         lbmproject::SolverLbmInterface& solver_ref
             = *dynamic_cast<lbmproject::SolverLbmInterface*>(grid_ref.ptr_solver_.get());
-        solver_ref.SetDomainBoundaryCondition(lbmproject::ELbmBoundaryType::kBoundaryXNeg,
+        solver_ref.SetDomainBoundaryCondition(lbmproject::ELbmBoundaryType::kBoundaryXMin,
             lbmproject::ELbmBoundaryConditionScheme::kPeriodic, &grid_ref.domain_boundary_condition_);
-        solver_ref.SetDomainBoundaryCondition(lbmproject::ELbmBoundaryType::kBoundaryXPos,
+        solver_ref.SetDomainBoundaryCondition(lbmproject::ELbmBoundaryType::kBoundaryXMax,
             lbmproject::ELbmBoundaryConditionScheme::kPeriodic, &grid_ref.domain_boundary_condition_);
     }
-
 
     lbmproject::SolverLbmInterface& solver_ref = *dynamic_cast<lbmproject::SolverLbmInterface*>(
         ptr_amr_instance_->ptr_grid_manager_->vec_ptr_solver_.at(0).get());
     solver_ref.k0BoolCompressible_ = true;
-    DefReal tau_0 = sqrt(3. / 16) + 0.5;  // BGK gives the exact solution
-    solver_ref.k0LbmViscosity_ = sqrt(3. / 16) * lbmproject::SolverLbmInterface::kCs_Sq_;
-    DefReal lbm_height = max_domain_height_ / dx_ + 1.;  // bounce back wall at 0.5 distance to the node
-    DefSizet num_probes = static_cast<DefSizet>(max_domain_height_ / dx_ + 1. + kEps);
+    solver_ref.k0LbmViscosity_ = sqrt(3./16) * lbmproject::SolverLbmInterface::kCs_Sq_;
+    DefReal lbm_height = max_domain_height_ /dx_ + 1.;  // bounce back wall at 0.5 distance to the node
+    DefSizet num_probes = static_cast<DefSizet>(max_domain_height_/dx_ + 1. + kEps);
     u_analytical_.resize(num_probes);
     u_analytical_sum_ = 0.;
     for (auto i_probe = 0; i_probe < num_probes; ++i_probe) {
-        u_analytical_.at(i_probe) = u_max_ * ((i_probe + 0.5) / lbm_height);
+        u_analytical_.at(i_probe)  = u_max_* ((i_probe + 0.5)/lbm_height);
         u_analytical_sum_ += Square(u_analytical_.at(i_probe));
     }
 
     ptr_amr_instance_->SetupSolverForGrids();
-
     ptr_amr_instance_->InitializeMesh();
-
 }
 void SetDomainBoundaryOtherThanPeriodic(
     lbmproject::ELbmBoundaryConditionScheme boundary_condition_type) {
@@ -73,46 +67,104 @@ void SetDomainBoundaryOtherThanPeriodic(
             = *dynamic_cast<lbmproject::GridInfoLbmInteface*>(iter_grid.get());
         lbmproject::SolverLbmInterface& solver_ref
             = *dynamic_cast<lbmproject::SolverLbmInterface*>(grid_ref.ptr_solver_.get());
-        solver_ref.SetDomainBoundaryCondition(lbmproject::ELbmBoundaryType::kBoundaryYNeg,
+        solver_ref.SetDomainBoundaryCondition(lbmproject::ELbmBoundaryType::kBoundaryYMin,
             boundary_condition_type, &grid_ref.domain_boundary_condition_);
-        solver_ref.SetDomainBoundaryCondition(lbmproject::ELbmBoundaryType::kBoundaryYPos,
+        solver_ref.SetDomainBoundaryCondition(lbmproject::ELbmBoundaryType::kBoundaryYMax,
             boundary_condition_type, &grid_ref.domain_boundary_condition_);
         // set y boundary velocity to u_max
-        grid_ref.domain_boundary_condition_.at(lbmproject::ELbmBoundaryType::kBoundaryYPos)
-            ->SetValues({ u_max_, 0. });
+        grid_ref.domain_boundary_condition_.at(lbmproject::ELbmBoundaryType::kBoundaryYMax)
+            ->SetValues({u_max_, 0.});
     }
 }
-int main(int argc, char* argv[]) {
+void CalFeqLinear(const DefReal rho,
+    const std::vector<DefReal>& velocity, std::vector<DefReal>* const ptr_feq) {
+    lbmproject::SolverLbmInterface& solver_ref = *dynamic_cast<lbmproject::SolverLbmInterface*>(
+        ptr_amr_instance_->ptr_grid_manager_->vec_ptr_solver_.at(0).get());
+    ptr_feq->resize(solver_ref.k0NumQ_);
+    DefReal c_uv = 0.;
+    for (int iq = 0; iq < solver_ref.k0NumQ_; ++iq) {
+        c_uv = velocity.at(kXIndex) * solver_ref.k0Cx_.at(iq)
+            + velocity.at(kYIndex) * solver_ref.k0Cy_.at(iq);
+        ptr_feq->at(iq) = solver_ref.k0Weights_.at(iq) * (rho + 3. * c_uv);
+    }
+}
+
+int main(int argc, char** argv) {
     MPI_Init(&argc, &argv);
-
     ptr_amr_instance_ = amrproject::AmrManager::GetInstance();
-    ptr_amr_instance_->program_name_ = "test_tmp";
-
     DefAmrIndexUint dims = 2;   // dimension
-    DefAmrIndexUint max_refinement_level = 0;  // maximum refinement level
+    DefAmrIndexUint max_refinement_level = 1;  // maximum refinement level
+    ptr_amr_instance_->DefaultInitialization(dims, max_refinement_level);
+
+    // geometry related parameters //
+    ptr_amr_instance_->ptr_grid_manager_->vec_ptr_tracking_info_creator_.push_back(
+        std::make_unique<amrproject::TrackingGridInfoCreatorInterface>());
+    amrproject::GeometryInfoOrigin2DCreator geo_creator;
+    ptr_amr_instance_->ptr_criterion_manager_->vec_ptr_geometries_.push_back(
+        geo_creator.CreateGeometryInfo());
+    amrproject::GeometryInfoOrigin2D* ptr_geo_temp =
+        dynamic_cast<amrproject::GeometryInfoOrigin2D*>(ptr_amr_instance_->
+        ptr_criterion_manager_->vec_ptr_geometries_.at(0).get());
+    ptr_geo_temp->ptr_geo_shape_ = std::make_unique<amrproject::GeoShapeDefaultLine2D>();
+    amrproject::GeoShapeDefaultLine2D* ptr_line =
+        dynamic_cast<amrproject::GeoShapeDefaultLine2D*>(ptr_geo_temp->ptr_geo_shape_.get());
+    ptr_line->start_point_ = { 0., 0};
+    ptr_line->end_point_ = { max_domain_length_, 0};
+    ptr_geo_temp->ptr_tracking_grid_info_creator_ =
+        ptr_amr_instance_->ptr_grid_manager_->vec_ptr_tracking_info_creator_.at(0).get();
+    ptr_geo_temp->geometry_center_ = { max_domain_length_/2, max_domain_height_/2 };
+    ptr_geo_temp->k0XIntExtendPositive_ = { 4, 4 };
+    ptr_geo_temp->k0XIntExtendNegative_ = { 4, 4 };
+    ptr_geo_temp->k0YIntExtendPositive_ = { 4, 4 };
+    ptr_geo_temp->k0YIntExtendNegative_ = { 4, 4 };
+    ptr_geo_temp->k0IntInnerExtend_ = { 2, 2 };
+    ///< number of extened layers
+
+    ptr_geo_temp->grid_extend_type_ = amrproject::EGridExtendType::kInAndOut;
+    ptr_geo_temp->i_level_ = max_refinement_level;
+    /* used for generating predefined geometries, number of input parameters
+    is based on the type of geometry_shape_*/
+    DefReal dx = dx_ / DefReal(std::pow(2, max_refinement_level));
+    ptr_geo_temp->SetOffset({2*dx, 2*dx});
 
     lbmproject::SolverCreatorLbmD2Q9 solver_creator = lbmproject::SolverCreatorLbmD2Q9();
-    SetTestDependentParameters(0, solver_creator);
+    SetTestDependentParameters(solver_creator);
     SetDomainBoundaryOtherThanPeriodic(lbmproject::ELbmBoundaryConditionScheme::kBounceBack);
 
-    for (DefAmrIndexLUint it = 0; it < max_t_; ++it) {
+    lbmproject::SolverLbmInterface& solver_ref = *dynamic_cast<lbmproject::SolverLbmInterface*>(
+        ptr_amr_instance_->ptr_grid_manager_->vec_ptr_solver_.at(0).get());
+        solver_ref.func_cal_feq_ =  [](const DefReal rho, const std::vector<DefReal>& velocity,
+        std::vector<DefReal>* const ptr_feq) {
+        CalFeqLinear(rho, velocity, ptr_feq);
+    };
+    for (auto& iter :
+        ptr_amr_instance_->ptr_grid_manager_->vec_ptr_grid_info_.at(0)->map_grid_node_) {
+        lbmproject::GridNodeLbm & lbm_node = *dynamic_cast<lbmproject::GridNodeLbm*>(iter.second.get());
+        CalFeqLinear(1, {u_max_, 0}, &lbm_node.f_collide_);
+        CalFeqLinear(1, {u_max_, 0}, &lbm_node.f_);
+        lbm_node.velocity_ = {u_max_, 0};
+    }
+
+
+    // // check if nodes for sending and receiving are correct, only used for debug purposes
+    // for (int i_level = 0; i_level< 2; ++i_level) {
+    //     ptr_amr_instance_->ptr_mpi_manager_->CheckMpiNodesCorrespondence(
+    //         *ptr_amr_instance_->ptr_grid_manager_->vec_ptr_grid_info_.at(i_level).get());
+    // }
+
+
+    // if (ptr_amr_instance_->ptr_mpi_manager_->rank_id_ == 1) {
+    //     for (auto& iter :
+    //     ptr_amr_instance_->ptr_grid_manager_->vec_ptr_grid_info_.at(1)->map_grid_node_) {
+    //     lbmproject::GridNodeLbm & lbm_node = *dynamic_cast<lbmproject::GridNodeLbm*>(iter.second.get());
+    //     CalFeqLinear(1, {u_max_, 0}, &lbm_node.f_);
+    //     CalFeqLinear(1, {u_max_, 0}, &lbm_node.f_collide_);
+    // }
+    // }
+
+
+    for (DefAmrIndexLUint it = 0; it < 1; ++it) {
         ptr_amr_instance_->TimeMarching(it);
     }
-
-    DefReal error_sum = 0., u_calculated;
-    amrproject::SFBitsetAux2D& sfbitset_aux = *dynamic_cast<amrproject::SFBitsetAux2D*>(
-        ptr_amr_instance_->ptr_grid_manager_.get());
-    lbmproject::GridInfoLbmInteface& grid_ref = *dynamic_cast<lbmproject::GridInfoLbmInteface*>(
-        ptr_amr_instance_->ptr_grid_manager_->vec_ptr_grid_info_.at(0).get());
-    DefSFBitset code_tmp = sfbitset_aux.SFBitsetEncoding({ DefAmrIndexLUint(max_domain_length_ / dx_ + kEps) + 1, 1 });
-    DefAmrIndexUint i_y = 0;
-    while (grid_ref.ptr_lbm_grid_nodes_->find(code_tmp) != grid_ref.ptr_lbm_grid_nodes_->end()) {
-        u_calculated = grid_ref.ptr_lbm_grid_nodes_->at(code_tmp)->velocity_[kXIndex];
-        error_sum += Square(u_calculated - u_analytical_.at(i_y));
-        code_tmp = sfbitset_aux.FindYPos(code_tmp);
-        ++i_y;
-    }
-    error_sum = sqrt(error_sum) / sqrt(u_analytical_sum_);
-
     MPI_Finalize();
 }

@@ -5,7 +5,6 @@
 * @file lbm_grid_interface.cpp
 * @author Zhengliang Liu
 * @brief functions used for manage LBM grid interface.
-* @date  2023-9-30
 */
 #include <mpi.h>
 #include "./lbm_interface.h"
@@ -26,45 +25,45 @@ bool GridInfoLbmInteface::CheckIfPeriodicDomainRequired(const DefAmrIndexUint di
     ptr_periodic_min->assign(dims, false);
     ptr_periodic_max->assign(dims, false);
     bool bool_has_periodic = false;
-    if (domain_boundary_condition_.find(ELbmBoundaryType::kBoundaryXNeg)
+    if (domain_boundary_condition_.find(ELbmBoundaryType::kBoundaryXMin)
         != domain_boundary_condition_.end()
-        && domain_boundary_condition_.at(ELbmBoundaryType::kBoundaryXNeg)->boundary_scheme_
+        && domain_boundary_condition_.at(ELbmBoundaryType::kBoundaryXMin)->boundary_scheme_
         == ELbmBoundaryConditionScheme::kPeriodic) {
         ptr_periodic_min->at(kXIndex) = true;
         bool_has_periodic = true;
     }
-    if (domain_boundary_condition_.find(ELbmBoundaryType::kBoundaryYNeg)
+    if (domain_boundary_condition_.find(ELbmBoundaryType::kBoundaryYMin)
         != domain_boundary_condition_.end()
-        && domain_boundary_condition_.at(ELbmBoundaryType::kBoundaryYNeg)->boundary_scheme_
+        && domain_boundary_condition_.at(ELbmBoundaryType::kBoundaryYMin)->boundary_scheme_
         == ELbmBoundaryConditionScheme::kPeriodic) {
         ptr_periodic_min->at(kYIndex) = true;
         bool_has_periodic = true;
     }
-    if (domain_boundary_condition_.find(ELbmBoundaryType::kBoundaryXPos)
+    if (domain_boundary_condition_.find(ELbmBoundaryType::kBoundaryXMax)
         != domain_boundary_condition_.end()
-        && domain_boundary_condition_.at(ELbmBoundaryType::kBoundaryXPos)->boundary_scheme_
+        && domain_boundary_condition_.at(ELbmBoundaryType::kBoundaryXMax)->boundary_scheme_
         == ELbmBoundaryConditionScheme::kPeriodic) {
         ptr_periodic_max->at(kXIndex) = true;
         bool_has_periodic = true;
     }
-    if (domain_boundary_condition_.find(ELbmBoundaryType::kBoundaryYPos)
+    if (domain_boundary_condition_.find(ELbmBoundaryType::kBoundaryYMax)
         != domain_boundary_condition_.end()
-        && domain_boundary_condition_.at(ELbmBoundaryType::kBoundaryYPos)->boundary_scheme_
+        && domain_boundary_condition_.at(ELbmBoundaryType::kBoundaryYMax)->boundary_scheme_
         == ELbmBoundaryConditionScheme::kPeriodic) {
         ptr_periodic_max->at(kYIndex) = true;
         bool_has_periodic = true;
     }
     if (dims == 3) {
-        if (domain_boundary_condition_.find(ELbmBoundaryType::kBoundaryZNeg)
+        if (domain_boundary_condition_.find(ELbmBoundaryType::kBoundaryZMin)
             != domain_boundary_condition_.end()
-            && domain_boundary_condition_.at(ELbmBoundaryType::kBoundaryZNeg)->boundary_scheme_
+            && domain_boundary_condition_.at(ELbmBoundaryType::kBoundaryZMin)->boundary_scheme_
             == ELbmBoundaryConditionScheme::kPeriodic) {
             ptr_periodic_min->at(kZIndex) = true;
             bool_has_periodic = true;
         }
-        if (domain_boundary_condition_.find(ELbmBoundaryType::kBoundaryZPos)
+        if (domain_boundary_condition_.find(ELbmBoundaryType::kBoundaryZMax)
             != domain_boundary_condition_.end()
-            && domain_boundary_condition_.at(ELbmBoundaryType::kBoundaryZPos)->boundary_scheme_
+            && domain_boundary_condition_.at(ELbmBoundaryType::kBoundaryZMax)->boundary_scheme_
             == ELbmBoundaryConditionScheme::kPeriodic) {
             ptr_periodic_max->at(kZIndex) = true;
             bool_has_periodic = true;
@@ -124,8 +123,19 @@ void GridInfoLbmInteface::CopyNodeInfoToBuffer(
                     position += force_size;
                 }
             } else {
-                std::string msg = "grid node does not exist for copying to a buffer in "
-                    + std::string(__FILE__) + " at line " + std::to_string(__LINE__);
+                std::vector<DefReal> indices;
+                ptr_sfbitset_aux_->SFBitsetComputeCoordinateVir(iter.first, grid_space_, &indices);
+                std::string msg;
+                if (indices.size() == 2) {
+                    msg = "grid node (" + std::to_string(indices[kXIndex]) + ", " + std::to_string(indices[kYIndex])
+                         + ") at " + std::to_string(i_level_) + " at level not exist for copying to a buffer in "
+                        + std::string(__FILE__) + " at line " + std::to_string(__LINE__);
+                } else {
+                    msg = "grid node (" + std::to_string(indices[kXIndex]) + ", " + std::to_string(indices[kYIndex])
+                        + std::to_string(indices[kZIndex]) +  + ") at " + std::to_string(i_level_)
+                        + " level does not exist for copying to a buffer in "
+                        + std::string(__FILE__) + " at line " + std::to_string(__LINE__);
+                }
                 amrproject::LogManager::LogError(msg);
             }
         }
@@ -136,7 +146,7 @@ void GridInfoLbmInteface::CopyNodeInfoToBuffer(
  * @param map_inner_nodes container storing space filling codes of inner mpi communication layers will be sent to other ranks.
  * @param map_outer_nodes container storing space filling codes of outer mpi communication layer of the current rank.
  */
-void GridInfoLbmInteface::ComputeLocalInfoOnMpiLayers(
+void GridInfoLbmInteface::ComputeInfoInMpiLayers(
     const std::map<int, DefMap<DefAmrIndexUint>>& map_inner_nodes,
     const DefMap<DefAmrIndexUint>& map_outer_nodes) {
     DefReal dt_lbm = ptr_collision_operator_->dt_lbm_;
@@ -154,8 +164,10 @@ void GridInfoLbmInteface::ComputeLocalInfoOnMpiLayers(
     } else {
         func_macro = ptr_lbm_solver->func_macro_without_force_;
     }
-    DefAmrIndexUint flag_not_compute =
-        amrproject::NodeBitStatus::kNodeStatusFine2Coarse0_|amrproject::NodeBitStatus::kNodeStatusFine2CoarseM1_;
+    DefAmrIndexUint flag_not_compute = amrproject::NodeBitStatus::kNodeStatusFine2Coarse0_
+        |amrproject::NodeBitStatus::kNodeStatusFine2CoarseGhost_
+        |amrproject::NodeBitStatus::kNodeStatusCoarse2Fine0_|amrproject::NodeBitStatus::kNodeStatusCoarse2FineGhost_;
+
     // collision for nodes in outer and inner MPI communication layers
     for (const auto& iter_node : map_outer_nodes) {
         if (!(ptr_lbm_grid_nodes_->at(iter_node.first)->flag_status_&flag_not_compute)) {
@@ -164,6 +176,8 @@ void GridInfoLbmInteface::ComputeLocalInfoOnMpiLayers(
                 ptr_lbm_grid_nodes_->at(iter_node.first).get());
         }
     }
+    DefMap<DefAmrIndexUint> map_one_layer_near_inner;
+    std::vector<DefSFBitset> vec_neighbor;
     for (const auto& iter_layer : map_inner_nodes) {
         for (const auto& iter_node : iter_layer.second) {
             if (!(ptr_lbm_grid_nodes_->at(iter_node.first)->flag_status_&flag_not_compute)) {
@@ -171,6 +185,29 @@ void GridInfoLbmInteface::ComputeLocalInfoOnMpiLayers(
                 ptr_collision_operator_->CollisionOperator(*ptr_lbm_solver,
                     ptr_lbm_grid_nodes_->at(iter_node.first).get());
             }
+            ptr_sfbitset_aux_->SFBitsetFindAllNeighborsVir(iter_node.first, &vec_neighbor);
+            for (const auto& iter_neighbor : vec_neighbor) {
+                if (map_one_layer_near_inner.find(iter_neighbor) == map_one_layer_near_inner.end()) {
+                    map_one_layer_near_inner.insert({iter_neighbor, 0});
+                }
+            }
+        }
+    }
+    // Since stream step will be performed before mpi communication, post-collision distribution
+    // functions of neighboring nodes are need
+    for (const auto& iter_node : map_one_layer_near_inner) {
+        if (ptr_lbm_grid_nodes_->find(iter_node.first) != ptr_lbm_grid_nodes_->end()
+            &&(!(ptr_lbm_grid_nodes_->at(iter_node.first)->flag_status_&flag_not_compute))) {
+            func_macro(dt_lbm, ptr_lbm_grid_nodes_->at(iter_node.first).get());
+            ptr_collision_operator_->CollisionOperator(*ptr_lbm_solver,
+                ptr_lbm_grid_nodes_->at(iter_node.first).get());
+        }
+    }
+
+    for (const auto& iter_layer : map_inner_nodes) {
+        for (const auto& iter_node : iter_layer.second) {
+            ptr_lbm_solver->StreamInForAGivenNode(iter_node.first, *ptr_sfbitset_aux_, ptr_lbm_grid_nodes_);
+
         }
     }
 }
@@ -181,7 +218,6 @@ void GridInfoLbmInteface::ComputeLocalInfoOnMpiLayers(
  */
 void GridInfoLbmInteface::ComputeNodeInfoAfterMpiCommunication(
     const DefSFBitset sfbitset_in, const SolverLbmInterface& lbm_solver) {
-    lbm_solver.StreamOutForAGivenNode(sfbitset_in, *ptr_sfbitset_aux_, ptr_lbm_grid_nodes_);
 }
 /**
  * @brief function to read node information from a buffer consisting all chunks.
@@ -212,11 +248,20 @@ void GridInfoLbmInteface::ReadNodeInfoFromBuffer(
                     ptr_buffer + position, force_size);
                  position += force_size;
             }
-             int i_rank;
-            MPI_Comm_rank(MPI_COMM_WORLD, &i_rank);
         } else {
-            std::string msg = "grid node does not exist for copying from a buffer in "
-            + std::string(__FILE__) + " at line " + std::to_string(__LINE__);
+            std::vector<DefReal> indices;
+            ptr_sfbitset_aux_->SFBitsetComputeCoordinateVir(key_code, grid_space_, &indices);
+            std::string msg;
+            if (indices.size() == 2) {
+                msg = "grid node (" + std::to_string(indices[kXIndex]) + ", " + std::to_string(indices[kYIndex])
+                    + ") at " + std::to_string(i_level_) + " level does not exist for copying from a buffer in "
+                    + std::string(__FILE__) + " at line " + std::to_string(__LINE__);
+            } else {
+                msg = "grid node (" + std::to_string(indices[kXIndex]) + ", " + std::to_string(indices[kYIndex])
+                    + std::to_string(indices[kZIndex]) + ") at " + std::to_string(i_level_)
+                    + " level does not exist for copying from a buffer in "
+                    + std::string(__FILE__) + " at line " + std::to_string(__LINE__);
+            }
             amrproject::LogManager::LogError(msg);
         }
     }

@@ -93,7 +93,7 @@ void IoManager::SetIoParameters() {
 /**
 * @brief function to write flow field.
 */
-void IoManager::OutputFlowfield(
+void IoManager::OutputFlowField(
     const std::string& prog_name,
     GridManagerInterface* const ptr_grid_manager,
     CriterionManager* const ptr_criterion_manager) {

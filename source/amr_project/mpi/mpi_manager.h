@@ -305,7 +305,7 @@ class MpiManager{
         std::vector<std::shared_ptr<GridInfoInterface>>* const ptr_vec_grid_info);
 
  private:
-        void GridPartitionOnASingleRank(const DefMap<DefAmrIndexUint>& sfbitset_current_level);
+    void GridPartitionOnASingleRank(const DefMap<DefAmrIndexUint>& sfbitset_current_level);
 
 // functions to serialize and deserialize information for node types other than grid node
  private:
@@ -330,8 +330,8 @@ class MpiManager{
         std::array<int, 2> array_buffer_size_ = {0, 0};
     };
     std::vector<bool> IdentifyRanksReceivingGridNode(const DefAmrIndexUint i_level) const;
-    void SendNReceiveGridNodeBufferSize(const DefAmrIndexUint i_level_receive,
-        const std::vector<bool>& rank_id_sent, const GridInfoInterface& grid_info,
+    void SendNReceiveGridNodeBufferSize(const DefAmrIndexUint i_level,
+        const int node_info_size, const std::vector<bool>& rank_id_sent,
         std::vector<BufferSizeInfo>* const ptr_send_buffer_info,
         std::vector<BufferSizeInfo>* const ptr_receive_buffer_info) const;
     DefSizet CalculateBufferSizeForGridNode(const int rank_send,
@@ -364,6 +364,10 @@ class MpiManager{
             return true;
         }
     }
+
+    // functions for the purpose of debug
+ public:
+    void CheckMpiNodesCorrespondence(const GridInfoInterface& grid_info) const;
 
  public:
 #ifndef  DEBUG_DISABLE_2D_FUNCTION

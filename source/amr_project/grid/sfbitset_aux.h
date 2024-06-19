@@ -44,6 +44,8 @@ class  SFBitsetAuxInterface {
         const std::vector<DefReal>& grid_space, const std::vector<DefReal>& coordi) const = 0;
     virtual void SFBitsetFindEdgeNode(const DefSFBitset& morton_in,
         std::vector<DefSFBitset>* const ptr_vec_edge_nodes) const = 0;
+    virtual DefSFBitset FindNodeInNeg(const DefAmrIndexUint dir, const DefSFBitset& sfbitset_in) const = 0;
+    virtual DefSFBitset FindNodeInPos(const DefAmrIndexUint dir, const DefSFBitset& sfbitset_in) const = 0;
     virtual void FindNodesInReginOfGivenLength(const DefSFBitset& sfbitset_in,
         const DefAmrIndexLUint region_length,
         const std::vector<DefSFBitset>& domain_min_m1_n_level,
@@ -181,6 +183,20 @@ class  SFBitsetAux2D : public SFBitsetAuxInterface {
         ptr_vec_edge_nodes->at(1) = FindXPos(morton_in);
         ptr_vec_edge_nodes->at(2) = FindYNeg(morton_in);
         ptr_vec_edge_nodes->at(3) = FindYPos(morton_in);
+    }
+    DefSFBitset FindNodeInNeg(const DefAmrIndexUint dir, const DefSFBitset& sfbitset_in) const override {
+        if (dir == 0) {
+            return FindXNeg(sfbitset_in);
+        } else {
+            return FindYNeg(sfbitset_in);
+        }
+    }
+    DefSFBitset FindNodeInPos(const DefAmrIndexUint dir, const DefSFBitset& sfbitset_in) const override {
+        if (dir == 0) {
+            return FindXPos(sfbitset_in);
+        } else {
+            return FindYPos(sfbitset_in);
+        }
     }
     void SFBitsetComputeCoordinateVir(const DefSFBitset& bitset_in,
         const std::vector<DefReal>& grid_space, std::vector<DefReal>* const ptr_coordi) const final {
@@ -361,6 +377,24 @@ class  SFBitsetAux3D : public SFBitsetAuxInterface {
         ptr_vec_edge_nodes->at(3) = FindYPos(morton_in);
         ptr_vec_edge_nodes->at(4) = FindZNeg(morton_in);
         ptr_vec_edge_nodes->at(5) = FindZPos(morton_in);
+    }
+    DefSFBitset FindNodeInNeg(const DefAmrIndexUint dir, const DefSFBitset& sfbitset_in) const override {
+        if (dir == 0) {
+            return FindXNeg(sfbitset_in);
+        } else if (dir == 1) {
+            return FindYNeg(sfbitset_in);
+        } else {
+            return FindZNeg(sfbitset_in);
+        }
+    }
+    DefSFBitset FindNodeInPos(const DefAmrIndexUint dir, const DefSFBitset& sfbitset_in) const override {
+        if (dir == 0) {
+            return FindXPos(sfbitset_in);
+        } else if (dir == 1) {
+            return FindYPos(sfbitset_in);
+        } else {
+            return FindZPos(sfbitset_in);
+        }
     }
     void SFBitsetComputeCoordinateVir(const DefSFBitset& bitset_in,
         const std::vector<DefReal>& grid_space, std::vector<DefReal>* const ptr_coordi) const final {

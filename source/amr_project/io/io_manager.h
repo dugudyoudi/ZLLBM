@@ -28,7 +28,7 @@ class IoManager {
     bool bool_binary_ = true;
     OutputDataFormat k0OutputDataFormat_;
 
-    void OutputFlowfield(const std::string& prog_name,
+    void OutputFlowField(const std::string& prog_name,
         GridManagerInterface* const ptr_grid_manager,
         CriterionManager* const ptr_criterion_manager);
     VtkWriterManager vtk_instance_;

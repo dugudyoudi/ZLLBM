@@ -137,7 +137,7 @@ void SolverLbmInterface::RunSolverOnGrid(const amrproject::ETimeSteppingScheme t
         ptr_lbm_grid_nodes_info->InitialNotComputeNodeFlag();
     }
 }
-void SolverLbmInterface::FinalizeAtTimeStepEnd(const amrproject::ETimeSteppingScheme time_scheme,
+void SolverLbmInterface::CallDomainBoundaryCondition(const amrproject::ETimeSteppingScheme time_scheme,
     const DefAmrIndexUint time_step_current, const amrproject::SFBitsetAuxInterface& sfbitset_aux,
     amrproject::GridInfoInterface* const ptr_grid_info) {
     GridInfoLbmInteface* ptr_lbm_grid_nodes_info = dynamic_cast<GridInfoLbmInteface*>(ptr_grid_info);
@@ -163,7 +163,8 @@ void SolverLbmInterface::InformationFromGridOfDifferentLevel(
             amrproject::NodeBitStatus::kNodeStatusCoarse2Fine0_,
             *(ptr_grid_manager_->vec_ptr_grid_info_.at(i_level - 1)));
         ptr_lbm_grid_nodes_info->NodeFlagNotCollision_ |=
-            (amrproject::NodeBitStatus::kNodeStatusFine2Coarse0_|amrproject::NodeBitStatus::kNodeStatusFine2CoarseM1_);
+            (amrproject::NodeBitStatus::kNodeStatusFine2Coarse0_
+            |amrproject::NodeBitStatus::kNodeStatusFine2CoarseGhost_);
     }
     if (i_level < ptr_grid_manager_->k0MaxLevel_ && ptr_grid_info->CheckNeedInfoFromFine(
         timing, time_scheme, time_step_current)) {

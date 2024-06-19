@@ -102,7 +102,7 @@ void MpiManager::IniSendNReceivePartitionedGeoCoordi(const std::array<DefReal, 2
               static_cast<DefAmrIndexLUint>(i_point.coordinate.at(kYIndex) / background_space[kYIndex] + kEps)};
             bitset_temp = bitset_aux.SFBitsetEncoding(coordinate_index);
             iter_index = std::lower_bound(ull_max.begin(),
-            ull_max.end(), bitset_temp.to_ullong());
+                ull_max.end(), bitset_temp.to_ullong());
             index = static_cast<int>(iter_index - ull_max.begin());
 #ifdef DEBUG_CHECK_GRID
             if (index == num_max) {
@@ -258,7 +258,7 @@ void MpiManager::IniSendNReceivePartitionedGeoCoordi(const std::array<DefReal, 3
               static_cast<DefAmrIndexLUint>(i_point.coordinate.at(kZIndex) / background_space[kZIndex] + kEps)};
             bitset_temp = sfbitset_aux.SFBitsetEncoding(coordinate_index);
             iter_index = std::lower_bound(ull_max.begin(),
-            ull_max.end(), bitset_temp.to_ullong());
+                ull_max.end(), bitset_temp.to_ullong());
             index = static_cast<int>(iter_index - ull_max.begin());
 #ifdef DEBUG_CHECK_GRID
             if (index == num_max) {

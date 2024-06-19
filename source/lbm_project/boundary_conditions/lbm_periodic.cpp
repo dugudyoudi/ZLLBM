@@ -27,19 +27,19 @@ void BoundaryPeriodic2D::CalBoundaryCondition(const ELbmBoundaryType boundary_ty
     const amrproject::GridManager2D& grid_manager2d =
         *dynamic_cast<amrproject::GridManager2D*>(ptr_grid_info->ptr_solver_->ptr_grid_manager_);
     switch (boundary_type) {
-    case ELbmBoundaryType::kBoundaryXNeg:
+    case ELbmBoundaryType::kBoundaryXMin:
         boundary_counterpart = ptr_grid_info->k0VecBitsetDomainMax_.at(kXIndex);
         set_coordinate = grid_manager2d.k0SFBitsetTakeXRef_.at(grid_manager2d.kRefOthers_);
         break;
-    case ELbmBoundaryType::kBoundaryXPos:
+    case ELbmBoundaryType::kBoundaryXMax:
         boundary_counterpart = ptr_grid_info->k0VecBitsetDomainMin_.at(kXIndex);
         set_coordinate = grid_manager2d.k0SFBitsetTakeXRef_.at(grid_manager2d.kRefOthers_);
         break;
-    case ELbmBoundaryType::kBoundaryYNeg:
+    case ELbmBoundaryType::kBoundaryYMin:
         boundary_counterpart = ptr_grid_info->k0VecBitsetDomainMax_.at(kYIndex);
         set_coordinate = grid_manager2d.k0SFBitsetTakeYRef_.at(grid_manager2d.kRefOthers_);
         break;
-    case ELbmBoundaryType::kBoundaryYPos:
+    case ELbmBoundaryType::kBoundaryYMax:
         boundary_counterpart = ptr_grid_info->k0VecBitsetDomainMin_.at(kYIndex);
         set_coordinate = grid_manager2d.k0SFBitsetTakeYRef_.at(grid_manager2d.kRefOthers_);
         break;
@@ -86,27 +86,27 @@ void BoundaryPeriodic3D::CalBoundaryCondition(const ELbmBoundaryType boundary_ty
     const amrproject::GridManager3D& grid_manager3d =
         *dynamic_cast<amrproject::GridManager3D*>(ptr_grid_info->ptr_solver_->ptr_grid_manager_);
     switch (boundary_type) {
-    case ELbmBoundaryType::kBoundaryXNeg:
+    case ELbmBoundaryType::kBoundaryXMin:
         boundary_counterpart = ptr_grid_info->k0VecBitsetDomainMax_.at(kXIndex);
         set_coordinate = grid_manager3d.k0SFBitsetTakeXRef_.at(grid_manager3d.kRefOthers_);
         break;
-    case ELbmBoundaryType::kBoundaryXPos:
+    case ELbmBoundaryType::kBoundaryXMax:
         boundary_counterpart = ptr_grid_info->k0VecBitsetDomainMin_.at(kXIndex);
         set_coordinate = grid_manager3d.k0SFBitsetTakeXRef_.at(grid_manager3d.kRefOthers_);
         break;
-    case ELbmBoundaryType::kBoundaryYNeg:
+    case ELbmBoundaryType::kBoundaryYMin:
         boundary_counterpart = ptr_grid_info->k0VecBitsetDomainMax_.at(kYIndex);
         set_coordinate = grid_manager3d.k0SFBitsetTakeYRef_.at(grid_manager3d.kRefOthers_);
         break;
-    case ELbmBoundaryType::kBoundaryYPos:
+    case ELbmBoundaryType::kBoundaryYMax:
         boundary_counterpart = ptr_grid_info->k0VecBitsetDomainMin_.at(kYIndex);
         set_coordinate = grid_manager3d.k0SFBitsetTakeYRef_.at(grid_manager3d.kRefOthers_);
         break;
-    case ELbmBoundaryType::kBoundaryZNeg:
+    case ELbmBoundaryType::kBoundaryZMin:
         boundary_counterpart = ptr_grid_info->k0VecBitsetDomainMax_.at(kZIndex);
         set_coordinate = grid_manager3d.k0SFBitsetTakeZRef_.at(grid_manager3d.kRefOthers_);
         break;
-    case ELbmBoundaryType::kBoundaryZPos:
+    case ELbmBoundaryType::kBoundaryZMax:
         boundary_counterpart = ptr_grid_info->k0VecBitsetDomainMin_.at(kZIndex);
         set_coordinate = grid_manager3d.k0SFBitsetTakeZRef_.at(grid_manager3d.kRefOthers_);
         break;

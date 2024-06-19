@@ -7,7 +7,6 @@
 * @brief functions used for manage LBM grid interface.
 * @date  2023-9-30
 */
-#include <mpi.h>
 #include "lbm_interface.h"
 #include "io/log_write.h"
 #include "io/vtk_writer.h"
@@ -144,10 +143,10 @@ void GridInfoLbmInteface::ComputeDomainBoundaryCondition() {
     for (auto i =0; i < domain_boundary_min_.size(); ++i) {
         switch (i) {
         case kXIndex: {
-                if (domain_boundary_condition_.find(ELbmBoundaryType::kBoundaryXNeg)
+                if (domain_boundary_condition_.find(ELbmBoundaryType::kBoundaryXMin)
                     != domain_boundary_condition_.end()) {
-                    domain_boundary_condition_.at(ELbmBoundaryType::kBoundaryXNeg)->CalBoundaryCondition(
-                        ELbmBoundaryType::kBoundaryXNeg, domain_boundary_min_.at(i), this);
+                    domain_boundary_condition_.at(ELbmBoundaryType::kBoundaryXMin)->CalBoundaryCondition(
+                        ELbmBoundaryType::kBoundaryXMin, domain_boundary_min_.at(i), this);
                 } else {
                     amrproject::LogManager::LogError("Boundary condition for x minimum domain boundary not found "
                         + std::string(__FILE__) + " at line " + std::to_string(__LINE__));
@@ -155,10 +154,10 @@ void GridInfoLbmInteface::ComputeDomainBoundaryCondition() {
             }
             break;
         case kYIndex: {
-                if (domain_boundary_condition_.find(ELbmBoundaryType::kBoundaryYNeg)
+                if (domain_boundary_condition_.find(ELbmBoundaryType::kBoundaryYMin)
                     != domain_boundary_condition_.end()) {
-                    domain_boundary_condition_.at(ELbmBoundaryType::kBoundaryYNeg)->CalBoundaryCondition(
-                        ELbmBoundaryType::kBoundaryYNeg, domain_boundary_min_.at(i), this);
+                    domain_boundary_condition_.at(ELbmBoundaryType::kBoundaryYMin)->CalBoundaryCondition(
+                        ELbmBoundaryType::kBoundaryYMin, domain_boundary_min_.at(i), this);
                 } else {
                     amrproject::LogManager::LogError("Boundary condition for y minimum domain boundary not found "
                         + std::string(__FILE__) + " at line " + std::to_string(__LINE__));
@@ -166,10 +165,10 @@ void GridInfoLbmInteface::ComputeDomainBoundaryCondition() {
             }
             break;
         case kZIndex: {
-                if (domain_boundary_condition_.find(ELbmBoundaryType::kBoundaryZNeg)
+                if (domain_boundary_condition_.find(ELbmBoundaryType::kBoundaryZMin)
                     != domain_boundary_condition_.end()) {
-                    domain_boundary_condition_.at(ELbmBoundaryType::kBoundaryZNeg)->CalBoundaryCondition(
-                        ELbmBoundaryType::kBoundaryZNeg, domain_boundary_min_.at(i), this);
+                    domain_boundary_condition_.at(ELbmBoundaryType::kBoundaryZMin)->CalBoundaryCondition(
+                        ELbmBoundaryType::kBoundaryZMin, domain_boundary_min_.at(i), this);
                 } else {
                     amrproject::LogManager::LogError("Boundary condition for z minimum domain boundary not found "
                         + std::string(__FILE__) + " at line " + std::to_string(__LINE__));
@@ -185,10 +184,10 @@ void GridInfoLbmInteface::ComputeDomainBoundaryCondition() {
     for (auto i =0; i < domain_boundary_max_.size(); ++i) {
         switch (i) {
         case kXIndex: {
-                if (domain_boundary_condition_.find(ELbmBoundaryType::kBoundaryXPos)
+                if (domain_boundary_condition_.find(ELbmBoundaryType::kBoundaryXMax)
                     != domain_boundary_condition_.end()) {
-                    domain_boundary_condition_.at(ELbmBoundaryType::kBoundaryXPos)->CalBoundaryCondition(
-                        ELbmBoundaryType::kBoundaryXPos, domain_boundary_max_.at(i), this);
+                    domain_boundary_condition_.at(ELbmBoundaryType::kBoundaryXMax)->CalBoundaryCondition(
+                        ELbmBoundaryType::kBoundaryXMax, domain_boundary_max_.at(i), this);
                 } else {
                     amrproject::LogManager::LogError("Boundary condition for x maximum domain boundary not found "
                         + std::string(__FILE__) + " at line " + std::to_string(__LINE__));
@@ -196,10 +195,10 @@ void GridInfoLbmInteface::ComputeDomainBoundaryCondition() {
             }
             break;
         case kYIndex: {
-                if (domain_boundary_condition_.find(ELbmBoundaryType::kBoundaryYPos)
+                if (domain_boundary_condition_.find(ELbmBoundaryType::kBoundaryYMax)
                     != domain_boundary_condition_.end()) {
-                    domain_boundary_condition_.at(ELbmBoundaryType::kBoundaryYPos)->CalBoundaryCondition(
-                        ELbmBoundaryType::kBoundaryYPos, domain_boundary_max_.at(i), this);
+                    domain_boundary_condition_.at(ELbmBoundaryType::kBoundaryYMax)->CalBoundaryCondition(
+                        ELbmBoundaryType::kBoundaryYMax, domain_boundary_max_.at(i), this);
                 } else {
                     amrproject::LogManager::LogError("Boundary condition for y maximum domain boundary not found "
                         + std::string(__FILE__) + " at line " + std::to_string(__LINE__));
@@ -207,10 +206,10 @@ void GridInfoLbmInteface::ComputeDomainBoundaryCondition() {
             }
             break;
         case kZIndex: {
-                if (domain_boundary_condition_.find(ELbmBoundaryType::kBoundaryZPos)
+                if (domain_boundary_condition_.find(ELbmBoundaryType::kBoundaryZMax)
                     != domain_boundary_condition_.end()) {
-                    domain_boundary_condition_.at(ELbmBoundaryType::kBoundaryZPos)->CalBoundaryCondition(
-                        ELbmBoundaryType::kBoundaryZPos, domain_boundary_max_.at(i), this);
+                    domain_boundary_condition_.at(ELbmBoundaryType::kBoundaryZMax)->CalBoundaryCondition(
+                        ELbmBoundaryType::kBoundaryZMax, domain_boundary_max_.at(i), this);
                 } else {
                     amrproject::LogManager::LogError("Boundary condition for z maximum domain boundary not found "
                         + std::string(__FILE__) + " at line " + std::to_string(__LINE__));
@@ -221,6 +220,58 @@ void GridInfoLbmInteface::ComputeDomainBoundaryCondition() {
             amrproject::LogManager::LogError("Type of boundary not defined for the " + std::to_string(i)
                 + "th maximum domain boundary in "+ std::string(__FILE__) + " at line " + std::to_string(__LINE__));
             break;
+        }
+    }
+}
+/**
+ * @brief function to call assigned boundary conditions for a given node.
+ * @param[in] flag_node_boundary flag indicting node on which boundary.
+ * @param[in] bitset_in space filling code of a given node.
+ */
+void GridInfoLbmInteface:: ComputeDomainBoundaryConditionForANode(
+    int flag_node_boundary, const DefSFBitset bitset_in) {
+    if (flag_node_boundary > kFlagInsideDomain_) {
+        if ((flag_node_boundary & kFlagXMinBoundary_) == kFlagXMinBoundary_) {
+            if (domain_boundary_condition_.find(ELbmBoundaryType::kBoundaryXMin)
+                != domain_boundary_condition_.end()) {
+                domain_boundary_condition_.at(ELbmBoundaryType::kBoundaryXMin)->CalBoundaryCondition(
+                    ELbmBoundaryType::kBoundaryXMin, {std::make_pair(bitset_in, 0)}, this);
+            }
+        }
+        if ((flag_node_boundary & kFlagXMaxBoundary_) == kFlagXMaxBoundary_) {
+            if (domain_boundary_condition_.find(ELbmBoundaryType::kBoundaryXMax)
+                != domain_boundary_condition_.end()) {
+                domain_boundary_condition_.at(ELbmBoundaryType::kBoundaryXMax)->CalBoundaryCondition(
+                    ELbmBoundaryType::kBoundaryXMax, {std::make_pair(bitset_in, 0)}, this);
+            }
+        }
+        if ((flag_node_boundary & kFlagYMinBoundary_) == kFlagYMinBoundary_) {
+            if (domain_boundary_condition_.find(ELbmBoundaryType::kBoundaryYMin)
+                != domain_boundary_condition_.end()) {
+                domain_boundary_condition_.at(ELbmBoundaryType::kBoundaryYMin)->CalBoundaryCondition(
+                    ELbmBoundaryType::kBoundaryYMin, {std::make_pair(bitset_in, 0)}, this);
+            }
+        }
+        if ((flag_node_boundary & kFlagYMaxBoundary_) == kFlagYMaxBoundary_) {
+            if (domain_boundary_condition_.find(ELbmBoundaryType::kBoundaryYMax)
+                != domain_boundary_condition_.end()) {
+                domain_boundary_condition_.at(ELbmBoundaryType::kBoundaryYMax)->CalBoundaryCondition(
+                    ELbmBoundaryType::kBoundaryYMax, {std::make_pair(bitset_in, 0)}, this);
+            }
+        }
+        if ((flag_node_boundary & kFlagZMinBoundary_)== kFlagZMinBoundary_) {
+            if (domain_boundary_condition_.find(ELbmBoundaryType::kBoundaryZMin)
+                != domain_boundary_condition_.end()) {
+                domain_boundary_condition_.at(ELbmBoundaryType::kBoundaryZMin)->CalBoundaryCondition(
+                    ELbmBoundaryType::kBoundaryZMin, {std::make_pair(bitset_in, 0)}, this);
+            }
+        }
+        if ((flag_node_boundary & kFlagZMaxBoundary_) == kFlagZMaxBoundary_) {
+            if (domain_boundary_condition_.find(ELbmBoundaryType::kBoundaryZMax)
+                != domain_boundary_condition_.end()) {
+                domain_boundary_condition_.at(ELbmBoundaryType::kBoundaryZMax)->CalBoundaryCondition(
+                    ELbmBoundaryType::kBoundaryZMax, {std::make_pair(bitset_in, 0)}, this);
+            }
         }
     }
 }
@@ -246,8 +297,10 @@ void GridInfoLbmInteface::SetUpGridAtBeginningOfTimeStep(const DefAmrIndexUint t
  * @param[in] grid_manager class manages mesh containing flags to classify nodes.
  */
 void GridInfoLbmInteface::InitialNotComputeNodeFlag() {
-    NodeFlagNotCollision_ = amrproject::NodeBitStatus::kNodeStatusMpiPartitionOutside_;
-    NodeFlagNotStream_ = amrproject::NodeBitStatus::kNodeStatusMpiPartitionOutside_;
+    NodeFlagNotCollision_ = amrproject::NodeBitStatus::kNodeStatusMpiPartitionOuter_
+        |amrproject::NodeBitStatus::kNodeStatusMpiPartitionInner_;
+    NodeFlagNotStream_ = amrproject::NodeBitStatus::kNodeStatusMpiPartitionOuter_
+        |amrproject::NodeBitStatus::kNodeStatusMpiPartitionInner_;
 }
 /**
  * @brief function to transfer information on the interface from the coarse grid to fine grid.
@@ -266,44 +319,45 @@ int GridInfoLbmInteface::TransferInfoFromCoarseGrid(const amrproject::SFBitsetAu
     }
     // identify periodic boundaries
     std::vector<bool> periodic_min(dims), periodic_max(dims);
-    if (domain_boundary_condition_.find(ELbmBoundaryType::kBoundaryXNeg) != domain_boundary_condition_.end()
-        && (domain_boundary_condition_.at(ELbmBoundaryType::kBoundaryXNeg)->boundary_scheme_
+    // CheckIfPeriodicDomainRequired(dims, &periodic_min, &periodic_max);
+    if (domain_boundary_condition_.find(ELbmBoundaryType::kBoundaryXMin) != domain_boundary_condition_.end()
+        && (domain_boundary_condition_.at(ELbmBoundaryType::kBoundaryXMin)->boundary_scheme_
         == ELbmBoundaryConditionScheme::kPeriodic)) {
         periodic_min.at(kXIndex) = true;
     } else {
         periodic_min.at(kXIndex) = false;
     }
-    if (domain_boundary_condition_.find(ELbmBoundaryType::kBoundaryYNeg) != domain_boundary_condition_.end()
-        && (domain_boundary_condition_.at(ELbmBoundaryType::kBoundaryYNeg)->boundary_scheme_
+    if (domain_boundary_condition_.find(ELbmBoundaryType::kBoundaryYMin) != domain_boundary_condition_.end()
+        && (domain_boundary_condition_.at(ELbmBoundaryType::kBoundaryYMin)->boundary_scheme_
         == ELbmBoundaryConditionScheme::kPeriodic)) {
         periodic_min.at(kYIndex) = true;
     } else {
         periodic_min.at(kYIndex) = false;
     }
-    if (domain_boundary_condition_.find(ELbmBoundaryType::kBoundaryXPos) != domain_boundary_condition_.end()
-        && (domain_boundary_condition_.at(ELbmBoundaryType::kBoundaryXPos)->boundary_scheme_
+    if (domain_boundary_condition_.find(ELbmBoundaryType::kBoundaryXMax) != domain_boundary_condition_.end()
+        && (domain_boundary_condition_.at(ELbmBoundaryType::kBoundaryXMax)->boundary_scheme_
         == ELbmBoundaryConditionScheme::kPeriodic)) {
         periodic_max.at(kXIndex) = true;
     } else {
         periodic_max.at(kXIndex) = false;
     }
-    if (domain_boundary_condition_.find(ELbmBoundaryType::kBoundaryYPos) != domain_boundary_condition_.end()
-        && (domain_boundary_condition_.at(ELbmBoundaryType::kBoundaryYPos)->boundary_scheme_
+    if (domain_boundary_condition_.find(ELbmBoundaryType::kBoundaryYMax) != domain_boundary_condition_.end()
+        && (domain_boundary_condition_.at(ELbmBoundaryType::kBoundaryYMax)->boundary_scheme_
         == ELbmBoundaryConditionScheme::kPeriodic)) {
         periodic_max.at(kYIndex) = true;
     } else {
         periodic_max.at(kYIndex) = false;
     }
     if (dims == 3) {
-        if (domain_boundary_condition_.find(ELbmBoundaryType::kBoundaryZNeg) != domain_boundary_condition_.end()
-            && (domain_boundary_condition_.at(ELbmBoundaryType::kBoundaryZNeg)->boundary_scheme_
+        if (domain_boundary_condition_.find(ELbmBoundaryType::kBoundaryZMin) != domain_boundary_condition_.end()
+            && (domain_boundary_condition_.at(ELbmBoundaryType::kBoundaryZMin)->boundary_scheme_
             == ELbmBoundaryConditionScheme::kPeriodic)) {
             periodic_min.at(kZIndex) = true;
         } else {
             periodic_min.at(kZIndex) = false;
         }
-        if (domain_boundary_condition_.find(ELbmBoundaryType::kBoundaryZPos) != domain_boundary_condition_.end()
-            && (domain_boundary_condition_.at(ELbmBoundaryType::kBoundaryZPos)->boundary_scheme_
+        if (domain_boundary_condition_.find(ELbmBoundaryType::kBoundaryZMax) != domain_boundary_condition_.end()
+            && (domain_boundary_condition_.at(ELbmBoundaryType::kBoundaryZMax)->boundary_scheme_
             == ELbmBoundaryConditionScheme::kPeriodic)) {
             periodic_max.at(kZIndex) = true;
         } else {
@@ -343,10 +397,26 @@ int GridInfoLbmInteface::TransferInfoFromCoarseGrid(const amrproject::SFBitsetAu
                 sfbitset_coarse = sfbitset_aux.SFBitsetToNLowerLevelVir(1, iter_node.first);
                 valid_length = sfbitset_aux.FindNodesInPeriodicReginOfGivenLength(sfbitset_coarse, max_interp_length_,
                     periodic_min, periodic_max, domain_min, domain_max, &nodes_in_region);
+
+                // if (i_level_ == 1) {
+                    // amrproject::SFBitsetAux2D aux2d;
+                    // std::array<DefAmrIndexLUint, 2> indices;
+                    // aux2d.SFBitsetComputeIndices(iter_node.first, &indices);
+                    // std::cout <<i_level_ << " " << i_layer << " " << indices[0] << " " << indices[1] << std::endl;
+                    // if (indices[0] == 2 && indices[1] == 10) {
+                    //     for (auto iter : nodes_in_region) {
+                    //         aux2d.SFBitsetComputeIndices(iter, &indices);
+                    //         std::cout << nodes_in_region.size() << " " << indices[0] << " " << indices[1] << std::endl;
+                    //         std::cout <<lbm_grid_coarse.ptr_lbm_grid_nodes_->at(iter)->f_collide_[1] << std::endl;
+                    //     }
+                    // }
+                // }
+
                 SetNodeVariablesAsZeros(ptr_lbm_grid_nodes_->at(iter_node.first).get());
                 func_node_interp_(valid_length, max_interp_length_, node_flag_not_interp, iter_node.first, sfbitset_aux,
                     nodes_in_region, *ptr_lbm_grid_nodes_, grid_info_coarse, *lbm_grid_coarse.ptr_lbm_grid_nodes_,
                     ptr_lbm_grid_nodes_->at(iter_node.first).get());
+
             }
         }
     }
@@ -357,7 +427,7 @@ int GridInfoLbmInteface::TransferInfoFromCoarseGrid(const amrproject::SFBitsetAu
  * @param sfbitset_aux class to manage functions for space filling code computation.
  * @param node_flag node indicator does not used in this implementation.
  * @param grid_info_fine grid information on the fine grid.
- * @return 0 run successfully, 1 does not do anything since find or coarse grid is not available.
+ * @return 0 run successfully, 1 does not do anything since fine or coarse grid is not available.
  * @note information on the layers from 1 to k0NumCoarse2FineLayer_ is transferred from the fine grid.
  */
 int GridInfoLbmInteface::TransferInfoFromFineGrid(const amrproject::SFBitsetAuxInterface& sfbitset_aux,
@@ -429,14 +499,15 @@ void GridInfoLbmInteface::NodeInfoFine2Coarse(const amrproject::GridNode& fine_b
  * @brief function to setup output infomation on variables of LBM node.
  */
 void GridInfoLbmInteface::SetupOutputVariables() {
+    SolverLbmInterface* ptr_lbm_solver = std::dynamic_pointer_cast<SolverLbmInterface>(ptr_solver_).get();
     for (const auto& iter_str : output_variable_name_) {
         if (iter_str == "rho") {
             output_variables_.push_back(std::make_unique<OutputLBMNodeVariableInfo>());
             OutputLBMNodeVariableInfo& output_info_temp =
                 *dynamic_cast<OutputLBMNodeVariableInfo*>(output_variables_.back().get());
             output_info_temp.variable_dims_ = 1;
-            output_info_temp.func_get_var_ = [] (const GridNodeLbm& node)->std::vector<DefReal> {
-                return {node.rho_};
+            output_info_temp.func_get_var_ = [] (GridNodeLbm* const ptr_node)->std::vector<DefReal> {
+                return {ptr_node->rho_};
             };
             output_info_temp.output_name_ = "rho";
         } else if (iter_str == "velocity") {
@@ -444,8 +515,14 @@ void GridInfoLbmInteface::SetupOutputVariables() {
             OutputLBMNodeVariableInfo& output_info_temp =
                 *dynamic_cast<OutputLBMNodeVariableInfo*>(output_variables_.back().get());
             output_info_temp.variable_dims_ = ptr_solver_->k0SolverDims_;
-            output_info_temp.func_get_var_ = [] (const GridNodeLbm& node)->std::vector<DefReal> {
-                return node.velocity_;
+            output_info_temp.func_get_var_ = [this, ptr_lbm_solver]
+                (GridNodeLbm* const ptr_node)->std::vector<DefReal> {
+                if (this->bool_forces_) {
+                    ptr_lbm_solver->func_macro_with_force_(this->ptr_collision_operator_->dt_lbm_, ptr_node);
+                } else {
+                    ptr_lbm_solver->func_macro_without_force_(this->ptr_collision_operator_->dt_lbm_, ptr_node);
+                }
+                return ptr_node->velocity_;
             };
             output_info_temp.output_name_ = "velocity";
         }
@@ -502,7 +579,7 @@ int GridInfoLbmInteface::OutputOneVariable(
         std::vector<uint8_t> vec_uint8{}, vec_base64{};
         for (auto iter = map_node_index.begin();
             iter != map_node_index.end(); ++iter) {
-            const std::vector<DefReal>& vec_var =  output_info.func_get_var_(*map_grid_node.at(iter->first).get());
+            const std::vector<DefReal>& vec_var =  output_info.func_get_var_(map_grid_node.at(iter->first).get());
             for (DefAmrIndexUint i_dims = 0;  i_dims < dims; ++i_dims) {
                 base64_instance.AddToVecChar(output_data_format.output_real_.CastType(vec_var.at(i_dims)), &vec_uint8);
             }
@@ -516,7 +593,7 @@ int GridInfoLbmInteface::OutputOneVariable(
         std::string str_format = "     "
             + output_data_format.output_real_.printf_format_;
         for (auto iter = map_node_index.begin(); iter != map_node_index.end(); ++iter) {
-            const std::vector<DefReal>& vec_var =  output_info.func_get_var_(*map_grid_node.at(iter->first).get());
+            const std::vector<DefReal>& vec_var =  output_info.func_get_var_(map_grid_node.at(iter->first).get());
             for (DefAmrIndexUint i_dims = 0; i_dims < dims; ++i_dims) {
                 fprintf_s(fp, "  ");
                 fprintf_s(fp, str_format.c_str(), vec_var.at(i_dims));

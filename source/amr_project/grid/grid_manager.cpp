@@ -9,7 +9,6 @@
 */
 #include <string>
 #include <set>
-#include <mpi.h>
 #include "auxiliary_inline_func.h"
 #include "grid/grid_manager.h"
 #include "criterion/criterion_manager.h"
@@ -80,6 +79,7 @@ void GridManagerInterface::CreateSameGridInstanceForAllLevel(const std::shared_p
         CalDomainBoundsAtGivenLevel(i_level,
             &grid_ref.k0VecBitsetDomainMin_, &grid_ref.k0VecBitsetDomainMax_);
         if (this->ptr_func_insert_domain_boundary_ == &GridManagerInterface::InsertCubicDomainBoundary) {
+            domain_boundary_type_ = EDomainBoundaryType::kCubic;
             grid_ref.domain_boundary_min_.resize(k0GridDims_);
             grid_ref.domain_boundary_max_.resize(k0GridDims_);
         }
@@ -94,7 +94,7 @@ void GridManagerInterface::CreateSameGridInstanceForAllLevel(const std::shared_p
 bool GridManagerInterface::InstantiateGridNode(const DefSFBitset& bitset_in,
     GridInfoInterface* const ptr_grid_info) {
     int flag_node = ptr_grid_info->CheckIfNodeOutsideCubicDomain(k0GridDims_, bitset_in, *GetSFBitsetAuxPtr());
-    if (flag_node >= 0) {
+    if (flag_node >= GridInfoInterface::kFlagInsideDomain_) {
         ptr_grid_info->map_grid_node_.insert({bitset_in, ptr_grid_info->GridNodeCreator()});
         return true;
     }
@@ -109,23 +109,29 @@ bool GridManagerInterface::InstantiateGridNode(const DefSFBitset& bitset_in,
 void GridManagerInterface::InsertCubicDomainBoundary(const int flag_node,
     const DefSFBitset& bitset_in, GridInfoInterface* const ptr_grid_info) const {
     // flag_node 1: x min, 8: x max, 2: y min, 16: y max, 4: z min, 32: z max
-    if (flag_node > 0) {  // flag_node == 0 indicates not on domain boundary
-        if ((flag_node & 1) == 1) {  // on x min boundary
-        ptr_grid_info->domain_boundary_min_[kXIndex].insert({bitset_in, 0});
+    if (flag_node > GridInfoInterface::kFlagInsideDomain_) {  // flag_node == 0 indicates not on domain boundary
+        if ((flag_node & GridInfoInterface::kFlagXMinBoundary_)
+            == GridInfoInterface::kFlagXMinBoundary_) {  // on x min boundary
+            ptr_grid_info->domain_boundary_min_[kXIndex].insert({bitset_in, 0});
         }
-        if ((flag_node & 8) == 8) {  // on x max boundary
-        ptr_grid_info->domain_boundary_max_[kXIndex].insert({bitset_in, 0});
+        if ((flag_node & GridInfoInterface::kFlagXMaxBoundary_)
+            == GridInfoInterface::kFlagXMaxBoundary_) {  // on x max boundary
+            ptr_grid_info->domain_boundary_max_[kXIndex].insert({bitset_in, 0});
         }
-        if ((flag_node & 2) == 2) {  // on y min boundary
-        ptr_grid_info->domain_boundary_min_[kYIndex].insert({bitset_in, 0});
+        if ((flag_node & GridInfoInterface::kFlagYMinBoundary_)
+            == GridInfoInterface::kFlagYMinBoundary_) {  // on y min boundary
+            ptr_grid_info->domain_boundary_min_[kYIndex].insert({bitset_in, 0});
         }
-        if ((flag_node & 16) == 16) {  // on y max boundary
-        ptr_grid_info->domain_boundary_max_[kYIndex].insert({bitset_in, 0});
+        if ((flag_node & GridInfoInterface::kFlagYMaxBoundary_)
+            == GridInfoInterface::kFlagYMaxBoundary_) {  // on y max boundary
+            ptr_grid_info->domain_boundary_max_[kYIndex].insert({bitset_in, 0});
         }
-        if ((flag_node & 4) == 4) {  // on z min boundary
+        if ((flag_node & GridInfoInterface::kFlagZMinBoundary_)
+            == GridInfoInterface::kFlagZMinBoundary_) {  // on z min boundary
             ptr_grid_info->domain_boundary_min_[kZIndex].insert({bitset_in, 0});
         }
-        if ((flag_node & 32) == 32) {  // on z max boundary
+        if ((flag_node & GridInfoInterface::kFlagZMaxBoundary_)
+            == GridInfoInterface::kFlagZMaxBoundary_) {  // on z max boundary
             ptr_grid_info->domain_boundary_max_[kZIndex].insert({bitset_in, 0});
         }
     }
@@ -308,8 +314,8 @@ void GridManagerInterface::FindOverlappingLayersBasedOnOutermostCoarse(
     DefMap<DefAmrUint>* const ptr_layer_fine_m1, DefMap<DefAmrUint>* const ptr_layer_fine_m2) {
 #ifdef DEBUG_CHECK_GRID
     if (&layer_coarse_m1 == ptr_layer_coarse_0) {
-        LogManager::LogError("input (layer_coarse_0)"
-         " should not be the same as output (ptr_layer_coarse_m1) in "
+        LogManager::LogError("input (layer_coarse_m1)"
+         " should not be the same as output (ptr_layer_coarse_0) in "
         + std::string(__FILE__) + " at line " + std::to_string(__LINE__));
     }
 #endif  // DEBUG_CHECK_GRID
@@ -319,11 +325,9 @@ void GridManagerInterface::FindOverlappingLayersBasedOnOutermostCoarse(
         FindCornersForNeighbourCells(iter_node.first, &corner_bitsets);
         for (auto& iter_conner : corner_bitsets) {
             IdentifyInterfaceForACell(iter_conner, layer_coarse_m1, sfbitset_exist,
-             ptr_layer_fine_m2, ptr_layer_fine_m1, ptr_layer_fine_0);
+                ptr_layer_fine_m2, ptr_layer_fine_m1, ptr_layer_fine_0);
         }
     }
-    // coarse node on the layer_coarse_m1 layer, which overlap with
-    // layer0 layer at one level higher
 #ifdef DEBUG_CHECK_GRID
     if (ptr_layer_fine_0 == ptr_layer_coarse_0) {
         LogManager::LogError("input (ptr_layer_fine_0)"
@@ -392,8 +396,8 @@ void GridManagerInterface::InstantiateOverlapLayerOfRefinementInterface(
                 for (int ilayer = 0; ilayer < maxlayer; ++ilayer) {
                     if (ilayer == maxlayer - 1) {
                         flag_temp = flag_refined | NodeBitStatus::kNodeStatusFine2Coarse0_;
-                    } else if (ilayer == maxlayer - 2) {
-                        flag_temp = flag_refined | NodeBitStatus::kNodeStatusFine2CoarseM1_;
+                    } else if (ilayer >= maxlayer - grid_info.k0NumFine2CoarseGhostLayer_) {
+                        flag_temp = flag_refined | NodeBitStatus::kNodeStatusFine2CoarseGhost_;
                     } else {
                         flag_temp = flag_refined;
                     }
@@ -412,8 +416,8 @@ void GridManagerInterface::InstantiateOverlapLayerOfRefinementInterface(
                 for (DefAmrIndexUint ilayer = 0; ilayer < maxlayer; ++ilayer) {
                     if (ilayer == maxlayer - 1) {
                         flag_temp = flag_refined | NodeBitStatus::kNodeStatusCoarse2Fine0_;
-                    } else if (ilayer == maxlayer - 2) {
-                        flag_temp = flag_refined | NodeBitStatus::kNodeStatusCoarse2FineM1_;
+                    } else if (ilayer >= maxlayer - grid_info_lower.k0NumCoarse2FineGhostLayer_) {
+                        flag_temp = flag_refined | NodeBitStatus::kNodeStatusCoarse2FineGhost_;
                     } else {
                         flag_temp = flag_refined;
                     }
@@ -447,8 +451,8 @@ void GridManagerInterface::InstantiateOverlapLayerOfRefinementInterface(
                 for (DefAmrIndexUint ilayer = 0; ilayer < maxlayer; ++ilayer) {
                     if (ilayer == maxlayer - 1) {
                         flag_temp = flag_refined | NodeBitStatus::kNodeStatusFine2Coarse0_;
-                    } else if (ilayer == maxlayer - 2) {
-                        flag_temp = flag_refined | NodeBitStatus::kNodeStatusFine2CoarseM1_;
+                    } else if (ilayer >= maxlayer - grid_info.k0NumFine2CoarseGhostLayer_) {
+                        flag_temp = flag_refined | NodeBitStatus::kNodeStatusFine2CoarseGhost_;
                     } else {
                         flag_temp = flag_refined;
                     }
@@ -467,8 +471,8 @@ void GridManagerInterface::InstantiateOverlapLayerOfRefinementInterface(
                 for (DefAmrIndexUint ilayer = 0; ilayer < maxlayer; ++ilayer) {
                     if (ilayer == maxlayer - 1) {
                         flag_temp = flag_refined | NodeBitStatus::kNodeStatusCoarse2Fine0_;
-                    } else if (ilayer == maxlayer - 2) {
-                        flag_temp = flag_refined | NodeBitStatus::kNodeStatusCoarse2FineM1_;
+                    } else if (ilayer >= maxlayer - grid_info_lower.k0NumCoarse2FineGhostLayer_) {
+                        flag_temp = flag_refined | NodeBitStatus::kNodeStatusCoarse2FineGhost_;
                     } else {
                         flag_temp = flag_refined;
                     }
@@ -529,6 +533,11 @@ void GridManagerInterface::InstantiateGridNodeAllLevel(const DefSFBitset sfbitse
     }
     // find overlapping node for refinement levels of 0 and 1
     for (const auto & iter_interfaces : vec_ptr_grid_info_.at(0)->map_ptr_interface_layer_info_) {
+        for (const auto & iter_coarse2fine : iter_interfaces.second->vec_inner_coarse2fine_) {
+            for (const auto & iter_node : iter_coarse2fine) {
+                background_occupied.erase(iter_node.first);
+            }
+        }
         for (const auto & iter_coarse2fine : iter_interfaces.second->vec_outer_coarse2fine_) {
             for (const auto & iter_node : iter_coarse2fine) {
                 background_occupied.erase(iter_node.first);

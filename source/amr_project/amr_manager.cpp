@@ -272,16 +272,30 @@ void AmrManager::TimeMarching(const DefAmrIndexLUint time_step_background) {
         ptr_mpi_manager_->WaitAndReadGridNodesFromBuffer(send_buffer_info,
             receive_buffer_info, vec_ptr_buffer_receive,
             &vec_vec_reqs_send, &vec_vec_reqs_receive, &grid_ref);
-        MPI_Barrier(MPI_COMM_WORLD);
 #endif  //  ENABLE_MPI
 
-        // use information in current time step
-        grid_ref.ptr_solver_->InformationFromGridOfDifferentLevel(
-            ETimingInOneStep::kStepEnd, k0TimeSteppingType_,
+        grid_ref.ptr_solver_->CallDomainBoundaryCondition(k0TimeSteppingType_,
             time_step_level[i_level], *ptr_grid_manager_->GetSFBitsetAuxPtr(), &grid_ref);
 
-        grid_ref.ptr_solver_->FinalizeAtTimeStepEnd(k0TimeSteppingType_,
-            time_step_level[i_level], *ptr_grid_manager_->GetSFBitsetAuxPtr(), &grid_ref);
+        // // use information in current time step
+        // if (ptr_mpi_manager_->rank_id_ == 0) {
+            grid_ref.ptr_solver_->InformationFromGridOfDifferentLevel(
+                ETimingInOneStep::kStepEnd, k0TimeSteppingType_,
+                time_step_level[i_level], *ptr_grid_manager_->GetSFBitsetAuxPtr(), &grid_ref);
+
+
+        //             //                                                     amrproject::SFBitsetAux2D aux2d;
+        //             // std::array<DefAmrIndexLUint, 2> indices = {2, 10};
+        //             // DefSFBitset bitset = aux2d.SFBitsetEncoding(indices);
+        //             // if (indices[0] == 2 && indices[1] == 10) {
+        //             //     std::cout << ptr_node->f_collide_[1]<< std::endl;
+                        
+                        
+        //             // }
+        // }
+
+
+
     }
 }
 /**
@@ -311,7 +325,7 @@ void AmrManager::SetDependentInfoForAllLevelsTheSame(const std::shared_ptr<Solve
 * @brief   function to finalize simulation
 */
 void AmrManager::FinalizeSimulation() {
-    ptr_io_manager_->OutputFlowfield(program_name_, ptr_grid_manager_.get(), ptr_criterion_manager_.get());
+    ptr_io_manager_->OutputFlowField(program_name_, ptr_grid_manager_.get(), ptr_criterion_manager_.get());
 #ifdef ENABLE_MPI
     ptr_mpi_manager_->FinalizeMpi();
 #endif  // ENABLE_MPI

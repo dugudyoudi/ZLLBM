@@ -532,11 +532,11 @@ void MpiManager::IniSendNReceiveCoarse2Fine0Interface(const DefAmrIndexUint dims
 
         //  send and receive outer layers
         IniSendNReiveOneLayerRefinementInterface(flag0, outmost_for_all_ranks,
-            &ptr_interface->vec_outer_coarse2fine_.at(num_of_layers_coarse2fine - 2));
+            &ptr_interface->vec_outer_coarse2fine_.at(0));
 
         //  send and receive inner layers
         IniSendNReiveOneLayerRefinementInterface(flag0, outmost_for_all_ranks,
-            &ptr_interface->vec_inner_coarse2fine_.at(num_of_layers_coarse2fine - 2));
+            &ptr_interface->vec_inner_coarse2fine_.at(0));
     }
 
     MPI_Type_free(&mpi_interface_index_type);

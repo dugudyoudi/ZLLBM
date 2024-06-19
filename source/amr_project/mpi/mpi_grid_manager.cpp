@@ -114,9 +114,9 @@ std::unique_ptr<char[]> MpiManager::SerializeNodeSFBitset(
 }
 /**
  * @brief function to deserialize space filling code (DefSFBitset) from a buffer
- * @param[in] flag_node a given value assign to the value corresponding to space filling code
- * @param[in] buffer buffer has received data
- * @param[out] map_nodes node information
+ * @param[in] flag_node flag indicating the node is read from the buffer 
+ * @param[in] buffer buffer stores received data.
+ * @param[out] map_nodes node information.
  */
 void MpiManager::DeserializeNodeSFBitset(const DefAmrIndexUint flag_node,
     const std::unique_ptr<char[]>& buffer, DefMap<DefAmrIndexUint>* const map_nodes) const {
@@ -284,11 +284,8 @@ void MpiManager::IniSendNReceivePartitionedGrid(const DefAmrIndexUint dims,
             std::vector<DefSFBitset> nodes_in_region;
             DefAmrIndexUint num_extend_coarse2fine = ptr_vec_grid_info->at(i_level_lower)->k0NumCoarse2FineLayer_ - 1;
             DefMap<DefAmrIndexUint> map_extend_coarse2fine;
-            DefAmrIndexLUint num_layer_near_interface = 1;
-            if (k0NumPartitionOuterLayers_ > num_extend_coarse2fine) {
-                num_layer_near_interface = k0NumPartitionOuterLayers_ - num_extend_coarse2fine;
-            }
-            std::vector<DefMap<DefAmrIndexUint>> map_interface_near_coarse2fine(num_ranks);
+            DefAmrIndexLUint num_layer_near_interface = k0NumPartitionOuterLayers_;
+            std::vector<DefMap<DefAmrIndexUint>> map_partition_near_f2c_outmost(num_ranks);
             bool bool_near_coarse2fine;
 
             for (auto& iter_node : vec_sfbitset_rank0.at(i_level)) {
@@ -325,15 +322,9 @@ void MpiManager::IniSendNReceivePartitionedGrid(const DefAmrIndexUint dims,
                     ptr_vec_grid_info->at(i_level_lower)->CheckNodesOnCubicPeriodicBoundary(
                         dims, iter_node.first, periodic_min, periodic_max, sfbitset_aux, &vec_periodic);
                     for (const auto& iter_periodic : vec_periodic) {
-                        sfbitset_aux.FindNodesInPeriodicReginNearby(iter_periodic,
-                            num_ghost_lower, periodic_min, periodic_max,
-                            domain_min_n_level, domain_max_n_level, &nodes_in_region);
-                        for (const auto& iter_node_in_region : nodes_in_region) {
-                            if (iter_node_in_region != sfbitset_aux.kInvalidSFbitset
-                                &&(iter_node_in_region.to_ullong() > code_max_current.at(i_rank)
-                                ||iter_node_in_region.to_ullong() < code_min_current.at(i_rank))) {
-                                map_ghost_lower_tmp_ranks.at(i_rank).insert({iter_node_in_region, flag_size0});
-                            }
+                        if ((iter_periodic.to_ullong() > code_max_current.at(i_rank)
+                            ||iter_periodic.to_ullong() < code_min_current.at(i_rank))) {
+                            map_ghost_upper_tmp_ranks.at(i_rank).insert({iter_periodic, flag_size0});
                         }
                     }
                 }
@@ -366,7 +357,8 @@ void MpiManager::IniSendNReceivePartitionedGrid(const DefAmrIndexUint dims,
                     }
                 }
                 if (int_interface_status) {
-                    sfbitset_aux.FindNodesInPeriodicReginOfGivenLength(iter_node.first,
+                    // find node on both partitioned interface and refinement interface
+                    sfbitset_aux.FindNodesInPeriodicReginNearby(iter_node.first,
                         num_layer_near_interface, periodic_min, periodic_max,
                         domain_min_n_level, domain_max_n_level, &nodes_in_region);
                     bool_near_coarse2fine = false;
@@ -374,13 +366,12 @@ void MpiManager::IniSendNReceivePartitionedGrid(const DefAmrIndexUint dims,
                         if ((vec_sfbitset_rank0.at(i_level).find(iter_node_in_region)
                             != vec_sfbitset_rank0.at(i_level).end())
                             && (vec_sfbitset_rank0.at(i_level).at(iter_node_in_region)&flag_fine2coarse_outmost)) {
-                            // at least one node in the region is on the outmost coarse to fine layer
                             bool_near_coarse2fine = true;
                             break;
                         }
                     }
                     if (bool_near_coarse2fine) {
-                        map_interface_near_coarse2fine.at(i_rank).insert({iter_node.first, 0});
+                        map_partition_near_f2c_outmost.at(i_rank).insert({iter_node.first, 0});
                     }
                 }
                 if (i_rank == 0) {  // nodes on rank 0 do not need send to other ranks
@@ -407,14 +398,16 @@ void MpiManager::IniSendNReceivePartitionedGrid(const DefAmrIndexUint dims,
                         outmost_for_all_ranks.at(iter_node.first).insert(i_rank);
                     }
                     // find nodes in all coarse to fine layers
-                    sfbitset_aux.FindNodesInPeriodicReginOfGivenLength(iter_node.first,
+                    sfbitset_aux.FindNodesInPeriodicReginNearby(iter_node.first,
                         num_extend_coarse2fine, periodic_min, periodic_max,
                         domain_min_n_level, domain_max_n_level, &nodes_in_region);
                     for (const auto& iter_region : nodes_in_region) {
-                        if (map_extend_coarse2fine.find(iter_region) == map_extend_coarse2fine.end()
-                            && vec_sfbitset_rank0.at(i_level).find(iter_region)
-                            != vec_sfbitset_rank0.at(i_level).end()) {
-                            map_extend_coarse2fine.insert({iter_region, 0});
+                        if (iter_region != SFBitsetAuxInterface::kInvalidSFbitset) {
+                            if (map_extend_coarse2fine.find(iter_region) == map_extend_coarse2fine.end()
+                                && vec_sfbitset_rank0.at(i_level).find(iter_region)
+                                != vec_sfbitset_rank0.at(i_level).end()) {
+                                map_extend_coarse2fine.insert({iter_region, 0});
+                            }
                         }
                     }
                 }
@@ -455,19 +448,21 @@ void MpiManager::IniSendNReceivePartitionedGrid(const DefAmrIndexUint dims,
             // nodes in both refinement and mpi communication layers
             DefMap<DefAmrIndexUint> map_ghost_n_refinement;
             DefSFCodeToUint code_tmp;
-            for (const auto& iter_ghost : map_interface_near_coarse2fine.at(0)) {
-                sfbitset_aux.FindNodesInPeriodicReginOfGivenLength(iter_ghost.first,
+            for (const auto& iter_ghost : map_partition_near_f2c_outmost.at(0)) {
+                sfbitset_aux.FindNodesInPeriodicReginNearby(iter_ghost.first,
                     k0NumPartitionOuterLayers_, periodic_min, periodic_max,
                     domain_min_n_level, domain_max_n_level, &nodes_in_region);
                 for (const auto& iter_region : nodes_in_region) {
-                    code_tmp = iter_region.to_ullong();
-                    if ((code_tmp < code_min_current.at(0)
-                        || code_tmp > code_max_current.at(0))
-                        && (map_extend_coarse2fine.find(iter_region)
-                        != map_extend_coarse2fine.end()
-                        || vec_sfbitset_rank0.at(i_level).find(iter_region)
-                        == vec_sfbitset_rank0.at(i_level).end())) {
-                        ptr_sfbitset_ghost_each->at(i_level).insert({iter_region, 0});
+                    if (iter_region != SFBitsetAuxInterface::kInvalidSFbitset) {
+                        code_tmp = iter_region.to_ullong();
+                        if ((code_tmp < code_min_current.at(0)
+                            || code_tmp > code_max_current.at(0))
+                            && (map_extend_coarse2fine.find(iter_region)
+                            != map_extend_coarse2fine.end()
+                            || vec_sfbitset_rank0.at(i_level).find(iter_region)
+                            == vec_sfbitset_rank0.at(i_level).end())) {
+                            ptr_sfbitset_ghost_each->at(i_level).insert({iter_region, 0});
+                        }
                     }
                 }
             }
@@ -548,20 +543,23 @@ void MpiManager::IniSendNReceivePartitionedGrid(const DefAmrIndexUint dims,
                 MPI_Waitall(num_chunks, reqs_send.data(), MPI_STATUS_IGNORE);
                 // nodes on both refinement layers and outer mpi communication layers
                 map_ghost_n_refinement.clear();
-                for (const auto& iter_ghost : map_interface_near_coarse2fine.at(i_rank)) {
-                    sfbitset_aux.FindNodesInPeriodicReginOfGivenLength(iter_ghost.first,
+                for (const auto& iter_ghost : map_partition_near_f2c_outmost.at(i_rank)) {
+                    sfbitset_aux.FindNodesInPeriodicReginNearby(iter_ghost.first,
                         k0NumPartitionOuterLayers_, periodic_min, periodic_max,
                         domain_min_n_level, domain_max_n_level, &nodes_in_region);
+
                     for (const auto& iter_region : nodes_in_region) {
-                        code_tmp = iter_region.to_ullong();
-                        if ((code_tmp < code_min_current.at(i_rank)
-                            || code_tmp > code_max_current.at(i_rank))
-                            &&map_ghost_n_refinement.find(iter_region) == map_ghost_n_refinement.end()
-                            && (map_extend_coarse2fine.find(iter_region)
-                            != map_extend_coarse2fine.end()
-                            || vec_sfbitset_rank0.at(i_level).find(iter_region)
-                            == vec_sfbitset_rank0.at(i_level).end())) {
-                            map_ghost_n_refinement.insert({iter_region, 0});
+                        if (iter_region != SFBitsetAuxInterface::kInvalidSFbitset) {
+                            code_tmp = iter_region.to_ullong();
+                            if ((code_tmp < code_min_current.at(i_rank)
+                                || code_tmp > code_max_current.at(i_rank))
+                                &&map_ghost_n_refinement.find(iter_region) == map_ghost_n_refinement.end()
+                                && (map_extend_coarse2fine.find(iter_region)
+                                != map_extend_coarse2fine.end()
+                                || vec_sfbitset_rank0.at(i_level).find(iter_region)
+                                == vec_sfbitset_rank0.at(i_level).end())) {
+                                map_ghost_n_refinement.insert({iter_region, 0});
+                            }
                         }
                     }
                 }
@@ -591,6 +589,19 @@ void MpiManager::IniSendNReceivePartitionedGrid(const DefAmrIndexUint dims,
                         i_chunk, MPI_COMM_WORLD, &reqs_send[i_chunk]);
                 }
                 MPI_Waitall(num_chunks, reqs_send.data(), MPI_STATUS_IGNORE);
+            }
+
+            // find nodes on both outmost layer and mpi outer layers
+            for (const auto& iter_node : outmost_for_all_ranks) {
+                sfbitset_aux.FindNodesInPeriodicReginNearby(iter_node.first, k0NumPartitionOuterLayers_,
+                    periodic_min, periodic_max, domain_min_n_level, domain_max_n_level, &nodes_in_region);
+                for (const auto& iter_region : nodes_in_region) {
+                    if (outmost_for_all_ranks.find(iter_region) != outmost_for_all_ranks.end()) {
+                        for (const auto iter_rank : iter_node.second) {
+                            outmost_for_all_ranks.at(iter_region).insert(iter_rank);
+                        }
+                    }
+                }
             }
         } else {
             int num_chunks = 0;
@@ -695,7 +706,6 @@ void MpiManager::IniSendNReceiveGridInfoAtAllLevels(const DefAmrIndexUint flag_s
     ptr_sfbitset_bound_current->at(0) = bitset_min.at(rank_id_);
     ptr_sfbitset_bound_current->at(1) = bitset_max.at(rank_id_);
 
-    // send and receive grid nodes and nodes on the second outmost coarse to fine refinement interface
     IniSendNReceivePartitionedGrid(dims, flag_size0, flag_fine2coarse_outmost,
         bitset_min, bitset_max, indices_min, indices_max,
         sfbitset_aux, ini_sfbitset_one_lower_level_rank0, ptr_sfbitset_one_lower_level_current_rank,

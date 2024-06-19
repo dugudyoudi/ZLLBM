@@ -35,7 +35,7 @@ class SolverInterface {
     virtual void RunSolverOnGrid(const ETimeSteppingScheme time_scheme,
         const DefAmrIndexUint time_step_current, const SFBitsetAuxInterface& sfbitset_aux,
         GridInfoInterface* const ptr_grid_info) = 0;
-    virtual void FinalizeAtTimeStepEnd(const ETimeSteppingScheme time_scheme,
+    virtual void CallDomainBoundaryCondition(const ETimeSteppingScheme time_scheme,
         const DefAmrIndexUint time_step_current, const SFBitsetAuxInterface& sfbitset_aux,
         GridInfoInterface* const ptr_grid_info) {}
     virtual void InformationFromGridOfDifferentLevel(

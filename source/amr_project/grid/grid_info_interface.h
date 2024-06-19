@@ -169,8 +169,10 @@ class GridInfoInterface {
     std::shared_ptr<GhostGridInfoInterface> ptr_ghost_grid_info_;
 
     // interface between grid of different refinement levels
-    DefAmrIndexUint k0NumFine2CoarseLayer_ = 3;
+    DefAmrIndexUint k0NumFine2CoarseLayer_ = 3;  // (k0NumCoarse2FineLayer_ - 1)*2 - 1
     DefAmrIndexUint k0NumCoarse2FineLayer_ = 2;
+    DefAmrIndexUint k0NumFine2CoarseGhostLayer_ = k0NumFine2CoarseLayer_/2 + 1;
+    DefAmrIndexUint k0NumCoarse2FineGhostLayer_ = k0NumCoarse2FineLayer_/2;
     std::map<std::pair<ECriterionType, DefAmrIndexUint>,
         std::shared_ptr<InterfaceLayerInfo>> map_ptr_interface_layer_info_;
 
@@ -181,7 +183,11 @@ class GridInfoInterface {
     DefAmrIndexUint k0NumRealForEachNode_ = 0;
     virtual void SetNodeVariablesAsZeros(GridNode* const ptr_node) {}  // will be called in interpolation
 
-    // domain boundary
+    // domain boundary related
+    // noting that kFlagInsideDomain indicates nodes are not on the domain boundary
+    static constexpr int kFlagInsideDomain_ = 0,  kFlagOutsideDomain_ = -1,
+        kFlagXMinBoundary_ = 1, kFlagXMaxBoundary_ = 8, kFlagYMinBoundary_ = 2,
+        kFlagYMaxBoundary_ = 16, kFlagZMinBoundary_ = 4, kFlagZMaxBoundary_ = 32;
     std::vector<DefSFBitset> k0VecBitsetDomainMin_, k0VecBitsetDomainMax_;
     ///< space filling codes of bounds for computational domain
     std::vector<DefMap<DefAmrIndexUint>> domain_boundary_min_, domain_boundary_max_;
@@ -280,7 +286,7 @@ class GridInfoInterface {
     }
     virtual int SizeOfGridNodeInfoForMpiCommunication() const {return 0;}
     virtual void CopyNodeInfoToBuffer(const DefMap<DefAmrIndexUint>& map_nodes, char* const ptr_buffer) {}
-    virtual void ComputeLocalInfoOnMpiLayers(
+    virtual void ComputeInfoInMpiLayers(
         const std::map<int, DefMap<DefAmrIndexUint>>& map_inner_nodes,
         const DefMap<DefAmrIndexUint>& map_outer_nodes) {}
     virtual void ReadNodeInfoFromBuffer(const DefSizet buffer_size, const std::unique_ptr<char[]>& buffer) {}

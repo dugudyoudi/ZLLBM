@@ -55,7 +55,8 @@ void GeometryConnectionInterface::FindTrackingNodeBasedOnGeo(DefAmrIndexUint i_g
         vertex_given_level_.at(iter.first).vec_vertex_coordinate
             .at(iter.second).map_bitset_ref
             .insert({ ptr_grid_info->i_level_, bitset_temp });
-        if (ptr_grid_info->CheckIfNodeOutsideCubicDomain(dims, bitset_temp, sfbitset_aux) >= 0) {
+        if (ptr_grid_info->CheckIfNodeOutsideCubicDomain(dims, bitset_temp, sfbitset_aux)
+            >= GridInfoInterface::kFlagInsideDomain_) {
             if (ptr_tracking_node->find(bitset_temp) == ptr_tracking_node->end()) {
                 ptr_tracking_node->insert({ bitset_temp, (ptr_grid_info
                 ->map_ptr_tracking_grid_info_.at(key_tracking_grid).get())

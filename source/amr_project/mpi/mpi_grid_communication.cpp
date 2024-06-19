@@ -33,7 +33,7 @@ std::vector<bool> MpiManager::IdentifyRanksReceivingGridNode(const DefAmrIndexUi
 }
 /**
  * @brief function to send grid node information to other ranks.
- * @param[in] i_level_receive refinement level of receiving information.
+ * @param[in] i_level_receive refinement level of grid for sending and receiving information.
  * @param[in] rank_id_receive indicators for current rank from which ranks it will receive information.
  * @param[in] grid_info class storting grid node information on current rank.
  * @param[out] ptr_send_buffer_info pointer to information of buffer size will be sent.
@@ -41,17 +41,11 @@ std::vector<bool> MpiManager::IdentifyRanksReceivingGridNode(const DefAmrIndexUi
  */
 // Information sends in an periodic iteration pattern for all ranks.
 
-void MpiManager::SendNReceiveGridNodeBufferSize(const DefAmrIndexUint i_level_receive,
-    const std::vector<bool>& rank_id_receive, const GridInfoInterface& grid_info,
+void MpiManager::SendNReceiveGridNodeBufferSize(const DefAmrIndexUint i_level,
+    const int node_info_size, const std::vector<bool>& rank_id_receive,
     std::vector<BufferSizeInfo>* const ptr_send_buffer_info,
     std::vector<BufferSizeInfo>* const ptr_receive_buffer_info) const {
     int key_size = sizeof(DefSFBitset);
-    int node_info_size = grid_info.SizeOfGridNodeInfoForMpiCommunication();
-    DefAmrIndexUint i_level = grid_info.i_level_;
-    if (i_level_receive != i_level) {
-        LogManager::LogError("refinement level of receiving information is not equal to the "
-            "refinement level current grid in " + std::string(__FILE__) + " at line " + std::to_string(__LINE__));
-    }
     int num_chunks;
     int node_buffer_size = key_size + node_info_size;
     int reqs_rank_count = 0;
@@ -214,11 +208,11 @@ void MpiManager::SendNReceiveGridNodes(
     ptr_vec_vec_reqs_receive->clear();
     ptr_vec_ptr_buffer_receive->clear();
     DefAmrIndexUint i_level = ptr_grid_info->i_level_;
-    ptr_grid_info->ComputeLocalInfoOnMpiLayers(mpi_communication_inner_layers_.at(i_level),
+    ptr_grid_info->ComputeInfoInMpiLayers(mpi_communication_inner_layers_.at(i_level),
         mpi_communication_outer_layers_.at(i_level));
     std::vector<bool> vec_receive_ranks(IdentifyRanksReceivingGridNode(i_level));
-    SendNReceiveGridNodeBufferSize(i_level, vec_receive_ranks,
-        *ptr_grid_info, ptr_send_buffer_info, ptr_receive_buffer_info);
+    SendNReceiveGridNodeBufferSize(i_level, ptr_grid_info->SizeOfGridNodeInfoForMpiCommunication(),
+        vec_receive_ranks, ptr_send_buffer_info, ptr_receive_buffer_info);
     for (int i_rank = 0; i_rank < num_of_ranks_; ++i_rank) {
         if (ptr_receive_buffer_info->at(i_rank).bool_exist_) {
             ptr_vec_vec_reqs_receive->push_back({});
@@ -264,6 +258,7 @@ void MpiManager::WaitAndReadGridNodesFromBuffer(const std::vector<BufferSizeInfo
             ++i_send;
         }
     }
+    MPI_Barrier(MPI_COMM_WORLD);
 }
 }  // end namespace amrproject
 }  // end namespace rootproject

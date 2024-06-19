@@ -27,7 +27,7 @@ void BoundaryBounceBackD2Q9::CalBoundaryCondition(const ELbmBoundaryType boundar
     const std::array<DefReal, 2>& velocity = boundary_velocity_;
     DefMap<std::unique_ptr<GridNodeLbm>>& grid_node = *ptr_grid_info->ptr_lbm_grid_nodes_;
     switch (boundary_type) {
-    case ELbmBoundaryType::kBoundaryXNeg:
+    case ELbmBoundaryType::kBoundaryXMin:
         for (const auto& iter_node : boundary_nodes) {
             GridNodeLbm& node = *grid_node.at(iter_node.first);
             node.f_[lbm_solver.kFXpY0Z0] = node.f_collide_[lbm_solver.kFXnY0Z0]
@@ -43,7 +43,7 @@ void BoundaryBounceBackD2Q9::CalBoundaryCondition(const ELbmBoundaryType boundar
                 + lbm_solver.k0Cy_.at(lbm_solver.kFXnYpZ0) * velocity[kYIndex]);
         }
         break;
-    case ELbmBoundaryType::kBoundaryXPos:
+    case ELbmBoundaryType::kBoundaryXMax:
         for (const auto& iter_node : boundary_nodes) {
             GridNodeLbm& node = *grid_node.at(iter_node.first);
             node.f_[lbm_solver.kFXnY0Z0] = node.f_collide_[lbm_solver.kFXpY0Z0]
@@ -59,7 +59,7 @@ void BoundaryBounceBackD2Q9::CalBoundaryCondition(const ELbmBoundaryType boundar
                 + lbm_solver.k0Cy_.at(lbm_solver.kFXpYpZ0) * velocity[kYIndex]);
         }
         break;
-    case ELbmBoundaryType::kBoundaryYNeg:
+    case ELbmBoundaryType::kBoundaryYMin:
         for (const auto& iter_node : boundary_nodes) {
             GridNodeLbm& node = *grid_node.at(iter_node.first);
             node.f_[lbm_solver.kFX0YpZ0] = node.f_collide_[lbm_solver.kFX0YnZ0]
@@ -75,7 +75,7 @@ void BoundaryBounceBackD2Q9::CalBoundaryCondition(const ELbmBoundaryType boundar
                 + lbm_solver.k0Cy_.at(lbm_solver.kFXpYnZ0) * velocity[kYIndex]);
         }
         break;
-    case ELbmBoundaryType::kBoundaryYPos:
+    case ELbmBoundaryType::kBoundaryYMax:
         for (const auto& iter_node : boundary_nodes) {
             GridNodeLbm& node = *grid_node.at(iter_node.first);
             node.f_[lbm_solver.kFX0YnZ0] = node.f_collide_[lbm_solver.kFX0YpZ0]

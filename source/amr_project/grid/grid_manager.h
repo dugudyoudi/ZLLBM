@@ -18,6 +18,7 @@
 #include <utility>
 #include <memory>
 #include <map>
+#include <variant>
 #include "../defs_libs.h"
 #include "./solver_info_interface.h"
 #include "grid/grid_info_interface.h"
@@ -28,6 +29,9 @@
 #endif  // DEBUG_UNIT_TEST
 namespace rootproject {
 namespace amrproject {
+enum class EDomainBoundaryType{
+    kCubic = 0,
+};
 template<typename InterfaceInfo>
 concept InterfaceInfoHasType = requires(
     InterfaceInfo type_interface) {
@@ -64,10 +68,11 @@ class MultiTimeSteppingC2F : public TimeSteppingSchemeInterface {
 struct NodeBitStatus {
     inline static DefAmrUint kNodeStatus0_ = 0;
     inline static DefAmrUint kNodeStatusCoarse2Fine0_ = 1 << 1;  ///< flag indicating node on the outmost fine layer
-    inline static DefAmrUint kNodeStatusCoarse2FineM1_ = 1 << 2;
+    inline static DefAmrUint kNodeStatusCoarse2FineGhost_ = 1 << 2;
     inline static DefAmrUint kNodeStatusFine2Coarse0_ = 1 << 3;  ///< flag indicating node on outmost coarse layer
-    inline static DefAmrUint kNodeStatusFine2CoarseM1_ = 1 << 4;
-    inline static DefAmrUint kNodeStatusMpiPartitionOutside_ = 1 << 5;
+    inline static DefAmrUint kNodeStatusFine2CoarseGhost_ = 1 << 4;
+    inline static DefAmrUint kNodeStatusMpiPartitionOuter_ = 1 << 5;
+    inline static DefAmrUint kNodeStatusMpiPartitionInner_ = 1 << 6;
 };
 /**
 * @class GridManagerInterface
@@ -138,6 +143,7 @@ class GridManagerInterface{
     // function to check nodes should be on domain boundaries
     void (GridManagerInterface::*ptr_func_insert_domain_boundary_)(const int flag_node,
         const DefSFBitset& bitset_in, GridInfoInterface* const ptr_grid_info) const = nullptr;
+    EDomainBoundaryType domain_boundary_type_ = EDomainBoundaryType::kCubic;
     void InsertCubicDomainBoundary(const int flag_node, const DefSFBitset& bitset_in,
         GridInfoInterface* const ptr_grid_info) const;
 
@@ -161,6 +167,10 @@ class GridManagerInterface{
         const std::vector<DefSFCodeToUint>& sfbitset_min,
         const std::vector<DefSFCodeToUint>& sfbitset_max) const = 0;
     virtual bool NodesBelongToOneCell(const DefSFBitset bitset_in,
+        const DefMap<DefAmrIndexUint>& node_exist,
+        std::vector<DefSFBitset>* const ptr_bitsets) const = 0;
+    virtual bool NodesBelongToOneSurfAtHigherLevel(const DefSFBitset bitset_in,
+        const DefAmrIndexUint dir_norm,
         const DefMap<DefAmrIndexUint>& node_exist,
         std::vector<DefSFBitset>* const ptr_bitsets) const = 0;
     virtual void GridFindAllNeighborsVir(const DefSFBitset& bitset_in,
@@ -248,9 +258,14 @@ class GridManagerInterface{
     virtual void FindCornersForNeighbourCells(const DefSFBitset bitset_in,
         std::vector<DefSFBitset>* const ptr_bitsets) const = 0;
     virtual void IdentifyInterfaceForACell(const DefSFBitset bitset_in,
-        const DefMap<DefAmrUint>& node_coarse_outmost, const DefMap<DefAmrIndexUint>& node_exist,
-        DefMap<DefAmrUint>* const ptr_inner_layer,
-        DefMap<DefAmrUint>* const ptr_mid_layer,
+        const DefMap<DefAmrUint>& node_coarse_interface,
+        const DefMap<DefAmrIndexUint>& node_exist_lower,
+        DefMap<DefAmrUint>* const ptr_inner_layer, DefMap<DefAmrUint>* const ptr_mid_layer,
+        DefMap<DefAmrUint>* const ptr_outer_layer) = 0;
+    virtual void IdentifyInterfaceForACell(const DefSFBitset bitset_in,
+        const DefMap<DefAmrUint>& node_coarse_interface, const DefMap<std::unique_ptr<GridNode>>& node_exist_current,
+        const DefMap<std::unique_ptr<GridNode>>& node_exist_lower,
+        DefMap<DefAmrUint>* const ptr_inner_layer, DefMap<DefAmrUint>* const ptr_mid_layer,
         DefMap<DefAmrUint>* const ptr_outer_layer) = 0;
 
     // functions to generate grid (Serial)
@@ -298,6 +313,16 @@ class GridManagerInterface{
         const DefSFCodeToUint interface_code_background_level, const std::vector<DefSFBitset>& vec_nodes_in_region,
         const std::vector<DefSFCodeToUint>& ull_max, const DefMap<DefAmrIndexUint>& mpi_inner_layer_tmp,
         std::map<int, DefMap<DefAmrIndexUint>>* const ptr_mpi_inner_layer);
+    void SetUpInnerLayerForHigherLevel(int i_rank,
+        const DefAmrIndexUint i_level, const DefAmrIndexLUint num_partition_outer_layer,
+        const DefSFCodeToUint code_min_background_level, const DefSFCodeToUint code_max_background_level,
+        const std::vector<bool>& periodic_min, const std::vector<bool>& periodic_max,
+        const std::vector<DefSFBitset>& domain_min_n_level, const std::vector<DefSFBitset>& domain_max_n_level,
+        const std::vector<DefSFCodeToUint>& ull_max, const DefMap<DefAmrIndexUint>& partition_interface_level,
+        const DefMap<DefAmrIndexUint>& mpi_outer_layer,
+        const DefMap<std::unique_ptr<GridNode>>& map_grid_node_higher_level,
+        const SFBitsetAuxInterface& sfbitset_aux, std::map<int, DefMap<DefAmrIndexUint>>* const ptr_mpi_inner_layer,
+        DefMap<std::unique_ptr<GridNode>> *const ptr_map_grid_node);
 
  protected:
     void InstantiateOverlapLayerOfRefinementInterfaceMpi(
@@ -308,6 +333,12 @@ class GridManagerInterface{
         const DefMap<DefAmrIndexUint>& sfbitset_partition_interface_background,
         DefMap<DefAmrIndexUint>* const ptr_outer_layer_current_level,
         DefMap<DefAmrIndexUint>* const ptr_outer_layer_lower_level);
+    void InstantiateDomainBoundary(const DefAmrIndexLUint num_partition_outer_layer,
+        const DefSFCodeToUint code_min_background_level, const DefSFCodeToUint code_max_background_level,
+        const std::vector<bool>& periodic_min, const std::vector<bool>& periodic_max,
+        const DefMap<DefAmrIndexUint>& sfbitset_one_lower_level,
+        const SFBitsetAuxInterface& sfbitset_aux, GridInfoInterface* const ptr_grid_info,
+        DefMap<DefAmrIndexUint>* const ptr_inner_layer, DefMap<DefAmrIndexUint>* const ptr_outer_layer);
 
 #ifdef DEBUG_UNIT_TEST
 
@@ -361,6 +392,10 @@ class GridManager2D :public  GridManagerInterface, public SFBitsetAux2D {
     bool NodesBelongToOneCell(const DefSFBitset bitset_in,
         const DefMap<DefAmrIndexUint>& node_exist,
         std::vector<DefSFBitset>* const ptr_bitsets) const override;
+    bool NodesBelongToOneSurfAtHigherLevel(const DefSFBitset bitset_in,
+        const DefAmrIndexUint dir_norm,
+        const DefMap<DefAmrIndexUint>& node_exist,
+        std::vector<DefSFBitset>* const ptr_bitsets) const override;
     void GridFindAllNeighborsVir(const DefSFBitset& bitset_in,
         std::vector<DefSFBitset>* const ptr_vec_neighbors) const override;
     void FindAllNodesInACellAtOneLevelLower(
@@ -397,11 +432,16 @@ class GridManager2D :public  GridManagerInterface, public SFBitsetAux2D {
         std::vector<DefAmrIndexLUint>* const ptr_vec_extend_neg,
         std::vector<DefAmrIndexLUint>* const ptr_vec_extend_pos) const override;
     void FindCornersForNeighbourCells(const DefSFBitset bitset_in,
-       std::vector<DefSFBitset>* const ptr_bitsets)  const override;
+        std::vector<DefSFBitset>* const ptr_bitsets)  const override;
     void IdentifyInterfaceForACell(const DefSFBitset bitset_in,
-        const DefMap<DefAmrUint>& node_coarse_outmost, const DefMap<DefAmrIndexUint>& node_exist,
-        DefMap<DefAmrUint>* const ptr_inner_layer,
-        DefMap<DefAmrUint>* const ptr_mid_layer,
+        const DefMap<DefAmrUint>& node_coarse_interface,
+        const DefMap<DefAmrIndexUint>& node_exist_lower,
+        DefMap<DefAmrUint>* const ptr_inner_layer, DefMap<DefAmrUint>* const ptr_mid_layer,
+        DefMap<DefAmrUint>* const ptr_outer_layer) override;
+    void IdentifyInterfaceForACell(const DefSFBitset bitset_in,
+        const DefMap<DefAmrUint>& node_coarse_interface, const DefMap<std::unique_ptr<GridNode>>& node_exist_current,
+        const DefMap<std::unique_ptr<GridNode>>& node_exist_lower,
+        DefMap<DefAmrUint>* const ptr_inner_layer, DefMap<DefAmrUint>* const ptr_mid_layer,
         DefMap<DefAmrUint>* const ptr_outer_layer) override;
     // functions to generate grid (Serial)
     void GenerateGridNodeNearTrackingNode(const DefAmrIndexUint i_level,
@@ -443,7 +483,13 @@ class GridManager2D :public  GridManagerInterface, public SFBitsetAux2D {
     void IdentifyInterfaceNodeOnEdge(
         const std::array<DefSFBitset, 2>& arr_bitset_lower,
         const DefSFBitset bitset_mid_higher,
-        const DefMap<DefAmrUint>& node_outmost,
+        const DefMap<DefAmrUint>& node_coarse_interface,
+        const std::array<DefMap<DefAmrUint>* const, 3>& arr_ptr_layer);
+    void IdentifyInterfaceNodeOnEdge(
+        const std::array<DefSFBitset, 2>& arr_bitset_lower,
+        const DefSFBitset bitset_mid_higher,
+        const DefMap<DefAmrUint>& node_coarse_interface,
+        const DefMap<std::unique_ptr<GridNode>>& node_current,
         const std::array<DefMap<DefAmrUint>* const, 3>& arr_ptr_layer);
 
 #ifdef DEBUG_UNIT_TEST
@@ -495,6 +541,10 @@ class GridManager3D :public  GridManagerInterface, public SFBitsetAux3D {
     bool NodesBelongToOneCell(const DefSFBitset bitset_in,
         const DefMap<DefAmrIndexUint>& node_exist,
         std::vector<DefSFBitset>* const ptr_bitsets) const override;
+    bool NodesBelongToOneSurfAtHigherLevel(const DefSFBitset bitset_in,
+        const DefAmrIndexUint dir_norm,
+        const DefMap<DefAmrIndexUint>& node_exist,
+        std::vector<DefSFBitset>* const ptr_bitsets) const override;
     void GridFindAllNeighborsVir(const DefSFBitset& bitset_in,
         std::vector<DefSFBitset>* const ptr_vec_neighbors) const override;
     void FindAllNodesInACellAtOneLevelLower(
@@ -534,9 +584,14 @@ class GridManager3D :public  GridManagerInterface, public SFBitsetAux3D {
     void FindCornersForNeighbourCells(const DefSFBitset bitset_in,
         std::vector<DefSFBitset>* const ptr_bitsets)  const override;
     void IdentifyInterfaceForACell(const DefSFBitset bitset_in,
-        const DefMap<DefAmrUint>& node_coarse_outmost, const DefMap<DefAmrIndexUint>& node_exist,
-        DefMap<DefAmrUint>* const ptr_inner_layer,
-        DefMap<DefAmrUint>* const ptr_mid_layer,
+        const DefMap<DefAmrUint>& node_coarse_interface,
+        const DefMap<DefAmrIndexUint>& node_exist_lower,
+        DefMap<DefAmrUint>* const ptr_inner_layer, DefMap<DefAmrUint>* const ptr_mid_layer,
+        DefMap<DefAmrUint>* const ptr_outer_layer) override;
+    void IdentifyInterfaceForACell(const DefSFBitset bitset_in,
+        const DefMap<DefAmrUint>& node_coarse_interface, const DefMap<std::unique_ptr<GridNode>>& node_exist_current,
+        const DefMap<std::unique_ptr<GridNode>>& node_exist_lower,
+        DefMap<DefAmrUint>* const ptr_inner_layer, DefMap<DefAmrUint>* const ptr_mid_layer,
         DefMap<DefAmrUint>* const ptr_outer_layer) override;
     // functions to generate grid (Serial)
     void GenerateGridNodeNearTrackingNode(const DefAmrIndexUint i_level,
@@ -581,10 +636,22 @@ class GridManager3D :public  GridManagerInterface, public SFBitsetAux3D {
         const DefSFBitset bitset_mid_higher,
         const DefMap<DefAmrUint>& node_outmost,
         const std::array<DefMap<DefAmrUint>* const, 3>& arr_ptr_layer);
+    void IdentifyInterfaceNodeOnEdge(
+        const std::array<DefSFBitset, 2>& arr_bitset_lower,
+        const DefSFBitset bitset_mid_higher,
+        const DefMap<DefAmrUint>& node_coarse_interface,
+        const DefMap<std::unique_ptr<GridNode>>& node_current,
+        const std::array<DefMap<DefAmrUint>* const, 3>& arr_ptr_layer);
     void IdentifyInterfaceNodeDiagonal(
         const std::array<DefSFBitset, 4>& arr_bitset_lower,
         const DefSFBitset bitset_center_higher,
-        const DefMap<DefAmrUint>& node_outmost,
+        const DefMap<DefAmrUint>& node_coarse_interface,
+        const std::array<DefMap<DefAmrUint>* const, 3>& arr_ptr_layer);
+    void IdentifyInterfaceNodeDiagonal(
+        const std::array<DefSFBitset, 4>& arr_bitset_lower,
+        const DefSFBitset bitset_center_higher,
+        const DefMap<DefAmrUint>& node_coarse_interface,
+        const DefMap<std::unique_ptr<GridNode>>& node_current,
         const std::array<DefMap<DefAmrUint>* const, 3>& arr_ptr_layer);
 
 #ifdef DEBUG_UNIT_TEST

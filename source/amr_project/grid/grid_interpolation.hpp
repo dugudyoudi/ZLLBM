@@ -79,9 +79,9 @@ int GridInfoInterface::InterpolationLinear2D(const DefAmrIndexLUint region_lengt
             for (auto ix = 0; ix <= 1; ++ix) {
                 index_x = index_y + ix;
                 if (std::fabs(coeffi_x[ix] * coeffi_y[iy]) > kEps) {
-                    if (nodes_coarse.find(sfbitset_coarse_region.at(index_x)) != nodes_coarse.end()&&(
-                        (nodes_coarse.at(sfbitset_coarse_region.at(index_x))->flag_status_&flag_not_for_interp_coarse)
-                        != flag_not_for_interp_coarse)) {
+                    if (nodes_coarse.find(sfbitset_coarse_region.at(index_x)) != nodes_coarse.end()&&
+                        !(nodes_coarse.at(sfbitset_coarse_region.at(index_x))->flag_status_
+                        &flag_not_for_interp_coarse)) {
                         coarse_grid_info.NodeInfoCoarse2fine(
                             *nodes_coarse.at(sfbitset_coarse_region.at(index_x)), &node_coarse2fine);
                         *ptr_node += node_coarse2fine * (coeffi_x[ix] * coeffi_y[iy]);
@@ -170,9 +170,9 @@ int GridInfoInterface::InterpolationLagrangian2D(const DefAmrIndexLUint interpol
             for (DefAmrIndexLUint ix = 0; ix < num_coeff; ++ix) {
                 index_x = index_y + ix;
                 if (std::fabs(coeffi_x[ix] * coeffi_y[iy]) > kEps) {
-                    if (nodes_coarse.find(sfbitset_coarse_region.at(index_x)) != nodes_coarse.end()&&(
-                        (nodes_coarse.at(sfbitset_coarse_region.at(index_x))->flag_status_&flag_not_for_interp_coarse)
-                        != flag_not_for_interp_coarse)) {
+                    if (nodes_coarse.find(sfbitset_coarse_region.at(index_x)) != nodes_coarse.end()&&
+                        !(nodes_coarse.at(sfbitset_coarse_region.at(index_x))->flag_status_
+                        &flag_not_for_interp_coarse)) {
                         coarse_grid_info.NodeInfoCoarse2fine(
                             *nodes_coarse.at(sfbitset_coarse_region.at(index_x)), &node_coarse2fine);
                         *ptr_node += node_coarse2fine * (coeffi_x[ix] * coeffi_y[iy]);
@@ -272,8 +272,8 @@ int GridInfoInterface::InterpolationLinear3D(const DefAmrIndexLUint region_lengt
                     index_x = index_y + ix;
                     if (std::fabs(coeffi_x[ix] * coeffi_y[iy]* coeffi_z[iz]) > kEps) {
                         if (nodes_coarse.find(sfbitset_coarse_region.at(index_x)) != nodes_coarse.end()
-                            &&((nodes_coarse.at(sfbitset_coarse_region.at(index_x))->flag_status_
-                            &flag_not_for_interp_coarse)!= flag_not_for_interp_coarse)) {
+                            &&!(nodes_coarse.at(sfbitset_coarse_region.at(index_x))->flag_status_
+                            &flag_not_for_interp_coarse)) {
                             coarse_grid_info.NodeInfoCoarse2fine(
                                 *nodes_coarse.at(sfbitset_coarse_region.at(index_x)), &node_coarse2fine);
                             *ptr_node += node_coarse2fine * (coeffi_x[ix] * coeffi_y[iy]* coeffi_z[iz]);
@@ -375,8 +375,8 @@ int GridInfoInterface::InterpolationLagrangian3D(const DefAmrIndexLUint interpol
                     index_x = index_y + ix;
                     if (std::fabs(coeffi_x[ix] * coeffi_y[iy]* coeffi_z[iz]) > kEps) {
                         if (nodes_coarse.find(sfbitset_coarse_region.at(index_x)) != nodes_coarse.end()
-                            &&((nodes_coarse.at(sfbitset_coarse_region.at(index_x))->flag_status_
-                            &flag_not_for_interp_coarse)!= flag_not_for_interp_coarse)) {
+                            &&!(nodes_coarse.at(sfbitset_coarse_region.at(index_x))->flag_status_
+                            &flag_not_for_interp_coarse)) {
                             coarse_grid_info.NodeInfoCoarse2fine(
                                 *nodes_coarse.at(sfbitset_coarse_region.at(index_x)), &node_coarse2fine);
                             *ptr_node += node_coarse2fine * (coeffi_x[ix] * coeffi_y[iy]* coeffi_z[iz]);

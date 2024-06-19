@@ -194,7 +194,7 @@ class LbmStrForceCollisionOpt : public LbmStrCollisionOpt {
         : LbmStrCollisionOpt(lbm_solver) {}
 };
 struct OutputLBMNodeVariableInfo : public amrproject::OutputNodeVariableInfoInterface {
-    std::function<std::vector<DefReal>(const GridNodeLbm&)> func_get_var_;
+    std::function<std::vector<DefReal>(GridNodeLbm* const)> func_get_var_;
 };
 /**
 * @brief  class to store LBM grid information at each refinement level
@@ -234,6 +234,7 @@ class GridInfoLbmInteface : public amrproject::GridInfoInterface {
     bool CheckIfPeriodicDomainRequired(const DefAmrIndexUint dims,
         std::vector<bool>* const ptr_periodic_min, std::vector<bool>* const ptr_periodic_max) const override;
     void ComputeDomainBoundaryCondition();
+    void ComputeDomainBoundaryConditionForANode(int flag_node_boundary, const DefSFBitset bitset_in);
 
     // time marching related
     void SetUpGridAtBeginningOfTimeStep(const DefAmrIndexUint time_step,
@@ -275,7 +276,7 @@ class GridInfoLbmInteface : public amrproject::GridInfoInterface {
     int k0SizeOfAllDistributionFunctions_ = 0;
     int SizeOfGridNodeInfoForMpiCommunication() const override;
     void CopyNodeInfoToBuffer(const DefMap<DefAmrIndexUint>& map_nodes, char* const ptr_buffer) override;
-    void ComputeLocalInfoOnMpiLayers(
+    void ComputeInfoInMpiLayers(
         const std::map<int, DefMap<DefAmrIndexUint>>& map_inner_nodes,
         const DefMap<DefAmrIndexUint>& map_outer_nodes) override;
     void ReadNodeInfoFromBuffer(const DefSizet buffer_size, const std::unique_ptr<char[]>& buffer) override;
@@ -317,7 +318,7 @@ class SolverLbmInterface :public amrproject::SolverInterface {
     void RunSolverOnGrid(const amrproject::ETimeSteppingScheme time_scheme,
         const DefAmrIndexUint time_step_current, const amrproject::SFBitsetAuxInterface& sfbitset_aux,
         amrproject::GridInfoInterface* const ptr_grid_info) override;
-    void FinalizeAtTimeStepEnd(const amrproject::ETimeSteppingScheme time_scheme,
+    void CallDomainBoundaryCondition(const amrproject::ETimeSteppingScheme time_scheme,
         const DefAmrIndexUint time_step_current, const amrproject::SFBitsetAuxInterface& sfbitset_aux,
         amrproject::GridInfoInterface* const ptr_grid_info) override;
     void InformationFromGridOfDifferentLevel(

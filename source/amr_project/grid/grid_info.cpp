@@ -44,55 +44,55 @@ int GridInfoInterface::CheckIfNodeOutsideCubicDomain(const DefAmrIndexUint dims,
     const DefSFBitset& bitset_in, const SFBitsetAuxInterface& sfbitset_aux) const {
     DefAmrIndexUint current_bit = sfbitset_aux.kRefCurrent_;
     DefSFCodeToUint code_one_dim, code_boundary;
-    int flag_node = 0;
+    int flag_node = kFlagInsideDomain_;
     // x min
     code_one_dim = (bitset_in&sfbitset_aux.k0SFBitsetTakeXRef_[current_bit]).to_ullong();
     code_boundary = k0VecBitsetDomainMin_[kXIndex].to_ullong();
     if (code_one_dim < code_boundary) {
-        return -1;
+        return kFlagOutsideDomain_;
     } else if (code_one_dim == code_boundary) {
-        flag_node |= 1;
+        flag_node |= kFlagXMinBoundary_;
     }
     // x max
     code_one_dim = (bitset_in&sfbitset_aux.k0SFBitsetTakeXRef_[current_bit]).to_ullong();
     code_boundary = k0VecBitsetDomainMax_[kXIndex].to_ullong();
     if (code_one_dim > code_boundary) {
-        return -1;
+        return kFlagOutsideDomain_;
     } else if (code_one_dim == code_boundary) {
-        flag_node |= 8;
+        flag_node |= kFlagXMaxBoundary_;
     }
     // y min
     code_one_dim = (bitset_in&sfbitset_aux.k0SFBitsetTakeYRef_[current_bit]).to_ullong();
     code_boundary = k0VecBitsetDomainMin_[kYIndex].to_ullong();
     if (code_one_dim < code_boundary) {
-        return -1;
+        return kFlagOutsideDomain_;
     } else if (code_one_dim == code_boundary) {
-        flag_node |= 2;
+        flag_node |= kFlagYMinBoundary_;
     }
     // y max
     code_one_dim = (bitset_in&sfbitset_aux.k0SFBitsetTakeYRef_[current_bit]).to_ullong();
     code_boundary = k0VecBitsetDomainMax_[kYIndex].to_ullong();
     if (code_one_dim > code_boundary) {
-        return -1;
+        return kFlagOutsideDomain_;
     } else if (code_one_dim == code_boundary) {
-        flag_node |= 16;
+        flag_node |= kFlagYMaxBoundary_;
     }
     if (dims == 3) {
         // z min
         code_one_dim = (bitset_in&sfbitset_aux.k0SFBitsetTakeZRef_[current_bit]).to_ullong();
         code_boundary = k0VecBitsetDomainMin_[kZIndex].to_ullong();
         if (code_one_dim < code_boundary) {
-            return -1;
+            return kFlagOutsideDomain_;
         } else if (code_one_dim == code_boundary) {
-            flag_node |= 4;
+            flag_node |= kFlagZMinBoundary_;
         }
         // z max
         code_one_dim = (bitset_in&sfbitset_aux.k0SFBitsetTakeZRef_[current_bit]).to_ullong();
         code_boundary = k0VecBitsetDomainMax_[kZIndex].to_ullong();
         if (code_one_dim > code_boundary) {
-            return -1;
+            return kFlagOutsideDomain_;
         } else if (code_one_dim == code_boundary) {
-            flag_node |= 32;
+            flag_node |= kFlagZMaxBoundary_;
         }
     }
     return flag_node;

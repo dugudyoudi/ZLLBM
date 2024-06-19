@@ -21,12 +21,12 @@ class SolverLbmInterface;
 */
 enum class ELbmBoundaryType {
     kUndefined = 0,
-    kBoundaryXNeg = 1,
-    kBoundaryXPos = 2,
-    kBoundaryYNeg = 3,
-    kBoundaryYPos = 4,
-    kBoundaryZNeg = 5,
-    kBoundaryZPos = 6
+    kBoundaryXMin = 1,
+    kBoundaryXMax = 2,
+    kBoundaryYMin = 3,
+    kBoundaryYMax = 4,
+    kBoundaryZMin = 5,
+    kBoundaryZMax = 6
 };
 /**
 * @brief enumerate boundary conditions

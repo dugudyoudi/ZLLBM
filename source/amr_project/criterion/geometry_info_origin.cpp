@@ -50,7 +50,8 @@ void GeometryInfoOrigin2D::FindTrackingNodeBasedOnGeo(
         coordi[kXIndex] = iter.coordinate[kXIndex];
         coordi[kYIndex] = iter.coordinate[kYIndex];
         bitset_temp = sfbitset_aux.SFBitsetEncodingCoordi(ptr_grid_info->grid_space_, coordi);
-        if (ptr_grid_info->CheckIfNodeOutsideCubicDomain(2, bitset_temp, sfbitset_aux) >= 0) {
+        if (ptr_grid_info->CheckIfNodeOutsideCubicDomain(2, bitset_temp, sfbitset_aux)
+            >= GridInfoInterface::kFlagInsideDomain_) {
             if (ptr_tracking_node->find(bitset_temp) == ptr_tracking_node->end()) {
                 ptr_tracking_node->insert({ bitset_temp, (ptr_grid_info
                 ->map_ptr_tracking_grid_info_.at(key_tracking_grid).get())->k0TrackNodeInstance_ });
@@ -101,7 +102,8 @@ void GeometryInfoOrigin3D::FindTrackingNodeBasedOnGeo(
         coordi[kYIndex] = iter.coordinate[kYIndex];
         coordi[kZIndex] = iter.coordinate[kZIndex];
         bitset_temp = sfbitset_aux.SFBitsetEncodingCoordi(ptr_grid_info->grid_space_, coordi);
-        if (ptr_grid_info->CheckIfNodeOutsideCubicDomain(3, bitset_temp, sfbitset_aux) >= 0) {
+        if (ptr_grid_info->CheckIfNodeOutsideCubicDomain(3, bitset_temp, sfbitset_aux)
+            >= GridInfoInterface::kFlagInsideDomain_) {
             if (ptr_tracking_node->find(bitset_temp) == ptr_tracking_node->end()) {
                 ptr_tracking_node->insert({ bitset_temp, (ptr_grid_info
                 ->map_ptr_tracking_grid_info_.at(key_tracking_grid).get())->k0TrackNodeInstance_ });

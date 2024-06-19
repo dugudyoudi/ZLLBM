@@ -85,32 +85,32 @@ void BoundaryConditionLbmInterface::GetBoundaryNInverseIndices(
     std::vector<DefAmrIndexUint>* const ptr_indices,
     std::vector<DefAmrIndexUint>* const ptr_inverse_indices) const {
     switch (boundary_type) {
-        case ELbmBoundaryType::kBoundaryXNeg:
+        case ELbmBoundaryType::kBoundaryXMin:
             // nodes at negative x boundary need to compute distribution functions at positive x
             *ptr_indices = lbm_solver.k0QIndicesPos_.at(kXIndex);
             *ptr_inverse_indices = lbm_solver.k0QIndicesNeg_.at(kXIndex);
             ptr_indices->shrink_to_fit();
             ptr_inverse_indices->shrink_to_fit();
             break;
-        case ELbmBoundaryType::kBoundaryXPos:
+        case ELbmBoundaryType::kBoundaryXMax:
             *ptr_indices = lbm_solver.k0QIndicesNeg_.at(kXIndex);
             *ptr_inverse_indices = lbm_solver.k0QIndicesPos_.at(kXIndex);
             ptr_indices->shrink_to_fit();
             ptr_inverse_indices->shrink_to_fit();
             break;
-        case ELbmBoundaryType::kBoundaryYNeg:
+        case ELbmBoundaryType::kBoundaryYMin:
             *ptr_indices = lbm_solver.k0QIndicesPos_.at(kYIndex);
             *ptr_inverse_indices = lbm_solver.k0QIndicesNeg_.at(kYIndex);
             ptr_indices->shrink_to_fit();
             ptr_inverse_indices->shrink_to_fit();
             break;
-        case ELbmBoundaryType::kBoundaryYPos:
+        case ELbmBoundaryType::kBoundaryYMax:
             *ptr_indices = lbm_solver.k0QIndicesNeg_.at(kYIndex);
             *ptr_inverse_indices = lbm_solver.k0QIndicesPos_.at(kYIndex);
             ptr_indices->shrink_to_fit();
             ptr_inverse_indices->shrink_to_fit();
             break;
-        case ELbmBoundaryType::kBoundaryZNeg:
+        case ELbmBoundaryType::kBoundaryZMin:
             if (lbm_solver.k0SolverDims_ == 2) {
                 amrproject::LogManager::LogError("Dimension for LBM solver is 2, does not support "
                     " boundary in z direction in "
@@ -119,7 +119,7 @@ void BoundaryConditionLbmInterface::GetBoundaryNInverseIndices(
             *ptr_indices = lbm_solver.k0QIndicesPos_.at(kZIndex);
             *ptr_inverse_indices = lbm_solver.k0QIndicesNeg_.at(kZIndex);
             break;
-        case ELbmBoundaryType::kBoundaryZPos:
+        case ELbmBoundaryType::kBoundaryZMax:
             if (lbm_solver.k0SolverDims_ == 2) {
                 amrproject::LogManager::LogError("Dimension for LBM solver is 2, does not support "
                     " boundary in z direction in "
