@@ -7,6 +7,7 @@
 * @brief functions used for manage LBM grid interface.
 * @date  2023-9-30
 */
+#include <mpi.h>
 #include "lbm_interface.h"
 #include "io/log_write.h"
 #include "io/vtk_writer.h"
@@ -398,29 +399,40 @@ int GridInfoLbmInteface::TransferInfoFromCoarseGrid(const amrproject::SFBitsetAu
                 valid_length = sfbitset_aux.FindNodesInPeriodicReginOfGivenLength(sfbitset_coarse, max_interp_length_,
                     periodic_min, periodic_max, domain_min, domain_max, &nodes_in_region);
 
-                // if (i_level_ == 1) {
-                    // amrproject::SFBitsetAux2D aux2d;
-                    // std::array<DefAmrIndexLUint, 2> indices;
-                    // aux2d.SFBitsetComputeIndices(iter_node.first, &indices);
-                    // std::cout <<i_level_ << " " << i_layer << " " << indices[0] << " " << indices[1] << std::endl;
-                    // if (indices[0] == 2 && indices[1] == 10) {
-                    //     for (auto iter : nodes_in_region) {
-                    //         aux2d.SFBitsetComputeIndices(iter, &indices);
-                    //         std::cout << nodes_in_region.size() << " " << indices[0] << " " << indices[1] << std::endl;
-                    //         std::cout <<lbm_grid_coarse.ptr_lbm_grid_nodes_->at(iter)->f_collide_[1] << std::endl;
-                    //     }
-                    // }
-                // }
-
                 SetNodeVariablesAsZeros(ptr_lbm_grid_nodes_->at(iter_node.first).get());
                 func_node_interp_(valid_length, max_interp_length_, node_flag_not_interp, iter_node.first, sfbitset_aux,
                     nodes_in_region, *ptr_lbm_grid_nodes_, grid_info_coarse, *lbm_grid_coarse.ptr_lbm_grid_nodes_,
                     ptr_lbm_grid_nodes_->at(iter_node.first).get());
 
+
+                //                             int rank_id = 0;
+                // MPI_Comm_rank(MPI_COMM_WORLD, &rank_id);
+                //                 if (i_level_ == 1 && rank_id==0) {
+                //     amrproject::SFBitsetAux2D aux2d;
+                //     std::array<DefAmrIndexLUint, 2> indices;
+                //     aux2d.SFBitsetComputeIndices(iter_node.first, &indices);
+                //     std::cout << indices[0] << " " << indices[1] << std::endl;
+                //     std::cout <<ptr_lbm_grid_nodes_->at(iter_node.first)->f_collide_[1] << std::endl;
+                // }
+
             }
         }
     }
     return 0;
+}
+void GridInfoLbmInteface::DebugWrite() {
+    
+                                                                                                int rank_id = 0;
+                MPI_Comm_rank(MPI_COMM_WORLD, &rank_id);
+                                if (i_level_ == 1 && rank_id==0) {
+                    amrproject::SFBitsetAux2D aux2d;
+                    //std::array<DefAmrIndexLUint, 2> indices;
+                    
+                    //aux2d.SFBitsetComputeIndices(iter_node.first, &indices);
+                    //std::cout << indices[0] << " " << indices[1] << std::endl;
+                    std::cout << "2: " <<ptr_lbm_grid_nodes_->at(aux2d.SFBitsetEncoding({2, 10}))->f_collide_[1]<< " "<<ptr_lbm_grid_nodes_->at(aux2d.SFBitsetEncoding({2, 10}))->f_[1] << std::endl;
+                    std::cout  << "3: "<<ptr_lbm_grid_nodes_->at(aux2d.SFBitsetEncoding({3, 10}))->f_collide_[1] << " "<<ptr_lbm_grid_nodes_->at(aux2d.SFBitsetEncoding({2, 10}))->f_[1]<< std::endl;
+                }
 }
 /**
  * @brief function to transfer information on the interface from the fine grid to coarse grid.
@@ -515,13 +527,8 @@ void GridInfoLbmInteface::SetupOutputVariables() {
             OutputLBMNodeVariableInfo& output_info_temp =
                 *dynamic_cast<OutputLBMNodeVariableInfo*>(output_variables_.back().get());
             output_info_temp.variable_dims_ = ptr_solver_->k0SolverDims_;
-            output_info_temp.func_get_var_ = [this, ptr_lbm_solver]
+            output_info_temp.func_get_var_ = []
                 (GridNodeLbm* const ptr_node)->std::vector<DefReal> {
-                if (this->bool_forces_) {
-                    ptr_lbm_solver->func_macro_with_force_(this->ptr_collision_operator_->dt_lbm_, ptr_node);
-                } else {
-                    ptr_lbm_solver->func_macro_without_force_(this->ptr_collision_operator_->dt_lbm_, ptr_node);
-                }
                 return ptr_node->velocity_;
             };
             output_info_temp.output_name_ = "velocity";

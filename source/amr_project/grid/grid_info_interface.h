@@ -227,6 +227,9 @@ class GridInfoInterface {
     virtual int TransferInfoFromFineGrid(const SFBitsetAuxInterface& sfbitset_aux,
         const DefAmrUint node_flag, const GridInfoInterface& grid_info_fine) {return 1;}
 
+    // debug
+    virtual void DebugWrite() {}
+
     // interpolation
     EInterpolationMethod interp_method_ = EInterpolationMethod::kLinear;
     DefAmrIndexLUint max_interp_length_ = 2;

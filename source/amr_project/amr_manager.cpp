@@ -274,26 +274,15 @@ void AmrManager::TimeMarching(const DefAmrIndexLUint time_step_background) {
             &vec_vec_reqs_send, &vec_vec_reqs_receive, &grid_ref);
 #endif  //  ENABLE_MPI
 
+
         grid_ref.ptr_solver_->CallDomainBoundaryCondition(k0TimeSteppingType_,
             time_step_level[i_level], *ptr_grid_manager_->GetSFBitsetAuxPtr(), &grid_ref);
 
-        // // use information in current time step
-        // if (ptr_mpi_manager_->rank_id_ == 0) {
-            grid_ref.ptr_solver_->InformationFromGridOfDifferentLevel(
-                ETimingInOneStep::kStepEnd, k0TimeSteppingType_,
-                time_step_level[i_level], *ptr_grid_manager_->GetSFBitsetAuxPtr(), &grid_ref);
 
-
-        //             //                                                     amrproject::SFBitsetAux2D aux2d;
-        //             // std::array<DefAmrIndexLUint, 2> indices = {2, 10};
-        //             // DefSFBitset bitset = aux2d.SFBitsetEncoding(indices);
-        //             // if (indices[0] == 2 && indices[1] == 10) {
-        //             //     std::cout << ptr_node->f_collide_[1]<< std::endl;
-                        
-                        
-        //             // }
-        // }
-
+        // use information in current time step
+        grid_ref.ptr_solver_->InformationFromGridOfDifferentLevel(
+            ETimingInOneStep::kStepEnd, k0TimeSteppingType_,
+            time_step_level[i_level], *ptr_grid_manager_->GetSFBitsetAuxPtr(), &grid_ref);
 
 
     }

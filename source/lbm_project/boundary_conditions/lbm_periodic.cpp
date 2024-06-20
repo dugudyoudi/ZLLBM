@@ -58,7 +58,6 @@ void BoundaryPeriodic2D::CalBoundaryCondition(const ELbmBoundaryType boundary_ty
                 node_counterpart =  *grid_node.at(sfbitset_counterpart);
             for (i = 0; i < num_q_one_direction; ++i) {
                 node.f_.at(indices[i]) = node_counterpart.f_.at(indices[i]);
-                node.f_collide_.at(indices[i]) = node_counterpart.f_collide_.at(indices[i]);
             }
         } else {
             std::array<DefReal, 2> coordinates, coordinates2,
@@ -125,7 +124,6 @@ void BoundaryPeriodic3D::CalBoundaryCondition(const ELbmBoundaryType boundary_ty
                 node_counterpart =  *grid_node.at(sfbitset_counterpart);
             for (i = 0; i < num_q_one_direction; ++i) {
                 node.f_.at(indices[i]) = node_counterpart.f_.at(indices[i]);
-                node.f_collide_.at(indices[i]) = node_counterpart.f_collide_.at(indices[i]);
             }
         } else {
             std::array<DefReal, 3> coordinates, coordinates2,

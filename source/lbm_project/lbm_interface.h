@@ -228,6 +228,8 @@ class GridInfoLbmInteface : public amrproject::GridInfoInterface {
         return std::make_unique<LbmStrForceCollisionOpt>(lbm_solver);
     }
 
+    void DebugWrite() override;
+
     // domain boundaries
     /**< pointer to boundary conditions adopted for domain boundary */
     std::map<ELbmBoundaryType, std::unique_ptr<BoundaryConditionLbmInterface>> domain_boundary_condition_;

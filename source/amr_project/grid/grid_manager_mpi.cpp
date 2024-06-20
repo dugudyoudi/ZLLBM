@@ -7,6 +7,7 @@
 * @brief functions used to manage grid related processes when mpi is used.
 * @date  2022-6-7
 */
+#include <mpi.h>
 #include <string>
 #include <set>
 #include <functional>

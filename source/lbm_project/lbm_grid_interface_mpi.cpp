@@ -164,9 +164,8 @@ void GridInfoLbmInteface::ComputeInfoInMpiLayers(
     } else {
         func_macro = ptr_lbm_solver->func_macro_without_force_;
     }
-    DefAmrIndexUint flag_not_compute = amrproject::NodeBitStatus::kNodeStatusFine2Coarse0_
-        |amrproject::NodeBitStatus::kNodeStatusFine2CoarseGhost_
-        |amrproject::NodeBitStatus::kNodeStatusCoarse2Fine0_|amrproject::NodeBitStatus::kNodeStatusCoarse2FineGhost_;
+    DefAmrIndexUint flag_not_compute = NodeFlagNotCollision_&(~(amrproject::NodeBitStatus::kNodeStatusMpiPartitionOuter_
+        |amrproject::NodeBitStatus::kNodeStatusMpiPartitionInner_));
 
     // collision for nodes in outer and inner MPI communication layers
     for (const auto& iter_node : map_outer_nodes) {
@@ -207,7 +206,6 @@ void GridInfoLbmInteface::ComputeInfoInMpiLayers(
     for (const auto& iter_layer : map_inner_nodes) {
         for (const auto& iter_node : iter_layer.second) {
             ptr_lbm_solver->StreamInForAGivenNode(iter_node.first, *ptr_sfbitset_aux_, ptr_lbm_grid_nodes_);
-
         }
     }
 }
