@@ -65,6 +65,7 @@ void AmrManager::DefaultInitialization(DefAmrIndexUint dims, DefAmrIndexUint max
     LogManager::LogStartTime();
 
     ptr_io_manager_->DefaultInitialization();
+
     ptr_grid_manager_->DefaultInitialization(max_level);
 }
 /**

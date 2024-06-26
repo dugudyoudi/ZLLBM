@@ -256,7 +256,7 @@ void GridInfoLbmInteface::ReadNodeInfoFromBuffer(
                     + std::string(__FILE__) + " at line " + std::to_string(__LINE__);
             } else {
                 msg = "grid node (" + std::to_string(indices[kXIndex]) + ", " + std::to_string(indices[kYIndex])
-                    + std::to_string(indices[kZIndex]) + ") at " + std::to_string(i_level_)
+                    + ", " + std::to_string(indices[kZIndex]) + ") at " + std::to_string(i_level_)
                     + " level does not exist for copying from a buffer in "
                     + std::string(__FILE__) + " at line " + std::to_string(__LINE__);
             }

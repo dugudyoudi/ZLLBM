@@ -184,8 +184,7 @@ void SolverLbmD3Q19::StreamInForAGivenNode(const DefSFBitset sfbitset_in,
     DefMap<std::unique_ptr<GridNodeLbm>>* const ptr_map_grid_nodes) const {
     const amrproject::SFBitsetAux3D sfbitset_aux3d = dynamic_cast<const amrproject::SFBitsetAux3D&>(sfbitset_aux);
     DefSFBitset sfbitset_tmp, sfbitset_tmp1;
-    ptr_map_grid_nodes->at(sfbitset_in)->f_collide_.at(kFX0Y0Z0) =
-        ptr_map_grid_nodes->at(sfbitset_in)->f_.at(kFX0Y0Z0);
+    ptr_map_grid_nodes->at(sfbitset_in)->f_.at(kFX0Y0Z0) = ptr_map_grid_nodes->at(sfbitset_in)->f_collide_.at(kFX0Y0Z0);
     // f(-x, 0, 0)
     sfbitset_tmp = sfbitset_aux3d.FindXPos(sfbitset_in);
     if (ptr_map_grid_nodes->find(sfbitset_tmp) != ptr_map_grid_nodes->end()) {

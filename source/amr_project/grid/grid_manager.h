@@ -160,9 +160,7 @@ class GridManagerInterface{
         const std::array<DefReal, 3>& domain_max) const;
     bool InstantiateGridNode(const DefSFBitset& bitset_in,
         GridInfoInterface* const ptr_grid_info);
-    virtual int CheckNodeOnDomainBoundary(const DefSFBitset& sfbitset_in,
-        const std::vector<DefSFBitset>& sfbitset_min,
-        const std::vector<DefSFBitset>& sfbitset_max) const = 0;
+    virtual int CheckNodeOnDomainBoundary(const DefAmrIndexUint i_level, const DefSFBitset& sfbitset_in) const = 0;
     virtual bool CheckNodeNotOutsideDomainBoundary(const DefSFBitset& sfbitset_in,
         const std::vector<DefSFCodeToUint>& sfbitset_min,
         const std::vector<DefSFCodeToUint>& sfbitset_max) const = 0;
@@ -215,6 +213,15 @@ class GridManagerInterface{
     // functions to generate grid
     void InstantiateOverlapLayerOfRefinementInterface(
         const std::vector<DefMap<DefAmrIndexUint>>& sfbitset_one_lower_level);
+    void instantiatePeriodicNodes(const bool bool_min, const DefAmrIndexUint i_dim, const DefAmrIndexUint i_level,
+        const DefAmrIndexUint num_ghost_layer, const int boundary_min, const DefSFBitset sfbitset_in,
+        const DefSFCodeToUint code_min_background_level, const DefSFCodeToUint code_max_background_level,
+        const SFBitsetAuxInterface& sfbitset_aux, GridInfoInterface* const ptr_grid_info,
+        DefMap<DefAmrIndexUint>* const ptr_inner_layer, DefMap<DefAmrIndexUint>* const ptr_outer_layer,
+        DefMap<DefAmrIndexUint>* const ptr_boundary_corner_y_min,
+        DefMap<DefAmrIndexUint>* const ptr_boundary_corner_y_max,
+        DefMap<DefAmrIndexUint>* const ptr_boundary_corner_z_min,
+        DefMap<DefAmrIndexUint>* const ptr_boundary_corner_z_max);
 
     virtual void OverlapLayerFromHighToLow(
         const DefMap<DefAmrUint>& layer_high_level,
@@ -383,9 +390,7 @@ class GridManager2D :public  GridManagerInterface, public SFBitsetAux2D {
     void SetDomainGridSize(const std::vector<DefReal>& domain_grid_size) override;
 
     // node related function
-    int CheckNodeOnDomainBoundary(const DefSFBitset& sfbitset_in,
-        const std::vector<DefSFBitset>& sfbitset_min,
-        const std::vector<DefSFBitset>& sfbitset_max) const override;
+    int CheckNodeOnDomainBoundary(const DefAmrIndexUint i_level, const DefSFBitset& sfbitset_in) const override;
     bool CheckNodeNotOutsideDomainBoundary(const DefSFBitset& sfbitset_in,
         const std::vector<DefSFCodeToUint>& sfbitset_min,
         const std::vector<DefSFCodeToUint>& sfbitset_max) const override;
@@ -532,9 +537,7 @@ class GridManager3D :public  GridManagerInterface, public SFBitsetAux3D {
     void SetDomainGridSize(const std::vector<DefReal>& domain_grid_size) override;
 
     // node related function
-    int CheckNodeOnDomainBoundary(const DefSFBitset& sfbitset_in,
-        const std::vector<DefSFBitset>& sfbitset_min,
-        const std::vector<DefSFBitset>& sfbitset_max) const override;
+    int CheckNodeOnDomainBoundary(const DefAmrIndexUint i_level, const DefSFBitset& sfbitset_in) const override;
     bool CheckNodeNotOutsideDomainBoundary(const DefSFBitset& sfbitset_in,
         const std::vector<DefSFCodeToUint>& sfbitset_min,
         const std::vector<DefSFCodeToUint>& sfbitset_max) const override;

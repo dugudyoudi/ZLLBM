@@ -226,15 +226,18 @@ void GridManager2D::ResetExtendLayerBasedOnDomainSize(
 }
 /**
 * @brief   function to check node on which domain boundaries.
+* @param[in] i_level refinement level.
 * @param[in] sfbitset_in space filling code of a given node.
-* @param[in] sfbitset_min bitset corresponding to the minimum coordinate in each direction.
-* @param[in] sfbitset_max bitset corresponding to the maximum coordinate in each direction.
 * @return flag indicate node on which domain boundaries, 1: x min, 2: x max, 4: y min, 8: y max
 */
-int GridManager2D::CheckNodeOnDomainBoundary(const DefSFBitset& sfbitset_in,
-    const std::vector<DefSFBitset>& sfbitset_min,
-    const std::vector<DefSFBitset>& sfbitset_max) const {
+int GridManager2D::CheckNodeOnDomainBoundary(
+    const DefAmrIndexUint i_level, const DefSFBitset& sfbitset_in) const {
     int node_status = 0;
+    std::array<DefSFBitset, 2> sfbitset_min, sfbitset_max;
+    sfbitset_min[kXIndex] = SFBitsetToNHigherLevel(i_level, SFBitsetMin_[kXIndex]);
+    sfbitset_min[kYIndex] = SFBitsetToNHigherLevel(i_level, SFBitsetMin_[kYIndex]);
+    sfbitset_max[kXIndex] = SFBitsetToNHigherLevel(i_level, SFBitsetMax_[kXIndex]);
+    sfbitset_max[kYIndex] = SFBitsetToNHigherLevel(i_level, SFBitsetMax_[kYIndex]);
     if ((sfbitset_in & k0SFBitsetTakeXRef_[kRefCurrent_])
         == sfbitset_min[kXIndex]) {
         node_status |= 1;

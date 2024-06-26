@@ -1877,7 +1877,7 @@ DefAmrIndexLUint SFBitsetAux3D::FindNodesInPeriodicReginNearby(const DefSFBitset
         if ((sfbitset_tmp_y&k0SFBitsetTakeYRef_.at(kRefCurrent_))
             == domain_max_n_level.at(kYIndex)) {
             if (periodic_max.at(kYIndex)) {
-                sfbitset_tmp_y = (sfbitset_tmp_x&k0SFBitsetTakeYRef_.at(kRefOthers_))
+                sfbitset_tmp_y = (sfbitset_tmp_y&k0SFBitsetTakeYRef_.at(kRefOthers_))
                     |domain_min_n_level.at(kYIndex);
                 sfbitset_tmp_y = FindYNeg(sfbitset_tmp_y);
             } else {
@@ -1894,18 +1894,18 @@ DefAmrIndexLUint SFBitsetAux3D::FindNodesInPeriodicReginNearby(const DefSFBitset
                     vec_index_x = vec_index_y - ix;
                     ptr_sfbitset_nodes->at(vec_index_x) = sfbitset_tmp_x;
                     if ((sfbitset_tmp_x&k0SFBitsetTakeXRef_.at(kRefCurrent_))
-                    == domain_min_n_level.at(kXIndex)) {
-                    if (periodic_min.at(kXIndex)) {
-                        sfbitset_tmp_x = (sfbitset_tmp_x&k0SFBitsetTakeXRef_.at(kRefOthers_))
-                            |domain_max_n_level.at(kXIndex);
-                        sfbitset_tmp_x = FindXPos(sfbitset_tmp_x);
-                    } else {
-                        if (index_min > DefAmrIndexLUint(ix)) {
-                            index_min = ix;
+                        == domain_min_n_level.at(kXIndex)) {
+                        if (periodic_min.at(kXIndex)) {
+                            sfbitset_tmp_x = (sfbitset_tmp_x&k0SFBitsetTakeXRef_.at(kRefOthers_))
+                                |domain_max_n_level.at(kXIndex);
+                            sfbitset_tmp_x = FindXPos(sfbitset_tmp_x);
+                        } else {
+                            if (index_min > DefAmrIndexLUint(ix)) {
+                                index_min = ix;
+                            }
+                            break;
                         }
-                        break;
                     }
-                }
                     sfbitset_tmp_x = FindXNeg(sfbitset_tmp_x);
                 }
                 sfbitset_tmp_x = sfbitset_tmp_y;
@@ -2067,7 +2067,7 @@ DefAmrIndexLUint SFBitsetAux3D::FindNodesInPeriodicReginNearby(const DefSFBitset
             if ((sfbitset_tmp_y&k0SFBitsetTakeYRef_.at(kRefCurrent_))
                 == domain_max_n_level.at(kYIndex)) {
                 if (periodic_max.at(kYIndex)) {
-                    sfbitset_tmp_y = (sfbitset_tmp_x&k0SFBitsetTakeYRef_.at(kRefOthers_))
+                    sfbitset_tmp_y = (sfbitset_tmp_y&k0SFBitsetTakeYRef_.at(kRefOthers_))
                         |domain_min_n_level.at(kYIndex);
                     sfbitset_tmp_y = FindYNeg(sfbitset_tmp_y);
                 } else {

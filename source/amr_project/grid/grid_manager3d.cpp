@@ -294,34 +294,39 @@ void GridManager3D::ResetExtendLayerBasedOnDomainSize(
 }
 /**
 * @brief   function to check node on which domain boundaries.
-* @param[in]  sfbitset_in space filling code of a given node.
-* @param[in] sfbitset_min bitset corresponding to the minimum coordinate in each direction.
-* @param[in] sfbitset_max bitset corresponding to the maximum coordinate in each direction.
-* @return flag indicate node on which domain boundaries, 1: x min, 8: x max, 2: y min, 16: y max, 4: z min, 32: z max
+* @param[in] i_level refinement level.
+* @param[in] sfbitset_in space filling code of a given node.
+* @return flag indicate node on which domain boundaries, 1: x min, 2: x max, 4: y min, 8: y max, 16: z min, 32: z max
 */
-int GridManager3D::CheckNodeOnDomainBoundary(const DefSFBitset& sfbitset_in,
-    const std::vector<DefSFBitset>& sfbitset_min,
-    const std::vector<DefSFBitset>& sfbitset_max) const {
+int GridManager3D::CheckNodeOnDomainBoundary(
+    const DefAmrIndexUint i_level, const DefSFBitset& sfbitset_in) const {
     int node_status = 0;
+    std::array<DefSFBitset, 3> sfbitset_min, sfbitset_max;
+    sfbitset_min[kXIndex] = SFBitsetToNHigherLevel(i_level, SFBitsetMin_[kXIndex]);
+    sfbitset_min[kYIndex] = SFBitsetToNHigherLevel(i_level, SFBitsetMin_[kYIndex]);
+    sfbitset_min[kZIndex] = SFBitsetToNHigherLevel(i_level, SFBitsetMin_[kZIndex]);
+    sfbitset_max[kXIndex] = SFBitsetToNHigherLevel(i_level, SFBitsetMax_[kXIndex]);
+    sfbitset_max[kYIndex] = SFBitsetToNHigherLevel(i_level, SFBitsetMax_[kYIndex]);
+    sfbitset_max[kZIndex] = SFBitsetToNHigherLevel(i_level, SFBitsetMax_[kZIndex]);
     if ((sfbitset_in & k0SFBitsetTakeXRef_[kRefCurrent_])
         == sfbitset_min[kXIndex]) {
         node_status |= 1;
     }
     if ((sfbitset_in & k0SFBitsetTakeXRef_[kRefCurrent_])
         == sfbitset_max[kXIndex]) {
-        node_status |= 8;
-    }
-    if ((sfbitset_in & k0SFBitsetTakeYRef_[kRefCurrent_])
-        == sfbitset_min[kYIndex]) {
         node_status |= 2;
     }
     if ((sfbitset_in & k0SFBitsetTakeYRef_[kRefCurrent_])
+        == sfbitset_min[kYIndex]) {
+        node_status |= 4;
+    }
+    if ((sfbitset_in & k0SFBitsetTakeYRef_[kRefCurrent_])
         == sfbitset_max[kYIndex]) {
-        node_status |= 16;
+        node_status |= 8;
     }
     if ((sfbitset_in & k0SFBitsetTakeZRef_[kRefCurrent_])
         == sfbitset_min[kZIndex]) {
-        node_status |= 4;
+        node_status |= 16;
     }
     if ((sfbitset_in & k0SFBitsetTakeZRef_[kRefCurrent_])
         == sfbitset_max[kZIndex]) {

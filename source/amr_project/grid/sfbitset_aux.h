@@ -107,9 +107,6 @@ class  SFBitsetAux2D : public SFBitsetAuxInterface {
     std::array<DefSFBitset, 2> SFBitsetMin_ = {~DefSFCodeToUint(0), ~DefSFCodeToUint(0)}, SFBitsetMax_ = {0, 0};
     /**< bitset corresponding to the minimum and maximum
      indices of the computational domain in each direction*/
-    std::array<DefSFBitset, 2> k0SFBitsetDomainCoordMin_, k0SFBitsetDomainCoordMax_;
-    /**< bitset corresponding to the minimum and maximum
-     coordinates of the computational domain in each direction*/
 
     /* give an offset to avoid exceeding the boundary limits when searching nodes.
     The offset distance is (k0MinIndexOfBackgroundNode_ * kDomainDx),
@@ -304,9 +301,6 @@ class  SFBitsetAux3D : public SFBitsetAuxInterface {
      kNodeIndexXnYnZn_ = 26;  ///< indices of node and  its 26 neighbors
     std::array<DefSFBitset, 3> SFBitsetMin_ = {~DefSFCodeToUint(0), ~DefSFCodeToUint(0), ~DefSFCodeToUint(0)},
         SFBitsetMax_ = {0, 0, 0};
-    std::array<DefSFBitset, 3> k0SFBitsetDomainCoordMin_, k0SFBitsetDomainCoordMax_;
-    /**< bitset corresponding to the minimum and maximum
-     coordinates of the computational domain in each direction*/
 
     /* give an offset to avoid exceeding the boundary limits when searching nodes.
     The offset distance is (k0MinIndexOfBackgroundNode_ * kDomainDx),
