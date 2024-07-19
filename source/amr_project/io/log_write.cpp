@@ -72,7 +72,6 @@ void LogManager::LogInfo(const std::string& msg) {
 
 /**
 * @brief function to write warning information to the logfile.
-* @param[in]  mpi_id        id of the mpi node.
 * @param[in]  msg        information write to the logfile.
 */
 void LogManager::LogWarning(const std::string& msg) {
@@ -102,8 +101,7 @@ void LogManager::LogWarning(const std::string& msg) {
 }
 
 /**
-* @brief function to write error information to the logfile.
-* @param[in]  mpi_id        id of the mpi node.
+* @brief function to write error information to the logfile and stop the program.
 * @param[in]  msg        information write to the logfile.
 */
 void LogManager::LogError(const std::string& msg) {
@@ -131,6 +129,35 @@ void LogManager::LogError(const std::string& msg) {
         | FOREGROUND_GREEN | FOREGROUND_BLUE);
 #endif
     exit(0);
+}
+/**
+* @brief function to write error information to the logfile.
+* @param[in]  msg        information write to the logfile.
+*/
+void LogManager::LogErrorMsg(const std::string& msg) {
+    int rank_id = 0;
+#ifdef ENABLE_MPI
+    MPI_Comm_rank(MPI_COMM_WORLD, &rank_id);
+#endif  // ENABLE_MPI
+    FILE* fp = nullptr;
+    errno_t err = fopen_s(&fp,
+        (logfile_name_ + std::to_string(rank_id)).c_str(), "a");
+    if (!fp) {
+        printf_s("The log file was not opened\n");
+    } else {
+        fprintf(fp, "Error: %s. \n",  msg.c_str());
+        fclose(fp);
+    }
+#ifdef _WIN32
+    SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE),
+        FOREGROUND_INTENSITY | FOREGROUND_RED);
+#endif
+    printf("Error of rank %d: %s. \n", rank_id, msg.c_str());
+#ifdef _WIN32
+    SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE),
+        FOREGROUND_INTENSITY | FOREGROUND_RED
+        | FOREGROUND_GREEN | FOREGROUND_BLUE);
+#endif
 }
 }  // end namespace amrproject
 }  // end namespace rootproject

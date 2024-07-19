@@ -586,25 +586,25 @@ void GridManager3D::IdentifyInterfaceForACell(const DefSFBitset bitset_in,
             SFBitsetToOneHigherLevel(bitset_neighbors[0]));
         IdentifyInterfaceNodeOnEdge(
             { bitset_neighbors[0], bitset_neighbors[1] },
-            bitset_mid_higher, node_coarse_interface, arr_ptr_layer);
+            bitset_mid_higher, *this, node_coarse_interface, arr_ptr_layer);
         // mid edge (0, 0 + dy/2, 0)
         bitset_mid_higher = FindYPos(
             SFBitsetToOneHigherLevel(bitset_neighbors[0]));
         IdentifyInterfaceNodeOnEdge(
             { bitset_neighbors[0], bitset_neighbors[2] },
-            bitset_mid_higher, node_coarse_interface, arr_ptr_layer);
+            bitset_mid_higher, *this, node_coarse_interface, arr_ptr_layer);
         // mid edge (0 + dx/2, y, 0)
         bitset_mid_higher = FindXPos(
             SFBitsetToOneHigherLevel(bitset_neighbors[2]));
         IdentifyInterfaceNodeOnEdge(
             { bitset_neighbors[2], bitset_neighbors[3] },
-            bitset_mid_higher, node_coarse_interface, arr_ptr_layer);
+            bitset_mid_higher, *this, node_coarse_interface, arr_ptr_layer);
         // mid edge (x, 0 + dy/2, 0)
         bitset_mid_higher = FindYPos(
             SFBitsetToOneHigherLevel(bitset_neighbors[1]));
         IdentifyInterfaceNodeOnEdge(
             { bitset_neighbors[1], bitset_neighbors[3] },
-            bitset_mid_higher, node_coarse_interface, arr_ptr_layer);
+            bitset_mid_higher, *this, node_coarse_interface, arr_ptr_layer);
         // diagonal (0 + x/2, 0 + dy/2, 0)
         bitset_mid_higher = FindXNeg(bitset_mid_higher);
         IdentifyInterfaceNodeDiagonal(
@@ -618,25 +618,25 @@ void GridManager3D::IdentifyInterfaceForACell(const DefSFBitset bitset_in,
             SFBitsetToOneHigherLevel(bitset_neighbors[4]));
         IdentifyInterfaceNodeOnEdge(
             { bitset_neighbors[4], bitset_neighbors[5] },
-            bitset_mid_higher, node_coarse_interface, arr_ptr_layer);
+            bitset_mid_higher, *this, node_coarse_interface, arr_ptr_layer);
         // mid edge (0, 0 + dy/2, z)
         bitset_mid_higher = FindYPos(
             SFBitsetToOneHigherLevel(bitset_neighbors[4]));
         IdentifyInterfaceNodeOnEdge(
             { bitset_neighbors[4], bitset_neighbors[6] },
-            bitset_mid_higher, node_coarse_interface, arr_ptr_layer);
+            bitset_mid_higher, *this, node_coarse_interface, arr_ptr_layer);
         // mid edge (0 + dx/2, y, z)
         bitset_mid_higher = FindXPos(
             SFBitsetToOneHigherLevel(bitset_neighbors[6]));
         IdentifyInterfaceNodeOnEdge(
             { bitset_neighbors[6], bitset_neighbors[7] },
-            bitset_mid_higher, node_coarse_interface, arr_ptr_layer);
+            bitset_mid_higher, *this, node_coarse_interface, arr_ptr_layer);
         // mid edge (x, 0 + dy/2, z)
         bitset_mid_higher = FindYPos(
             SFBitsetToOneHigherLevel(bitset_neighbors[5]));
         IdentifyInterfaceNodeOnEdge(
             { bitset_neighbors[5], bitset_neighbors[7] },
-            bitset_mid_higher, node_coarse_interface, arr_ptr_layer);
+            bitset_mid_higher, *this, node_coarse_interface, arr_ptr_layer);
         // diagonal (0 + x/2, 0 + dy/2, z)
         bitset_mid_higher = FindXNeg(bitset_mid_higher);
         IdentifyInterfaceNodeDiagonal(
@@ -650,7 +650,7 @@ void GridManager3D::IdentifyInterfaceForACell(const DefSFBitset bitset_in,
             SFBitsetToOneHigherLevel(bitset_neighbors[0]));
         IdentifyInterfaceNodeOnEdge(
             { bitset_neighbors[0], bitset_neighbors[4] },
-            bitset_mid_higher, node_coarse_interface, arr_ptr_layer);
+            bitset_mid_higher, *this, node_coarse_interface, arr_ptr_layer);
         // diagonal (0 + x/2, 0, 0 + dz/2)
         bitset_mid_higher = FindXPos(bitset_mid_higher);
         IdentifyInterfaceNodeDiagonal(
@@ -662,7 +662,7 @@ void GridManager3D::IdentifyInterfaceForACell(const DefSFBitset bitset_in,
             SFBitsetToOneHigherLevel(bitset_neighbors[1]));
         IdentifyInterfaceNodeOnEdge(
             { bitset_neighbors[1], bitset_neighbors[5] },
-            bitset_mid_higher, node_coarse_interface, arr_ptr_layer);
+            bitset_mid_higher, *this, node_coarse_interface, arr_ptr_layer);
         // diagonal (x, 0 + dy/2, 0 + dz/2)
         bitset_mid_higher = FindYPos(bitset_mid_higher);
         IdentifyInterfaceNodeDiagonal(
@@ -674,7 +674,7 @@ void GridManager3D::IdentifyInterfaceForACell(const DefSFBitset bitset_in,
             SFBitsetToOneHigherLevel(bitset_neighbors[2]));
         IdentifyInterfaceNodeOnEdge(
             { bitset_neighbors[2], bitset_neighbors[6] },
-            bitset_mid_higher, node_coarse_interface, arr_ptr_layer);
+            bitset_mid_higher, *this, node_coarse_interface, arr_ptr_layer);
         // diagonal (0, 0 + dy/2, 0 + dz/2)
         bitset_mid_higher = FindYNeg(bitset_mid_higher);
         IdentifyInterfaceNodeDiagonal(
@@ -686,7 +686,7 @@ void GridManager3D::IdentifyInterfaceForACell(const DefSFBitset bitset_in,
             SFBitsetToOneHigherLevel(bitset_neighbors[3]));
         IdentifyInterfaceNodeOnEdge(
             { bitset_neighbors[3], bitset_neighbors[7] },
-            bitset_mid_higher, node_coarse_interface, arr_ptr_layer);
+            bitset_mid_higher, *this, node_coarse_interface, arr_ptr_layer);
         // diagonal (0 + dx/2, y, 0 + dz/2)
         bitset_mid_higher = FindXNeg(bitset_mid_higher);
         IdentifyInterfaceNodeDiagonal(
@@ -701,20 +701,24 @@ void GridManager3D::IdentifyInterfaceForACell(const DefSFBitset bitset_in,
 /**
 * @brief   function to identify interface for a given cell
 * @param[in] sfbitset_in   space filling code of the given node (lower level)
-* @param[in] node_coarse_interface nodes on on interface layer of coarser grid
+* @param[in] node_coarse_interface_previous nodes on coarse to fine interface has been marked
+* @param[in] node_coarse_interface_inner nodes on inner coarse to fine interface
 * @param[in] node_exist_current existing nodes at current level
 * @param[in] node_exist_lower   existing nodes at lower level
-* @param[out]  ptr_inner_layer map store nodes on the inner layer
-* @param[out]  ptr_mid_layer map store nodes on the middle layer
-* @param[out]  ptr_outer_layer map store nodes on the outer layer
+* @param[out] ptr_inner_layer map storing nodes on the inner layer
+* @param[out] ptr_mid_layer map storing nodes on the middle layer
+* @param[out] ptr_outer_layer map storing nodes on the outer layer
+* @param[out] ptr_node_coarse_interface_outer pointer to map storing nodes on outer coarse to fine interface
 */
-// only add nodes exist at current refinement level to refinement interfaces
+// in node_exist_current and node_exist_lower, all nodes exist since grid generation is done
+// the aim is to add nodes at current refinement level to refinement interfaces
 void GridManager3D::IdentifyInterfaceForACell(const DefSFBitset bitset_in,
-    const DefMap<DefAmrUint>& node_coarse_interface,
+    const DefMap<DefAmrUint>& node_coarse_interface_previous,
+    const DefMap<DefAmrUint>& node_coarse_interface_inner,
     const DefMap<std::unique_ptr<GridNode>>& node_exist_current,
     const DefMap<std::unique_ptr<GridNode>>& node_exist_lower,
     DefMap<DefAmrUint>* const ptr_inner_layer, DefMap<DefAmrUint>* const ptr_mid_layer,
-    DefMap<DefAmrUint>* const ptr_outer_layer) {
+    DefMap<DefAmrUint>* const ptr_outer_layer, DefMap<DefAmrUint>* const ptr_node_coarse_interface_outer) {
     // bitset_neighbors[0]:(0, 0, 0);   bitset_neighbors[1]:(+x, 0, 0);
     // bitset_neighbors[2]:(0, +y, 0);  bitset_neighbors[3]:(+x, +y, 0);
     // bitset_neighbors[4]:(0, 0, +z);  bitset_neighbors[5]:(+x, 0, +z);
@@ -730,208 +734,261 @@ void GridManager3D::IdentifyInterfaceForACell(const DefSFBitset bitset_in,
         // edge (0 + dx/2, 0, 0)
         bitset_mid_higher = FindXPos(SFBitsetToOneHigherLevel(bitset_neighbors[0]));
         IdentifyInterfaceNodeOnEdge({bitset_neighbors[0], bitset_neighbors[1]},
-            bitset_mid_higher, node_coarse_interface, node_exist_current, arr_ptr_layer);
+            bitset_mid_higher, *this, node_coarse_interface_previous, node_coarse_interface_inner,
+            node_exist_current, arr_ptr_layer, ptr_node_coarse_interface_outer);
         // mid edge (0, 0 + dy/2, 0)
         bitset_mid_higher = FindYPos(SFBitsetToOneHigherLevel(bitset_neighbors[0]));
         IdentifyInterfaceNodeOnEdge({bitset_neighbors[0], bitset_neighbors[2]},
-            bitset_mid_higher, node_coarse_interface, node_exist_current, arr_ptr_layer);
+            bitset_mid_higher, *this, node_coarse_interface_previous, node_coarse_interface_inner,
+            node_exist_current, arr_ptr_layer, ptr_node_coarse_interface_outer);
         // mid edge (0 + dx/2, y, 0)
         bitset_mid_higher = FindXPos(SFBitsetToOneHigherLevel(bitset_neighbors[2]));
         IdentifyInterfaceNodeOnEdge({bitset_neighbors[2], bitset_neighbors[3]},
-            bitset_mid_higher, node_coarse_interface, node_exist_current, arr_ptr_layer);
+            bitset_mid_higher, *this, node_coarse_interface_previous, node_coarse_interface_inner,
+            node_exist_current, arr_ptr_layer, ptr_node_coarse_interface_outer);
         // mid edge (x, 0 + dy/2, 0)
         bitset_mid_higher = FindYPos(SFBitsetToOneHigherLevel(bitset_neighbors[1]));
         IdentifyInterfaceNodeOnEdge({bitset_neighbors[1], bitset_neighbors[3]},
-            bitset_mid_higher, node_coarse_interface, node_exist_current, arr_ptr_layer);
+            bitset_mid_higher, *this, node_coarse_interface_previous, node_coarse_interface_inner,
+            node_exist_current, arr_ptr_layer, ptr_node_coarse_interface_outer);
         // diagonal (0 + x/2, 0 + dy/2, 0)
         bitset_mid_higher = FindXNeg(bitset_mid_higher);
-        IdentifyInterfaceNodeDiagonal({bitset_neighbors[0], bitset_neighbors[1],
-            bitset_neighbors[2], bitset_neighbors[3] },
-            bitset_mid_higher, node_coarse_interface, node_exist_current, arr_ptr_layer);
+        IdentifyInterfaceNodeOnEdge({bitset_neighbors[0], bitset_neighbors[3]},
+            bitset_mid_higher, *this, node_coarse_interface_previous, node_coarse_interface_inner,
+            node_exist_current, arr_ptr_layer, ptr_node_coarse_interface_outer);
 
         // top surface
         // mid edge (0 + dx/2, 0, z)
         bitset_mid_higher = FindXPos(SFBitsetToOneHigherLevel(bitset_neighbors[4]));
         IdentifyInterfaceNodeOnEdge({bitset_neighbors[4], bitset_neighbors[5]},
-            bitset_mid_higher, node_coarse_interface, node_exist_current, arr_ptr_layer);
+            bitset_mid_higher, *this, node_coarse_interface_previous, node_coarse_interface_inner,
+            node_exist_current, arr_ptr_layer, ptr_node_coarse_interface_outer);
         // mid edge (0, 0 + dy/2, z)
         bitset_mid_higher = FindYPos(SFBitsetToOneHigherLevel(bitset_neighbors[4]));
         IdentifyInterfaceNodeOnEdge({bitset_neighbors[4], bitset_neighbors[6]},
-            bitset_mid_higher, node_coarse_interface, node_exist_current, arr_ptr_layer);
+            bitset_mid_higher, *this, node_coarse_interface_previous, node_coarse_interface_inner,
+            node_exist_current, arr_ptr_layer, ptr_node_coarse_interface_outer);
         // mid edge (0 + dx/2, y, z)
         bitset_mid_higher = FindXPos(SFBitsetToOneHigherLevel(bitset_neighbors[6]));
         IdentifyInterfaceNodeOnEdge({bitset_neighbors[6], bitset_neighbors[7]},
-            bitset_mid_higher, node_coarse_interface, node_exist_current, arr_ptr_layer);
+            bitset_mid_higher, *this, node_coarse_interface_previous, node_coarse_interface_inner,
+            node_exist_current, arr_ptr_layer, ptr_node_coarse_interface_outer);
         // mid edge (x, 0 + dy/2, z)
         bitset_mid_higher = FindYPos(SFBitsetToOneHigherLevel(bitset_neighbors[5]));
         IdentifyInterfaceNodeOnEdge({bitset_neighbors[5], bitset_neighbors[7]},
-            bitset_mid_higher, node_coarse_interface, node_exist_current, arr_ptr_layer);
+            bitset_mid_higher, *this, node_coarse_interface_previous, node_coarse_interface_inner,
+            node_exist_current, arr_ptr_layer, ptr_node_coarse_interface_outer);
         // diagonal (0 + x/2, 0 + dy/2, z)
         bitset_mid_higher = FindXNeg(bitset_mid_higher);
-        IdentifyInterfaceNodeDiagonal({bitset_neighbors[4], bitset_neighbors[5],
-            bitset_neighbors[6], bitset_neighbors[7] },
-            bitset_mid_higher, node_coarse_interface, node_exist_current, arr_ptr_layer);
+        IdentifyInterfaceNodeOnEdge({bitset_neighbors[4], bitset_neighbors[7]},
+            bitset_mid_higher, *this, node_coarse_interface_previous, node_coarse_interface_inner,
+            node_exist_current, arr_ptr_layer, ptr_node_coarse_interface_outer);
 
         // middle surface
         // mid edge (0, 0, 0 + dz/2)
         bitset_mid_higher = FindZPos(SFBitsetToOneHigherLevel(bitset_neighbors[0]));
         IdentifyInterfaceNodeOnEdge({bitset_neighbors[0], bitset_neighbors[4]},
-            bitset_mid_higher, node_coarse_interface, node_exist_current, arr_ptr_layer);
+            bitset_mid_higher, *this, node_coarse_interface_previous, node_coarse_interface_inner,
+            node_exist_current, arr_ptr_layer, ptr_node_coarse_interface_outer);
         // diagonal (0 + x/2, 0, 0 + dz/2)
         bitset_mid_higher = FindXPos(bitset_mid_higher);
-        IdentifyInterfaceNodeDiagonal({bitset_neighbors[0], bitset_neighbors[1],
-            bitset_neighbors[5], bitset_neighbors[4] },
-            bitset_mid_higher, node_coarse_interface, node_exist_current, arr_ptr_layer);
+        IdentifyInterfaceNodeOnEdge({bitset_neighbors[0], bitset_neighbors[4]},
+            bitset_mid_higher, *this, node_coarse_interface_previous, node_coarse_interface_inner,
+            node_exist_current, arr_ptr_layer, ptr_node_coarse_interface_outer);
         // mid edge (x, 0, 0 + dz/2)
         bitset_mid_higher = FindZPos(SFBitsetToOneHigherLevel(bitset_neighbors[1]));
         IdentifyInterfaceNodeOnEdge({bitset_neighbors[1], bitset_neighbors[5]},
-            bitset_mid_higher, node_coarse_interface, node_exist_current, arr_ptr_layer);
+            bitset_mid_higher, *this, node_coarse_interface_previous, node_coarse_interface_inner,
+            node_exist_current, arr_ptr_layer, ptr_node_coarse_interface_outer);
         // diagonal (x, 0 + dy/2, 0 + dz/2)
         bitset_mid_higher = FindYPos(bitset_mid_higher);
-        IdentifyInterfaceNodeDiagonal({bitset_neighbors[1], bitset_neighbors[3],
-              bitset_neighbors[7], bitset_neighbors[5] },
-            bitset_mid_higher, node_coarse_interface, node_exist_current, arr_ptr_layer);
+        IdentifyInterfaceNodeOnEdge({bitset_neighbors[1], bitset_neighbors[7]},
+            bitset_mid_higher, *this, node_coarse_interface_previous, node_coarse_interface_inner,
+            node_exist_current, arr_ptr_layer, ptr_node_coarse_interface_outer);
         // mid edge (0, y, 0+ dz/2)
         bitset_mid_higher = FindZPos(SFBitsetToOneHigherLevel(bitset_neighbors[2]));
         IdentifyInterfaceNodeOnEdge({bitset_neighbors[2], bitset_neighbors[6]},
-            bitset_mid_higher, node_coarse_interface, node_exist_current, arr_ptr_layer);
+            bitset_mid_higher, *this, node_coarse_interface_previous, node_coarse_interface_inner,
+            node_exist_current, arr_ptr_layer, ptr_node_coarse_interface_outer);
         // diagonal (0, 0 + dy/2, 0 + dz/2)
         bitset_mid_higher = FindYNeg(bitset_mid_higher);
-        IdentifyInterfaceNodeDiagonal({bitset_neighbors[0], bitset_neighbors[2],
-              bitset_neighbors[6], bitset_neighbors[4] },
-            bitset_mid_higher, node_coarse_interface, node_exist_current, arr_ptr_layer);
+        IdentifyInterfaceNodeOnEdge({bitset_neighbors[0], bitset_neighbors[6]},
+            bitset_mid_higher, *this, node_coarse_interface_previous, node_coarse_interface_inner,
+            node_exist_current, arr_ptr_layer, ptr_node_coarse_interface_outer);
         // mid edge (x, y, 0+ dz/2)
         bitset_mid_higher = FindZPos(SFBitsetToOneHigherLevel(bitset_neighbors[3]));
         IdentifyInterfaceNodeOnEdge({bitset_neighbors[3], bitset_neighbors[7]},
-            bitset_mid_higher, node_coarse_interface, node_exist_current, arr_ptr_layer);
+            bitset_mid_higher, *this, node_coarse_interface_previous, node_coarse_interface_inner,
+            node_exist_current, arr_ptr_layer, ptr_node_coarse_interface_outer);
         // diagonal (0 + dx/2, y, 0 + dz/2)
         bitset_mid_higher = FindXNeg(bitset_mid_higher);
-        IdentifyInterfaceNodeDiagonal({bitset_neighbors[2], bitset_neighbors[3],
-            bitset_neighbors[7], bitset_neighbors[6] },
-            bitset_mid_higher, node_coarse_interface, node_exist_current, arr_ptr_layer);
+        IdentifyInterfaceNodeOnEdge({bitset_neighbors[2], bitset_neighbors[7]},
+            bitset_mid_higher, *this, node_coarse_interface_previous, node_coarse_interface_inner,
+            node_exist_current, arr_ptr_layer, ptr_node_coarse_interface_outer);
 
         // center (0 + dx/2, 0 + dy/2, 0 + dz/2)
         bitset_mid_higher = FindYNeg(bitset_mid_higher);
-        if (node_exist_current.find(bitset_mid_higher) != node_exist_current.end()) {
-            ptr_mid_layer->insert({bitset_mid_higher, kFlag0_ });
-        }
+        IdentifyInterfaceNodeOnEdge({bitset_neighbors[0], bitset_neighbors[7]},
+            bitset_mid_higher, *this, node_coarse_interface_previous, node_coarse_interface_inner,
+            node_exist_current, arr_ptr_layer, ptr_node_coarse_interface_outer);
     }
 }
 /**
-* @brief   function to identify types of interface node on the edge
-* @param[in]  flag_interface   flag of marked interface node
-* @param[in] arr_bitset_lower   two nodes of an edge
-* @param[in] bitset_mid_higher   node at the mid point of the edge
-* @param[in] node_coarse_interface   nodes on on interface layer of coarser grid
-* @param[out]  arr_ptr_layer pointer to map store interface layers
+* @brief   function to identify interface for a given cell
+* @param[in] sfbitset_in   space filling code of the given node (lower level)
+* @param[in] node_coarse_interface_innermost  nodes on the innermost coarse to fine interface
+* @param[in] node_exist_current existing nodes at current level
+* @param[in] node_exist_lower   existing nodes at lower level
+* @param[out] ptr_inner_layer map storing nodes on the inner layer
+* @param[out] ptr_mid_layer map storing nodes on the middle layer
+* @param[out] ptr_outer_layer map storing nodes on the outer layer
+* @param[out] ptr_node_coarse_interface_outer  pointer to map storing nodes on outer coarse to fine interface
 */
-void GridManager3D::IdentifyInterfaceNodeOnEdge(
-    const std::array<DefSFBitset, 2>& arr_bitset_lower,
-    const DefSFBitset bitset_mid_higher,
-    const DefMap<DefAmrUint>& node_coarse_interface,
-    const std::array<DefMap<DefAmrUint>* const, 3>& arr_ptr_layer) {
-    bool node0_flag = node_coarse_interface.find(arr_bitset_lower[0]) != node_coarse_interface.end(),
-        node1_flag = node_coarse_interface.find(arr_bitset_lower[1]) != node_coarse_interface.end();
-    if (node0_flag == node1_flag) {
-        if (node0_flag) {
-            arr_ptr_layer[2]->insert({
-                SFBitsetToOneHigherLevel(arr_bitset_lower[0]), kFlag0_ });
-            arr_ptr_layer[2]->insert({ bitset_mid_higher, kFlag0_ });
-            arr_ptr_layer[2]->insert({
-                SFBitsetToOneHigherLevel(arr_bitset_lower[1]), kFlag0_ });
-        } else {
-            arr_ptr_layer[0]->insert({
-                SFBitsetToOneHigherLevel(arr_bitset_lower[0]), kFlag0_ });
-            arr_ptr_layer[0]->insert({ bitset_mid_higher, kFlag0_ });
-            arr_ptr_layer[0]->insert({
-                SFBitsetToOneHigherLevel(arr_bitset_lower[1]), kFlag0_ });
-        }
-    } else {
-        if (node0_flag) {
-            arr_ptr_layer[2]->insert({
-                SFBitsetToOneHigherLevel(arr_bitset_lower[0]), kFlag0_ });
-            arr_ptr_layer[1]->insert({ bitset_mid_higher, kFlag0_ });
-            arr_ptr_layer[0]->insert({
-                SFBitsetToOneHigherLevel(arr_bitset_lower[1]), kFlag0_ });
-        } else {
-            arr_ptr_layer[0]->insert({
-                SFBitsetToOneHigherLevel(arr_bitset_lower[0]), kFlag0_ });
-            arr_ptr_layer[1]->insert({ bitset_mid_higher, kFlag0_ });
-            arr_ptr_layer[2]->insert({
-                SFBitsetToOneHigherLevel(arr_bitset_lower[1]), kFlag0_ });
-        }
-    }
-}
+void GridManager3D::IdentifyInnermostInterfaceForACell(const DefSFBitset sfbitset_in,
+    const DefMap<DefAmrUint>& node_coarse_interface_innermost,
+    const DefMap<std::unique_ptr<GridNode>>& node_exist_current,
+    const DefMap<DefAmrIndexUint>& node_exist_lower,
+    DefMap<DefAmrUint>* const ptr_inner_layer, DefMap<DefAmrUint>* const ptr_mid_layer,
+    DefMap<DefAmrUint>* const ptr_outer_layer, DefMap<DefAmrUint>* const ptr_node_coarse_interface_outer) {
+    std::array<DefSFBitset, 8> bitset_neighbors;
+    std::array<DefMap<DefAmrUint>* const, 3> arr_ptr_layer = {
+        ptr_inner_layer, ptr_mid_layer, ptr_outer_layer };
+    bool belong_to_cell =  SFBitsetBelongToOneCell<DefAmrIndexUint>(
+        sfbitset_in, node_exist_lower, &bitset_neighbors);
+    DefSFBitset bitset_mid_higher;
+    if (belong_to_cell) {
+        // mid (0 + dx/2, 0)
+        bitset_mid_higher = FindXPos(
+            SFBitsetToOneHigherLevel(bitset_neighbors[0]));
+        IdentifyInterfaceNodeOnEdgeInnermost(
+            { bitset_neighbors[0], bitset_neighbors[1] },
+            bitset_mid_higher, *this, node_coarse_interface_innermost, node_exist_current,
+            arr_ptr_layer, ptr_node_coarse_interface_outer);
+        // mid (0, 0 + dy/2)
+        bitset_mid_higher = FindYPos(
+            SFBitsetToOneHigherLevel(bitset_neighbors[0]));
+        IdentifyInterfaceNodeOnEdgeInnermost(
+            { bitset_neighbors[0], bitset_neighbors[2] },
+            bitset_mid_higher, *this, node_coarse_interface_innermost, node_exist_current,
+            arr_ptr_layer, ptr_node_coarse_interface_outer);
+        // mid (0 + dx/2, y)
+        bitset_mid_higher = FindXPos(
+            SFBitsetToOneHigherLevel(bitset_neighbors[2]));
+        IdentifyInterfaceNodeOnEdgeInnermost(
+            { bitset_neighbors[2], bitset_neighbors[3] },
+            bitset_mid_higher, *this, node_coarse_interface_innermost, node_exist_current,
+            arr_ptr_layer, ptr_node_coarse_interface_outer);
+        // mid (x, 0 + dy/2)
+        bitset_mid_higher = FindYPos(
+            SFBitsetToOneHigherLevel(bitset_neighbors[1]));
+        IdentifyInterfaceNodeOnEdgeInnermost(
+            { bitset_neighbors[1], bitset_neighbors[3] },
+            bitset_mid_higher, *this, node_coarse_interface_innermost, node_exist_current,
+            arr_ptr_layer, ptr_node_coarse_interface_outer);
+        // diagonal (0 + x/2, 0 + dy/2)
+        ptr_mid_layer->insert({ FindXNeg(bitset_mid_higher), kFlag0_ });
 
-/**
-* @brief   function to identify types of interface nodes
-* @param[in] arr_bitset_lower   two nodes of an edge
-* @param[in] bitset_mid_higher   node at the mid point of the edge
-* @param[in] node_coarse_interface   nodes on on interface layer of coarser grid
-* @param[in] node_current nodes at current level
-* @param[out]  arr_ptr_layer pointer to map store interface layers
-*/
-void GridManager3D::IdentifyInterfaceNodeOnEdge(
-    const std::array<DefSFBitset, 2>& arr_bitset_lower,
-    const DefSFBitset bitset_mid_higher,
-    const DefMap<DefAmrUint>& node_coarse_interface,
-    const DefMap<std::unique_ptr<GridNode>>& node_current,
-    const std::array<DefMap<DefAmrUint>* const, 3>& arr_ptr_layer) {
-    DefSFBitset sfbitset_tmp;
-    bool node0_flag = node_coarse_interface.find(arr_bitset_lower[0]) != node_coarse_interface.end(),
-        node1_flag = node_coarse_interface.find(arr_bitset_lower[1]) != node_coarse_interface.end();
-    if (node0_flag == node1_flag) {
-        if (node0_flag) {
-            sfbitset_tmp = SFBitsetToOneHigherLevel(arr_bitset_lower[0]);
-            if (node_current.find(sfbitset_tmp) != node_current.end()) {
-                arr_ptr_layer[2]->insert({sfbitset_tmp, kFlag0_ });
-            }
-            if (node_current.find(bitset_mid_higher) != node_current.end()) {
-                arr_ptr_layer[2]->insert({bitset_mid_higher, kFlag0_});
-            }
-            sfbitset_tmp = SFBitsetToOneHigherLevel(arr_bitset_lower[1]);
-            if (node_current.find(sfbitset_tmp) != node_current.end()) {
-                arr_ptr_layer[2]->insert({sfbitset_tmp, kFlag0_ });
-            }
-        } else {
-            sfbitset_tmp = SFBitsetToOneHigherLevel(arr_bitset_lower[0]);
-            if (node_current.find(sfbitset_tmp) != node_current.end()) {
-                arr_ptr_layer[0]->insert({sfbitset_tmp, kFlag0_ });
-            }
-            if (node_current.find(bitset_mid_higher) != node_current.end()) {
-                arr_ptr_layer[0]->insert({bitset_mid_higher, kFlag0_});
-            }
-            sfbitset_tmp = SFBitsetToOneHigherLevel(arr_bitset_lower[1]);
-            if (node_current.find(sfbitset_tmp) != node_current.end()) {
-                arr_ptr_layer[0]->insert({sfbitset_tmp, kFlag0_ });
-            }
-        }
-    } else {
-        if (node0_flag) {
-            sfbitset_tmp = SFBitsetToOneHigherLevel(arr_bitset_lower[0]);
-            if (node_current.find(sfbitset_tmp) != node_current.end()) {
-                arr_ptr_layer[2]->insert({sfbitset_tmp, kFlag0_ });
-            }
-            if (node_current.find(bitset_mid_higher) != node_current.end()) {
-                arr_ptr_layer[1]->insert({bitset_mid_higher, kFlag0_});
-            }
-            sfbitset_tmp = SFBitsetToOneHigherLevel(arr_bitset_lower[1]);
-            if (node_current.find(sfbitset_tmp) != node_current.end()) {
-                arr_ptr_layer[0]->insert({sfbitset_tmp, kFlag0_ });
-            }
-        } else {
-            sfbitset_tmp = SFBitsetToOneHigherLevel(arr_bitset_lower[0]);
-            if (node_current.find(sfbitset_tmp) != node_current.end()) {
-                arr_ptr_layer[0]->insert({sfbitset_tmp, kFlag0_ });
-            }
-            if (node_current.find(bitset_mid_higher) != node_current.end()) {
-                arr_ptr_layer[1]->insert({bitset_mid_higher, kFlag0_});
-            }
-            sfbitset_tmp = SFBitsetToOneHigherLevel(arr_bitset_lower[1]);
-            if (node_current.find(sfbitset_tmp) != node_current.end()) {
-                arr_ptr_layer[2]->insert({sfbitset_tmp, kFlag0_ });
-            }
-        }
+        // bottom surface
+        // edge (0 + dx/2, 0, 0)
+        bitset_mid_higher = FindXPos(SFBitsetToOneHigherLevel(bitset_neighbors[0]));
+        IdentifyInterfaceNodeOnEdgeInnermost({bitset_neighbors[0], bitset_neighbors[1]},
+            bitset_mid_higher, *this, node_coarse_interface_innermost, node_exist_current,
+            arr_ptr_layer, ptr_node_coarse_interface_outer);
+        // mid edge (0, 0 + dy/2, 0)
+        bitset_mid_higher = FindYPos(SFBitsetToOneHigherLevel(bitset_neighbors[0]));
+        IdentifyInterfaceNodeOnEdgeInnermost({bitset_neighbors[0], bitset_neighbors[2]},
+            bitset_mid_higher, *this, node_coarse_interface_innermost, node_exist_current,
+            arr_ptr_layer, ptr_node_coarse_interface_outer);
+        // mid edge (0 + dx/2, y, 0)
+        bitset_mid_higher = FindXPos(SFBitsetToOneHigherLevel(bitset_neighbors[2]));
+        IdentifyInterfaceNodeOnEdgeInnermost({bitset_neighbors[2], bitset_neighbors[3]},
+            bitset_mid_higher, *this, node_coarse_interface_innermost, node_exist_current,
+            arr_ptr_layer, ptr_node_coarse_interface_outer);
+        // mid edge (x, 0 + dy/2, 0)
+        bitset_mid_higher = FindYPos(SFBitsetToOneHigherLevel(bitset_neighbors[1]));
+        IdentifyInterfaceNodeOnEdgeInnermost({bitset_neighbors[1], bitset_neighbors[3]},
+            bitset_mid_higher, *this, node_coarse_interface_innermost, node_exist_current,
+            arr_ptr_layer, ptr_node_coarse_interface_outer);
+        // diagonal (0 + x/2, 0 + dy/2, 0)
+        bitset_mid_higher = FindXNeg(bitset_mid_higher);
+        IdentifyInterfaceNodeOnEdgeInnermost({bitset_neighbors[0], bitset_neighbors[3]},
+            bitset_mid_higher, *this, node_coarse_interface_innermost, node_exist_current,
+            arr_ptr_layer, ptr_node_coarse_interface_outer);
+
+        // top surface
+        // mid edge (0 + dx/2, 0, z)
+        bitset_mid_higher = FindXPos(SFBitsetToOneHigherLevel(bitset_neighbors[4]));
+        IdentifyInterfaceNodeOnEdgeInnermost({bitset_neighbors[4], bitset_neighbors[5]},
+            bitset_mid_higher, *this, node_coarse_interface_innermost, node_exist_current,
+            arr_ptr_layer, ptr_node_coarse_interface_outer);
+        // mid edge (0, 0 + dy/2, z)
+        bitset_mid_higher = FindYPos(SFBitsetToOneHigherLevel(bitset_neighbors[4]));
+        IdentifyInterfaceNodeOnEdgeInnermost({bitset_neighbors[4], bitset_neighbors[6]},
+            bitset_mid_higher, *this, node_coarse_interface_innermost, node_exist_current,
+            arr_ptr_layer, ptr_node_coarse_interface_outer);
+        // mid edge (0 + dx/2, y, z)
+        bitset_mid_higher = FindXPos(SFBitsetToOneHigherLevel(bitset_neighbors[6]));
+        IdentifyInterfaceNodeOnEdgeInnermost({bitset_neighbors[6], bitset_neighbors[7]},
+            bitset_mid_higher, *this, node_coarse_interface_innermost, node_exist_current,
+            arr_ptr_layer, ptr_node_coarse_interface_outer);
+        // mid edge (x, 0 + dy/2, z)
+        bitset_mid_higher = FindYPos(SFBitsetToOneHigherLevel(bitset_neighbors[5]));
+        IdentifyInterfaceNodeOnEdgeInnermost({bitset_neighbors[5], bitset_neighbors[7]},
+            bitset_mid_higher, *this, node_coarse_interface_innermost, node_exist_current,
+            arr_ptr_layer, ptr_node_coarse_interface_outer);
+        // diagonal (0 + x/2, 0 + dy/2, z)
+        bitset_mid_higher = FindXNeg(bitset_mid_higher);
+        IdentifyInterfaceNodeOnEdgeInnermost({bitset_neighbors[4], bitset_neighbors[7]},
+            bitset_mid_higher, *this, node_coarse_interface_innermost, node_exist_current,
+            arr_ptr_layer, ptr_node_coarse_interface_outer);
+
+        // middle surface
+        // mid edge (0, 0, 0 + dz/2)
+        bitset_mid_higher = FindZPos(SFBitsetToOneHigherLevel(bitset_neighbors[0]));
+        IdentifyInterfaceNodeOnEdgeInnermost({bitset_neighbors[0], bitset_neighbors[4]},
+            bitset_mid_higher, *this, node_coarse_interface_innermost, node_exist_current,
+            arr_ptr_layer, ptr_node_coarse_interface_outer);
+        // diagonal (0 + x/2, 0, 0 + dz/2)
+        bitset_mid_higher = FindXPos(bitset_mid_higher);
+        IdentifyInterfaceNodeOnEdgeInnermost({bitset_neighbors[0], bitset_neighbors[4]},
+            bitset_mid_higher, *this, node_coarse_interface_innermost, node_exist_current,
+            arr_ptr_layer, ptr_node_coarse_interface_outer);
+        // mid edge (x, 0, 0 + dz/2)
+        bitset_mid_higher = FindZPos(SFBitsetToOneHigherLevel(bitset_neighbors[1]));
+        IdentifyInterfaceNodeOnEdgeInnermost({bitset_neighbors[1], bitset_neighbors[5]},
+            bitset_mid_higher, *this, node_coarse_interface_innermost, node_exist_current,
+            arr_ptr_layer, ptr_node_coarse_interface_outer);
+        // diagonal (x, 0 + dy/2, 0 + dz/2)
+        bitset_mid_higher = FindYPos(bitset_mid_higher);
+        IdentifyInterfaceNodeOnEdgeInnermost({bitset_neighbors[1], bitset_neighbors[7]},
+            bitset_mid_higher, *this, node_coarse_interface_innermost, node_exist_current,
+            arr_ptr_layer, ptr_node_coarse_interface_outer);
+        // mid edge (0, y, 0+ dz/2)
+        bitset_mid_higher = FindZPos(SFBitsetToOneHigherLevel(bitset_neighbors[2]));
+        IdentifyInterfaceNodeOnEdgeInnermost({bitset_neighbors[2], bitset_neighbors[6]},
+            bitset_mid_higher, *this, node_coarse_interface_innermost, node_exist_current,
+            arr_ptr_layer, ptr_node_coarse_interface_outer);
+        // diagonal (0, 0 + dy/2, 0 + dz/2)
+        bitset_mid_higher = FindYNeg(bitset_mid_higher);
+        IdentifyInterfaceNodeOnEdgeInnermost({bitset_neighbors[0], bitset_neighbors[6]},
+            bitset_mid_higher, *this, node_coarse_interface_innermost, node_exist_current,
+            arr_ptr_layer, ptr_node_coarse_interface_outer);
+        // mid edge (x, y, 0+ dz/2)
+        bitset_mid_higher = FindZPos(SFBitsetToOneHigherLevel(bitset_neighbors[3]));
+        IdentifyInterfaceNodeOnEdgeInnermost({bitset_neighbors[3], bitset_neighbors[7]},
+            bitset_mid_higher, *this, node_coarse_interface_innermost, node_exist_current,
+            arr_ptr_layer, ptr_node_coarse_interface_outer);
+        // diagonal (0 + dx/2, y, 0 + dz/2)
+        bitset_mid_higher = FindXNeg(bitset_mid_higher);
+        IdentifyInterfaceNodeOnEdgeInnermost({bitset_neighbors[2], bitset_neighbors[7]},
+            bitset_mid_higher, *this, node_coarse_interface_innermost, node_exist_current,
+            arr_ptr_layer, ptr_node_coarse_interface_outer);
+
+        // center (0 + dx/2, 0 + dy/2, 0 + dz/2)
+        bitset_mid_higher = FindYNeg(bitset_mid_higher);
+        IdentifyInterfaceNodeOnEdgeInnermost({bitset_neighbors[0], bitset_neighbors[7]},
+            bitset_mid_higher, *this, node_coarse_interface_innermost, node_exist_current,
+            arr_ptr_layer, ptr_node_coarse_interface_outer);
     }
 }
 /**
@@ -960,42 +1017,6 @@ void GridManager3D::IdentifyInterfaceNodeDiagonal(
         }
     } else {
         arr_ptr_layer[1]->insert({ bitset_center_higher, kFlag0_ });
-    }
-}
-/**
-* @brief   function to Identify types of interface diagonal node
-* @param[in]  flag_interface   flag of marked interface node
-* @param[in] arr_bitset_lower   two nodes of an edge
-* @param[in] bitset_mid_higher   node at the mid point of the edge
-* @param[in] node_coarse_interface   existing nodes on the outermost layer of coarse grid
-* @param[in] node_current existing nodes at current level
-* @param[out]  arr_ptr_layer pointer to map store interface layers
-*/
-void GridManager3D::IdentifyInterfaceNodeDiagonal(
-    const std::array<DefSFBitset, 4>& arr_bitset_lower,
-    const DefSFBitset bitset_center_higher,
-    const DefMap<DefAmrUint>& node_coarse_interface,
-    const DefMap<std::unique_ptr<GridNode>>& node_current,
-    const std::array<DefMap<DefAmrUint>* const, 3>& arr_ptr_layer) {
-    DefAmrUint node0_flag = node_coarse_interface.find(arr_bitset_lower[0]) != node_coarse_interface.end(),
-        node1_flag = node_coarse_interface.find(arr_bitset_lower[1]) != node_coarse_interface.end(),
-        node2_flag = node_coarse_interface.find(arr_bitset_lower[2]) != node_coarse_interface.end(),
-        node3_flag = node_coarse_interface.find(arr_bitset_lower[3]) != node_coarse_interface.end();
-    if (node0_flag == node1_flag && node1_flag == node2_flag
-        && node2_flag == node3_flag) {
-        if (node0_flag) {
-            if (node_current.find(bitset_center_higher) != node_current.end()) {
-                arr_ptr_layer[2]->insert({ bitset_center_higher, kFlag0_ });
-            }
-        } else {
-            if (node_current.find(bitset_center_higher) != node_current.end()) {
-                arr_ptr_layer[0]->insert({ bitset_center_higher, kFlag0_ });
-            }
-        }
-    } else {
-        if (node_current.find(bitset_center_higher) != node_current.end()) {
-            arr_ptr_layer[1]->insert({ bitset_center_higher, kFlag0_ });
-        }
     }
 }
 /**
@@ -1032,18 +1053,18 @@ void GridManager3D::FindAllNodesInACellAtOneLevelLower(
     // bitset_cell[2]:(0, +y, 0);  bitset_cell[3]:(+x, +y, 0);
     // bitset_cell[4]:(0, 0, +z);  bitset_cell[5]:(+x, 0, +z);
     // bitset_cell[6]:(0, +y, +z); bitset_cell[7]:(+x, +y, +z).
-    DefSFBitset bitset_temp;
+    DefSFBitset sfbitset_tmp;
     // bottom
-    bitset_temp = SFBitsetToOneHigherLevel(bitset_cell.at(0));
-    ptr_bitset_all->at(0) = bitset_temp;
-    ptr_bitset_all->at(1) = FindXPos(bitset_temp);
+    sfbitset_tmp = SFBitsetToOneHigherLevel(bitset_cell.at(0));
+    ptr_bitset_all->at(0) = sfbitset_tmp;
+    ptr_bitset_all->at(1) = FindXPos(sfbitset_tmp);
     ptr_bitset_all->at(2) = SFBitsetToOneHigherLevel(bitset_cell.at(1));
     ptr_bitset_all->at(3) = FindYPos(ptr_bitset_all->at(0));
     ptr_bitset_all->at(4) = FindYPos(ptr_bitset_all->at(1));
     ptr_bitset_all->at(5) = FindYPos(ptr_bitset_all->at(2));
-    bitset_temp = SFBitsetToOneHigherLevel(bitset_cell.at(2));
-    ptr_bitset_all->at(6) = bitset_temp;
-    ptr_bitset_all->at(7) = FindXPos(bitset_temp);
+    sfbitset_tmp = SFBitsetToOneHigherLevel(bitset_cell.at(2));
+    ptr_bitset_all->at(6) = sfbitset_tmp;
+    ptr_bitset_all->at(7) = FindXPos(sfbitset_tmp);
     ptr_bitset_all->at(8) = SFBitsetToOneHigherLevel(bitset_cell.at(3));
 
     // middle
@@ -1057,16 +1078,16 @@ void GridManager3D::FindAllNodesInACellAtOneLevelLower(
     ptr_bitset_all->at(16) = FindZPos(ptr_bitset_all->at(7));
     ptr_bitset_all->at(17) = FindZPos(ptr_bitset_all->at(8));
     // top
-    bitset_temp = SFBitsetToOneHigherLevel(bitset_cell.at(4));
-    ptr_bitset_all->at(18) = bitset_temp;
-    ptr_bitset_all->at(19) = FindXPos(bitset_temp);
+    sfbitset_tmp = SFBitsetToOneHigherLevel(bitset_cell.at(4));
+    ptr_bitset_all->at(18) = sfbitset_tmp;
+    ptr_bitset_all->at(19) = FindXPos(sfbitset_tmp);
     ptr_bitset_all->at(20) = SFBitsetToOneHigherLevel(bitset_cell.at(5));
     ptr_bitset_all->at(21) = FindYPos(ptr_bitset_all->at(18));
     ptr_bitset_all->at(22) = FindYPos(ptr_bitset_all->at(19));
     ptr_bitset_all->at(23) = FindYPos(ptr_bitset_all->at(20));
-    bitset_temp = SFBitsetToOneHigherLevel(bitset_cell.at(6));
-    ptr_bitset_all->at(24) = bitset_temp;
-    ptr_bitset_all->at(25) = FindXPos(bitset_temp);
+    sfbitset_tmp = SFBitsetToOneHigherLevel(bitset_cell.at(6));
+    ptr_bitset_all->at(24) = sfbitset_tmp;
+    ptr_bitset_all->at(25) = FindXPos(sfbitset_tmp);
     ptr_bitset_all->at(26) = SFBitsetToOneHigherLevel(bitset_cell.at(7));
 }
 /**
@@ -1119,16 +1140,16 @@ bool GridManager3D::CheckBackgroundOffset(const DefSFBitset& bitset_in) const {
 */
 void GridManager3D::InstantiateBackgroundGrid(const DefSFCodeToUint code_min,
     const DefSFCodeToUint code_max, const DefMap<DefAmrIndexUint>& map_occupied) {
-    DefSFBitset bitset_temp;
+    DefSFBitset sfbitset_tmp;
     GridInfoInterface& grid_info = *(vec_ptr_grid_info_.at(0));
     DefSFCodeToUint i_code = code_min;
     int flag_node;
     while (i_code <= code_max) {
-        ResetIndicesExceedingDomain(k0MinIndexOfBackgroundNode_, k0MaxIndexOfBackgroundNode_, &i_code, &bitset_temp);
-        if (map_occupied.find(bitset_temp) == map_occupied.end()) {
-            InstantiateGridNode(bitset_temp, &grid_info);
-            flag_node = grid_info.CheckIfNodeOutsideCubicDomain(k0GridDims_, bitset_temp, *this);
-            (this->*ptr_func_insert_domain_boundary_)(flag_node, bitset_temp, &grid_info);
+        ResetIndicesExceedingDomain(k0MinIndexOfBackgroundNode_, k0MaxIndexOfBackgroundNode_, &i_code, &sfbitset_tmp);
+        if (map_occupied.find(sfbitset_tmp) == map_occupied.end()) {
+            InstantiateGridNode(sfbitset_tmp, &grid_info);
+            flag_node = grid_info.CheckIfNodeOutsideCubicDomain(k0GridDims_, sfbitset_tmp, *this);
+            (this->*ptr_func_insert_domain_boundary_)(flag_node, sfbitset_tmp, &grid_info);
         }
         ++i_code;
     }

@@ -8,8 +8,8 @@
 * @brief define classes to store grid information
 */
 
-#ifndef ROOTPROJECT_SOURCE_AMR_PROJECT_GRID_GRID_INFO_H_
-#define ROOTPROJECT_SOURCE_AMR_PROJECT_GRID_GRID_INFO_H_
+#ifndef SOURCE_AMR_PROJECT_GRID_GRID_INFO_INTERFACE_H_
+#define SOURCE_AMR_PROJECT_GRID_GRID_INFO_INTERFACE_H_
 #include <vector>
 #include <array>
 #include <map>
@@ -169,7 +169,7 @@ class GridInfoInterface {
     std::shared_ptr<GhostGridInfoInterface> ptr_ghost_grid_info_;
 
     // interface between grid of different refinement levels
-    DefAmrIndexUint k0NumFine2CoarseLayer_ = 3;  // (k0NumCoarse2FineLayer_ - 1)*2 - 1
+    DefAmrIndexUint k0NumFine2CoarseLayer_ = 3;  // (k0NumCoarse2FineLayer_)*2 - 1
     DefAmrIndexUint k0NumCoarse2FineLayer_ = 2;
     DefAmrIndexUint k0NumFine2CoarseGhostLayer_ = k0NumFine2CoarseLayer_/2 + 1;
     DefAmrIndexUint k0NumCoarse2FineGhostLayer_ = k0NumCoarse2FineLayer_/2;
@@ -281,6 +281,10 @@ class GridInfoInterface {
 
     // mpi related
  public:
+    DefMap<std::unique_ptr<GridNode>> interp_nodes_outer_layer_;
+    int AddGhostNodesForInterpolation(const std::vector<bool>& periodic_min, const std::vector<bool>& periodic_max,
+        const SFBitsetAuxInterface& sfbitset_aux, const DefMap<DefAmrUint>& refinement_interface,
+        const DefMap<std::unique_ptr<GridNode>>& map_nodes_lower);
     virtual bool CheckIfPeriodicDomainRequired(const DefAmrIndexUint dims,
         std::vector<bool>* const ptr_periodic_min, std::vector<bool>* const ptr_periodic_max) const {
         ptr_periodic_min->assign(dims, false);
@@ -314,4 +318,4 @@ class GridInfoCreatorInterface {
 }  // end namespace amrproject
 }  // end namespace rootproject
 #include "grid/grid_interpolation.hpp"
-#endif  // ROOTPROJECT_AMR_PROJECT_SOURCE_GRID_GRID_INFO_H_
+#endif  // SOURCE_AMR_PROJECT_GRID_GRID_INFO_INTERFACE_H_

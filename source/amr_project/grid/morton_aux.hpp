@@ -84,10 +84,10 @@ inline DefSFBitset SFBitsetAux2D::FindXNeg(
 */
 inline DefSFBitset SFBitsetAux2D::FindXPos(
     const DefSFBitset& bitset_in) const {
-    DefSFBitset temp = static_cast<DefSFBitset>
+    DefSFBitset sfbitest_tmp = static_cast<DefSFBitset>
         ((bitset_in | SFBitsetAux2D::k0SFBitsetTakeXRef_.
             at(SFBitsetAux2D::kRefOthers_)).to_ullong() + 1);
-    return ((temp & SFBitsetAux2D::k0SFBitsetTakeXRef_.
+    return ((sfbitest_tmp & SFBitsetAux2D::k0SFBitsetTakeXRef_.
         at(SFBitsetAux2D::kRefCurrent_))
         | (bitset_in & SFBitsetAux2D::k0SFBitsetTakeYRef_.
             at(SFBitsetAux2D::kRefCurrent_)));
@@ -119,10 +119,10 @@ inline DefSFBitset SFBitsetAux2D::FindYNeg(
 */
 inline DefSFBitset SFBitsetAux2D::FindYPos(
     const DefSFBitset& bitset_in) const {
-    DefSFBitset temp = static_cast<DefSFBitset>
+    DefSFBitset sfbitest_tmp = static_cast<DefSFBitset>
         ((bitset_in | SFBitsetAux2D::k0SFBitsetTakeYRef_.
             at(SFBitsetAux2D::kRefOthers_)).to_ullong() + 1);
-    return ((temp & SFBitsetAux2D::k0SFBitsetTakeYRef_.
+    return ((sfbitest_tmp & SFBitsetAux2D::k0SFBitsetTakeYRef_.
         at(SFBitsetAux2D::kRefCurrent_))
         | (bitset_in & SFBitsetAux2D::k0SFBitsetTakeXRef_.
             at(SFBitsetAux2D::kRefCurrent_)));
@@ -205,10 +205,10 @@ inline DefSFBitset SFBitsetAux3D::FindXNeg(
 */
 inline DefSFBitset SFBitsetAux3D::FindXPos(
     const DefSFBitset& bitset_in)  const {
-    DefSFBitset temp = static_cast<DefSFBitset>
+    DefSFBitset sfbitest_tmp = static_cast<DefSFBitset>
         ((bitset_in | SFBitsetAux3D::k0SFBitsetTakeXRef_.
             at(SFBitsetAux3D::kRefOthers_)).to_ullong() + 1);
-    return ((temp & SFBitsetAux3D::k0SFBitsetTakeXRef_.
+    return ((sfbitest_tmp & SFBitsetAux3D::k0SFBitsetTakeXRef_.
         at(SFBitsetAux3D::kRefCurrent_))
         | (bitset_in & SFBitsetAux3D::k0SFBitsetTakeYRef_.
             at(SFBitsetAux3D::kRefCurrent_))
@@ -245,10 +245,10 @@ inline DefSFBitset SFBitsetAux3D::FindYNeg(
 */
 inline DefSFBitset SFBitsetAux3D::FindYPos(
     const DefSFBitset& bitset_in)  const {
-    DefSFBitset temp = static_cast<DefSFBitset>
+    DefSFBitset sfbitest_tmp = static_cast<DefSFBitset>
         ((bitset_in | SFBitsetAux3D::k0SFBitsetTakeYRef_.
             at(SFBitsetAux3D::kRefOthers_)).to_ullong() + 1);
-    return ((temp & SFBitsetAux3D::k0SFBitsetTakeYRef_.
+    return ((sfbitest_tmp & SFBitsetAux3D::k0SFBitsetTakeYRef_.
         at(SFBitsetAux3D::kRefCurrent_))
         | (bitset_in & SFBitsetAux3D::k0SFBitsetTakeXRef_.
             at(SFBitsetAux3D::kRefCurrent_))
@@ -285,10 +285,10 @@ inline DefSFBitset SFBitsetAux3D::FindZNeg(
 */
 inline DefSFBitset SFBitsetAux3D::FindZPos(
     const DefSFBitset& bitset_in) const {
-    DefSFBitset temp = static_cast<DefSFBitset>
+    DefSFBitset sfbitest_tmp = static_cast<DefSFBitset>
         ((bitset_in | SFBitsetAux3D::k0SFBitsetTakeZRef_.
             at(SFBitsetAux3D::kRefOthers_)).to_ullong() + 1);
-    return ((temp & SFBitsetAux3D::k0SFBitsetTakeZRef_.
+    return ((sfbitest_tmp & SFBitsetAux3D::k0SFBitsetTakeZRef_.
         at(SFBitsetAux3D::kRefCurrent_))
         | (bitset_in & SFBitsetAux3D::k0SFBitsetTakeXRef_.
             at(SFBitsetAux3D::kRefCurrent_))

@@ -49,6 +49,7 @@ void MpiManager::CheckMpiNodesCorrespondence(const GridInfoInterface& grid_info)
         }
     }
     // send node in mpi inner layer via mpi communication
+    int error_flag;
     for (int i_rank = 0; i_rank < num_of_ranks_; ++i_rank) {
         if (send_buffer_info.at(i_rank).bool_exist_) {
             vec_vec_reqs_send.push_back({});
@@ -57,8 +58,8 @@ void MpiManager::CheckMpiNodesCorrespondence(const GridInfoInterface& grid_info)
                 const int& num_chunks = send_buffer_info.at(i_rank).num_chunks_;
                 vec_vec_reqs_send.back().resize(num_chunks);
                 int size_tmp;
-                vec_ptr_buffer_send.push_back(
-                    SerializeNodeSFBitset(mpi_communication_inner_layers_.at(i_level).at(i_rank), &size_tmp));
+                vec_ptr_buffer_send.push_back(SerializeNodeSFBitset(
+                    mpi_communication_inner_layers_.at(i_level).at(i_rank), &size_tmp, &error_flag));
                 const int& buffer_size_send = send_buffer_info.at(i_rank).array_buffer_size_.at(0);
                 for (int i_chunk = 0; i_chunk < num_chunks - 1; ++i_chunk) {
                     MPI_Isend(vec_ptr_buffer_send.back().get()+i_chunk*buffer_size_send,

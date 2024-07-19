@@ -31,14 +31,14 @@ std::array<DefSFBitset, 2> SFBitsetAuxInterface::k0SFBitsetTakeZRef_;
 void SFBitsetAux2D::SFBitsetSetMinAndMaxBounds(
     const std::array<DefAmrIndexLUint, 2>& indices_min,
     const std::array<DefAmrIndexLUint, 2>& indices_max) {
-    std::array<DefAmrIndexLUint, 2> indices_temp = { indices_min[kXIndex], 0 };
-    SFBitsetMin_.at(kXIndex) = SFBitsetEncoding(indices_temp);
-    indices_temp = { indices_max.at(kXIndex), 0 };
-    SFBitsetMax_.at(kXIndex) = SFBitsetEncoding(indices_temp);
-    indices_temp = { 0, indices_min[kYIndex] };
-    SFBitsetMin_.at(kYIndex) = SFBitsetEncoding(indices_temp);
-    indices_temp = { 0, indices_max.at(kYIndex) };
-    SFBitsetMax_.at(kYIndex) = SFBitsetEncoding(indices_temp);
+    std::array<DefAmrIndexLUint, 2> indices_tmp = { indices_min[kXIndex], 0 };
+    SFBitsetMin_.at(kXIndex) = SFBitsetEncoding(indices_tmp);
+    indices_tmp = { indices_max.at(kXIndex), 0 };
+    SFBitsetMax_.at(kXIndex) = SFBitsetEncoding(indices_tmp);
+    indices_tmp = { 0, indices_min[kYIndex] };
+    SFBitsetMin_.at(kYIndex) = SFBitsetEncoding(indices_tmp);
+    indices_tmp = { 0, indices_max.at(kYIndex) };
+    SFBitsetMax_.at(kYIndex) = SFBitsetEncoding(indices_tmp);
 }
 #endif  // DEBUG_DISABLE_2D_FUNCTIONS
 #ifndef  DEBUG_DISABLE_3D_FUNCTIONS
@@ -165,33 +165,33 @@ void SFBitsetAux2D::SFBitsetFindAllNeighbors(
     std::array<DefSFBitset, 9>* const  ptr_bitset_neighbors) const {
     bool bool_x_gt0 = (sfbitset_center & k0SFBitsetTakeXRef_[kRefCurrent_]) != 0;
     bool bool_y_gt0 = (sfbitset_center & k0SFBitsetTakeYRef_[kRefCurrent_]) != 0;
-    DefSFBitset sfbitset_temp0 = sfbitset_center, sfbitset_temp1 = sfbitset_center;
+    DefSFBitset sfsfbitset_tmp0 = sfbitset_center, sfsfbitset_tmp1 = sfbitset_center;
 
     ptr_bitset_neighbors->at(kNodeIndexX0Y0_) = sfbitset_center;
     // node at (-x, 0, 0)
-    sfbitset_temp0 = bool_x_gt0 ? FindXNeg(sfbitset_center) : sfbitset_center;
-    ptr_bitset_neighbors->at(kNodeIndexXnY0_) = sfbitset_temp0;
+    sfsfbitset_tmp0 = bool_x_gt0 ? FindXNeg(sfbitset_center) : sfbitset_center;
+    ptr_bitset_neighbors->at(kNodeIndexXnY0_) = sfsfbitset_tmp0;
     // node at (-x, -y, 0)
-    sfbitset_temp1 = bool_y_gt0 ? FindYNeg(sfbitset_temp0) : sfbitset_temp0;
-    ptr_bitset_neighbors->at(kNodeIndexXnYn_) = sfbitset_temp1;
+    sfsfbitset_tmp1 = bool_y_gt0 ? FindYNeg(sfsfbitset_tmp0) : sfsfbitset_tmp0;
+    ptr_bitset_neighbors->at(kNodeIndexXnYn_) = sfsfbitset_tmp1;
     // node at (-x, +y, 0)
-    sfbitset_temp1 = FindYPos(sfbitset_temp0);
-    ptr_bitset_neighbors->at(kNodeIndexXnYp_) = sfbitset_temp1;
+    sfsfbitset_tmp1 = FindYPos(sfsfbitset_tmp0);
+    ptr_bitset_neighbors->at(kNodeIndexXnYp_) = sfsfbitset_tmp1;
     // node at (+x, 0, 0)
-    sfbitset_temp0 = FindXPos(sfbitset_center);
-    ptr_bitset_neighbors->at(kNodeIndexXpY0_) = sfbitset_temp0;
+    sfsfbitset_tmp0 = FindXPos(sfbitset_center);
+    ptr_bitset_neighbors->at(kNodeIndexXpY0_) = sfsfbitset_tmp0;
     // node at (+x, -y, 0)
-    sfbitset_temp1 = bool_y_gt0 ? FindYNeg(sfbitset_temp0) : sfbitset_temp0;
-    ptr_bitset_neighbors->at(kNodeIndexXpYn_) = sfbitset_temp1;
+    sfsfbitset_tmp1 = bool_y_gt0 ? FindYNeg(sfsfbitset_tmp0) : sfsfbitset_tmp0;
+    ptr_bitset_neighbors->at(kNodeIndexXpYn_) = sfsfbitset_tmp1;
     // node at (+x, +y, 0)
-    sfbitset_temp1 = FindYPos(sfbitset_temp0);
-    ptr_bitset_neighbors->at(kNodeIndexXpYp_) = sfbitset_temp1;
+    sfsfbitset_tmp1 = FindYPos(sfsfbitset_tmp0);
+    ptr_bitset_neighbors->at(kNodeIndexXpYp_) = sfsfbitset_tmp1;
     // node at (0, -y, 0)
-    sfbitset_temp0 = bool_y_gt0 ? FindYNeg(sfbitset_center) : sfbitset_center;
-    ptr_bitset_neighbors->at(kNodeIndexX0Yn_) = sfbitset_temp0;
+    sfsfbitset_tmp0 = bool_y_gt0 ? FindYNeg(sfbitset_center) : sfbitset_center;
+    ptr_bitset_neighbors->at(kNodeIndexX0Yn_) = sfsfbitset_tmp0;
     // node at (0, +y, 0)
-    sfbitset_temp0 = FindYPos(sfbitset_center);
-    ptr_bitset_neighbors->at(kNodeIndexX0Yp_) = sfbitset_temp0;
+    sfsfbitset_tmp0 = FindYPos(sfbitset_center);
+    ptr_bitset_neighbors->at(kNodeIndexX0Yp_) = sfsfbitset_tmp0;
 }
 /**
 * @brief   function to find all neighboring nodes bonded by lower and upper limits.
@@ -206,7 +206,7 @@ void SFBitsetAux2D::SFBitsetFindAllBondedNeighborsVir(const DefSFBitset& bitset_
     const std::vector<bool>& bool_periodic_min, const std::vector<bool>& bool_periodic_max,
     const std::vector<DefSFBitset>& domain_min_n_level, const std::vector<DefSFBitset>& domain_max_n_level,
     std::vector<DefSFBitset>* const ptr_bitset_neighbors) const {
-    DefSFBitset sfbitset_temp0 = bitset_in;
+    DefSFBitset sfsfbitset_tmp0 = bitset_in;
     ptr_bitset_neighbors->clear();
     bool bool_not_x_min = (bitset_in&k0SFBitsetTakeXRef_.at(kRefCurrent_)) != domain_min_n_level.at(kXIndex),
         bool_not_x_max = (bitset_in&k0SFBitsetTakeXRef_.at(kRefCurrent_)) != domain_max_n_level.at(kXIndex),
@@ -214,49 +214,49 @@ void SFBitsetAux2D::SFBitsetFindAllBondedNeighborsVir(const DefSFBitset& bitset_
         bool_not_y_max = (bitset_in&k0SFBitsetTakeYRef_.at(kRefCurrent_)) != domain_max_n_level.at(kYIndex);
 
     if (bool_not_x_min) {
-        sfbitset_temp0 = FindXNeg(bitset_in);
+        sfsfbitset_tmp0 = FindXNeg(bitset_in);
         // node at (-x, 0, 0)
-        ptr_bitset_neighbors->push_back(sfbitset_temp0);
+        ptr_bitset_neighbors->push_back(sfsfbitset_tmp0);
     } else if (bool_periodic_min.at(kXIndex)) {
-        sfbitset_temp0 = (bitset_in&k0SFBitsetTakeXRef_.at(kRefOthers_))|domain_max_n_level.at(kXIndex);
-        ptr_bitset_neighbors->push_back(sfbitset_temp0);
+        sfsfbitset_tmp0 = (bitset_in&k0SFBitsetTakeXRef_.at(kRefOthers_))|domain_max_n_level.at(kXIndex);
+        ptr_bitset_neighbors->push_back(sfsfbitset_tmp0);
     }
     if (bool_not_y_min) {
         // node at (-x, -y, 0)
-        ptr_bitset_neighbors->push_back(FindYNeg(sfbitset_temp0));
+        ptr_bitset_neighbors->push_back(FindYNeg(sfsfbitset_tmp0));
     } else if (bool_periodic_min.at(kYIndex)) {
         ptr_bitset_neighbors->push_back(
-            (sfbitset_temp0&k0SFBitsetTakeYRef_.at(kRefOthers_))|domain_max_n_level.at(kYIndex));
+            (sfsfbitset_tmp0&k0SFBitsetTakeYRef_.at(kRefOthers_))|domain_max_n_level.at(kYIndex));
     }
     if (bool_not_y_max) {
         // node at (-x, +y, 0)
-        ptr_bitset_neighbors->push_back(FindYPos(sfbitset_temp0));
+        ptr_bitset_neighbors->push_back(FindYPos(sfsfbitset_tmp0));
     } else if (bool_periodic_max.at(kYIndex)) {
         ptr_bitset_neighbors->push_back(
-            (sfbitset_temp0&k0SFBitsetTakeYRef_.at(kRefOthers_))|domain_min_n_level.at(kYIndex));
+            (sfsfbitset_tmp0&k0SFBitsetTakeYRef_.at(kRefOthers_))|domain_min_n_level.at(kYIndex));
     }
 
     if (bool_not_x_max) {
-        sfbitset_temp0 = FindXPos(bitset_in);
+        sfsfbitset_tmp0 = FindXPos(bitset_in);
         // node at (+x, 0, 0)
-        ptr_bitset_neighbors->push_back(sfbitset_temp0);
+        ptr_bitset_neighbors->push_back(sfsfbitset_tmp0);
     } else if (bool_periodic_max.at(kXIndex)) {
-        sfbitset_temp0 = (bitset_in&k0SFBitsetTakeXRef_.at(kRefOthers_))|domain_min_n_level.at(kXIndex);
-        ptr_bitset_neighbors->push_back(sfbitset_temp0);
+        sfsfbitset_tmp0 = (bitset_in&k0SFBitsetTakeXRef_.at(kRefOthers_))|domain_min_n_level.at(kXIndex);
+        ptr_bitset_neighbors->push_back(sfsfbitset_tmp0);
     }
     if (bool_not_y_min) {
         // node at (+x, -y, 0)
-        ptr_bitset_neighbors->push_back(FindYNeg(sfbitset_temp0));
+        ptr_bitset_neighbors->push_back(FindYNeg(sfsfbitset_tmp0));
     } else if (bool_periodic_min.at(kYIndex)) {
         ptr_bitset_neighbors->push_back(
-            (sfbitset_temp0&k0SFBitsetTakeYRef_.at(kRefOthers_))|domain_max_n_level.at(kYIndex));
+            (sfsfbitset_tmp0&k0SFBitsetTakeYRef_.at(kRefOthers_))|domain_max_n_level.at(kYIndex));
     }
     if (bool_not_y_max) {
         // node at (+x, +y, 0)
-        ptr_bitset_neighbors->push_back(FindYPos(sfbitset_temp0));
+        ptr_bitset_neighbors->push_back(FindYPos(sfsfbitset_tmp0));
     } else if (bool_periodic_max.at(kYIndex)) {
         ptr_bitset_neighbors->push_back(
-            (sfbitset_temp0&k0SFBitsetTakeYRef_.at(kRefOthers_))|domain_min_n_level.at(kYIndex));
+            (sfsfbitset_tmp0&k0SFBitsetTakeYRef_.at(kRefOthers_))|domain_min_n_level.at(kYIndex));
     }
 
     if (bool_not_y_min) {
@@ -930,89 +930,89 @@ void SFBitsetAux3D::SFBitsetFindAllNeighbors(
     bool bool_x_gt0 = (sfbitset_center & k0SFBitsetTakeXRef_[kRefCurrent_]) != 0;
     bool bool_y_gt0 = (sfbitset_center & k0SFBitsetTakeYRef_[kRefCurrent_]) != 0;
     bool bool_z_gt0 = (sfbitset_center & k0SFBitsetTakeZRef_[kRefCurrent_]) != 0;
-    DefSFBitset sfbitset_temp0 = sfbitset_center, sfbitset_temp1 = sfbitset_center,
-     sfbitset_temp2 = sfbitset_center;
+    DefSFBitset sfsfbitset_tmp0 = sfbitset_center, sfsfbitset_tmp1 = sfbitset_center,
+     sfsfbitset_tmp2 = sfbitset_center;
 
     ptr_bitset_neighbors->at(kNodeIndexX0Y0Z0_) = sfbitset_center;
     // node at (-x, 0, 0)
-    sfbitset_temp0 = bool_x_gt0 ? FindXNeg(sfbitset_center) : sfbitset_center;
-    ptr_bitset_neighbors->at(kNodeIndexXnY0Z0_) = sfbitset_temp0;
+    sfsfbitset_tmp0 = bool_x_gt0 ? FindXNeg(sfbitset_center) : sfbitset_center;
+    ptr_bitset_neighbors->at(kNodeIndexXnY0Z0_) = sfsfbitset_tmp0;
     // node at (-x, -y, 0)
-    sfbitset_temp1 = bool_y_gt0 ? FindYNeg(sfbitset_temp0) : sfbitset_temp0;
-    ptr_bitset_neighbors->at(kNodeIndexXnYnZ0_) = sfbitset_temp1;
+    sfsfbitset_tmp1 = bool_y_gt0 ? FindYNeg(sfsfbitset_tmp0) : sfsfbitset_tmp0;
+    ptr_bitset_neighbors->at(kNodeIndexXnYnZ0_) = sfsfbitset_tmp1;
     // node at (-x, +y, 0)
-    sfbitset_temp1 = FindYPos(sfbitset_temp0);
-    ptr_bitset_neighbors->at(kNodeIndexXnYpZ0_) = sfbitset_temp1;
+    sfsfbitset_tmp1 = FindYPos(sfsfbitset_tmp0);
+    ptr_bitset_neighbors->at(kNodeIndexXnYpZ0_) = sfsfbitset_tmp1;
     // node at (+x, 0, 0)
-    sfbitset_temp0 = FindXPos(sfbitset_center);
-    ptr_bitset_neighbors->at(kNodeIndexXpY0Z0_) = sfbitset_temp0;
+    sfsfbitset_tmp0 = FindXPos(sfbitset_center);
+    ptr_bitset_neighbors->at(kNodeIndexXpY0Z0_) = sfsfbitset_tmp0;
     // node at (+x, -y, 0)
-    sfbitset_temp1 = bool_y_gt0 ? FindYNeg(sfbitset_temp0) : sfbitset_temp0;
-    ptr_bitset_neighbors->at(kNodeIndexXpYnZ0_) = sfbitset_temp1;
+    sfsfbitset_tmp1 = bool_y_gt0 ? FindYNeg(sfsfbitset_tmp0) : sfsfbitset_tmp0;
+    ptr_bitset_neighbors->at(kNodeIndexXpYnZ0_) = sfsfbitset_tmp1;
     // node at (+x, +y, 0)
-    sfbitset_temp1 = FindYPos(sfbitset_temp0);
-    ptr_bitset_neighbors->at(kNodeIndexXpYpZ0_) = sfbitset_temp1;
+    sfsfbitset_tmp1 = FindYPos(sfsfbitset_tmp0);
+    ptr_bitset_neighbors->at(kNodeIndexXpYpZ0_) = sfsfbitset_tmp1;
     // node at (0, -y, 0)
-    sfbitset_temp0 = bool_y_gt0 ? FindYNeg(sfbitset_center) : sfbitset_center;
-    ptr_bitset_neighbors->at(kNodeIndexX0YnZ0_) = sfbitset_temp0;
+    sfsfbitset_tmp0 = bool_y_gt0 ? FindYNeg(sfbitset_center) : sfbitset_center;
+    ptr_bitset_neighbors->at(kNodeIndexX0YnZ0_) = sfsfbitset_tmp0;
     // node at (0, +y, 0)
-    sfbitset_temp0 = FindYPos(sfbitset_center);
-    ptr_bitset_neighbors->at(kNodeIndexX0YpZ0_) = sfbitset_temp0;
+    sfsfbitset_tmp0 = FindYPos(sfbitset_center);
+    ptr_bitset_neighbors->at(kNodeIndexX0YpZ0_) = sfsfbitset_tmp0;
 
     // node at (0, 0, -z)
-    sfbitset_temp0 = bool_z_gt0 ? FindZNeg(sfbitset_center) : sfbitset_center;
-    ptr_bitset_neighbors->at(kNodeIndexX0Y0Zn_) = sfbitset_temp0;
+    sfsfbitset_tmp0 = bool_z_gt0 ? FindZNeg(sfbitset_center) : sfbitset_center;
+    ptr_bitset_neighbors->at(kNodeIndexX0Y0Zn_) = sfsfbitset_tmp0;
     // node at (-x, 0, -z)
-    sfbitset_temp1 = bool_x_gt0 ? FindXNeg(sfbitset_temp0) : sfbitset_temp0;
-    ptr_bitset_neighbors->at(kNodeIndexXnY0Zn_) = sfbitset_temp1;
+    sfsfbitset_tmp1 = bool_x_gt0 ? FindXNeg(sfsfbitset_tmp0) : sfsfbitset_tmp0;
+    ptr_bitset_neighbors->at(kNodeIndexXnY0Zn_) = sfsfbitset_tmp1;
     // node at (-x, -y, -z)
-    sfbitset_temp2 = bool_y_gt0 ? FindYNeg(sfbitset_temp1) : sfbitset_temp1;
-    ptr_bitset_neighbors->at(kNodeIndexXnYnZn_) = sfbitset_temp2;
+    sfsfbitset_tmp2 = bool_y_gt0 ? FindYNeg(sfsfbitset_tmp1) : sfsfbitset_tmp1;
+    ptr_bitset_neighbors->at(kNodeIndexXnYnZn_) = sfsfbitset_tmp2;
     // node at (-x, +y, -z)
-    sfbitset_temp2 = FindYPos(sfbitset_temp1);
-    ptr_bitset_neighbors->at(kNodeIndexXnYpZn_) = sfbitset_temp2;
+    sfsfbitset_tmp2 = FindYPos(sfsfbitset_tmp1);
+    ptr_bitset_neighbors->at(kNodeIndexXnYpZn_) = sfsfbitset_tmp2;
     // node at (+x, 0, -z)
-    sfbitset_temp1 = FindXPos(sfbitset_temp0);
-    ptr_bitset_neighbors->at(kNodeIndexXpY0Zn_) = sfbitset_temp1;
+    sfsfbitset_tmp1 = FindXPos(sfsfbitset_tmp0);
+    ptr_bitset_neighbors->at(kNodeIndexXpY0Zn_) = sfsfbitset_tmp1;
     // node at (+x, -y, -z)
-    sfbitset_temp2 = bool_y_gt0 ? FindYNeg(sfbitset_temp1) : sfbitset_temp1;
-    ptr_bitset_neighbors->at(kNodeIndexXpYnZn_) = sfbitset_temp2;
+    sfsfbitset_tmp2 = bool_y_gt0 ? FindYNeg(sfsfbitset_tmp1) : sfsfbitset_tmp1;
+    ptr_bitset_neighbors->at(kNodeIndexXpYnZn_) = sfsfbitset_tmp2;
     // node at (+x, +y, -z)
-    sfbitset_temp2 = FindYPos(sfbitset_temp1);
-    ptr_bitset_neighbors->at(kNodeIndexXpYpZn_) = sfbitset_temp2;
+    sfsfbitset_tmp2 = FindYPos(sfsfbitset_tmp1);
+    ptr_bitset_neighbors->at(kNodeIndexXpYpZn_) = sfsfbitset_tmp2;
     // node at (0, -y, -z)
-    sfbitset_temp1 = bool_y_gt0 ? FindYNeg(sfbitset_temp0) : sfbitset_temp0;
-    ptr_bitset_neighbors->at(kNodeIndexX0YnZn_) = sfbitset_temp1;
+    sfsfbitset_tmp1 = bool_y_gt0 ? FindYNeg(sfsfbitset_tmp0) : sfsfbitset_tmp0;
+    ptr_bitset_neighbors->at(kNodeIndexX0YnZn_) = sfsfbitset_tmp1;
     //  node at (0, +y, -z)
-    sfbitset_temp1 = FindYPos(sfbitset_temp0);
-    ptr_bitset_neighbors->at(kNodeIndexX0YpZn_) = sfbitset_temp1;
+    sfsfbitset_tmp1 = FindYPos(sfsfbitset_tmp0);
+    ptr_bitset_neighbors->at(kNodeIndexX0YpZn_) = sfsfbitset_tmp1;
     // node at (0, 0, +z)
-    sfbitset_temp0 = FindZPos(sfbitset_center);
-    ptr_bitset_neighbors->at(kNodeIndexX0Y0Zp_) = sfbitset_temp0;
+    sfsfbitset_tmp0 = FindZPos(sfbitset_center);
+    ptr_bitset_neighbors->at(kNodeIndexX0Y0Zp_) = sfsfbitset_tmp0;
     // node at (-x, 0, +z)
-    sfbitset_temp1 = bool_x_gt0 ? FindXNeg(sfbitset_temp0) : sfbitset_temp0;
-    ptr_bitset_neighbors->at(kNodeIndexXnY0Zp_) = sfbitset_temp1;
+    sfsfbitset_tmp1 = bool_x_gt0 ? FindXNeg(sfsfbitset_tmp0) : sfsfbitset_tmp0;
+    ptr_bitset_neighbors->at(kNodeIndexXnY0Zp_) = sfsfbitset_tmp1;
     // node at (-x, -y, +z)
-    sfbitset_temp2 = bool_y_gt0 ? FindYNeg(sfbitset_temp1) : sfbitset_temp1;
-    ptr_bitset_neighbors->at(kNodeIndexXnYnZp_) = sfbitset_temp2;
+    sfsfbitset_tmp2 = bool_y_gt0 ? FindYNeg(sfsfbitset_tmp1) : sfsfbitset_tmp1;
+    ptr_bitset_neighbors->at(kNodeIndexXnYnZp_) = sfsfbitset_tmp2;
     // node at (-x, +y, +z)
-    sfbitset_temp2 = FindYPos(sfbitset_temp1);
-    ptr_bitset_neighbors->at(kNodeIndexXnYpZp_) = sfbitset_temp2;
+    sfsfbitset_tmp2 = FindYPos(sfsfbitset_tmp1);
+    ptr_bitset_neighbors->at(kNodeIndexXnYpZp_) = sfsfbitset_tmp2;
     // node at (+x, 0, +z)
-    sfbitset_temp1 = FindXPos(sfbitset_temp0);
-    ptr_bitset_neighbors->at(kNodeIndexXpY0Zp_) = sfbitset_temp1;
+    sfsfbitset_tmp1 = FindXPos(sfsfbitset_tmp0);
+    ptr_bitset_neighbors->at(kNodeIndexXpY0Zp_) = sfsfbitset_tmp1;
     // node at (+x, -y, +z)
-    sfbitset_temp2 = bool_y_gt0 ? FindYNeg(sfbitset_temp1) : sfbitset_temp1;
-    ptr_bitset_neighbors->at(kNodeIndexXpYnZp_) = sfbitset_temp2;
+    sfsfbitset_tmp2 = bool_y_gt0 ? FindYNeg(sfsfbitset_tmp1) : sfsfbitset_tmp1;
+    ptr_bitset_neighbors->at(kNodeIndexXpYnZp_) = sfsfbitset_tmp2;
     // node at (+x, +y, +z)
-    sfbitset_temp2 = FindYPos(sfbitset_temp1);
-    ptr_bitset_neighbors->at(kNodeIndexXpYpZp_) = sfbitset_temp2;
+    sfsfbitset_tmp2 = FindYPos(sfsfbitset_tmp1);
+    ptr_bitset_neighbors->at(kNodeIndexXpYpZp_) = sfsfbitset_tmp2;
     // node at (0, -y, +z)
-    sfbitset_temp1 = bool_y_gt0 ? FindYNeg(sfbitset_temp0) : sfbitset_temp0;
-    ptr_bitset_neighbors->at(kNodeIndexX0YnZp_) = sfbitset_temp1;
+    sfsfbitset_tmp1 = bool_y_gt0 ? FindYNeg(sfsfbitset_tmp0) : sfsfbitset_tmp0;
+    ptr_bitset_neighbors->at(kNodeIndexX0YnZp_) = sfsfbitset_tmp1;
     // node at (0, +y, +z)
-    sfbitset_temp1 = FindYPos(sfbitset_temp0);
-    ptr_bitset_neighbors->at(kNodeIndexX0YpZp_) = sfbitset_temp1;
+    sfsfbitset_tmp1 = FindYPos(sfsfbitset_tmp0);
+    ptr_bitset_neighbors->at(kNodeIndexX0YpZp_) = sfsfbitset_tmp1;
 }
 /**
 * @brief   function to find all neighboring nodes bonded by lower and upper limits.
@@ -1027,7 +1027,7 @@ void SFBitsetAux3D::SFBitsetFindAllBondedNeighborsVir(const DefSFBitset& bitset_
     const std::vector<bool>& bool_periodic_min, const std::vector<bool>& bool_periodic_max,
     const std::vector<DefSFBitset>& domain_min_n_level, const std::vector<DefSFBitset>& domain_max_n_level,
     std::vector<DefSFBitset>* const ptr_bitset_neighbors) const {
-    DefSFBitset sfbitset_temp0 = bitset_in, sfbitset_temp1;
+    DefSFBitset sfsfbitset_tmp0 = bitset_in, sfsfbitset_tmp1;
     ptr_bitset_neighbors->clear();
     bool bool_not_x_min = (bitset_in&k0SFBitsetTakeXRef_.at(kRefCurrent_)) != domain_min_n_level.at(kXIndex),
         bool_not_x_max = (bitset_in&k0SFBitsetTakeXRef_.at(kRefCurrent_)) != domain_max_n_level.at(kXIndex),
@@ -1037,198 +1037,198 @@ void SFBitsetAux3D::SFBitsetFindAllBondedNeighborsVir(const DefSFBitset& bitset_
         bool_not_z_max = (bitset_in&k0SFBitsetTakeZRef_.at(kRefCurrent_)) != domain_max_n_level.at(kZIndex);
 
     if (bool_not_x_min) {
-        sfbitset_temp0 = FindXNeg(bitset_in);
+        sfsfbitset_tmp0 = FindXNeg(bitset_in);
         // node at (-x, 0, 0)
-        ptr_bitset_neighbors->push_back(sfbitset_temp0);
+        ptr_bitset_neighbors->push_back(sfsfbitset_tmp0);
     } else if (bool_periodic_min.at(kXIndex)) {
-        sfbitset_temp0 = (bitset_in&k0SFBitsetTakeXRef_.at(kRefOthers_))|domain_max_n_level.at(kXIndex);
-        ptr_bitset_neighbors->push_back(sfbitset_temp0);
+        sfsfbitset_tmp0 = (bitset_in&k0SFBitsetTakeXRef_.at(kRefOthers_))|domain_max_n_level.at(kXIndex);
+        ptr_bitset_neighbors->push_back(sfsfbitset_tmp0);
     }
     if (bool_not_y_min) {
         // node at (-x, -y, 0)
-        sfbitset_temp1 = FindYNeg(sfbitset_temp0);
-        ptr_bitset_neighbors->push_back(sfbitset_temp1);
+        sfsfbitset_tmp1 = FindYNeg(sfsfbitset_tmp0);
+        ptr_bitset_neighbors->push_back(sfsfbitset_tmp1);
     } else if (bool_periodic_min.at(kYIndex)) {
-        sfbitset_temp1 = (sfbitset_temp0&k0SFBitsetTakeYRef_.at(kRefOthers_))|domain_max_n_level.at(kYIndex);
-        ptr_bitset_neighbors->push_back(sfbitset_temp1);
+        sfsfbitset_tmp1 = (sfsfbitset_tmp0&k0SFBitsetTakeYRef_.at(kRefOthers_))|domain_max_n_level.at(kYIndex);
+        ptr_bitset_neighbors->push_back(sfsfbitset_tmp1);
     }
     if (bool_not_z_min) {
         // node at (-x, -y, -z)
-        ptr_bitset_neighbors->push_back(FindZNeg(sfbitset_temp1));
+        ptr_bitset_neighbors->push_back(FindZNeg(sfsfbitset_tmp1));
     } else if (bool_periodic_min.at(kZIndex)) {
         ptr_bitset_neighbors->push_back(
-            (sfbitset_temp1&k0SFBitsetTakeZRef_.at(kRefOthers_))|domain_max_n_level.at(kZIndex));
+            (sfsfbitset_tmp1&k0SFBitsetTakeZRef_.at(kRefOthers_))|domain_max_n_level.at(kZIndex));
     }
     if (bool_not_z_max) {
         // node at (-x, -y, +z)
-        ptr_bitset_neighbors->push_back(FindZPos(sfbitset_temp1));
+        ptr_bitset_neighbors->push_back(FindZPos(sfsfbitset_tmp1));
     } else if (bool_periodic_max.at(kZIndex)) {
         ptr_bitset_neighbors->push_back(
-            (sfbitset_temp1&k0SFBitsetTakeZRef_.at(kRefOthers_))|domain_min_n_level.at(kZIndex));
+            (sfsfbitset_tmp1&k0SFBitsetTakeZRef_.at(kRefOthers_))|domain_min_n_level.at(kZIndex));
     }
     if (bool_not_y_max) {
         // node at (-x, +y, 0)
-        sfbitset_temp1 = FindYPos(sfbitset_temp0);
-        ptr_bitset_neighbors->push_back(sfbitset_temp1);
+        sfsfbitset_tmp1 = FindYPos(sfsfbitset_tmp0);
+        ptr_bitset_neighbors->push_back(sfsfbitset_tmp1);
     } else if (bool_periodic_max.at(kYIndex)) {
-        sfbitset_temp1 = (sfbitset_temp0&k0SFBitsetTakeYRef_.at(kRefOthers_))|domain_min_n_level.at(kYIndex);
-        ptr_bitset_neighbors->push_back(sfbitset_temp1);
+        sfsfbitset_tmp1 = (sfsfbitset_tmp0&k0SFBitsetTakeYRef_.at(kRefOthers_))|domain_min_n_level.at(kYIndex);
+        ptr_bitset_neighbors->push_back(sfsfbitset_tmp1);
     }
     if (bool_not_z_min) {
         // node at (-x, +y, -z)
-        ptr_bitset_neighbors->push_back(FindZNeg(sfbitset_temp1));
+        ptr_bitset_neighbors->push_back(FindZNeg(sfsfbitset_tmp1));
     } else if (bool_periodic_min.at(kZIndex)) {
         ptr_bitset_neighbors->push_back(
-            (sfbitset_temp1&k0SFBitsetTakeZRef_.at(kRefOthers_))|domain_max_n_level.at(kZIndex));
+            (sfsfbitset_tmp1&k0SFBitsetTakeZRef_.at(kRefOthers_))|domain_max_n_level.at(kZIndex));
     }
     if (bool_not_z_max) {
         // node at (-x, +y, +z)
-        ptr_bitset_neighbors->push_back(FindZPos(sfbitset_temp1));
+        ptr_bitset_neighbors->push_back(FindZPos(sfsfbitset_tmp1));
     } else if (bool_periodic_max.at(kZIndex)) {
         ptr_bitset_neighbors->push_back(
-            (sfbitset_temp1&k0SFBitsetTakeZRef_.at(kRefOthers_))|domain_min_n_level.at(kZIndex));
+            (sfsfbitset_tmp1&k0SFBitsetTakeZRef_.at(kRefOthers_))|domain_min_n_level.at(kZIndex));
     }
     if (bool_not_z_min) {
         // node at (-x, 0, -z)
-        ptr_bitset_neighbors->push_back(FindZNeg(sfbitset_temp0));
+        ptr_bitset_neighbors->push_back(FindZNeg(sfsfbitset_tmp0));
     } else if (bool_periodic_min.at(kZIndex)) {
         ptr_bitset_neighbors->push_back(
-            (sfbitset_temp0&k0SFBitsetTakeZRef_.at(kRefOthers_))|domain_max_n_level.at(kZIndex));
+            (sfsfbitset_tmp0&k0SFBitsetTakeZRef_.at(kRefOthers_))|domain_max_n_level.at(kZIndex));
     }
     if (bool_not_z_max) {
         // node at (-x, 0, +z)
-        ptr_bitset_neighbors->push_back(FindZPos(sfbitset_temp0));
+        ptr_bitset_neighbors->push_back(FindZPos(sfsfbitset_tmp0));
     } else if (bool_periodic_max.at(kZIndex)) {
         ptr_bitset_neighbors->push_back(
-            (sfbitset_temp0&k0SFBitsetTakeZRef_.at(kRefOthers_))|domain_min_n_level.at(kZIndex));
+            (sfsfbitset_tmp0&k0SFBitsetTakeZRef_.at(kRefOthers_))|domain_min_n_level.at(kZIndex));
     }
 
     if (bool_not_x_max) {
-        sfbitset_temp0 = FindXPos(bitset_in);
+        sfsfbitset_tmp0 = FindXPos(bitset_in);
         // node at (+x, 0, 0)
-        ptr_bitset_neighbors->push_back(sfbitset_temp0);
+        ptr_bitset_neighbors->push_back(sfsfbitset_tmp0);
     } else if (bool_periodic_max.at(kXIndex)) {
-        sfbitset_temp0 = (bitset_in&k0SFBitsetTakeXRef_.at(kRefOthers_))|domain_min_n_level.at(kXIndex);
-        ptr_bitset_neighbors->push_back(sfbitset_temp0);
+        sfsfbitset_tmp0 = (bitset_in&k0SFBitsetTakeXRef_.at(kRefOthers_))|domain_min_n_level.at(kXIndex);
+        ptr_bitset_neighbors->push_back(sfsfbitset_tmp0);
     }
     if (bool_not_y_min) {
         // node at (+x, -y, 0)
-        sfbitset_temp1 = FindYNeg(sfbitset_temp0);
-        ptr_bitset_neighbors->push_back(sfbitset_temp1);
+        sfsfbitset_tmp1 = FindYNeg(sfsfbitset_tmp0);
+        ptr_bitset_neighbors->push_back(sfsfbitset_tmp1);
     } else if (bool_periodic_min.at(kYIndex)) {
-        sfbitset_temp1 = (sfbitset_temp0&k0SFBitsetTakeYRef_.at(kRefOthers_))|domain_max_n_level.at(kYIndex);
-        ptr_bitset_neighbors->push_back(sfbitset_temp1);
+        sfsfbitset_tmp1 = (sfsfbitset_tmp0&k0SFBitsetTakeYRef_.at(kRefOthers_))|domain_max_n_level.at(kYIndex);
+        ptr_bitset_neighbors->push_back(sfsfbitset_tmp1);
     }
     if (bool_not_z_min) {
         // node at (+x, -y, -z)
-        ptr_bitset_neighbors->push_back(FindZNeg(sfbitset_temp1));
+        ptr_bitset_neighbors->push_back(FindZNeg(sfsfbitset_tmp1));
     } else if (bool_periodic_min.at(kZIndex)) {
         ptr_bitset_neighbors->push_back(
-            (sfbitset_temp1&k0SFBitsetTakeZRef_.at(kRefOthers_))|domain_max_n_level.at(kZIndex));
+            (sfsfbitset_tmp1&k0SFBitsetTakeZRef_.at(kRefOthers_))|domain_max_n_level.at(kZIndex));
     }
     if (bool_not_z_max) {
         // node at (+x, -y, +z)
-        ptr_bitset_neighbors->push_back(FindZPos(sfbitset_temp1));
+        ptr_bitset_neighbors->push_back(FindZPos(sfsfbitset_tmp1));
     } else if (bool_periodic_max.at(kZIndex)) {
         ptr_bitset_neighbors->push_back(
-            (sfbitset_temp1&k0SFBitsetTakeZRef_.at(kRefOthers_))|domain_min_n_level.at(kZIndex));
+            (sfsfbitset_tmp1&k0SFBitsetTakeZRef_.at(kRefOthers_))|domain_min_n_level.at(kZIndex));
     }
     if (bool_not_y_max) {
         // node at (+x, +y, 0)
-        sfbitset_temp1 = FindYPos(sfbitset_temp0);
-        ptr_bitset_neighbors->push_back(sfbitset_temp1);
+        sfsfbitset_tmp1 = FindYPos(sfsfbitset_tmp0);
+        ptr_bitset_neighbors->push_back(sfsfbitset_tmp1);
     } else if (bool_periodic_max.at(kYIndex)) {
-        sfbitset_temp1 = (sfbitset_temp0&k0SFBitsetTakeYRef_.at(kRefOthers_))|domain_min_n_level.at(kYIndex);
-        ptr_bitset_neighbors->push_back(sfbitset_temp1);
+        sfsfbitset_tmp1 = (sfsfbitset_tmp0&k0SFBitsetTakeYRef_.at(kRefOthers_))|domain_min_n_level.at(kYIndex);
+        ptr_bitset_neighbors->push_back(sfsfbitset_tmp1);
     }
     if (bool_not_z_min) {
         // node at (+x, +y, -z)
-        ptr_bitset_neighbors->push_back(FindZNeg(sfbitset_temp1));
+        ptr_bitset_neighbors->push_back(FindZNeg(sfsfbitset_tmp1));
     } else if (bool_periodic_min.at(kZIndex)) {
         ptr_bitset_neighbors->push_back(
-            (sfbitset_temp1&k0SFBitsetTakeZRef_.at(kRefOthers_))|domain_max_n_level.at(kZIndex));
+            (sfsfbitset_tmp1&k0SFBitsetTakeZRef_.at(kRefOthers_))|domain_max_n_level.at(kZIndex));
     }
     if (bool_not_z_max) {
         // node at (+x, +y, +z)
-        ptr_bitset_neighbors->push_back(FindZPos(sfbitset_temp1));
+        ptr_bitset_neighbors->push_back(FindZPos(sfsfbitset_tmp1));
     } else if (bool_periodic_max.at(kZIndex)) {
         ptr_bitset_neighbors->push_back(
-            (sfbitset_temp1&k0SFBitsetTakeZRef_.at(kRefOthers_))|domain_min_n_level.at(kZIndex));
+            (sfsfbitset_tmp1&k0SFBitsetTakeZRef_.at(kRefOthers_))|domain_min_n_level.at(kZIndex));
     }
     if (bool_not_z_min) {
         // node at (+x, 0, -z)
-        ptr_bitset_neighbors->push_back(FindZNeg(sfbitset_temp0));
+        ptr_bitset_neighbors->push_back(FindZNeg(sfsfbitset_tmp0));
     } else if (bool_periodic_min.at(kZIndex)) {
         ptr_bitset_neighbors->push_back(
-            (sfbitset_temp0&k0SFBitsetTakeZRef_.at(kRefOthers_))|domain_max_n_level.at(kZIndex));
+            (sfsfbitset_tmp0&k0SFBitsetTakeZRef_.at(kRefOthers_))|domain_max_n_level.at(kZIndex));
     }
     if (bool_not_z_max) {
         // node at (+x, 0, +z)
-        ptr_bitset_neighbors->push_back(FindZPos(sfbitset_temp0));
+        ptr_bitset_neighbors->push_back(FindZPos(sfsfbitset_tmp0));
     } else if (bool_periodic_max.at(kZIndex)) {
         ptr_bitset_neighbors->push_back(
-            (sfbitset_temp0&k0SFBitsetTakeZRef_.at(kRefOthers_))|domain_min_n_level.at(kZIndex));
+            (sfsfbitset_tmp0&k0SFBitsetTakeZRef_.at(kRefOthers_))|domain_min_n_level.at(kZIndex));
     }
 
     if (bool_not_y_min) {
         // node at (0, -y, 0)
-        sfbitset_temp0 = FindYNeg(bitset_in);
+        sfsfbitset_tmp0 = FindYNeg(bitset_in);
         ptr_bitset_neighbors->push_back(bitset_in);
     } else if (bool_periodic_min.at(kYIndex)) {
-        sfbitset_temp0 = (bitset_in&k0SFBitsetTakeYRef_.at(kRefOthers_))|domain_max_n_level.at(kYIndex);
-        ptr_bitset_neighbors->push_back(sfbitset_temp0);
+        sfsfbitset_tmp0 = (bitset_in&k0SFBitsetTakeYRef_.at(kRefOthers_))|domain_max_n_level.at(kYIndex);
+        ptr_bitset_neighbors->push_back(sfsfbitset_tmp0);
     }
     if (bool_not_z_min) {
         // node at (0, -y, -z)
-        ptr_bitset_neighbors->push_back(FindZNeg(sfbitset_temp0));
+        ptr_bitset_neighbors->push_back(FindZNeg(sfsfbitset_tmp0));
     } else if (bool_periodic_min.at(kZIndex)) {
         ptr_bitset_neighbors->push_back(
-            (sfbitset_temp0&k0SFBitsetTakeZRef_.at(kRefOthers_))|domain_max_n_level.at(kZIndex));
+            (sfsfbitset_tmp0&k0SFBitsetTakeZRef_.at(kRefOthers_))|domain_max_n_level.at(kZIndex));
     }
     if (bool_not_z_max) {
         // node at (0, -y, +z)
-        ptr_bitset_neighbors->push_back(FindZPos(sfbitset_temp0));
+        ptr_bitset_neighbors->push_back(FindZPos(sfsfbitset_tmp0));
     } else if (bool_periodic_max.at(kZIndex)) {
         ptr_bitset_neighbors->push_back(
-            (sfbitset_temp0&k0SFBitsetTakeZRef_.at(kRefOthers_))|domain_min_n_level.at(kZIndex));
+            (sfsfbitset_tmp0&k0SFBitsetTakeZRef_.at(kRefOthers_))|domain_min_n_level.at(kZIndex));
     }
 
     if (bool_not_y_max) {
         // node at (0, +y, 0)
-        sfbitset_temp0 = FindYPos(bitset_in);
-        ptr_bitset_neighbors->push_back(sfbitset_temp0);
+        sfsfbitset_tmp0 = FindYPos(bitset_in);
+        ptr_bitset_neighbors->push_back(sfsfbitset_tmp0);
     } else if (bool_periodic_max.at(kYIndex)) {
-        sfbitset_temp0 = (bitset_in&k0SFBitsetTakeYRef_.at(kRefOthers_))|domain_min_n_level.at(kYIndex);
-        ptr_bitset_neighbors->push_back(sfbitset_temp0);
+        sfsfbitset_tmp0 = (bitset_in&k0SFBitsetTakeYRef_.at(kRefOthers_))|domain_min_n_level.at(kYIndex);
+        ptr_bitset_neighbors->push_back(sfsfbitset_tmp0);
     }
     if (bool_not_z_min) {
         // node at (0, +y, -z)
-        ptr_bitset_neighbors->push_back(FindZNeg(sfbitset_temp0));
+        ptr_bitset_neighbors->push_back(FindZNeg(sfsfbitset_tmp0));
     } else if (bool_periodic_min.at(kZIndex)) {
         ptr_bitset_neighbors->push_back(
-            (sfbitset_temp0&k0SFBitsetTakeZRef_.at(kRefOthers_))|domain_max_n_level.at(kZIndex));
+            (sfsfbitset_tmp0&k0SFBitsetTakeZRef_.at(kRefOthers_))|domain_max_n_level.at(kZIndex));
     }
     if (bool_not_z_max) {
         // node at (0, +y, +z)
-        ptr_bitset_neighbors->push_back(FindZPos(sfbitset_temp0));
+        ptr_bitset_neighbors->push_back(FindZPos(sfsfbitset_tmp0));
     } else if (bool_periodic_max.at(kZIndex)) {
         ptr_bitset_neighbors->push_back(
-            (sfbitset_temp0&k0SFBitsetTakeZRef_.at(kRefOthers_))|domain_min_n_level.at(kZIndex));
+            (sfsfbitset_tmp0&k0SFBitsetTakeZRef_.at(kRefOthers_))|domain_min_n_level.at(kZIndex));
     }
 
     if (bool_not_z_min) {
         // node at (0, 0, -z)
         ptr_bitset_neighbors->push_back(FindZNeg(bitset_in));
     } else if (bool_periodic_min.at(kZIndex)) {
-        sfbitset_temp0 = (bitset_in&k0SFBitsetTakeZRef_.at(kRefOthers_))|domain_max_n_level.at(kZIndex);
-        ptr_bitset_neighbors->push_back(sfbitset_temp0);
+        sfsfbitset_tmp0 = (bitset_in&k0SFBitsetTakeZRef_.at(kRefOthers_))|domain_max_n_level.at(kZIndex);
+        ptr_bitset_neighbors->push_back(sfsfbitset_tmp0);
     }
     if (bool_not_z_max) {
         // node at (0, 0, +z)
         ptr_bitset_neighbors->push_back(FindZPos(bitset_in));
     } else if (bool_periodic_max.at(kZIndex)) {
-        sfbitset_temp0 = (bitset_in&k0SFBitsetTakeZRef_.at(kRefOthers_))|domain_min_n_level.at(kZIndex);
-        ptr_bitset_neighbors->push_back(sfbitset_temp0);
+        sfsfbitset_tmp0 = (bitset_in&k0SFBitsetTakeZRef_.at(kRefOthers_))|domain_min_n_level.at(kZIndex);
+        ptr_bitset_neighbors->push_back(sfsfbitset_tmp0);
     }
 }
 /**

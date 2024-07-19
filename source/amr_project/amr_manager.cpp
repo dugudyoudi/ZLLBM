@@ -276,13 +276,15 @@ void AmrManager::TimeMarching(const DefAmrIndexLUint time_step_background) {
 #endif  //  ENABLE_MPI
 
 
-        grid_ref.ptr_solver_->CallDomainBoundaryCondition(k0TimeSteppingType_,
-            time_step_level[i_level], *ptr_grid_manager_->GetSFBitsetAuxPtr(), &grid_ref);
-
-
         // use information in current time step
-        grid_ref.ptr_solver_->InformationFromGridOfDifferentLevel(
+        if (grid_ref.ptr_solver_->InformationFromGridOfDifferentLevel(
             ETimingInOneStep::kStepEnd, k0TimeSteppingType_,
+            time_step_level[i_level], *ptr_grid_manager_->GetSFBitsetAuxPtr(), &grid_ref) != 0) {
+            LogManager::LogError("Error in AmrManager::TimeMarching in "
+                + std::string(__FILE__) + " at line " + std::to_string(__LINE__));
+        }
+
+        grid_ref.ptr_solver_->CallDomainBoundaryCondition(k0TimeSteppingType_,
             time_step_level[i_level], *ptr_grid_manager_->GetSFBitsetAuxPtr(), &grid_ref);
 
 

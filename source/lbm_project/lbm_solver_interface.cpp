@@ -150,8 +150,9 @@ void SolverLbmInterface::CallDomainBoundaryCondition(const amrproject::ETimeStep
  * @param[in] time_step_current time step at current grid refinement level in one background step.
  * @param[in] sfbitset_aux class to manage functions for space filling code computation.
  * @param[out] ptr_grid_info pointer to class storing LBM grid information.
+ * @return 0 run successfully, otherwise some error occurred in this function.
  */
-void SolverLbmInterface::InformationFromGridOfDifferentLevel(
+int SolverLbmInterface::InformationFromGridOfDifferentLevel(
     const amrproject::ETimingInOneStep timing, const amrproject::ETimeSteppingScheme time_scheme,
     const DefAmrIndexUint time_step_current, const amrproject::SFBitsetAuxInterface& sfbitset_aux,
     amrproject::GridInfoInterface* const ptr_grid_info) {
@@ -159,20 +160,23 @@ void SolverLbmInterface::InformationFromGridOfDifferentLevel(
     GridInfoLbmInteface* ptr_lbm_grid_nodes_info = dynamic_cast<GridInfoLbmInteface*>(ptr_grid_info);
     if (i_level > 0 && ptr_grid_info->CheckNeedInfoFromCoarse(
         timing, time_scheme, time_step_current)) {
-        ptr_grid_info->TransferInfoFromCoarseGrid(*ptr_grid_manager_->GetSFBitsetAuxPtr(),
-            amrproject::NodeBitStatus::kNodeStatusCoarse2Fine0_,
-            *(ptr_grid_manager_->vec_ptr_grid_info_.at(i_level - 1)));
-        ptr_lbm_grid_nodes_info->NodeFlagNotCollision_ |=
-            (amrproject::NodeBitStatus::kNodeStatusFine2Coarse0_
-            |amrproject::NodeBitStatus::kNodeStatusFine2CoarseGhost_);
+        if (ptr_grid_info->TransferInfoFromCoarseGrid(*ptr_grid_manager_->GetSFBitsetAuxPtr(),
+            amrproject::NodeBitStatus::kNodeStatusCoarse2FineGhost_,
+            *(ptr_grid_manager_->vec_ptr_grid_info_.at(i_level - 1))) != 0) {
+            amrproject::LogManager::LogErrorMsg("transfer information from coarse grid to fine grid failed"
+            " in function SolverLbmInterface::TransferInfoFromCoarseGrid in file "
+            + std::string(__FILE__) + " at line " + std::to_string(__LINE__));
+            return 1;
+        }
     }
     if (i_level < ptr_grid_manager_->k0MaxLevel_ && ptr_grid_info->CheckNeedInfoFromFine(
         timing, time_scheme, time_step_current)) {
         ptr_grid_info->TransferInfoFromFineGrid(*ptr_grid_manager_->GetSFBitsetAuxPtr(),
-            amrproject::NodeBitStatus::kNodeStatusCoarse2Fine0_,
+            amrproject::NodeBitStatus::kNodeStatusCoarse2FineGhost_,
             *(ptr_grid_manager_->vec_ptr_grid_info_.at(i_level + 1)));
         ptr_lbm_grid_nodes_info->NodeFlagNotCollision_ |= amrproject::NodeBitStatus::kNodeStatusCoarse2Fine0_;
     }
+    return 0;
 }
 /**
  * @brief function to perform collision step in the LBM simulation.

@@ -38,10 +38,10 @@ class SolverInterface {
     virtual void CallDomainBoundaryCondition(const ETimeSteppingScheme time_scheme,
         const DefAmrIndexUint time_step_current, const SFBitsetAuxInterface& sfbitset_aux,
         GridInfoInterface* const ptr_grid_info) {}
-    virtual void InformationFromGridOfDifferentLevel(
+    virtual int InformationFromGridOfDifferentLevel(
         const ETimingInOneStep timing, const ETimeSteppingScheme time_scheme,
         const DefAmrIndexUint time_step_current, const SFBitsetAuxInterface& sfbitset_aux,
-        GridInfoInterface* const ptr_grid_info) {}
+        GridInfoInterface* const ptr_grid_info) {return 0;}
 };
 /**
 * @class SolverCreatorInterface

@@ -22,7 +22,7 @@ namespace amrproject {
 * @class SFBitsetAuxInterface
 * @brief class used to handle functions for space filling curves
 */
-class  SFBitsetAuxInterface {
+class SFBitsetAuxInterface {
  public:
     static std::array<DefSFBitset, 2> k0SFBitsetTakeXRef_, k0SFBitsetTakeYRef_;
     static constexpr DefSFBitset kInvalidSFbitset = ~0;

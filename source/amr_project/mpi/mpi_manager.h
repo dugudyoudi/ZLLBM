@@ -66,6 +66,10 @@ class MpiManager{
     void FinalizeMpi();
 
     void IniBroadcastBitsetBounds(std::vector<DefSFBitset>* const ptr_bitset_bounds);
+    /**
+     * @brief function to find space filling code is on which rank.
+     * @param[in] sfcode_in space filling code at background level.
+     */
     inline int CheckNodeInWhichRank(const DefSFCodeToUint& sfcode_in) const {
         return static_cast<int>(std::lower_bound(vec_sfcode_max_all_ranks_.begin(),
             vec_sfcode_max_all_ranks_.end(), sfcode_in) - vec_sfcode_max_all_ranks_.begin());
@@ -261,7 +265,7 @@ class MpiManager{
     void DeserializeNodeStoreUint(const std::unique_ptr<char[]>& buffer,
         DefMap<DefAmrUint>* const map_nodes) const;
     std::unique_ptr<char[]> SerializeNodeSFBitset(const DefMap<DefAmrIndexUint>& map_nodes,
-        int* const ptr_buffer_size) const;
+        int* const ptr_buffer_size, int* const ptr_error_flag) const;
     void DeserializeNodeSFBitset(const DefAmrIndexUint flag_node, const std::unique_ptr<char[]>& buffer,
         DefMap<DefAmrIndexUint>* const map_nodes) const;
 
@@ -329,14 +333,23 @@ class MpiManager{
         int num_chunks_ = 0;
         std::array<int, 2> array_buffer_size_ = {0, 0};
     };
+    int SendGhostNodeForInterpolation(const SFBitsetAuxInterface& sfbitset_aux,
+        const GridInfoInterface& grid_info_lower, GridInfoInterface* ptr_grid_info,
+        std::vector<BufferSizeInfo>* const ptr_send_buffer_info,
+        std::vector<BufferSizeInfo>* const ptr_receive_buffer_info,
+        std::vector<std::vector<MPI_Request>>* const ptr_vec_vec_reqs_send,
+        std::vector<std::vector<MPI_Request>>* const ptr_vec_vec_reqs_receive,
+        std::vector<std::unique_ptr<char[]>>* const ptr_vec_ptr_buffer_send,
+        std::vector<std::unique_ptr<char[]>>* const ptr_vec_ptr_buffer_receive);
     std::vector<bool> IdentifyRanksReceivingGridNode(const DefAmrIndexUint i_level) const;
     void SendNReceiveGridNodeBufferSize(const DefAmrIndexUint i_level,
         const int node_info_size, const std::vector<bool>& rank_id_sent,
         std::vector<BufferSizeInfo>* const ptr_send_buffer_info,
         std::vector<BufferSizeInfo>* const ptr_receive_buffer_info) const;
-    DefSizet CalculateBufferSizeForGridNode(const int rank_send,
-        const GridInfoInterface& grid_inf) const;
+    DefSizet CalculateBufferSizeForGridNode(
+        const DefSizet num_nodes, const GridInfoInterface& grid_info) const;
     void SendGridNodeInformation(const int i_rank, const BufferSizeInfo& send_buffer_info,
+        const std::map<int, DefMap<DefAmrIndexUint>>& nodes_to_send,
         GridInfoInterface* ptr_grid_info, char* const ptr_buffer_send,
         std::vector<MPI_Request>* const ptr_reqs_send) const;
     std::unique_ptr<char[]> ReceiveGridNodeInformation(const int rank_receive, const int node_info_size,

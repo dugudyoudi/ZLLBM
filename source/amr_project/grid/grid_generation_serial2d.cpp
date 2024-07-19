@@ -20,11 +20,11 @@ namespace amrproject {
 * @param[in] i_level refinement level.
 * @param[in] tracking_grid_key key of the tracking grid used for
 *                  generating one layer of grid.
-* @param[out] ptr_map_node_temp  nodes near the tracking grid.
+* @param[out] ptr_map_node_tmp  nodes near the tracking grid.
 */
 void GridManager2D::GenerateGridNodeNearTrackingNode(const DefAmrIndexUint i_level,
     const std::pair<ECriterionType, DefAmrIndexUint>& tracking_grid_key,
-    DefMap<DefAmrUint>* const ptr_map_node_temp) const {
+    DefMap<DefAmrUint>* const ptr_map_node_tmp) const {
     std::vector<DefSFCodeToUint> sfbitset_min(k0GridDims_), sfbitset_max(k0GridDims_);
     for (DefAmrIndexUint i_dms = 0; i_dms < k0GridDims_; ++i_dms) {
         sfbitset_min.at(i_dms) = this->vec_ptr_grid_info_.at(i_level)->k0VecBitsetDomainMin_.at(i_dms).to_ullong();
@@ -38,9 +38,9 @@ void GridManager2D::GenerateGridNodeNearTrackingNode(const DefAmrIndexUint i_lev
         bitset_lower_level = SFBitsetToOneLowerLevel(iter.first);
         SFBitsetFindAllNeighbors(bitset_lower_level, &bitset_of_a_cell);
         for (const auto& iter_bitset : bitset_of_a_cell) {
-            if (ptr_map_node_temp->find(iter_bitset) == ptr_map_node_temp->end()
+            if (ptr_map_node_tmp->find(iter_bitset) == ptr_map_node_tmp->end()
                 && CheckNodeNotOutsideDomainBoundary(iter_bitset, sfbitset_min, sfbitset_max)) {
-                ptr_map_node_temp->insert({ iter_bitset, kFlag0_ });
+                ptr_map_node_tmp->insert({ iter_bitset, kFlag0_ });
             }
         }
     }
@@ -84,11 +84,11 @@ void GridManager2D::IdentifyTypeOfLayerByFloodFill(
         SFBitsetEncoding(std::array<DefAmrIndexLUint, 2>({ x_index , y_index }));
     // search in -x direction from the vec_origin until meet the first vertex
     // in map_nodes_exist
-    DefSFBitset sfbitset_temp = sfbitset_origin_vertex, sfbitset_start_vertex;
+    DefSFBitset sfsfbitset_tmp = sfbitset_origin_vertex, sfbitset_start_vertex;
     while (i_count < x_index) {
-        sfbitset_temp = FindXNeg(sfbitset_temp);
-        if (map_nodes_exist.find(sfbitset_temp) != map_nodes_exist.end()) {
-            sfbitset_start_vertex = FindXPos(sfbitset_temp);
+        sfsfbitset_tmp = FindXNeg(sfsfbitset_tmp);
+        if (map_nodes_exist.find(sfsfbitset_tmp) != map_nodes_exist.end()) {
+            sfbitset_start_vertex = FindXPos(sfsfbitset_tmp);
             bool_find_node_for_flood_fill = true;
             break;
         }
@@ -98,12 +98,12 @@ void GridManager2D::IdentifyTypeOfLayerByFloodFill(
     // search in -y direction from the vec_origin until meet the first vertex
     // in map_nodes_exist
     if (!bool_find_node_for_flood_fill) {
-        sfbitset_temp = sfbitset_origin_vertex;
+        sfsfbitset_tmp = sfbitset_origin_vertex;
         i_count = 0;
         while (i_count < y_index) {
-            sfbitset_temp = FindYNeg(sfbitset_temp);
-            if (map_nodes_exist.find(sfbitset_temp) != map_nodes_exist.end()) {
-                sfbitset_start_vertex = FindYPos(sfbitset_temp);
+            sfsfbitset_tmp = FindYNeg(sfsfbitset_tmp);
+            if (map_nodes_exist.find(sfsfbitset_tmp) != map_nodes_exist.end()) {
+                sfbitset_start_vertex = FindYPos(sfsfbitset_tmp);
                 bool_find_node_for_flood_fill = true;
                 break;
             }
@@ -114,12 +114,12 @@ void GridManager2D::IdentifyTypeOfLayerByFloodFill(
     // search in +x direction from the vec_origin until meet the first vertex
     // in map_nodes_exist
     if (!bool_find_node_for_flood_fill) {
-        sfbitset_temp = sfbitset_origin_vertex;
+        sfsfbitset_tmp = sfbitset_origin_vertex;
         i_count = 0;
         while (i_count < x_index_max) {
-            sfbitset_temp = FindXPos(sfbitset_temp);
-            if (map_nodes_exist.find(sfbitset_temp) != map_nodes_exist.end()) {
-                sfbitset_start_vertex = FindXNeg(sfbitset_temp);
+            sfsfbitset_tmp = FindXPos(sfsfbitset_tmp);
+            if (map_nodes_exist.find(sfsfbitset_tmp) != map_nodes_exist.end()) {
+                sfbitset_start_vertex = FindXNeg(sfsfbitset_tmp);
                 bool_find_node_for_flood_fill = true;
                 break;
             }
@@ -130,12 +130,12 @@ void GridManager2D::IdentifyTypeOfLayerByFloodFill(
     // search in +y direction from the vec_origin until meet the first vertex
     // in map_nodes_exist
     if (!bool_find_node_for_flood_fill) {
-        sfbitset_temp = sfbitset_origin_vertex;
+        sfsfbitset_tmp = sfbitset_origin_vertex;
         i_count = 0;
         while (i_count < y_index_max) {
-            sfbitset_temp = FindYPos(sfbitset_temp);
-            if (map_nodes_exist.find(sfbitset_temp) != map_nodes_exist.end()) {
-                sfbitset_start_vertex = FindYNeg(sfbitset_temp);
+            sfsfbitset_tmp = FindYPos(sfsfbitset_tmp);
+            if (map_nodes_exist.find(sfsfbitset_tmp) != map_nodes_exist.end()) {
+                sfbitset_start_vertex = FindYNeg(sfsfbitset_tmp);
                 bool_find_node_for_flood_fill = true;
                 break;
             }
@@ -174,9 +174,9 @@ void GridManager2D::PushBackSFBitsetInFloodFill(const DefSFBitset& sfbitset_in,
     std::vector<DefSFBitset>* const ptr_vec_stk) const {
     std::array<DefSFBitset, 9> array_neighbors;
     SFBitsetFindAllNeighbors(sfbitset_in, &array_neighbors);
-    std::vector<DefSFBitset> vec_temp(9);
-    memcpy(vec_temp.data(), array_neighbors.data(), 9 * sizeof(DefSFBitset));
-    ptr_vec_stk->insert(ptr_vec_stk->end(), vec_temp.begin() + 1, vec_temp.end());
+    std::vector<DefSFBitset> vec_tmp(9);
+    memcpy(vec_tmp.data(), array_neighbors.data(), 9 * sizeof(DefSFBitset));
+    ptr_vec_stk->insert(ptr_vec_stk->end(), vec_tmp.begin() + 1, vec_tmp.end());
 }
 /**
 * @brief   function to extend the grid by one layer.
@@ -207,7 +207,7 @@ void GridManager2D::ExtendOneLayerGrid(
     ptr_vector_boundary_max->resize(k0GridDims_);
     DefAmrUint flag_node_boundary;
     std::vector<DefSFBitset> vec_neighbors;
-    DefMap<DefAmrUint> outmost_temp;
+    DefMap<DefAmrUint> outmost_tmp;
     for (const auto& iter : map_start_layer) {
         bool_neg_boundary[kXIndex]
          = (iter.first & k0SFBitsetTakeXRef_[kRefCurrent_])
@@ -243,7 +243,7 @@ void GridManager2D::ExtendOneLayerGrid(
                 ptr_vector_boundary_min->at(kXIndex)
                     .insert({ iter.first, kFlag0_ });
             } else {
-                outmost_temp.insert({ iter.first, flag_node_boundary });
+                outmost_tmp.insert({ iter.first, flag_node_boundary });
             }
         }
         if ((flag_node_boundary & kFlagCurrentNodeXPos_)
@@ -251,7 +251,7 @@ void GridManager2D::ExtendOneLayerGrid(
             if (bool_pos_boundary[kXIndex]) {  // on the maximum x boundary
                 ptr_vector_boundary_max->at(kXIndex).insert({ iter.first, kFlag0_ });
             } else {
-                outmost_temp.insert({ iter.first, flag_node_boundary });
+                outmost_tmp.insert({ iter.first, flag_node_boundary });
             }
         }
         if ((flag_node_boundary & kFlagCurrentNodeYNeg_)
@@ -259,7 +259,7 @@ void GridManager2D::ExtendOneLayerGrid(
             if (bool_neg_boundary[kYIndex]) {  // on the minimum y boundary
                 ptr_vector_boundary_min->at(kYIndex).insert({ iter.first, kFlag0_ });
             } else {
-                outmost_temp.insert({ iter.first, flag_node_boundary });
+                outmost_tmp.insert({ iter.first, flag_node_boundary });
             }
         }
         if ((flag_node_boundary & kFlagCurrentNodeYPos_)
@@ -267,12 +267,12 @@ void GridManager2D::ExtendOneLayerGrid(
             if (bool_pos_boundary[kYIndex]) {  // on the maximum y boundary
                 ptr_vector_boundary_max->at(kYIndex).insert({ iter.first, kFlag0_ });
             } else {
-                outmost_temp.insert({ iter.first, flag_node_boundary });
+                outmost_tmp.insert({ iter.first, flag_node_boundary });
             }
         }
     }
     // check if nodes on the outmost layer
-    for (const auto iter : outmost_temp) {
+    for (const auto iter : outmost_tmp) {
         bool_neg[kXIndex]
             = !((iter.first & k0SFBitsetTakeXRef_[kRefCurrent_])
             == vec_bitset_min[kXIndex]);
@@ -330,44 +330,44 @@ DefAmrUint GridManager2D::FindAllNeighborsWithSpecifiedDirection(
     std::vector <DefSFBitset>* const ptr_vec_neighbors) const {
     ptr_vec_neighbors->clear();
     DefAmrUint flag_current_node = 0;
-    DefSFBitset bitset_temp, bitset_temp1;
+    DefSFBitset sfbitset_tmp, sfbitset_tmp1;
     if (bool_neg[kXIndex]) {  // (-x, 0)
-        bitset_temp = FindXNeg(bitset_in);
-        ptr_vec_neighbors->push_back(bitset_temp);
+        sfbitset_tmp = FindXNeg(bitset_in);
+        ptr_vec_neighbors->push_back(sfbitset_tmp);
         if (bool_neg[kYIndex]) {  // (-x, -y)
-            bitset_temp1 = FindYNeg(bitset_temp);
-            ptr_vec_neighbors->push_back(bitset_temp1);
+            sfbitset_tmp1 = FindYNeg(sfbitset_tmp);
+            ptr_vec_neighbors->push_back(sfbitset_tmp1);
         }
         if (bool_pos[kYIndex]) {  // (-x, +y)
-            bitset_temp1 = FindYPos(bitset_temp);
-            ptr_vec_neighbors->push_back(bitset_temp1);
+            sfbitset_tmp1 = FindYPos(sfbitset_tmp);
+            ptr_vec_neighbors->push_back(sfbitset_tmp1);
         }
     } else {
         flag_current_node |= kFlagCurrentNodeXNeg_;
     }
     if (bool_pos[kXIndex]) {  // (+x, 0)
-        bitset_temp = FindXPos(bitset_in);
-        ptr_vec_neighbors->push_back(bitset_temp);
+        sfbitset_tmp = FindXPos(bitset_in);
+        ptr_vec_neighbors->push_back(sfbitset_tmp);
         if (bool_neg[kYIndex]) {  // (+x, -y)
-            bitset_temp1 = FindYNeg(bitset_temp);
-            ptr_vec_neighbors->push_back(bitset_temp1);
+            sfbitset_tmp1 = FindYNeg(sfbitset_tmp);
+            ptr_vec_neighbors->push_back(sfbitset_tmp1);
         }
         if (bool_pos[kYIndex]) {  // (+x, +y)
-            bitset_temp1 = FindYPos(bitset_temp);
-            ptr_vec_neighbors->push_back(bitset_temp1);
+            sfbitset_tmp1 = FindYPos(sfbitset_tmp);
+            ptr_vec_neighbors->push_back(sfbitset_tmp1);
         }
     } else {
         flag_current_node |= kFlagCurrentNodeXPos_;
     }
     if (bool_neg[kYIndex]) {  // (0, -y)
-        bitset_temp = FindYNeg(bitset_in);
-        ptr_vec_neighbors->push_back(bitset_temp);
+        sfbitset_tmp = FindYNeg(bitset_in);
+        ptr_vec_neighbors->push_back(sfbitset_tmp);
     } else {
         flag_current_node |= kFlagCurrentNodeYNeg_;
     }
     if (bool_pos[kYIndex]) {  // (0, +y)
-        bitset_temp = FindYPos(bitset_in);
-        ptr_vec_neighbors->push_back(bitset_temp);
+        sfbitset_tmp = FindYPos(bitset_in);
+        ptr_vec_neighbors->push_back(sfbitset_tmp);
     } else {
         flag_current_node |= kFlagCurrentNodeYPos_;
     }
@@ -416,7 +416,7 @@ void  GridManager2D::FindOutmostLayerForFineGrid(
     std::array<bool, 2> bool_neg_not_boundary, bool_pos_not_boundary;
     DefAmrUint flag_node_boundary;
     std::vector<DefSFBitset> vec_neighbors, vec_lower_neighbors;
-    DefSFBitset bitset_lower_level, bitset_temp, bitset_neighbor;
+    DefSFBitset bitset_lower_level, sfbitset_tmp, bitset_neighbor;
     for (const auto& iter : map_outmost_layer) {
         bool_neg_not_boundary[kXIndex]
             = !((iter.first & k0SFBitsetTakeXRef_[kRefCurrent_])
@@ -462,8 +462,8 @@ void  GridManager2D::FindOutmostLayerForFineGrid(
                 FindAllNeighborsWithSpecifiedDirection(
                     bitset_lower_level, bool_neg_not_boundary,
                     bool_pos_not_boundary, &vec_neighbors);
-                bitset_temp = SFBitsetToOneHigherLevel(bitset_lower_level);
-                if (map_exist->find(bitset_temp) == map_exist->end()) {
+                sfbitset_tmp = SFBitsetToOneHigherLevel(bitset_lower_level);
+                if (map_exist->find(sfbitset_tmp) == map_exist->end()) {
                     ptr_layer_lower_level_outer->insert({
                         bitset_lower_level, kFlag0_ });
                     for (const auto& iter_lower : vec_neighbors) {

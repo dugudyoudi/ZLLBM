@@ -345,25 +345,25 @@ void MpiManager::IniTraverseBackgroundForPartitionRank0(
     DefAmrIndexLUint cost_background = vec_cost.at(0);
     std::array<DefAmrIndexLUint, 3> indices(indices_min);
     DefSFCodeToUint i_code = bitset_domain_min.to_ullong();
-    DefSFBitset bitset_temp = static_cast<DefSFBitset>(i_code);
+    DefSFBitset sfbitset_tmp = static_cast<DefSFBitset>(i_code);
     for (DefAmrIndexLUint i_node = 0; i_node < num_background_nodes - 1; ++i_node) {
         if (load_count >= rank_load.at(i_rank)) {
             load_count = 0;
             ++i_rank;
-            ptr_bitset_min->at(i_rank) = bitset_temp;
+            ptr_bitset_min->at(i_rank) = sfbitset_tmp;
         }
-        if (background_occupied.find(bitset_temp)
+        if (background_occupied.find(sfbitset_tmp)
             == background_occupied.end()) {
             load_count += bk_cost;
         } else {
-            load_count += background_occupied.at(bitset_temp);
+            load_count += background_occupied.at(sfbitset_tmp);
         }
         if (load_count >= rank_load.at(i_rank)) {
-            ptr_bitset_max->at(i_rank) = bitset_temp;
+            ptr_bitset_max->at(i_rank) = sfbitset_tmp;
         }
         //  reset i_code if indices exceed domain
         ++i_code;
-        status = bitset_aux3d.ResetIndicesExceedingDomain(indices_min, indices_max, &i_code, &bitset_temp);
+        status = bitset_aux3d.ResetIndicesExceedingDomain(indices_min, indices_max, &i_code, &sfbitset_tmp);
 #ifdef DEBUG_CHECK_GRID
         if (status) {
             LogManager::LogError("iterations exceed the maximum when space filling code exceed domain boundary "

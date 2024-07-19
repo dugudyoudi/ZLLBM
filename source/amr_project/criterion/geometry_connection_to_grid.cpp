@@ -47,18 +47,18 @@ void GeometryConnectionInterface::FindTrackingNodeBasedOnGeo(DefAmrIndexUint i_g
     DefMap<TrackingNode>* ptr_tracking_node = &(ptr_grid_info
         ->map_ptr_tracking_grid_info_.at(key_tracking_grid).get()->map_tracking_node_);
 
-    DefSFBitset bitset_temp;
+    DefSFBitset sfbitset_tmp;
     for (auto& iter : connection_vertex_given_level_.at(level_diff)) {
-        bitset_temp = sfbitset_aux.SFBitsetEncodingCoordi(
+        sfbitset_tmp = sfbitset_aux.SFBitsetEncodingCoordi(
             ptr_grid_info->grid_space_, vertex_given_level_.at(iter.first)
             .vec_vertex_coordinate.at(iter.second).coordinates);
         vertex_given_level_.at(iter.first).vec_vertex_coordinate
             .at(iter.second).map_bitset_ref
-            .insert({ ptr_grid_info->i_level_, bitset_temp });
-        if (ptr_grid_info->CheckIfNodeOutsideCubicDomain(dims, bitset_temp, sfbitset_aux)
+            .insert({ ptr_grid_info->i_level_, sfbitset_tmp });
+        if (ptr_grid_info->CheckIfNodeOutsideCubicDomain(dims, sfbitset_tmp, sfbitset_aux)
             >= GridInfoInterface::kFlagInsideDomain_) {
-            if (ptr_tracking_node->find(bitset_temp) == ptr_tracking_node->end()) {
-                ptr_tracking_node->insert({ bitset_temp, (ptr_grid_info
+            if (ptr_tracking_node->find(sfbitset_tmp) == ptr_tracking_node->end()) {
+                ptr_tracking_node->insert({ sfbitset_tmp, (ptr_grid_info
                 ->map_ptr_tracking_grid_info_.at(key_tracking_grid).get())
                 ->k0TrackNodeInstance_ });
             }
@@ -76,7 +76,7 @@ void GeometryConnectionInterface::FindTrackingNodeBasedOnGeo(DefAmrIndexUint i_g
                 + std::string(__FILE__) + " at line " + std::to_string(__LINE__));
             }
         }
-        ptr_tracking_node->at(bitset_temp).set_point_index.insert(iter);
+        ptr_tracking_node->at(sfbitset_tmp).set_point_index.insert(iter);
     }
 }
 }  // end namespace amrproject

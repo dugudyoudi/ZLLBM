@@ -63,8 +63,8 @@ void GeometryInfoConnection3D::InitialCoordinateGivenLevel(
     vertex_given_level_.push_back({});
     connection_vertex_given_level_.push_back({});
     DefSizet i_vertex = 0;
-    GeometryConnectionCoordinate vertex_temp;
-    vertex_temp.coordinates = { 0., 0., 0. };
+    GeometryConnectionCoordinate vertex_tmp;
+    vertex_tmp.coordinates = { 0., 0., 0. };
     ptr_coordi_min->resize(3);
     ptr_coordi_max->resize(3);
     ptr_coordi_min->at(kXIndex) =
@@ -107,10 +107,10 @@ void GeometryInfoConnection3D::InitialCoordinateGivenLevel(
             ptr_coordi_max->at(kZIndex) =
                 iter_vertex.coordinate.at(kZIndex);
         }
-        vertex_temp.coordinates.at(0) = iter_vertex.coordinate.at(0);
-        vertex_temp.coordinates.at(1) = iter_vertex.coordinate.at(1);
-        vertex_temp.coordinates.at(2) = iter_vertex.coordinate.at(2);
-        vertex_given_level_.at(0).vec_vertex_coordinate.push_back(vertex_temp);
+        vertex_tmp.coordinates.at(0) = iter_vertex.coordinate.at(0);
+        vertex_tmp.coordinates.at(1) = iter_vertex.coordinate.at(1);
+        vertex_tmp.coordinates.at(2) = iter_vertex.coordinate.at(2);
+        vertex_given_level_.at(0).vec_vertex_coordinate.push_back(vertex_tmp);
         connection_vertex_given_level_.at(0).insert({ 0, i_vertex });
         ++i_vertex;
     }

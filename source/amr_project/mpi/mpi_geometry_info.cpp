@@ -78,7 +78,7 @@ void MpiManager::DeserializeCoordiOrigin(const std::unique_ptr<char[]>& buffer,
 void MpiManager::IniSendNReceivePartitionedGeoCoordi(const std::array<DefReal, 2>& background_space,
     const SFBitsetAux2D& bitset_aux, const std::vector<DefSFBitset>& bitset_max,
     std::vector<GeometryCoordinate2D>* ptr_vec_coordinate) {
-    DefSFBitset bitset_temp;
+    DefSFBitset sfbitset_tmp;
     std::array<DefAmrIndexLUint, 2> coordinate_index;
     const int rank_id = rank_id_, num_ranks = num_of_ranks_;
     int max_buffer = (std::numeric_limits<int>::max)() / sizeof(DefReal) / 2;
@@ -100,9 +100,9 @@ void MpiManager::IniSendNReceivePartitionedGeoCoordi(const std::array<DefReal, 2
             coordinate_index =
             { static_cast<DefAmrIndexLUint>(i_point.coordinate.at(kXIndex) / background_space[kXIndex] + kEps),
               static_cast<DefAmrIndexLUint>(i_point.coordinate.at(kYIndex) / background_space[kYIndex] + kEps)};
-            bitset_temp = bitset_aux.SFBitsetEncoding(coordinate_index);
+            sfbitset_tmp = bitset_aux.SFBitsetEncoding(coordinate_index);
             iter_index = std::lower_bound(ull_max.begin(),
-                ull_max.end(), bitset_temp.to_ullong());
+                ull_max.end(), sfbitset_tmp.to_ullong());
             index = static_cast<int>(iter_index - ull_max.begin());
 #ifdef DEBUG_CHECK_GRID
             if (index == num_max) {
@@ -233,7 +233,7 @@ void MpiManager::DeserializeCoordiOrigin(const std::unique_ptr<char[]>& buffer,
 void MpiManager::IniSendNReceivePartitionedGeoCoordi(const std::array<DefReal, 3>& background_space,
     const SFBitsetAux3D& sfbitset_aux, const std::vector<DefSFBitset>& bitset_max,
     std::vector<GeometryCoordinate3D>* ptr_vec_coordinate) {
-    DefSFBitset bitset_temp;
+    DefSFBitset sfbitset_tmp;
     std::array<DefAmrIndexLUint, 3> coordinate_index;
     int rank_id = rank_id_, num_ranks = num_of_ranks_;
     int max_buffer = (std::numeric_limits<int>::max)() / sizeof(DefReal) / 3;
@@ -256,9 +256,9 @@ void MpiManager::IniSendNReceivePartitionedGeoCoordi(const std::array<DefReal, 3
             { static_cast<DefAmrIndexLUint>(i_point.coordinate.at(kXIndex) / background_space[kXIndex] + kEps),
               static_cast<DefAmrIndexLUint>(i_point.coordinate.at(kYIndex) / background_space[kYIndex] + kEps),
               static_cast<DefAmrIndexLUint>(i_point.coordinate.at(kZIndex) / background_space[kZIndex] + kEps)};
-            bitset_temp = sfbitset_aux.SFBitsetEncoding(coordinate_index);
+            sfbitset_tmp = sfbitset_aux.SFBitsetEncoding(coordinate_index);
             iter_index = std::lower_bound(ull_max.begin(),
-                ull_max.end(), bitset_temp.to_ullong());
+                ull_max.end(), sfbitset_tmp.to_ullong());
             index = static_cast<int>(iter_index - ull_max.begin());
 #ifdef DEBUG_CHECK_GRID
             if (index == num_max) {

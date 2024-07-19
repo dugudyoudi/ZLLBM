@@ -65,8 +65,8 @@ void GeometryInfoConnection2D::InitialCoordinateGivenLevel(
     vertex_given_level_.push_back({});
     connection_vertex_given_level_.push_back({});
     DefSizet i_vertex = 0;
-    GeometryConnectionCoordinate vertex_temp;
-    vertex_temp.coordinates = { 0., 0.};
+    GeometryConnectionCoordinate vertex_tmp;
+    vertex_tmp.coordinates = { 0., 0.};
     ptr_coordi_min->resize(2);
     ptr_coordi_max->resize(2);
     ptr_coordi_min->at(kXIndex) =
@@ -96,9 +96,9 @@ void GeometryInfoConnection2D::InitialCoordinateGivenLevel(
             ptr_coordi_max->at(kYIndex) =
                 iter_vertex.coordinate.at(kYIndex);
         }
-        vertex_temp.coordinates.at(kXIndex) = iter_vertex.coordinate.at(kXIndex);
-        vertex_temp.coordinates.at(kYIndex) = iter_vertex.coordinate.at(kYIndex);
-        vertex_given_level_.at(0).vec_vertex_coordinate.push_back(vertex_temp);
+        vertex_tmp.coordinates.at(kXIndex) = iter_vertex.coordinate.at(kXIndex);
+        vertex_tmp.coordinates.at(kYIndex) = iter_vertex.coordinate.at(kYIndex);
+        vertex_given_level_.at(0).vec_vertex_coordinate.push_back(vertex_tmp);
         connection_vertex_given_level_.at(0).insert({ 0, i_vertex });
         vertex_given_level_.at(0).vec_vertex_coordinate.at(i_vertex)
             .map_linked_vertices_level.insert({});

@@ -22,6 +22,7 @@ class LogManager {
     static void LogInfo(const std::string& msg);
     static void LogWarning(const std::string& msg);
     static void LogError(const std::string& msg);
+    static void LogErrorMsg(const std::string& msg);
     static void LogStartTime();
 };
 }  // end namespace amrproject

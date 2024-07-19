@@ -82,15 +82,19 @@ void MpiManager::DeserializeNodeStoreUint(
  * @brief function to serialize space filling code (DefSFBitset) and save it to buffer
  * @param[in] map_nodes node information
  * @param[out] ptr_buffer_size pointer to size of the buffer in bytes.
+ * @param[out] ptr_error_flag pointer to flag indicating the success or failure of this function.
  * @return unique pointer to a char array to store the serialized data.
  */
 std::unique_ptr<char[]> MpiManager::SerializeNodeSFBitset(
-    const DefMap<DefAmrIndexUint>& map_nodes, int* const ptr_buffer_size) const {
+    const DefMap<DefAmrIndexUint>& map_nodes, int* const ptr_buffer_size, int* const ptr_error_flag) const {
     int key_size = sizeof(DefSFBitset);
     int num_nodes = 1;
     if  (sizeof(int) + map_nodes.size() *(key_size) > (std::numeric_limits<int>::max)()) {
-        LogManager::LogError("size of the buffer is greater than the"
-         " maximum of int in MpiManager::SerializeData(DefMap<DefAmrUint>)");
+        *ptr_error_flag = 1;
+        LogManager::LogErrorMsg("size of the buffer is greater than the"
+         " maximum of int in function MpiManager::SerializeData(DefMap<DefAmrUint>) in file "
+         + std::string(__FILE__) + " at line " + std::to_string(__LINE__));
+        return std::make_unique<char[]>(0);
     } else {
         num_nodes = static_cast<int>(map_nodes.size());
     }
@@ -110,6 +114,7 @@ std::unique_ptr<char[]> MpiManager::SerializeNodeSFBitset(
         std::memcpy(ptr_buffer + position, &key_host, key_size);
         position += key_size;
     }
+    *ptr_error_flag = 0;
     return buffer;
 }
 /**
@@ -446,7 +451,6 @@ void MpiManager::IniSendNReceivePartitionedGrid(const DefAmrIndexUint dims,
             }
 
             // nodes in both refinement and mpi communication layers
-            DefMap<DefAmrIndexUint> map_ghost_n_refinement;
             DefSFCodeToUint code_tmp;
             for (const auto& iter_ghost : map_partition_near_f2c_outmost.at(0)) {
                 sfbitset_aux.FindNodesInPeriodicReginNearby(iter_ghost.first,
@@ -527,7 +531,7 @@ void MpiManager::IniSendNReceivePartitionedGrid(const DefAmrIndexUint dims,
                     }
                 }
                 // send grid nodes
-                int buffer_size_send = 0;
+                int buffer_size_send = 0, error_flag;
                 int num_chunks;
                 num_chunks = static_cast<int>(vec_nodes_ranks.at(i_rank).size());
                 vec_ptr_buffer.resize(num_chunks);
@@ -535,14 +539,14 @@ void MpiManager::IniSendNReceivePartitionedGrid(const DefAmrIndexUint dims,
                 MPI_Send(&num_chunks, 1, MPI_INT, i_rank, i_level, MPI_COMM_WORLD);
                 for (int i_chunk = 0; i_chunk < num_chunks; ++i_chunk) {
                     vec_ptr_buffer.at(i_chunk) = SerializeNodeSFBitset(vec_nodes_ranks.at(i_rank).at(i_chunk),
-                        &buffer_size_send);
+                        &buffer_size_send, &error_flag);
                     MPI_Send(&buffer_size_send, 1, MPI_INT, i_rank, i_chunk, MPI_COMM_WORLD);
                     MPI_Isend(vec_ptr_buffer.at(i_chunk).get(), buffer_size_send, MPI_BYTE, i_rank,
                     i_chunk, MPI_COMM_WORLD, &reqs_send[i_chunk]);
                 }
                 MPI_Waitall(num_chunks, reqs_send.data(), MPI_STATUS_IGNORE);
                 // nodes on both refinement layers and outer mpi communication layers
-                map_ghost_n_refinement.clear();
+                DefMap<DefAmrIndexUint> map_ghost_n_refinement;
                 for (const auto& iter_ghost : map_partition_near_f2c_outmost.at(i_rank)) {
                     sfbitset_aux.FindNodesInPeriodicReginNearby(iter_ghost.first,
                         k0NumPartitionOuterLayers_, periodic_min, periodic_max,
@@ -583,7 +587,7 @@ void MpiManager::IniSendNReceivePartitionedGrid(const DefAmrIndexUint dims,
                 MPI_Send(&num_chunks, 1, MPI_INT, i_rank, i_level, MPI_COMM_WORLD);
                 for (int i_chunk = 0; i_chunk < num_chunks; ++i_chunk) {
                     vec_ptr_buffer.at(i_chunk) = SerializeNodeSFBitset(
-                        vec_ghost_nodes_ranks.at(i_rank).at(i_chunk), &buffer_size_send);
+                        vec_ghost_nodes_ranks.at(i_rank).at(i_chunk), &buffer_size_send, &error_flag);
                     MPI_Send(&buffer_size_send, 1, MPI_INT, i_rank, i_chunk, MPI_COMM_WORLD);
                     MPI_Isend(vec_ptr_buffer.at(i_chunk).get(), buffer_size_send, MPI_BYTE, i_rank,
                         i_chunk, MPI_COMM_WORLD, &reqs_send[i_chunk]);
@@ -695,10 +699,10 @@ void MpiManager::IniSendNReceiveGridInfoAtAllLevels(const DefAmrIndexUint flag_s
     vec_sfcode_min_all_ranks_.resize(bitset_min.size());
     vec_sfcode_max_all_ranks_.resize(bitset_max.size());
     for (DefSizet i = 0; i < bitset_max.size(); ++i) {
-            vec_sfcode_min_all_ranks_.at(i) = bitset_min.at(i).to_ullong();
+        vec_sfcode_min_all_ranks_.at(i) = bitset_min.at(i).to_ullong();
     }
     for (DefSizet i = 0; i < bitset_max.size(); ++i) {
-            vec_sfcode_max_all_ranks_.at(i) = bitset_max.at(i).to_ullong();
+        vec_sfcode_max_all_ranks_.at(i) = bitset_max.at(i).to_ullong();
     }
     sfbitset_min_current_rank_ = bitset_min.at(rank_id_);
     sfbitset_max_current_rank_ = bitset_max.at(rank_id_);

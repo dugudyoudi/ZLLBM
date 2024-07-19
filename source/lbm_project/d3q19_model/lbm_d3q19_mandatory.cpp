@@ -18,31 +18,31 @@ namespace lbmproject {
  * @return shared pointer to the instance of solver using D3Q19 model.
  */
 std::shared_ptr<amrproject::SolverInterface> SolverCreatorLbmD3Q19::CreateSolver() const {
-    std::shared_ptr<SolverLbmD3Q19> ptr_temp = std::make_shared<SolverLbmD3Q19>();
-    ptr_temp->k0SolverDims_ = 3;
-    ptr_temp->k0NumQ_ = 19;
-    ptr_temp->solver_type_ = "LbmD3Q19";
+    std::shared_ptr<SolverLbmD3Q19> ptr_tmp = std::make_shared<SolverLbmD3Q19>();
+    ptr_tmp->k0SolverDims_ = 3;
+    ptr_tmp->k0NumQ_ = 19;
+    ptr_tmp->solver_type_ = "LbmD3Q19";
 
-    ptr_temp->k0Cx_ = { 0., 1., -1., 0.,  0., 0.,  0., 1., -1.,  1., -1., 1., -1.,  1., -1., 0., 0.,   0.,  0.};
-    ptr_temp->k0Cy_ = { 0., 0.,  0., 1., -1., 0.,  0., 1.,  1., -1., -1., 0.,  0.,  0.,  0., 1., -1.,  1., -1.};
-    ptr_temp->k0Cz_ = { 0., 0.,  0., 0.,  0., 1., -1., 0.,  0.,  0.,  0., 1.,  1., -1., -1., 1.,  1., -1., -1.};
-    ptr_temp->k0Weights_ = { 1./3., 1./18., 1./18., 1./18., 1./18., 1./18., 1./18.,
+    ptr_tmp->k0Cx_ = { 0., 1., -1., 0.,  0., 0.,  0., 1., -1.,  1., -1., 1., -1.,  1., -1., 0., 0.,   0.,  0.};
+    ptr_tmp->k0Cy_ = { 0., 0.,  0., 1., -1., 0.,  0., 1.,  1., -1., -1., 0.,  0.,  0.,  0., 1., -1.,  1., -1.};
+    ptr_tmp->k0Cz_ = { 0., 0.,  0., 0.,  0., 1., -1., 0.,  0.,  0.,  0., 1.,  1., -1., -1., 1.,  1., -1., -1.};
+    ptr_tmp->k0Weights_ = { 1./3., 1./18., 1./18., 1./18., 1./18., 1./18., 1./18.,
         1./36., 1./36., 1./36., 1./36., 1./36., 1./36., 1./36., 1./36., 1./36., 1./36., 1./36., 1./36. };
-    ptr_temp->k0NumQInOneDirection_ = 5;
-    ptr_temp->k0QIndicesNeg_ = {{ptr_temp->kFXnY0Z0, ptr_temp->kFXnYnZ0, ptr_temp->kFXnYpZ0,
-        ptr_temp->kFXnY0Zn, ptr_temp->kFXnY0Zp},
-        {ptr_temp->kFX0YnZ0, ptr_temp->kFXnYnZ0, ptr_temp->kFXpYnZ0,
-        ptr_temp->kFX0YnZn, ptr_temp->kFX0YnZp},
-        {ptr_temp->kFX0Y0Zn, ptr_temp->kFXnY0Zn, ptr_temp->kFXpY0Zn,
-        ptr_temp->kFX0YnZn, ptr_temp->kFX0YpZn}};
-    ptr_temp->k0QIndicesPos_ = {{ptr_temp->kFXpY0Z0, ptr_temp->kFXpYpZ0, ptr_temp->kFXpYnZ0,
-        ptr_temp->kFXpY0Zp, ptr_temp->kFXpY0Zn},
-        {ptr_temp->kFX0YpZ0, ptr_temp->kFXpYpZ0, ptr_temp->kFXnYpZ0,
-        ptr_temp->kFX0YpZp, ptr_temp->kFX0YpZn},
-        {ptr_temp->kFX0Y0Zp, ptr_temp->kFXpY0Zp, ptr_temp->kFXnY0Zp,
-        ptr_temp->kFX0YpZp, ptr_temp->kFX0YnZp}};
-    ptr_temp->ResizeModelRelatedVectors();
-    return ptr_temp;
+    ptr_tmp->k0NumQInOneDirection_ = 5;
+    ptr_tmp->k0QIndicesNeg_ = {{ptr_tmp->kFXnY0Z0, ptr_tmp->kFXnYnZ0, ptr_tmp->kFXnYpZ0,
+        ptr_tmp->kFXnY0Zn, ptr_tmp->kFXnY0Zp},
+        {ptr_tmp->kFX0YnZ0, ptr_tmp->kFXnYnZ0, ptr_tmp->kFXpYnZ0,
+        ptr_tmp->kFX0YnZn, ptr_tmp->kFX0YnZp},
+        {ptr_tmp->kFX0Y0Zn, ptr_tmp->kFXnY0Zn, ptr_tmp->kFXpY0Zn,
+        ptr_tmp->kFX0YnZn, ptr_tmp->kFX0YpZn}};
+    ptr_tmp->k0QIndicesPos_ = {{ptr_tmp->kFXpY0Z0, ptr_tmp->kFXpYpZ0, ptr_tmp->kFXpYnZ0,
+        ptr_tmp->kFXpY0Zp, ptr_tmp->kFXpY0Zn},
+        {ptr_tmp->kFX0YpZ0, ptr_tmp->kFXpYpZ0, ptr_tmp->kFXnYpZ0,
+        ptr_tmp->kFX0YpZp, ptr_tmp->kFX0YpZn},
+        {ptr_tmp->kFX0Y0Zp, ptr_tmp->kFXpY0Zp, ptr_tmp->kFXnY0Zp,
+        ptr_tmp->kFX0YpZp, ptr_tmp->kFX0YnZp}};
+    ptr_tmp->ResizeModelRelatedVectors();
+    return ptr_tmp;
 }
 void SolverLbmD3Q19::InitialModelDependencies() {
     if (k0SolverDims_ != 3) {

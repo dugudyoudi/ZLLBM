@@ -17,20 +17,20 @@ namespace lbmproject {
  * @return shared pointer to the instance of solver using D2Q9 model.
  */
 std::shared_ptr<amrproject::SolverInterface> SolverCreatorLbmD2Q9::CreateSolver() const {
-    std::shared_ptr<SolverLbmD2Q9> ptr_temp = std::make_shared<SolverLbmD2Q9>();
-    ptr_temp->k0SolverDims_ = 2;
-    ptr_temp->k0NumQ_ = 9;
-    ptr_temp->solver_type_ = "LbmD2Q9";
-    ptr_temp->k0Cx_ = { 0., 1., 0., -1., 0., 1., -1., -1., 1. };
-    ptr_temp->k0Cy_ = { 0., 0., 1., 0., -1., 1., 1., -1., -1. };
-    ptr_temp->k0Weights_ = { 4. / 9., 1. / 9., 1. / 9., 1. / 9., 1. / 9., 1. / 36., 1. / 36., 1. / 36., 1. / 36. };
-    ptr_temp->k0NumQInOneDirection_ = 3;
-    ptr_temp->k0QIndicesNeg_ = {{ptr_temp->kFXnY0Z0, ptr_temp->kFXnYnZ0, ptr_temp->kFXnYpZ0},
-        {ptr_temp->kFX0YnZ0, ptr_temp->kFXnYnZ0, ptr_temp->kFXpYnZ0}};
-    ptr_temp->k0QIndicesPos_ = {{ptr_temp->kFXpY0Z0, ptr_temp->kFXpYpZ0, ptr_temp->kFXpYnZ0},
-        {ptr_temp->kFX0YpZ0, ptr_temp->kFXpYpZ0, ptr_temp->kFXnYpZ0}};
-    ptr_temp->ResizeModelRelatedVectors();
-    return ptr_temp;
+    std::shared_ptr<SolverLbmD2Q9> ptr_tmp = std::make_shared<SolverLbmD2Q9>();
+    ptr_tmp->k0SolverDims_ = 2;
+    ptr_tmp->k0NumQ_ = 9;
+    ptr_tmp->solver_type_ = "LbmD2Q9";
+    ptr_tmp->k0Cx_ = { 0., 1., 0., -1., 0., 1., -1., -1., 1. };
+    ptr_tmp->k0Cy_ = { 0., 0., 1., 0., -1., 1., 1., -1., -1. };
+    ptr_tmp->k0Weights_ = { 4. / 9., 1. / 9., 1. / 9., 1. / 9., 1. / 9., 1. / 36., 1. / 36., 1. / 36., 1. / 36. };
+    ptr_tmp->k0NumQInOneDirection_ = 3;
+    ptr_tmp->k0QIndicesNeg_ = {{ptr_tmp->kFXnY0Z0, ptr_tmp->kFXnYnZ0, ptr_tmp->kFXnYpZ0},
+        {ptr_tmp->kFX0YnZ0, ptr_tmp->kFXnYnZ0, ptr_tmp->kFXpYnZ0}};
+    ptr_tmp->k0QIndicesPos_ = {{ptr_tmp->kFXpY0Z0, ptr_tmp->kFXpYpZ0, ptr_tmp->kFXpYnZ0},
+        {ptr_tmp->kFX0YpZ0, ptr_tmp->kFXpYpZ0, ptr_tmp->kFXnYpZ0}};
+    ptr_tmp->ResizeModelRelatedVectors();
+    return ptr_tmp;
 }
 void SolverLbmD2Q9::InitialModelDependencies() {
     if (k0SolverDims_ != 2) {

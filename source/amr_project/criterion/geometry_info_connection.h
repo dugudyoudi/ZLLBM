@@ -195,11 +195,11 @@ class GeometryInfoConnection2D : public GeometryInfo2DInterface, public Geometry
 class GeometryInfoConnection2DCreator :public GeometryInfoCreatorInterface {
  public:
     std::shared_ptr<GeometryInfoInterface> CreateGeometryInfo() override {
-        std::shared_ptr<GeometryInfoConnection2D> ptr_temp =
+        std::shared_ptr<GeometryInfoConnection2D> ptr_tmp =
          std::make_shared<GeometryInfoConnection2D>();
-        ptr_temp->node_type_ = "Connection2D";
-        ptr_temp->geometry_cell_type_ = EGeometryCellType::kPolyLine;
-        return ptr_temp;
+        ptr_tmp->node_type_ = "Connection2D";
+        ptr_tmp->geometry_cell_type_ = EGeometryCellType::kPolyLine;
+        return ptr_tmp;
     };
 };
 #endif  // DEBUG_DISABLE_2D_FUNCTIONS
@@ -240,11 +240,11 @@ class GeometryInfoConnection3D : public GeometryInfo3DInterface, public Geometry
 class GeometryInfoConnection3DCreator :public GeometryInfoCreatorInterface {
  public:
     std::shared_ptr<GeometryInfoInterface> CreateGeometryInfo() override {
-        std::shared_ptr<GeometryInfoConnection3D> ptr_temp =
+        std::shared_ptr<GeometryInfoConnection3D> ptr_tmp =
          std::make_shared<GeometryInfoConnection3D>();
-        ptr_temp->node_type_ = "Connection3D";
-        ptr_temp->geometry_cell_type_ = EGeometryCellType::kPolyLine;
-        return ptr_temp;
+        ptr_tmp->node_type_ = "Connection3D";
+        ptr_tmp->geometry_cell_type_ = EGeometryCellType::kPolyLine;
+        return ptr_tmp;
     };
 };
 #endif  // DEBUG_DISABLE_3D_FUNCTIONS

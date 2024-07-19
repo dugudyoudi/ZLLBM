@@ -129,12 +129,12 @@ int SFBitsetAux2D::ResetIndicesExceedingDomain(const std::array<DefAmrIndexLUint
     DefSFCodeToUint* const ptr_i_code, DefSFBitset* ptr_bitset_tmp) const {
     std::array<DefAmrIndexLUint, 2> indices;
     DefSFCodeToUint& i_code = *ptr_i_code;
-    DefSFBitset& bitset_temp = *ptr_bitset_tmp;
-    bitset_temp = static_cast<DefSFBitset>(i_code);
+    DefSFBitset& sfbitset_tmp = *ptr_bitset_tmp;
+    sfbitset_tmp = static_cast<DefSFBitset>(i_code);
     DefAmrUint iter_count;
     DefAmrUint sfcode_block;  // block size of space filling code
     bool bool_exceed_x, bool_exceed_y;
-    SFBitsetComputeIndices(bitset_temp, &indices);
+    SFBitsetComputeIndices(sfbitset_tmp, &indices);
     bool_exceed_x =
         indices[kXIndex] > domain_max_indices[kXIndex];
     bool_exceed_y =
@@ -148,8 +148,8 @@ int SFBitsetAux2D::ResetIndicesExceedingDomain(const std::array<DefAmrIndexLUint
                 sfcode_block *= 4;
             }
             i_code += sfcode_block / 4;
-            bitset_temp = static_cast<DefSFBitset>(i_code);
-            SFBitsetComputeIndices(bitset_temp, &indices);
+            sfbitset_tmp = static_cast<DefSFBitset>(i_code);
+            SFBitsetComputeIndices(sfbitset_tmp, &indices);
             bool_exceed_x =
                 indices[kXIndex] > domain_max_indices[kXIndex];
             bool_exceed_y =
@@ -161,8 +161,8 @@ int SFBitsetAux2D::ResetIndicesExceedingDomain(const std::array<DefAmrIndexLUint
                 sfcode_block *= 4;
             }
             i_code += sfcode_block / 4 * 2;
-            bitset_temp = static_cast<DefSFBitset>(i_code);
-            SFBitsetComputeIndices(bitset_temp, &indices);
+            sfbitset_tmp = static_cast<DefSFBitset>(i_code);
+            SFBitsetComputeIndices(sfbitset_tmp, &indices);
             bool_exceed_x =
                 indices[kXIndex] > domain_max_indices[kXIndex];
             bool_exceed_y =
@@ -176,16 +176,16 @@ int SFBitsetAux2D::ResetIndicesExceedingDomain(const std::array<DefAmrIndexLUint
     }
 #endif
     if (indices[kXIndex] < domain_min_indices[kXIndex]) {
-        bitset_temp = SFBitsetEncoding(
+        sfbitset_tmp = SFBitsetEncoding(
             { domain_min_indices[kXIndex], indices[kYIndex] });
-        i_code = bitset_temp.to_ullong();
-        SFBitsetComputeIndices(bitset_temp, &indices);
+        i_code = sfbitset_tmp.to_ullong();
+        SFBitsetComputeIndices(sfbitset_tmp, &indices);
     }
     if (indices[kYIndex] < domain_min_indices[kYIndex]) {
-        bitset_temp = SFBitsetEncoding(
+        sfbitset_tmp = SFBitsetEncoding(
             { indices[kXIndex] , domain_min_indices[kYIndex] });
-        i_code = bitset_temp.to_ullong();
-        SFBitsetComputeIndices(bitset_temp, &indices);
+        i_code = sfbitset_tmp.to_ullong();
+        SFBitsetComputeIndices(sfbitset_tmp, &indices);
     }
     return 0;
 }
@@ -319,12 +319,12 @@ int SFBitsetAux3D::ResetIndicesExceedingDomain(const std::array<DefAmrIndexLUint
     DefSFCodeToUint* const ptr_i_code, DefSFBitset* ptr_bitset_tmp) const {
     std::array<DefAmrIndexLUint, 3> indices;
     DefSFCodeToUint& i_code = *ptr_i_code;
-    DefSFBitset& bitset_temp = *ptr_bitset_tmp;
-    bitset_temp = static_cast<DefSFBitset>(i_code);
+    DefSFBitset& sfbitset_tmp = *ptr_bitset_tmp;
+    sfbitset_tmp = static_cast<DefSFBitset>(i_code);
     DefAmrUint iter_count;
     DefAmrUint sfcode_block;  // block size of space filling code
     bool bool_exceed_x, bool_exceed_y, bool_exceed_z;
-    SFBitsetComputeIndices(bitset_temp, &indices);
+    SFBitsetComputeIndices(sfbitset_tmp, &indices);
     bool_exceed_x =
         indices[kXIndex] > domain_max_indices[kXIndex];
     bool_exceed_y =
@@ -340,8 +340,8 @@ int SFBitsetAux3D::ResetIndicesExceedingDomain(const std::array<DefAmrIndexLUint
                 sfcode_block *= 8;
             }
             i_code += sfcode_block / 8;
-            bitset_temp = static_cast<DefSFBitset>(i_code);
-            SFBitsetComputeIndices(bitset_temp, &indices);
+            sfbitset_tmp = static_cast<DefSFBitset>(i_code);
+            SFBitsetComputeIndices(sfbitset_tmp, &indices);
             bool_exceed_x =
                 indices[kXIndex] > domain_max_indices[kXIndex];
             bool_exceed_y =
@@ -355,8 +355,8 @@ int SFBitsetAux3D::ResetIndicesExceedingDomain(const std::array<DefAmrIndexLUint
                 sfcode_block *= 8;
             }
             i_code += sfcode_block / 8 * 2;
-            bitset_temp = static_cast<DefSFBitset>(i_code);
-            SFBitsetComputeIndices(bitset_temp, &indices);
+            sfbitset_tmp = static_cast<DefSFBitset>(i_code);
+            SFBitsetComputeIndices(sfbitset_tmp, &indices);
             bool_exceed_x =
                 indices[kXIndex] > domain_max_indices[kXIndex];
             bool_exceed_y =
@@ -370,8 +370,8 @@ int SFBitsetAux3D::ResetIndicesExceedingDomain(const std::array<DefAmrIndexLUint
                 sfcode_block *= 8;
             }
             i_code += sfcode_block / 8 * 4;
-            bitset_temp = static_cast<DefSFBitset>(i_code);
-            SFBitsetComputeIndices(bitset_temp, &indices);
+            sfbitset_tmp = static_cast<DefSFBitset>(i_code);
+            SFBitsetComputeIndices(sfbitset_tmp, &indices);
             bool_exceed_x =
                 indices[kXIndex] > domain_max_indices[kXIndex];
             bool_exceed_y =
@@ -387,22 +387,22 @@ int SFBitsetAux3D::ResetIndicesExceedingDomain(const std::array<DefAmrIndexLUint
     }
 #endif
     if (indices[kXIndex] < domain_min_indices[kXIndex]) {
-        bitset_temp = SFBitsetEncoding(
+        sfbitset_tmp = SFBitsetEncoding(
             { domain_min_indices[kXIndex], indices[kYIndex], indices[kZIndex] });
-        i_code = bitset_temp.to_ullong();
-        SFBitsetComputeIndices(bitset_temp, &indices);
+        i_code = sfbitset_tmp.to_ullong();
+        SFBitsetComputeIndices(sfbitset_tmp, &indices);
     }
     if (indices[kYIndex] < domain_min_indices[kYIndex]) {
-        bitset_temp = SFBitsetEncoding(
+        sfbitset_tmp = SFBitsetEncoding(
             { indices[kXIndex], domain_min_indices[kYIndex], indices[kZIndex] });
-        i_code = bitset_temp.to_ullong();
-        SFBitsetComputeIndices(bitset_temp, &indices);
+        i_code = sfbitset_tmp.to_ullong();
+        SFBitsetComputeIndices(sfbitset_tmp, &indices);
     }
     if (indices[kZIndex] < domain_min_indices[kZIndex]) {
-        bitset_temp = SFBitsetEncoding(
+        sfbitset_tmp = SFBitsetEncoding(
             { indices[kXIndex], indices[kYIndex], domain_min_indices[kZIndex] });
-        i_code = bitset_temp.to_ullong();
-        SFBitsetComputeIndices(bitset_temp, &indices);
+        i_code = sfbitset_tmp.to_ullong();
+        SFBitsetComputeIndices(sfbitset_tmp, &indices);
     }
     return 0;
 }

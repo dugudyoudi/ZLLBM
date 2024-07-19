@@ -45,11 +45,11 @@ class GeometryInfoOrigin2D : public GeometryInfo2DInterface {
 class GeometryInfoOrigin2DCreator :public GeometryInfoCreatorInterface {
  public:
     std::shared_ptr<GeometryInfoInterface> CreateGeometryInfo() override {
-        std::shared_ptr<GeometryInfoOrigin2D> ptr_temp =
+        std::shared_ptr<GeometryInfoOrigin2D> ptr_tmp =
          std::make_shared<GeometryInfoOrigin2D>();
-        ptr_temp->node_type_ = "Origin2D";
-        ptr_temp->geometry_cell_type_ = EGeometryCellType::kPolyLine;
-        return ptr_temp;
+        ptr_tmp->node_type_ = "Origin2D";
+        ptr_tmp->geometry_cell_type_ = EGeometryCellType::kPolyLine;
+        return ptr_tmp;
     };
 };
 #endif  // DEBUG_DISABLE_2D_FUNCTIONS
@@ -73,11 +73,11 @@ class GeometryInfoOrigin3D : public GeometryInfo3DInterface {
 class GeometryInfoOrigin3DCreator :public GeometryInfoCreatorInterface {
  public:
     std::shared_ptr<GeometryInfoInterface> CreateGeometryInfo() override {
-        std::shared_ptr<GeometryInfoOrigin3D> ptr_temp =
+        std::shared_ptr<GeometryInfoOrigin3D> ptr_tmp =
          std::make_shared<GeometryInfoOrigin3D>();
-        ptr_temp->node_type_ = "Origin3D";
-        ptr_temp->geometry_cell_type_ = EGeometryCellType::kPolyLine;
-        return ptr_temp;
+        ptr_tmp->node_type_ = "Origin3D";
+        ptr_tmp->geometry_cell_type_ = EGeometryCellType::kPolyLine;
+        return ptr_tmp;
     };
 };
 #endif  // DEBUG_DISABLE_3D_FUNCTIONS

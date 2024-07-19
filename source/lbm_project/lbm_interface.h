@@ -323,7 +323,7 @@ class SolverLbmInterface :public amrproject::SolverInterface {
     void CallDomainBoundaryCondition(const amrproject::ETimeSteppingScheme time_scheme,
         const DefAmrIndexUint time_step_current, const amrproject::SFBitsetAuxInterface& sfbitset_aux,
         amrproject::GridInfoInterface* const ptr_grid_info) override;
-    void InformationFromGridOfDifferentLevel(
+    int InformationFromGridOfDifferentLevel(
         const amrproject::ETimingInOneStep timing, const amrproject::ETimeSteppingScheme time_scheme,
         const DefAmrIndexUint time_step_current, const amrproject::SFBitsetAuxInterface& sfbitset_aux,
         amrproject::GridInfoInterface* const ptr_grid_info) override;

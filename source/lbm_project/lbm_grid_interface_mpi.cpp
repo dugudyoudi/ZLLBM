@@ -110,7 +110,7 @@ void GridInfoLbmInteface::CopyNodeInfoToBuffer(
         for (const auto& iter : map_nodes) {
             if (ptr_lbm_grid_nodes_->find(iter.first) != ptr_lbm_grid_nodes_->end()) {
                 // calculate distribution functions before copy
-                ComputeNodeInfoBeforeMpiCommunication(iter.first, *ptr_lbm_solver);
+                //ComputeNodeInfoBeforeMpiCommunication(iter.first, *ptr_lbm_solver);
 
                 std::memcpy(ptr_buffer + position, &(iter.first), sizeof(DefSFBitset));
                 position+=sizeof(DefSFBitset);

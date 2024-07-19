@@ -300,8 +300,8 @@ void GridManagerInterface::ExtendGivenNumbOfLayer(
         bool_extend_pos(k0GridDims_, true);
     DefMap<DefAmrUint> map_input_layer(map_start_layer);
     std::vector<DefMap<DefAmrUint>> vec_boundary_min, vec_boundary_max;
-    std::vector<DefAmrIndexLUint> num_extend_neg_temp(num_extend_neg),
-        num_extend_pos_temp(num_extend_pos);
+    std::vector<DefAmrIndexLUint> num_extend_neg_tmp(num_extend_neg),
+        num_extend_pos_tmp(num_extend_pos);
     // extend grid layer by layer
     for (DefAmrIndexLUint i_layer = 0; i_layer < extend_layer_max; ++i_layer) {
         DefMap<DefAmrUint> map_output_layer;
@@ -311,14 +311,14 @@ void GridManagerInterface::ExtendGivenNumbOfLayer(
         map_input_layer = std::move(map_output_layer);
         for (DefAmrIndexUint i = 0; i < k0GridDims_; ++i) {
             if (bool_extend_neg[i]) {
-                num_extend_neg_temp[i] -= 1;
-                if (num_extend_neg_temp[i] == 0) {
+                num_extend_neg_tmp[i] -= 1;
+                if (num_extend_neg_tmp[i] == 0) {
                     bool_extend_neg[i] = false;
                 }
             }
             if (bool_extend_pos[i]) {
-                num_extend_pos_temp[i] -= 1;
-                if (num_extend_pos_temp[i] == 0) {
+                num_extend_pos_tmp[i] -= 1;
+                if (num_extend_pos_tmp[i] == 0) {
                     bool_extend_pos[i] = false;
                 }
             }
@@ -366,16 +366,16 @@ int GridManagerInterface::FloodFillForInAndOut(
         // create a copy of map_nodes_exist and add one layer for flood fill
         DefAmrIndexUint flag_bit_colored = DefAmrIndexUint(1 << (sizeof(DefAmrIndexUint) * 8 - 1));
         DefAmrIndexUint flag_bit_exist = flag_bit_colored | (sizeof(DefAmrIndexUint) * 8 - 2);
-        DefMap<DefAmrUint> map_nodes_temp(map_nodes_exist);
+        DefMap<DefAmrUint> map_nodes_tmp(map_nodes_exist);
         // generate one more layer around the input grid
         for (auto iter = map_nodes_exist.begin();
             iter != map_nodes_exist.end(); ++iter) {
-            map_nodes_temp.at(iter->first) = flag_bit_exist;
+            map_nodes_tmp.at(iter->first) = flag_bit_exist;
             GridFindAllNeighborsVir(iter->first, &bitset_neigh);
             for (const auto& iter_neighbour : bitset_neigh) {
-                if (map_nodes_temp.find(iter_neighbour)
-                    == map_nodes_temp.end()) {
-                    map_nodes_temp.insert({ iter_neighbour, kFlagSize0_ });
+                if (map_nodes_tmp.find(iter_neighbour)
+                    == map_nodes_tmp.end()) {
+                    map_nodes_tmp.insert({ iter_neighbour, kFlagSize0_ });
                 }
             }
         }
@@ -388,14 +388,14 @@ int GridManagerInterface::FloodFillForInAndOut(
             sfbitset_seed = vec_sfbitset_stk.back();
             vec_sfbitset_stk.pop_back();
             ++i;
-            if (map_nodes_temp.find(sfbitset_seed) == map_nodes_temp.end()) {
-            } else if ((map_nodes_temp.at(sfbitset_seed) & flag_bit_exist)
+            if (map_nodes_tmp.find(sfbitset_seed) == map_nodes_tmp.end()) {
+            } else if ((map_nodes_tmp.at(sfbitset_seed) & flag_bit_exist)
                 == flag_bit_exist) {
                 ptr_map_nodes_inside->insert({ sfbitset_seed, kFlagSize0_ });
-            } else if ((map_nodes_temp.at(sfbitset_seed) & flag_bit_colored)
+            } else if ((map_nodes_tmp.at(sfbitset_seed) & flag_bit_colored)
                 != flag_bit_colored) {
                 // color the node
-                map_nodes_temp.at(sfbitset_seed) |= flag_bit_colored;
+                map_nodes_tmp.at(sfbitset_seed) |= flag_bit_colored;
                 // add neighboring nodes to seed
                 PushBackSFBitsetInFloodFill(sfbitset_seed, &vec_sfbitset_stk);
             }

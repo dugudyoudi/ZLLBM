@@ -308,7 +308,7 @@ void GridInfoLbmInteface::InitialNotComputeNodeFlag() {
  * @param sfbitset_aux class to manage functions for space filling code computation.
  * @param node_flag flag indicates coarse node status, which will be not used for interpolation.
  * @param grid_info_coarse grid information on the coarse grid.
- * @return 0 run successfully, 1 does not do anything since find or coarse grid is not available.
+ * @return 0 run successfully, otherwise some error occurred in this function.
  * @note information on the layers from 1 to k0NumFine2CoarseLayer_ is transferred from the coarse grid.
  */
 int GridInfoLbmInteface::TransferInfoFromCoarseGrid(const amrproject::SFBitsetAuxInterface& sfbitset_aux,
@@ -316,7 +316,10 @@ int GridInfoLbmInteface::TransferInfoFromCoarseGrid(const amrproject::SFBitsetAu
     DefAmrIndexUint dims = ptr_solver_->k0SolverDims_;
     if (GetPointerToLbmGrid() == nullptr ||
         (dynamic_cast<const GridInfoLbmInteface&>(grid_info_coarse).ptr_lbm_grid_nodes_ == nullptr)) {
-        return 1;
+        amrproject::LogManager::LogErrorMsg("pointer to LBM grid nodes is null in function"
+            " GridInfoLbmInteface::TransferInfoFromCoarseGrid in file "
+            + std::string(__FILE__) + " at line " + std::to_string(__LINE__));
+        return -1;
     }
     // identify periodic boundaries
     std::vector<bool> periodic_min(dims), periodic_max(dims);
@@ -379,10 +382,10 @@ int GridInfoLbmInteface::TransferInfoFromCoarseGrid(const amrproject::SFBitsetAu
     std::vector<DefSFBitset> nodes_in_region;
     DefAmrIndexLUint valid_length = max_interp_length_;
     SolverLbmInterface* lbm_solver_manager = dynamic_cast<SolverLbmInterface*>(ptr_solver_.get());
-    const GridInfoLbmInteface& lbm_grid_coarse =
-        dynamic_cast<const GridInfoLbmInteface&>(grid_info_coarse);
+    const GridInfoLbmInteface& lbm_grid_coarse = dynamic_cast<const GridInfoLbmInteface&>(grid_info_coarse);
+    DefAmrIndexUint start_layer = k0NumFine2CoarseLayer_ - k0NumFine2CoarseGhostLayer_;
     for (auto& iter_interface : map_ptr_interface_layer_info_) {
-        for (DefAmrIndexUint i_layer = 1; i_layer < k0NumFine2CoarseLayer_; ++i_layer) {
+        for (DefAmrIndexUint i_layer = start_layer; i_layer < k0NumFine2CoarseLayer_; ++i_layer) {
             // layers on inner interfaces
             for (auto& iter_node : iter_interface.second->vec_inner_fine2coarse_.at(i_layer)) {
                 sfbitset_coarse = sfbitset_aux.SFBitsetToNLowerLevelVir(1, iter_node.first);
@@ -392,29 +395,49 @@ int GridInfoLbmInteface::TransferInfoFromCoarseGrid(const amrproject::SFBitsetAu
                 func_node_interp_(valid_length, max_interp_length_, node_flag_not_interp, iter_node.first, sfbitset_aux,
                     nodes_in_region, *ptr_lbm_grid_nodes_, grid_info_coarse, *lbm_grid_coarse.ptr_lbm_grid_nodes_,
                     ptr_lbm_grid_nodes_->at(iter_node.first).get());
+                lbm_solver_manager->StreamOutForAGivenNode(iter_node.first, sfbitset_aux, ptr_lbm_grid_nodes_);
             }
             // layers on outer interfaces
             for (auto& iter_node : iter_interface.second->vec_outer_fine2coarse_.at(i_layer)) {
+
+       
+//        int rank_id = 0
+//                 MPI_Comm_rank(MPI_COMM_WORLD, &rank_id);
+//                 if (rank_id == 0) {
+// amrproject::SFBitsetAux2D aux2d;
+// std::array<DefAmrIndexLUint, 2> indices;
+// aux2d.SFBitsetComputeIndices(iter_node.first, &indices);
+// std::cout << i_layer << " " << indices[0] << " " << indices[1] << std::endl;
+// if (indices[0] == 5 && indices[1] == 10) {
+//     std::cout << ptr_lbm_grid_nodes_->at(iter_node.first)->f_collide_[1] << "-----" << std::endl;
+// }
+//                 }
+
                 sfbitset_coarse = sfbitset_aux.SFBitsetToNLowerLevelVir(1, iter_node.first);
                 valid_length = sfbitset_aux.FindNodesInPeriodicReginOfGivenLength(sfbitset_coarse, max_interp_length_,
                     periodic_min, periodic_max, domain_min, domain_max, &nodes_in_region);
-
-                SetNodeVariablesAsZeros(ptr_lbm_grid_nodes_->at(iter_node.first).get());
+                if (ptr_lbm_grid_nodes_->find(iter_node.first) != ptr_lbm_grid_nodes_->end()) {
+                    SetNodeVariablesAsZeros(ptr_lbm_grid_nodes_->at(iter_node.first).get());
+                } else {
+                    amrproject::LogManager::LogErrorMsg("node for interpolation is not found in function"
+                        " GridInfoLbmInteface::TransferInfoFromCoarseGrid in file "
+                        + std::string(__FILE__) + " at line " + std::to_string(__LINE__));
+                    return -1;
+                }
                 func_node_interp_(valid_length, max_interp_length_, node_flag_not_interp, iter_node.first, sfbitset_aux,
                     nodes_in_region, *ptr_lbm_grid_nodes_, grid_info_coarse, *lbm_grid_coarse.ptr_lbm_grid_nodes_,
                     ptr_lbm_grid_nodes_->at(iter_node.first).get());
+                lbm_solver_manager->StreamOutForAGivenNode(iter_node.first, sfbitset_aux, ptr_lbm_grid_nodes_);
 
+//                 if (rank_id == 0) {
 
-                //                             int rank_id = 0;
-                // MPI_Comm_rank(MPI_COMM_WORLD, &rank_id);
-                //                 if (i_level_ == 1 && rank_id==0) {
-                //     amrproject::SFBitsetAux2D aux2d;
-                //     std::array<DefAmrIndexLUint, 2> indices;
-                //     aux2d.SFBitsetComputeIndices(iter_node.first, &indices);
-                //     std::cout << indices[0] << " " << indices[1] << std::endl;
-                //     std::cout <<ptr_lbm_grid_nodes_->at(iter_node.first)->f_collide_[1] << std::endl;
-                // }
-
+// amrproject::SFBitsetAux2D aux2d;
+// std::array<DefAmrIndexLUint, 2> indices;
+// aux2d.SFBitsetComputeIndices(iter_node.first, &indices);
+// if (indices[0] == 5 && indices[1] == 10) {
+//     std::cout << ptr_lbm_grid_nodes_->at(iter_node.first)->f_collide_[1] << std::endl;
+// }
+//                 }
             }
         }
     }
@@ -430,8 +453,8 @@ void GridInfoLbmInteface::DebugWrite() {
                     
                     //aux2d.SFBitsetComputeIndices(iter_node.first, &indices);
                     //std::cout << indices[0] << " " << indices[1] << std::endl;
-                    std::cout << "2: " <<ptr_lbm_grid_nodes_->at(aux2d.SFBitsetEncoding({2, 10}))->f_collide_[1]<< " "<<ptr_lbm_grid_nodes_->at(aux2d.SFBitsetEncoding({2, 10}))->f_[1] << std::endl;
-                    std::cout  << "3: "<<ptr_lbm_grid_nodes_->at(aux2d.SFBitsetEncoding({3, 10}))->f_collide_[1] << " "<<ptr_lbm_grid_nodes_->at(aux2d.SFBitsetEncoding({2, 10}))->f_[1]<< std::endl;
+                    std::cout << "2: " <<ptr_lbm_grid_nodes_->at(aux2d.SFBitsetEncoding({18, 9}))->f_collide_[1]<< " "<<ptr_lbm_grid_nodes_->at(aux2d.SFBitsetEncoding({18, 9}))->f_[1] << std::endl;
+                    std::cout  << "3: "<<ptr_lbm_grid_nodes_->at(aux2d.SFBitsetEncoding({6, 9}))->f_collide_[1] << " "<<ptr_lbm_grid_nodes_->at(aux2d.SFBitsetEncoding({6, 9}))->f_[1]<< std::endl;
                 }
 }
 /**
@@ -515,23 +538,23 @@ void GridInfoLbmInteface::SetupOutputVariables() {
     for (const auto& iter_str : output_variable_name_) {
         if (iter_str == "rho") {
             output_variables_.push_back(std::make_unique<OutputLBMNodeVariableInfo>());
-            OutputLBMNodeVariableInfo& output_info_temp =
+            OutputLBMNodeVariableInfo& output_info_tmp =
                 *dynamic_cast<OutputLBMNodeVariableInfo*>(output_variables_.back().get());
-            output_info_temp.variable_dims_ = 1;
-            output_info_temp.func_get_var_ = [] (GridNodeLbm* const ptr_node)->std::vector<DefReal> {
+            output_info_tmp.variable_dims_ = 1;
+            output_info_tmp.func_get_var_ = [] (GridNodeLbm* const ptr_node)->std::vector<DefReal> {
                 return {ptr_node->rho_};
             };
-            output_info_temp.output_name_ = "rho";
+            output_info_tmp.output_name_ = "rho";
         } else if (iter_str == "velocity") {
             output_variables_.push_back(std::make_unique<OutputLBMNodeVariableInfo>());
-            OutputLBMNodeVariableInfo& output_info_temp =
+            OutputLBMNodeVariableInfo& output_info_tmp =
                 *dynamic_cast<OutputLBMNodeVariableInfo*>(output_variables_.back().get());
-            output_info_temp.variable_dims_ = ptr_solver_->k0SolverDims_;
-            output_info_temp.func_get_var_ = []
+            output_info_tmp.variable_dims_ = ptr_solver_->k0SolverDims_;
+            output_info_tmp.func_get_var_ = []
                 (GridNodeLbm* const ptr_node)->std::vector<DefReal> {
                 return ptr_node->velocity_;
             };
-            output_info_temp.output_name_ = "velocity";
+            output_info_tmp.output_name_ = "velocity";
         }
     }
     GetPointerToLbmGrid();
@@ -570,23 +593,23 @@ int GridInfoLbmInteface::OutputOneVariable(
     const amrproject::OutputDataFormat& output_data_format,
     const DefMap<DefSizet>& map_node_index) const {
     const DefMap<std::unique_ptr<GridNodeLbm>>& map_grid_node = *ptr_lbm_grid_nodes_;
-    std::string str_format, str_temp;
+    std::string str_format, str_tmp;
     DefAmrIndexUint dims = output_info.variable_dims_;
     if (bool_binary) {
         str_format =  "binary";
     } else {
         str_format =  "ascii";
     }
-    str_temp.assign("      <DataArray NumberOfComponents=\"" + std::to_string(dims)
+    str_tmp.assign("      <DataArray NumberOfComponents=\"" + std::to_string(dims)
         + "\" type=\"" + output_data_format.output_real_.format_name_
         + "\" Name=\"" + output_info.output_name_ + "\" format=\"" + str_format + "\">\n");
-    fprintf_s(fp, str_temp.c_str());
+    fprintf_s(fp, str_tmp.c_str());
 
     if (bool_binary) {
         std::vector<uint8_t> vec_uint8{}, vec_base64{};
         for (auto iter = map_node_index.begin();
             iter != map_node_index.end(); ++iter) {
-            const std::vector<DefReal>& vec_var =  output_info.func_get_var_(map_grid_node.at(iter->first).get());
+            const std::vector<DefReal>& vec_var = output_info.func_get_var_(map_grid_node.at(iter->first).get());
             for (DefAmrIndexUint i_dims = 0;  i_dims < dims; ++i_dims) {
                 base64_instance.AddToVecChar(output_data_format.output_real_.CastType(vec_var.at(i_dims)), &vec_uint8);
             }

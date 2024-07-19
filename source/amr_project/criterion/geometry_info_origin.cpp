@@ -43,17 +43,17 @@ void GeometryInfoOrigin2D::FindTrackingNodeBasedOnGeo(
     DefMap<TrackingNode>* ptr_tracking_node = &(ptr_grid_info
      ->map_ptr_tracking_grid_info_.at(key_tracking_grid).get()->map_tracking_node_);
 
-    DefSFBitset bitset_temp;
+    DefSFBitset sfbitset_tmp;
     std::vector<DefReal> coordi(2, 0.);
     DefSizet ipoint = 0;
     for (const auto& iter : coordinate_origin_) {
         coordi[kXIndex] = iter.coordinate[kXIndex];
         coordi[kYIndex] = iter.coordinate[kYIndex];
-        bitset_temp = sfbitset_aux.SFBitsetEncodingCoordi(ptr_grid_info->grid_space_, coordi);
-        if (ptr_grid_info->CheckIfNodeOutsideCubicDomain(2, bitset_temp, sfbitset_aux)
+        sfbitset_tmp = sfbitset_aux.SFBitsetEncodingCoordi(ptr_grid_info->grid_space_, coordi);
+        if (ptr_grid_info->CheckIfNodeOutsideCubicDomain(2, sfbitset_tmp, sfbitset_aux)
             >= GridInfoInterface::kFlagInsideDomain_) {
-            if (ptr_tracking_node->find(bitset_temp) == ptr_tracking_node->end()) {
-                ptr_tracking_node->insert({ bitset_temp, (ptr_grid_info
+            if (ptr_tracking_node->find(sfbitset_tmp) == ptr_tracking_node->end()) {
+                ptr_tracking_node->insert({ sfbitset_tmp, (ptr_grid_info
                 ->map_ptr_tracking_grid_info_.at(key_tracking_grid).get())->k0TrackNodeInstance_ });
             }
         } else {
@@ -62,7 +62,7 @@ void GeometryInfoOrigin2D::FindTrackingNodeBasedOnGeo(
                 + std::string(__FILE__) + " at line " + std::to_string(__LINE__));
         }
 
-        ptr_tracking_node->at(bitset_temp).set_point_index.insert({0, ipoint });
+        ptr_tracking_node->at(sfbitset_tmp).set_point_index.insert({0, ipoint });
         ++ipoint;
     }
 }
@@ -94,18 +94,18 @@ void GeometryInfoOrigin3D::FindTrackingNodeBasedOnGeo(
     DefMap<TrackingNode>* ptr_tracking_node = &(ptr_grid_info
      ->map_ptr_tracking_grid_info_.at(key_tracking_grid).get()->map_tracking_node_);
 
-    DefSFBitset bitset_temp;
+    DefSFBitset sfbitset_tmp;
     std::vector<DefReal> coordi(3, 0.);
     DefSizet ipoint = 0;
     for (const auto& iter : coordinate_origin_) {
         coordi[kXIndex] = iter.coordinate[kXIndex];
         coordi[kYIndex] = iter.coordinate[kYIndex];
         coordi[kZIndex] = iter.coordinate[kZIndex];
-        bitset_temp = sfbitset_aux.SFBitsetEncodingCoordi(ptr_grid_info->grid_space_, coordi);
-        if (ptr_grid_info->CheckIfNodeOutsideCubicDomain(3, bitset_temp, sfbitset_aux)
+        sfbitset_tmp = sfbitset_aux.SFBitsetEncodingCoordi(ptr_grid_info->grid_space_, coordi);
+        if (ptr_grid_info->CheckIfNodeOutsideCubicDomain(3, sfbitset_tmp, sfbitset_aux)
             >= GridInfoInterface::kFlagInsideDomain_) {
-            if (ptr_tracking_node->find(bitset_temp) == ptr_tracking_node->end()) {
-                ptr_tracking_node->insert({ bitset_temp, (ptr_grid_info
+            if (ptr_tracking_node->find(sfbitset_tmp) == ptr_tracking_node->end()) {
+                ptr_tracking_node->insert({ sfbitset_tmp, (ptr_grid_info
                 ->map_ptr_tracking_grid_info_.at(key_tracking_grid).get())->k0TrackNodeInstance_ });
             }
         } else {
@@ -114,7 +114,7 @@ void GeometryInfoOrigin3D::FindTrackingNodeBasedOnGeo(
                 + std::to_string(coordi[kZIndex]) + ") is outside the computational domain in "
                 + std::string(__FILE__) + " at line " + std::to_string(__LINE__));
         }
-        ptr_tracking_node->at(bitset_temp).set_point_index.insert({ 0, ipoint });
+        ptr_tracking_node->at(sfbitset_tmp).set_point_index.insert({ 0, ipoint });
         ++ipoint;
     }
 }
