@@ -45,22 +45,20 @@ void LbmCollisionOptInterface::CalRelaxationTimeRatio() {
 /**
  * @brief function to convert distribution functions on coarse grid to fine grid.
  * @param[in] dt_lbm  LBM time step at current refinement level (coarse grid).
- * @param[in] feq equilibrium distribution functions.
- * @param[in] node_coarse  a node on coarse grid.
- * @param[out] ptr_node_fine pointer to a node on fine grid.
+ * @param[in] lbm_solver reference of lbm solver.
+ * @param[in] f_collide_coarse post collision distribution functions of a coarse grid.
+ * @param[out] ptr_f_collide_fine pointer to post collision distribution functions of a fine grid.
  */
 void LbmCollisionOptInterface::Coarse2Fine(const DefReal dt_lbm, const std::vector<DefReal>& feq,
-    const GridNodeLbm& node_coarse, GridNodeLbm* const ptr_node_fine) {
-    ptr_node_fine->rho_ = node_coarse.rho_;
-    ptr_node_fine->velocity_ = node_coarse.velocity_;
+    const std::vector<DefReal>& f_collide_coarse, std::vector<DefReal>* const ptr_f_collide_fine) {
     DefSizet num_q = feq.size();
-    ptr_node_fine->f_collide_.resize(num_q);
+    ptr_f_collide_fine->resize(num_q);
     //  DefReal relax_tau_f = viscosity_lbm_ * SolverLbmInterface::kCs_Sq_Reciprocal_ / dt_lbm * 2. + 0.5;
     //  DefReal relax_tau_c = viscosity_lbm_ * SolverLbmInterface::kCs_Sq_Reciprocal_ / dt_lbm + 0.5;
     //  DefReal tau_ratio = 0.5 * (relax_tau_f - 1)/ (relax_tau_c - 1);
 
     for (int iq = 0; iq < num_q; ++iq) {
-        ptr_node_fine->f_collide_[iq] = feq.at(iq) + tau_ratio_c2f_ * (node_coarse.f_collide_[iq] - feq.at(iq));
+        ptr_f_collide_fine->at(iq) = feq.at(iq) + tau_ratio_c2f_ * (f_collide_coarse[iq] - feq.at(iq));
     }
 }
 /**
@@ -87,24 +85,23 @@ void LbmCollisionOptInterface::Fine2Coarse(const DefReal dt_lbm, const std::vect
 /**
  * @brief function to convert distribution functions on coarse grid to fine grid.
  * @param[in] dt_lbm  LBM time step at current refinement level (coarse grid).
- * @param[in] feq equilibrium distribution functions.
+ * @param[in] feq reference of lbm solver.
  * @param[in] lbm_solver reference of lbm solver.
- * @param[in] node_fine  a node on fine grid.
  * @param[in] ptr_func_cal_force_iq pointer to function calculating lbm forcing term.
- * @param[out] ptr_node_coarse pointer to a node on coarse grid.
+ * @param[in] node_coarse a node on coarse grid.
+ * @param[out] ptr_f_collide_fine pointer to post collision distribution functions of a fine grid.
  */
 void LbmCollisionOptInterface::Coarse2FineForce(const DefReal dt_lbm, const std::vector<DefReal>& feq,
     const SolverLbmInterface& lbm_solver,
     DefReal (SolverLbmInterface::*ptr_func_cal_force_iq)(const int, const GridNodeLbm&) const,
-    const GridNodeLbm& node_coarse, GridNodeLbm* const ptr_node_fine) {
+    const GridNodeLbm& node_coarse, std::vector<DefReal>* const ptr_f_collide_fine) {
     DefReal force_tmp;
     DefSizet num_q = feq.size();
-    ptr_node_fine->rho_ = node_coarse.rho_;
-    ptr_node_fine->velocity_ = node_coarse.velocity_;
+    ptr_f_collide_fine->resize(num_q);
     for (int iq = 0; iq <num_q; ++iq) {
-        ptr_node_fine->f_collide_[iq] = feq.at(iq) + tau_ratio_c2f_ * (node_coarse.f_collide_[iq] - feq.at(iq));
+        ptr_f_collide_fine->at(iq) = feq.at(iq) + tau_ratio_c2f_ * (node_coarse.f_collide_[iq] - feq.at(iq));
         force_tmp = (lbm_solver.*ptr_func_cal_force_iq)(iq, node_coarse);
-        ptr_node_fine->f_collide_[iq] +=  dt_lbm * force_tmp / 4. - tau_ratio_c2f_ *force_tmp * dt_lbm / 2.;
+        ptr_f_collide_fine->at(iq) +=  dt_lbm * force_tmp / 4. - tau_ratio_c2f_ *force_tmp * dt_lbm / 2.;
     }
 }
 /**

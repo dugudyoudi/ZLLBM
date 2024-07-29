@@ -7,13 +7,12 @@
 * @brief functions used for manage LBM grid interface.
 * @date  2023-9-30
 */
-#include <mpi.h>
 #include "lbm_interface.h"
 #include "io/log_write.h"
 #include "io/vtk_writer.h"
 namespace rootproject {
 namespace lbmproject {
-    /**
+/**
  * @brief function to set variables stored in the node as zeroes.
  * @param[out] ptr_node pointer to a node.
  */
@@ -389,7 +388,7 @@ int GridInfoLbmInteface::TransferInfoFromCoarseGrid(const amrproject::SFBitsetAu
             // layers on inner interfaces
             for (auto& iter_node : iter_interface.second->vec_inner_fine2coarse_.at(i_layer)) {
                 sfbitset_coarse = sfbitset_aux.SFBitsetToNLowerLevelVir(1, iter_node.first);
-                valid_length = sfbitset_aux.FindNodesInPeriodicReginOfGivenLength(sfbitset_coarse, max_interp_length_,
+                valid_length = sfbitset_aux.FindNodesInPeriodicRegionCorner(sfbitset_coarse, max_interp_length_,
                     periodic_min, periodic_max, domain_min, domain_max, &nodes_in_region);
                 SetNodeVariablesAsZeros(ptr_lbm_grid_nodes_->at(iter_node.first).get());
                 func_node_interp_(valid_length, max_interp_length_, node_flag_not_interp, iter_node.first, sfbitset_aux,
@@ -399,22 +398,8 @@ int GridInfoLbmInteface::TransferInfoFromCoarseGrid(const amrproject::SFBitsetAu
             }
             // layers on outer interfaces
             for (auto& iter_node : iter_interface.second->vec_outer_fine2coarse_.at(i_layer)) {
-
-       
-//        int rank_id = 0
-//                 MPI_Comm_rank(MPI_COMM_WORLD, &rank_id);
-//                 if (rank_id == 0) {
-// amrproject::SFBitsetAux2D aux2d;
-// std::array<DefAmrIndexLUint, 2> indices;
-// aux2d.SFBitsetComputeIndices(iter_node.first, &indices);
-// std::cout << i_layer << " " << indices[0] << " " << indices[1] << std::endl;
-// if (indices[0] == 5 && indices[1] == 10) {
-//     std::cout << ptr_lbm_grid_nodes_->at(iter_node.first)->f_collide_[1] << "-----" << std::endl;
-// }
-//                 }
-
                 sfbitset_coarse = sfbitset_aux.SFBitsetToNLowerLevelVir(1, iter_node.first);
-                valid_length = sfbitset_aux.FindNodesInPeriodicReginOfGivenLength(sfbitset_coarse, max_interp_length_,
+                valid_length = sfbitset_aux.FindNodesInPeriodicRegionCorner(sfbitset_coarse, max_interp_length_,
                     periodic_min, periodic_max, domain_min, domain_max, &nodes_in_region);
                 if (ptr_lbm_grid_nodes_->find(iter_node.first) != ptr_lbm_grid_nodes_->end()) {
                     SetNodeVariablesAsZeros(ptr_lbm_grid_nodes_->at(iter_node.first).get());
@@ -428,16 +413,6 @@ int GridInfoLbmInteface::TransferInfoFromCoarseGrid(const amrproject::SFBitsetAu
                     nodes_in_region, *ptr_lbm_grid_nodes_, grid_info_coarse, *lbm_grid_coarse.ptr_lbm_grid_nodes_,
                     ptr_lbm_grid_nodes_->at(iter_node.first).get());
                 lbm_solver_manager->StreamOutForAGivenNode(iter_node.first, sfbitset_aux, ptr_lbm_grid_nodes_);
-
-//                 if (rank_id == 0) {
-
-// amrproject::SFBitsetAux2D aux2d;
-// std::array<DefAmrIndexLUint, 2> indices;
-// aux2d.SFBitsetComputeIndices(iter_node.first, &indices);
-// if (indices[0] == 5 && indices[1] == 10) {
-//     std::cout << ptr_lbm_grid_nodes_->at(iter_node.first)->f_collide_[1] << std::endl;
-// }
-//                 }
             }
         }
     }
@@ -445,46 +420,55 @@ int GridInfoLbmInteface::TransferInfoFromCoarseGrid(const amrproject::SFBitsetAu
 }
 void GridInfoLbmInteface::DebugWrite() {
     
-                                                                                                int rank_id = 0;
-                MPI_Comm_rank(MPI_COMM_WORLD, &rank_id);
-                                if (i_level_ == 1 && rank_id==0) {
-                    amrproject::SFBitsetAux2D aux2d;
-                    //std::array<DefAmrIndexLUint, 2> indices;
+                //                                                                                 int rank_id = 0;
+                // MPI_Comm_rank(MPI_COMM_WORLD, &rank_id);
+                //                 if (i_level_ == 1 && rank_id==0) {
+                //     amrproject::SFBitsetAux2D aux2d;
+                //     //std::array<DefAmrIndexLUint, 2> indices;
                     
-                    //aux2d.SFBitsetComputeIndices(iter_node.first, &indices);
-                    //std::cout << indices[0] << " " << indices[1] << std::endl;
-                    std::cout << "2: " <<ptr_lbm_grid_nodes_->at(aux2d.SFBitsetEncoding({18, 9}))->f_collide_[1]<< " "<<ptr_lbm_grid_nodes_->at(aux2d.SFBitsetEncoding({18, 9}))->f_[1] << std::endl;
-                    std::cout  << "3: "<<ptr_lbm_grid_nodes_->at(aux2d.SFBitsetEncoding({6, 9}))->f_collide_[1] << " "<<ptr_lbm_grid_nodes_->at(aux2d.SFBitsetEncoding({6, 9}))->f_[1]<< std::endl;
-                }
+                //     //aux2d.SFBitsetComputeIndices(iter_node.first, &indices);
+                //     //std::cout << indices[0] << " " << indices[1] << std::endl;
+                //     std::cout << "2: " <<ptr_lbm_grid_nodes_->at(aux2d.SFBitsetEncoding({18, 9}))->f_collide_[1]<< " "<<ptr_lbm_grid_nodes_->at(aux2d.SFBitsetEncoding({18, 9}))->f_[1] << std::endl;
+                //     std::cout  << "3: "<<ptr_lbm_grid_nodes_->at(aux2d.SFBitsetEncoding({6, 9}))->f_collide_[1] << " "<<ptr_lbm_grid_nodes_->at(aux2d.SFBitsetEncoding({6, 9}))->f_[1]<< std::endl;
+                // }
 }
 /**
  * @brief function to transfer information on the interface from the fine grid to coarse grid.
  * @param sfbitset_aux class to manage functions for space filling code computation.
  * @param node_flag node indicator does not used in this implementation.
  * @param grid_info_fine grid information on the fine grid.
- * @return 0 run successfully, 1 does not do anything since fine or coarse grid is not available.
- * @note information on the layers from 1 to k0NumCoarse2FineLayer_ is transferred from the fine grid.
+ * @return 0 run successfully,  otherwise some error occurred in this function.
+ * @note information on the layers from k0NumCoarse2FineGhostLayer_ to k0NumCoarse2FineLayer_ is transferred from the fine grid.
  */
 int GridInfoLbmInteface::TransferInfoFromFineGrid(const amrproject::SFBitsetAuxInterface& sfbitset_aux,
     const DefAmrUint node_flag, const amrproject::GridInfoInterface& grid_info_fine) {
     DefSFBitset sfbitset_fine;
     if (GetPointerToLbmGrid() == nullptr ||
         (dynamic_cast<const GridInfoLbmInteface&>(grid_info_fine).ptr_lbm_grid_nodes_ == nullptr)) {
-        return 1;
+        amrproject::LogManager::LogErrorMsg("pointer to LBM grid is null in function "
+            " GridInfoLbmInteface::TransferInfoFromFineGrid in file "
+            + std::string(__FILE__) + " at line " + std::to_string(__LINE__));
+        return -1;
     }
+    DefMap<std::unique_ptr<GridNodeLbm>>* ptr_lbm_grid =
+        dynamic_cast<const GridInfoLbmInteface&>(grid_info_fine).ptr_lbm_grid_nodes_;
     for (auto& iter_interface : map_ptr_interface_layer_info_) {
-        for (DefAmrIndexUint i_layer = 1; i_layer < k0NumCoarse2FineLayer_; ++i_layer) {
+        for (DefAmrIndexUint i_layer = k0NumCoarse2FineGhostLayer_; i_layer < k0NumCoarse2FineLayer_; ++i_layer) {
             // layers on inner interfaces
             for (auto& iter_node : iter_interface.second->vec_inner_coarse2fine_.at(i_layer)) {
                 sfbitset_fine = sfbitset_aux.SFBitsetToNHigherLevelVir(1, iter_node.first);
-                grid_info_fine.NodeInfoFine2Coarse(*(dynamic_cast<const GridInfoLbmInteface&>(grid_info_fine)
-                    .ptr_lbm_grid_nodes_->at(sfbitset_fine).get()), ptr_lbm_grid_nodes_->at(iter_node.first).get());
+                if (ptr_lbm_grid->find(sfbitset_fine) != ptr_lbm_grid->end()) {
+                    grid_info_fine.NodeInfoFine2Coarse(*(ptr_lbm_grid->at(sfbitset_fine).get()),
+                    ptr_lbm_grid_nodes_->at(iter_node.first).get());
+                }
             }
             // layers on outer interfaces
             for (auto& iter_node : iter_interface.second->vec_outer_coarse2fine_.at(i_layer)) {
                 sfbitset_fine = sfbitset_aux.SFBitsetToNHigherLevelVir(1, iter_node.first);
-                grid_info_fine.NodeInfoFine2Coarse(*(dynamic_cast<const GridInfoLbmInteface&>(grid_info_fine)
-                    .ptr_lbm_grid_nodes_->at(sfbitset_fine).get()), ptr_lbm_grid_nodes_->at(iter_node.first).get());
+                if (ptr_lbm_grid->find(sfbitset_fine) != ptr_lbm_grid->end()) {
+                    grid_info_fine.NodeInfoFine2Coarse(*(ptr_lbm_grid->at(sfbitset_fine).get()),
+                        ptr_lbm_grid_nodes_->at(iter_node.first).get());
+                }
             }
         }
     }
@@ -499,21 +483,26 @@ void GridInfoLbmInteface::NodeInfoCoarse2fine(const amrproject::GridNode& coarse
     amrproject::GridNode* const ptr_base_fine_node) const {
     const GridNodeLbm& coarse_node = dynamic_cast<const GridNodeLbm&>(coarse_base_node);
     GridNodeLbm* ptr_fine_node = dynamic_cast<GridNodeLbm*>(ptr_base_fine_node);
-    std::vector<DefReal> feq;
     const SolverLbmInterface& lbm_solver = *std::dynamic_pointer_cast<SolverLbmInterface>(ptr_solver_).get();
-    lbm_solver.func_cal_feq_(coarse_node.rho_, coarse_node.velocity_, &feq);
+    std::vector<DefReal> feq(lbm_solver.k0NumQ_);
+    ptr_fine_node->velocity_.resize(lbm_solver.k0SolverDims_);
     if (bool_forces_) {
-        ptr_collision_operator_->Coarse2FineForce(ptr_collision_operator_->dt_lbm_,
-            feq, lbm_solver, lbm_solver.ptr_func_cal_force_iq_, coarse_node,  ptr_fine_node);
+        lbm_solver.func_macro_with_force_(ptr_collision_operator_->dt_lbm_, coarse_node,
+            &ptr_fine_node->rho_, &ptr_fine_node->velocity_);
+        lbm_solver.func_cal_feq_(ptr_fine_node->rho_, ptr_fine_node->velocity_, &feq);
+        ptr_collision_operator_->Coarse2FineForce(ptr_collision_operator_->dt_lbm_, feq, lbm_solver,
+            lbm_solver.ptr_func_cal_force_iq_, coarse_node, &ptr_fine_node->f_collide_);
     } else {
+        lbm_solver.func_macro_without_force_(coarse_node, &ptr_fine_node->rho_, &ptr_fine_node->velocity_);
+        lbm_solver.func_cal_feq_(ptr_fine_node->rho_, ptr_fine_node->velocity_, &feq);
         ptr_collision_operator_->Coarse2Fine(ptr_collision_operator_->dt_lbm_,
-            feq, coarse_node,  ptr_fine_node);
+            feq, coarse_node.f_collide_, &ptr_fine_node->f_collide_);
     }
 }
 /**
  * @brief function to transfer information stored in fine LBM node to coarse node.
  * @param[in]  fine_base_node   reference of fine LBM node.
- * @param[in]  ptr_base_coarse_node   pointer to coarse LBM node.
+ * @param[out]  ptr_base_coarse_node   pointer to coarse LBM node.
  */
 void GridInfoLbmInteface::NodeInfoFine2Coarse(const amrproject::GridNode& fine_base_node,
     amrproject::GridNode* const ptr_base_coarse_node) const {

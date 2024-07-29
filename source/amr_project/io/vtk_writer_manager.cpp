@@ -599,13 +599,6 @@ void VtkWriterManager::WriteGridNodeFlagStatus(FILE* const fp,
             fprintf_s(fp, str_format.c_str(),
                 map_grid_node.at(iter->first)->flag_status_);
             fprintf_s(fp, "\n");
-            
-    //              int rank_id = 0;
-    //  MPI_Comm_rank(MPI_COMM_WORLD, &rank_id);
-    //         amrproject::SFBitsetAux2D aux2d;
-    //      std::array<DefAmrIndexLUint, 2> indices;
-    //      aux2d.SFBitsetComputeIndices(iter->first, &indices);
-    //      if (rank_id == 0) std::cout << indices[0] << " " << indices[1] << " "<<  map_grid_node.at(iter->first)->flag_status_ << std::endl;
         }
     }
     fprintf_s(fp, "      </DataArray>\n");

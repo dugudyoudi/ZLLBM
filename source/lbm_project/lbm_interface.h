@@ -7,7 +7,7 @@
 * @brief define classes to manage LBM models.
 * @date  2023-9-30
 */
-#ifndef ROOTPROJECT_SOURCE_LBM_LBM_INTERFACE_H_
+#ifndef SOURCE_LBM_PROJECT_LBM_INTERFACE_H_
 #define ROOTPROJECT_SOURCE_LBM_LBM_INTERFACE_H_
 #include <string>
 #include <vector>
@@ -157,13 +157,13 @@ class LbmCollisionOptInterface {
     virtual void CollisionOperator(const SolverLbmInterface& lbm_solver, GridNodeLbm* const ptr_node) const = 0;
     virtual void CalRelaxationTimeRatio();
     virtual void Coarse2Fine(const DefReal dt_lbm, const std::vector<DefReal>& feq,
-        const GridNodeLbm& node_coarse, GridNodeLbm* const ptr_node_fine);
+        const std::vector<DefReal>& f_collide_coarse, std::vector<DefReal>* const ptr_f_collide_fine);
     virtual void Fine2Coarse(const DefReal dt_lbm, const std::vector<DefReal>& feq,
         const GridNodeLbm& node_fine, GridNodeLbm* const ptr_node_coarse);
     virtual void Coarse2FineForce(const DefReal dt_lbm, const std::vector<DefReal>& feq,
         const SolverLbmInterface& lbm_solver,
         DefReal (SolverLbmInterface::*ptr_func_cal_force_iq)(const int, const GridNodeLbm&) const,
-        const GridNodeLbm& node_coarse, GridNodeLbm* const ptr_node_fine);
+        const GridNodeLbm& node_coarse, std::vector<DefReal>* const ptr_f_collide_fine);
     virtual void Fine2CoarseForce(const DefReal dt_lbm, const std::vector<DefReal>& feq,
         const SolverLbmInterface& lbm_solver,
         DefReal (SolverLbmInterface::*ptr_func_cal_force_iq)(const int, const GridNodeLbm&) const,
@@ -277,7 +277,11 @@ class GridInfoLbmInteface : public amrproject::GridInfoInterface {
     // mpi related
     int k0SizeOfAllDistributionFunctions_ = 0;
     int SizeOfGridNodeInfoForMpiCommunication() const override;
-    void CopyNodeInfoToBuffer(const DefMap<DefAmrIndexUint>& map_nodes, char* const ptr_buffer) override;
+    int CopyNodeInfoToBuffer(const DefMap<DefAmrIndexUint>& map_nodes, char* const ptr_buffer) override;
+    int CopyInterpolationNodeInfoToBuffer(const GridInfoInterface& grid_info_lower,
+        const DefMap<DefAmrIndexUint>& map_nodes, char* const ptr_buffer) override;
+    int ReadInterpolationNodeInfoFromBuffer(
+        const DefSizet buffer_size, const std::unique_ptr<char[]>& buffer) override;
     void ComputeInfoInMpiLayers(
         const std::map<int, DefMap<DefAmrIndexUint>>& map_inner_nodes,
         const DefMap<DefAmrIndexUint>& map_outer_nodes) override;
@@ -378,17 +382,28 @@ class SolverLbmInterface :public amrproject::SolverInterface {
 
     // pointer to function calculate macroscopic variables
     // declare with std::function rather than pointer to function is used for implementations in derived class
-    std::function<void(const DefReal, GridNodeLbm* const)> func_macro_without_force_, func_macro_with_force_;
+    std::function<void(const GridNodeLbm& node,
+        DefReal* const ptr_rho, std::vector<DefReal>* const ptr_velocity)> func_macro_without_force_;
+    std::function<void(const DefReal dt_lbm, const GridNodeLbm& node,
+        DefReal* const ptr_rho, std::vector<DefReal>* const ptr_velocity)> func_macro_with_force_;
 
  protected:
-    void CalMacro2DCompressible(const DefReal dt_lbm, GridNodeLbm* const ptr_node) const;
-    void CalMacro2DIncompressible(const DefReal dt_lbm, GridNodeLbm* const ptr_node) const;
-    void CalMacroForce2DCompressible(const DefReal dt_lbm, GridNodeLbm* const ptr_node) const;
-    void CalMacroForce2DIncompressible(const DefReal dt_lbm, GridNodeLbm* const ptr_node) const;
-    void CalMacro3DCompressible(const DefReal dt_lbm, GridNodeLbm* const ptr_node) const;
-    void CalMacro3DIncompressible(const DefReal dt_lbm, GridNodeLbm* const ptr_node) const;
-    void CalMacroForce3DCompressible(const DefReal dt_lbm, GridNodeLbm* const ptr_node) const;
-    void CalMacroForce3DIncompressible(const DefReal dt_lbm, GridNodeLbm* const ptr_node) const;
+    void CalMacro2DCompressible(const GridNodeLbm& node,
+        DefReal* const ptr_rho, std::vector<DefReal>* const ptr_velocity) const;
+    void CalMacro2DIncompressible(const GridNodeLbm& node,
+        DefReal* const ptr_rho, std::vector<DefReal>* const ptr_velocity) const;
+    void CalMacroForce2DCompressible(const DefReal dt_lbm, const GridNodeLbm& node,
+        DefReal* const ptr_rho, std::vector<DefReal>* const ptr_velocity) const;
+    void CalMacroForce2DIncompressible(const DefReal dt_lbm, const GridNodeLbm& node,
+        DefReal* const ptr_rho, std::vector<DefReal>* const ptr_velocity) const;
+    void CalMacro3DCompressible(const GridNodeLbm& node,
+        DefReal* const ptr_rho, std::vector<DefReal>* const ptr_velocity) const;
+    void CalMacro3DIncompressible(const GridNodeLbm& node,
+        DefReal* const ptr_rho, std::vector<DefReal>* const ptr_velocity) const;
+    void CalMacroForce3DCompressible(const DefReal dt_lbm, const GridNodeLbm& node,
+        DefReal* const ptr_rho, std::vector<DefReal>* const ptr_velocity) const;
+    void CalMacroForce3DIncompressible(const DefReal dt_lbm, const GridNodeLbm& node,
+        DefReal* const ptr_rho, std::vector<DefReal>* const ptr_velocity) const;
 };
 }  // end namespace lbmproject
 }  // end namespace rootproject

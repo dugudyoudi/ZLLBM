@@ -886,7 +886,11 @@ void GridManager3D::IdentifyInnermostInterfaceForACell(const DefSFBitset sfbitse
             bitset_mid_higher, *this, node_coarse_interface_innermost, node_exist_current,
             arr_ptr_layer, ptr_node_coarse_interface_outer);
         // diagonal (0 + x/2, 0 + dy/2)
-        ptr_mid_layer->insert({ FindXNeg(bitset_mid_higher), kFlag0_ });
+        bitset_mid_higher = FindXNeg(bitset_mid_higher);
+        IdentifyInterfaceNodeOnEdgeInnermost(
+            { bitset_neighbors[0], bitset_neighbors[3] },
+            bitset_mid_higher, *this, node_coarse_interface_innermost, node_exist_current,
+            arr_ptr_layer, ptr_node_coarse_interface_outer);
 
         // bottom surface
         // edge (0 + dx/2, 0, 0)

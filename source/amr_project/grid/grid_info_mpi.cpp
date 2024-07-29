@@ -7,6 +7,8 @@
 * @brief functions used to manage grid informaiton for mpi communication.
 * @date  2022-6-7
 */
+#include <mpi.h>
+
 #include <string>
 #include "grid/grid_info_interface.h"
 #include "grid/grid_manager.h"
@@ -49,7 +51,7 @@ void GridInfoInterface::SetPeriodicBoundaryAsPartitionInterface(DefAmrIndexUint 
     }
 }
 /**
- * @brief function to set mpi communication region for periodic boundary conditions.
+ * @brief function to add nodes not exist on current rank but used in interpolation.
  * @param[in] bool_periodic_min booleans indicating if the boundary is periodic at minimum domain boundaries.
  * @param[in] bool_periodic_max booleans indicating if the boundary is periodic at maximum domain boundaries.
  * @param[in] sfbitset_aux class to manage space filling codes.
@@ -69,14 +71,29 @@ int GridInfoInterface::AddGhostNodesForInterpolation(const std::vector<bool>& bo
     }
     for (auto& iter_node : refinement_interface) {
         sfbitset_lower = sfbitset_aux.SFBitsetToNLowerLevelVir(1, iter_node.first);
-        sfbitset_aux.FindNodesInPeriodicReginOfGivenLength(sfbitset_lower,
+        sfbitset_aux.FindNodesInPeriodicRegionCorner(sfbitset_lower,
             max_interp_length_, bool_periodic_min, bool_periodic_max,
             domain_min, domain_max, &vec_in_region);
         for (const auto& iter_node_region : vec_in_region) {
-            if (map_nodes_lower.find(iter_node_region) ==  map_nodes_lower.end()) {
+            if (map_nodes_lower.find(iter_node_region) ==  map_nodes_lower.end()
+                || ((map_nodes_lower.at(iter_node_region)->flag_status_ & NodeBitStatus::kNodeStatusCoarse2FineGhost_)
+                == NodeBitStatus::kNodeStatusCoarse2FineGhost_)) {
                 sfbitset_current = sfbitset_aux.SFBitsetToNHigherLevelVir(1, iter_node_region);
-                if (map_grid_node_.find(iter_node_region) == map_grid_node_.end()) {
-                    interp_nodes_outer_layer_.insert({iter_node_region, GridNodeCreator()});
+
+// int rank_id;
+//                                                     MPI_Comm_rank(MPI_COMM_WORLD, &rank_id);
+//                                 if (i_level_ == 1 && rank_id==0) {
+//                     amrproject::SFBitsetAux3D aux3d;
+//                     std::array<DefAmrIndexLUint, 3> indices;
+                    
+//                     aux3d.SFBitsetComputeIndices(iter_node_region, &indices);
+//                     std::cout << indices[0] << " " << indices[1] << " " << indices[2] << std::endl;
+//                                 }
+
+                if (map_grid_node_.find(sfbitset_current) == map_grid_node_.end()
+                    ||((map_grid_node_.at(sfbitset_current)->flag_status_ & NodeBitStatus::kNodeStatusFine2CoarseGhost_)
+                    == NodeBitStatus::kNodeStatusFine2CoarseGhost_)) {
+                    interp_nodes_outer_layer_.insert({sfbitset_current, GridNodeCreator()});
                 }
             }
         }

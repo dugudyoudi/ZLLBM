@@ -254,8 +254,13 @@ void AmrManager::TimeMarching(const DefAmrIndexLUint time_step_background) {
         std::vector<MpiManager::BufferSizeInfo> send_buffer_info, receive_buffer_info;
         std::vector<std::vector<MPI_Request>> vec_vec_reqs_send, vec_vec_reqs_receive;
         std::vector<std::unique_ptr<char[]>> vec_ptr_buffer_receive, vec_ptr_buffer_send;
-        ptr_mpi_manager_->SendNReceiveGridNodes(&send_buffer_info, &receive_buffer_info,
-            &vec_vec_reqs_send, &vec_vec_reqs_receive, &vec_ptr_buffer_send, &vec_ptr_buffer_receive, &grid_ref);
+        if (ptr_mpi_manager_->SendNReceiveGridNodes(&send_buffer_info, &receive_buffer_info,
+            &vec_vec_reqs_send, &vec_vec_reqs_receive, &vec_ptr_buffer_send,
+            &vec_ptr_buffer_receive, &grid_ref) != 0) {
+            LogManager::LogError("failed to send grid nodes from rank " + std::to_string(ptr_mpi_manager_->rank_id_)
+                + " in function AmrManager::TimeMarching in file "
+                + std::string(__FILE__) + " at line " + std::to_string(__LINE__));
+        }
 #endif  //  ENABLE_MPI
 
 
@@ -275,7 +280,6 @@ void AmrManager::TimeMarching(const DefAmrIndexLUint time_step_background) {
             &vec_vec_reqs_send, &vec_vec_reqs_receive, &grid_ref);
 #endif  //  ENABLE_MPI
 
-
         // use information in current time step
         if (grid_ref.ptr_solver_->InformationFromGridOfDifferentLevel(
             ETimingInOneStep::kStepEnd, k0TimeSteppingType_,
@@ -286,8 +290,6 @@ void AmrManager::TimeMarching(const DefAmrIndexLUint time_step_background) {
 
         grid_ref.ptr_solver_->CallDomainBoundaryCondition(k0TimeSteppingType_,
             time_step_level[i_level], *ptr_grid_manager_->GetSFBitsetAuxPtr(), &grid_ref);
-
-
     }
 }
 /**

@@ -120,7 +120,7 @@ void GeoShapeDefaultCubic3D::UpdateShape(const DefReal dx) {
 }
 #endif  // DEBUG_DISABLE_3D_FUNCTIONS
 /**
-* @brief   function to generate a 2d circle
+* @brief   function to generate a quadrilateral
 * @param[in] dx_background reference spatial step (background)
 */
 // (start)

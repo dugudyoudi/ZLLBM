@@ -221,7 +221,7 @@ void GridManagerInterface::GenerateGridFromHighToLowLevelSerial(
                 vec_ptr_grid_info_.at(level_low)->k0NumCoarse2FineLayer_);
             FindOutmostLayerForFineGrid(i_level, iter_inner.second,
                 &ptr_sfbitset_one_lower_level->at(i_level),
-                &ptr_interface_info->vec_inner_coarse2fine_.back() - 1,
+                &ptr_interface_info->vec_inner_coarse2fine_.at(0),
                 &ptr_sfbitset_one_lower_level->at(level_low),
                 &innermost_layer.at(iter_inner.first));
         }
@@ -241,7 +241,7 @@ void GridManagerInterface::GenerateGridFromHighToLowLevelSerial(
                 vec_ptr_grid_info_.at(level_low)->k0NumCoarse2FineLayer_);
             FindOutmostLayerForFineGrid(i_level, iter_outer.second,
                 &ptr_sfbitset_one_lower_level->at(i_level),
-                &ptr_interface_info->vec_outer_coarse2fine_.back() - 1,
+                &ptr_interface_info->vec_outer_coarse2fine_.at(0),
                 &ptr_sfbitset_one_lower_level->at(level_low),
                 &outermost_layer.at(iter_outer.first));
         }
@@ -361,7 +361,7 @@ int GridManagerInterface::FloodFillForInAndOut(
                 }
             }
         }
-        return 1;
+        return -1;
     } else {
         // create a copy of map_nodes_exist and add one layer for flood fill
         DefAmrIndexUint flag_bit_colored = DefAmrIndexUint(1 << (sizeof(DefAmrIndexUint) * 8 - 1));

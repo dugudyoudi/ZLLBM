@@ -346,7 +346,7 @@ void MpiManager::IniDeserializeRefinementInterfaceNode(const DefAmrUint flag0,
  * @param[in] i_level  level of the interface layer to send/receive.
  * @param[in] flag0 flag for initialization.
  * @param[in] outmost_for_all_ranks nodes on the outmost fine to coarse interface for all ranks stored on rank 0. 
- * @param[out] ptr_map_interface_layer pointer to nodes on the refinement interface layer.
+ * @param[in, out] ptr_map_interface_layer pointer to nodes on the refinement interface layer.
  */
 void MpiManager::IniSendNReiveOneLayerRefinementInterface(
     const DefAmrUint flag0, const DefMap<std::set<int>>& outmost_for_all_ranks,
@@ -472,28 +472,28 @@ void MpiManager::IniSendNReceiveCoarse2Fine0Interface(const DefAmrIndexUint dims
                     LogManager::LogError("size of k0ExtendOuterNeg_ " + std::to_string(
                      ptr_map_interface_info->at(pair_interface)->k0ExtendOuterNeg_.size())
                      + " is not equal to the dimension " + std::to_string(dims)
-                     + " in IniSendNReceiveCoarse2Fine0Interface in "
+                     + " in MpiManager::IniSendNReceiveCoarse2Fine0Interface in "
                      + std::string(__FILE__) + " at line " + std::to_string(__LINE__));
                 }
                 if (ptr_map_interface_info->at(pair_interface)->k0ExtendOuterPos_.size() != dims) {
                     LogManager::LogError("size of k0ExtendOuterPos_ " + std::to_string(
                      ptr_map_interface_info->at(pair_interface)->k0ExtendOuterPos_.size())
                      + " is not equal to the dimension " + std::to_string(dims)
-                     + " in IniSendNReceiveCoarse2Fine0Interface in "
+                     + " in MpiManager::IniSendNReceiveCoarse2Fine0Interface in "
                      + std::string(__FILE__) + " at line " + std::to_string(__LINE__));
                 }
                 if (ptr_map_interface_info->at(pair_interface)->k0ExtendInnerNeg_.size() != dims) {
                     LogManager::LogError("size of k0ExtendInnerNeg_ " + std::to_string(
                      ptr_map_interface_info->at(pair_interface)->k0ExtendInnerNeg_.size())
                      + " is not equal to the dimension " + std::to_string(dims)
-                     + " in IniSendNReceiveCoarse2Fine0Interface in "
+                     + " in MpiManager::IniSendNReceiveCoarse2Fine0Interface in "
                      + std::string(__FILE__) + " at line " + std::to_string(__LINE__));
                 }
                 if (ptr_map_interface_info->at(pair_interface)->k0ExtendInnerPos_.size() != dims) {
                     LogManager::LogError("size of k0ExtendInnerPos_ " + std::to_string(
                      ptr_map_interface_info->at(pair_interface)->k0ExtendInnerPos_.size())
                      + " is not equal to the dimension " + std::to_string(dims)
-                     + " in IniSendNReceiveCoarse2Fine0Interface in "
+                     + " in MpiManager::IniSendNReceiveCoarse2Fine0Interface in "
                      + std::string(__FILE__) + " at line " + std::to_string(__LINE__));
                 }
                 if (ptr_map_interface_info->at(pair_interface)->vec_outer_coarse2fine_.size()
@@ -501,7 +501,7 @@ void MpiManager::IniSendNReceiveCoarse2Fine0Interface(const DefAmrIndexUint dims
                     LogManager::LogError("size of vec_outer_coarse2fine_ " + std::to_string(
                      ptr_map_interface_info->at(pair_interface)->vec_outer_coarse2fine_.size())
                      + " is not equal to the number of layers " + std::to_string(num_of_layers_coarse2fine)
-                     + " in IniSendNReceiveCoarse2Fine0Interface in "
+                     + " in MpiManager::IniSendNReceiveCoarse2Fine0Interface in "
                      + std::string(__FILE__) + " at line " + std::to_string(__LINE__));
                 }
                 if (ptr_map_interface_info->at(pair_interface)->vec_inner_coarse2fine_.size()
@@ -509,7 +509,7 @@ void MpiManager::IniSendNReceiveCoarse2Fine0Interface(const DefAmrIndexUint dims
                     LogManager::LogError("size of vec_inner_coarse2fine_ " + std::to_string(
                      ptr_map_interface_info->at(pair_interface)->vec_inner_coarse2fine_.size())
                      + " is not equal to the number of layers " + std::to_string(num_of_layers_coarse2fine)
-                     + " in IniSendNReceiveCoarse2Fine0Interface in "
+                     + " in MpiManager::IniSendNReceiveCoarse2Fine0Interface in "
                      + std::string(__FILE__) + " at line " + std::to_string(__LINE__));
                 }
             }
@@ -540,125 +540,6 @@ void MpiManager::IniSendNReceiveCoarse2Fine0Interface(const DefAmrIndexUint dims
     }
 
     MPI_Type_free(&mpi_interface_index_type);
-}
-int MpiManager::SendGhostNodeForInterpolation(const SFBitsetAuxInterface& sfbitset_aux,
-    const GridInfoInterface& grid_info_lower, GridInfoInterface* ptr_grid_info,
-    std::vector<BufferSizeInfo>* const ptr_send_buffer_info,
-    std::vector<BufferSizeInfo>* const ptr_receive_buffer_info,
-    std::vector<std::vector<MPI_Request>>* const ptr_vec_vec_reqs_send,
-    std::vector<std::vector<MPI_Request>>* const ptr_vec_vec_reqs_receive,
-    std::vector<std::unique_ptr<char[]>>* const ptr_vec_ptr_buffer_send,
-    std::vector<std::unique_ptr<char[]>>* const ptr_vec_ptr_buffer_receive) {
-    ptr_send_buffer_info->resize(num_of_ranks_);
-    ptr_receive_buffer_info->resize(num_of_ranks_);
-    DefAmrIndexUint i_level = ptr_grid_info->i_level_;
-    if (i_level > 0) {
-        DefSFCodeToUint code_background;
-        std::vector<DefMap<DefAmrIndexUint>> requested_nodes(num_of_ranks_);
-        int i_rank;
-        for (const auto& iter_node : ptr_grid_info->interp_nodes_outer_layer_) {
-            code_background = sfbitset_aux.SFBitsetToNLowerLevelVir(i_level, iter_node.first).to_ullong();
-            i_rank = CheckNodeInWhichRank(code_background);
-            if (i_rank != rank_id_) {
-                requested_nodes.at(i_rank).insert({iter_node.first, 0});
-            } else {
-                LogManager::LogErrorMsg("node already exists in current rank in function"
-                    " MpiManager::SendNReceiveGhostNodeForInterpolation in file "
-                    + std::string(__FILE__) + " at line " + std::to_string(__LINE__));
-                return 1;
-            }
-        }
-        std::vector<int> num_node_request_current(num_of_ranks_), num_node_request_others(num_of_ranks_);
-        for (int i_rank = 0; i_rank < num_of_ranks_; ++i_rank) {
-            num_node_request_current.at(i_rank) = static_cast<int>(requested_nodes.at(i_rank).size());
-        }
-        MPI_Alltoall(num_node_request_current.data(), 1, MPI_INT,
-            num_node_request_others.data(), 1, MPI_INT, MPI_COMM_WORLD);
-
-        int flag_error;
-        std::vector<MPI_Request> reqs_send(num_of_ranks_);
-        std::vector<DefMap<DefAmrIndexUint>> vec_map_nodes_receive(num_of_ranks_);
-        // send and receive which need nodes are needed for interpolation
-        for (int i = 0; i < num_of_ranks_; ++i) {
-            int i_rank_send = (rank_id_ + i) % num_of_ranks_;
-            int i_rank_receive = (rank_id_ - i + num_of_ranks_)% num_of_ranks_;
-            if (num_node_request_current.at(i_rank_send) > 0) {
-                int buffer_size_send = 0;
-                std::unique_ptr<char[]> buffer_request;
-                buffer_request = SerializeNodeSFBitset(
-                    requested_nodes.at(i_rank_send), &buffer_size_send, &flag_error);
-                if (flag_error != 0) {
-                    return 1;
-                }
-                MPI_Send(&buffer_size_send, 1, MPI_INT, i_rank_send, i_level, MPI_COMM_WORLD);
-                MPI_Isend(buffer_request.get(), buffer_size_send, MPI_BYTE, i_rank,
-                    rank_id_, MPI_COMM_WORLD, &reqs_send[i_rank]);
-            }
-            if (num_node_request_others.at(i_rank_receive) > 0) {
-                int buffer_size_receive = 0;
-                MPI_Recv(&buffer_size_receive, 1, MPI_INT, i_rank_receive, i_level, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
-                std::unique_ptr<char[]> ptr_buffer = std::make_unique<char[]>(buffer_size_receive);
-                MPI_Recv(ptr_buffer.get(), buffer_size_receive, MPI_BYTE, 0,
-                    i_rank, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
-                DeserializeNodeSFBitset(0, ptr_buffer, &vec_map_nodes_receive.at(i_rank));
-            }
-        }
-        // send node information
-        int key_size = sizeof(DefSFBitset);
-        int node_buffer_size = key_size + ptr_grid_info->SizeOfGridNodeInfoForMpiCommunication();
-
-        std::vector<MPI_Request> reqs_receive(num_of_ranks_);
-        for (int i = 0; i < num_of_ranks_; ++i) {
-            // send and receive number of chunks if needed
-            int i_rank_send = (rank_id_ + i) % num_of_ranks_;
-            int i_rank_receive = (rank_id_ - i + num_of_ranks_)% num_of_ranks_;
-            int num_node_all = num_node_request_others.at(i_rank_send), last_num_nodes = 0, other_num_nodes = 0;
-            if (num_node_request_others.at(i_rank_send) > 0) {
-                int num_chunks = static_cast<int>(node_buffer_size * num_node_all
-                    /((std::numeric_limits<int>::max)() - sizeof(int)) + 1);
-                ptr_send_buffer_info->at(i_rank_send).bool_exist_ = true;
-                ptr_send_buffer_info->at(i_rank_send).num_chunks_ = num_chunks;
-                if (num_chunks < 2) {  // buffer is enough to store information of all nodes
-                    other_num_nodes = 0;
-                    last_num_nodes = num_node_all;
-                } else {
-                    last_num_nodes = num_node_all%(num_chunks - 1);
-                    other_num_nodes = (num_node_all - last_num_nodes)/(num_chunks - 1);
-                }
-                ptr_send_buffer_info->at(i_rank_send).num_chunks_ = num_chunks;
-                MPI_Send(&num_chunks, 1, MPI_INT, i_rank_send, i_level, MPI_COMM_WORLD);
-            }
-            if (num_node_request_others.at(i_rank_receive) > 0) {
-                ptr_receive_buffer_info->at(i_rank_receive).bool_exist_ = true;
-                MPI_Recv(&ptr_receive_buffer_info->at(i_rank_receive).num_chunks_,
-                    1, MPI_INT, i_rank_receive, i_level, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
-            }
-            // send and receive buffer size of each chunk if needed
-            if (num_node_request_others.at(i_rank_send) > 0) {
-                DefSizet buffer_size_send = node_buffer_size * other_num_nodes;
-                if (CheckBufferSizeNotExceedMax(buffer_size_send)) {
-                    ptr_send_buffer_info->at(i_rank_send).array_buffer_size_.at(0) = static_cast<int>(buffer_size_send);
-                } else {
-                    LogManager::LogError("size of the buffer is greater than the maximum value of int in "
-                        + std::string(__FILE__) + " at line " + std::to_string(__LINE__));
-                }
-                buffer_size_send = node_buffer_size * last_num_nodes;
-                if (CheckBufferSizeNotExceedMax(buffer_size_send)) {
-                    ptr_send_buffer_info->at(i_rank_send).array_buffer_size_.at(1) = static_cast<int>(buffer_size_send);
-                } else {
-                    LogManager::LogError("size of the buffer is greater than the maximum value of int in "
-                        + std::string(__FILE__) + " at line " + std::to_string(__LINE__));
-                }
-                MPI_Send(ptr_send_buffer_info->at(i_rank_send).array_buffer_size_.data(),
-                    2, MPI_INT, i_rank_send, i_level, MPI_COMM_WORLD);
-            }
-            if (num_node_request_others.at(i_rank_receive) > 0) {
-                MPI_Recv(ptr_receive_buffer_info->at(i_rank_receive).array_buffer_size_.data(),
-                    2, MPI_INT, i_rank_receive, i_level, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
-            }
-        }
-    }
-    return 0;
 }
 }  // end namespace amrproject
 }  // end namespace rootproject

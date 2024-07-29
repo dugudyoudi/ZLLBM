@@ -29,7 +29,7 @@ int GeometryInfoInterface::UpdateGeometry(const DefReal sum_t) {
     if (geometry_status_ == EGeometryStatus::kMoving) {
         ptr_geo_shape_->UpdateShape(sum_t);
     } else {
-        return 1;
+        return -1;
     }
     return 0;
 }

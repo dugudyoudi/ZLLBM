@@ -51,13 +51,13 @@ class SFBitsetAuxInterface {
         const std::vector<DefSFBitset>& domain_min_m1_n_level,
         const std::vector<DefSFBitset>& domain_max_p1_n_level,
         std::vector<DefSFBitset>* const ptr_sfbitset_nodes) const = 0;
-    virtual DefAmrIndexLUint FindNodesInPeriodicReginOfGivenLength(const DefSFBitset& sfbitset_in,
+    virtual DefAmrIndexLUint FindNodesInPeriodicRegionCorner(const DefSFBitset& sfbitset_in,
         const DefAmrIndexLUint region_length,
         const std::vector<bool>& periodic_min, const std::vector<bool>& periodic_max,
         const std::vector<DefSFBitset>& domain_min_n_level,
         const std::vector<DefSFBitset>& domain_max_n_level,
         std::vector<DefSFBitset>* const ptr_sfbitset_node) const = 0;
-    virtual DefAmrIndexLUint FindNodesInPeriodicReginNearby(const DefSFBitset& sfbitset_in,
+    virtual DefAmrIndexLUint FindNodesInPeriodicRegionCenter(const DefSFBitset& sfbitset_in,
         const DefAmrIndexLUint region_length,
         const std::vector<bool>& periodic_min, const std::vector<bool>& periodic_max,
         const std::vector<DefSFBitset>& domain_min_n_level,
@@ -75,15 +75,17 @@ class SFBitsetAuxInterface {
     virtual void GetMaxAtGivenLevel(const DefAmrIndexUint i_level,
         std::vector<DefAmrIndexLUint> indices_max,
         std::vector<DefSFBitset>* const ptr_max_bitset) const = 0;
+    virtual void FindNeighboringCoarseFromFine(const DefSFBitset& sfbitset_fine,
+        std::vector<DefSFBitset>* const ptr_vec_coarse) const = 0;
     // compared to inline function, this virtual is costly, avoiding using this if possible
     virtual DefSFBitset SFBitsetToNLowerLevelVir(
-        const DefAmrIndexUint n_level, const DefSFBitset& morton_in) const = 0;
+        const DefAmrIndexUint n_level, const DefSFBitset& sfbitset_in) const = 0;
     virtual DefSFBitset SFBitsetToNHigherLevelVir(
-        const DefAmrIndexUint n_level, const DefSFBitset& morton_in) const = 0;
-    virtual DefAmrIndexUint SFBitsetCoincideLevelVir(const DefSFBitset& morton_in) const = 0;
-    virtual void SFBitsetFindAllNeighborsVir(const DefSFBitset& bitset_in,
+        const DefAmrIndexUint n_level, const DefSFBitset& sfbitset_in) const = 0;
+    virtual DefAmrIndexUint SFBitsetCoincideLevelVir(const DefSFBitset& sfbitset_in) const = 0;
+    virtual void SFBitsetFindAllNeighborsVir(const DefSFBitset& sfbitset_in,
         std::vector<DefSFBitset>* const ptr_vec_neighbors) const = 0;
-    virtual void SFBitsetFindAllBondedNeighborsVir(const DefSFBitset& bitset_in,
+    virtual void SFBitsetFindAllBondedNeighborsVir(const DefSFBitset& sfbitset_in,
         const std::vector<bool>& bool_periodic_min, const std::vector<bool>& bool_periodic_max,
         const std::vector<DefSFBitset>& domain_min_m1_n_level,
         const std::vector<DefSFBitset>& domain_max_p1_n_level,
@@ -208,13 +210,13 @@ class  SFBitsetAux2D : public SFBitsetAuxInterface {
         const std::vector<DefSFBitset>& domain_min_m1_n_level,
         const std::vector<DefSFBitset>& domain_max_p1_n_level,
         std::vector<DefSFBitset>* const ptr_sfbitset_nodes) const final;
-    DefAmrIndexLUint FindNodesInPeriodicReginOfGivenLength(const DefSFBitset& sfbitset_in,
+    DefAmrIndexLUint FindNodesInPeriodicRegionCorner(const DefSFBitset& sfbitset_in,
         const DefAmrIndexLUint region_length,
         const std::vector<bool>& periodic_min, const std::vector<bool>& periodic_max,
         const std::vector<DefSFBitset>& domain_min_n_level,
         const std::vector<DefSFBitset>& domain_max_n_level,
         std::vector<DefSFBitset>* const ptr_sfbitset_node) const final;
-    DefAmrIndexLUint FindNodesInPeriodicReginNearby(const DefSFBitset& sfbitset_in,
+    DefAmrIndexLUint FindNodesInPeriodicRegionCenter(const DefSFBitset& sfbitset_in,
         const DefAmrIndexLUint region_length,
         const std::vector<bool>& periodic_min, const std::vector<bool>& periodic_max,
         const std::vector<DefSFBitset>& domain_min_n_level,
@@ -232,7 +234,9 @@ class  SFBitsetAux2D : public SFBitsetAuxInterface {
     void GetMaxAtGivenLevel(const DefAmrIndexUint i_level,
         std::vector<DefAmrIndexLUint> indices_max,
         std::vector<DefSFBitset>* const ptr_max_bitset) const final;
-    DefSFBitset  SFBitsetToNLowerLevelVir(const DefAmrIndexUint n_level,
+    void FindNeighboringCoarseFromFine(const DefSFBitset& sfbitset_fine,
+        std::vector<DefSFBitset>* const ptr_vec_coarse) const  final;
+    DefSFBitset SFBitsetToNLowerLevelVir(const DefAmrIndexUint n_level,
         const DefSFBitset& morton_in) const final {
         return SFBitsetToNLowerLevel(n_level, morton_in);
     }
@@ -405,13 +409,13 @@ class  SFBitsetAux3D : public SFBitsetAuxInterface {
         const std::vector<DefSFBitset>& domain_min_m1_n_level,
         const std::vector<DefSFBitset>& domain_max_p1_n_level,
         std::vector<DefSFBitset>* const ptr_sfbitset_nodes) const final;
-    DefAmrIndexLUint FindNodesInPeriodicReginOfGivenLength(const DefSFBitset& sfbitset_in,
+    DefAmrIndexLUint FindNodesInPeriodicRegionCorner(const DefSFBitset& sfbitset_in,
         const DefAmrIndexLUint region_length,
         const std::vector<bool>& periodic_min, const std::vector<bool>& periodic_max,
         const std::vector<DefSFBitset>& domain_min_n_level,
         const std::vector<DefSFBitset>& domain_max_n_level,
         std::vector<DefSFBitset>* const ptr_sfbitset_node) const final;
-    DefAmrIndexLUint FindNodesInPeriodicReginNearby(const DefSFBitset& sfbitset_in,
+    DefAmrIndexLUint FindNodesInPeriodicRegionCenter(const DefSFBitset& sfbitset_in,
         const DefAmrIndexLUint region_length,
         const std::vector<bool>& periodic_min, const std::vector<bool>& periodic_max,
         const std::vector<DefSFBitset>& domain_min_n_level,
@@ -429,6 +433,8 @@ class  SFBitsetAux3D : public SFBitsetAuxInterface {
     void GetMaxAtGivenLevel(const DefAmrIndexUint i_level,
         std::vector<DefAmrIndexLUint> indices_max,
         std::vector<DefSFBitset>* const ptr_max_bitset) const final;
+    void FindNeighboringCoarseFromFine(const DefSFBitset& sfbitset_fine,
+        std::vector<DefSFBitset>* const ptr_vec_coarse) const final;
     DefSFBitset  SFBitsetToNLowerLevelVir(const DefAmrIndexUint n_level, const DefSFBitset& morton_in) const final {
         return SFBitsetToNLowerLevel(n_level, morton_in);
     }

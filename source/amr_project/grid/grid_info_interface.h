@@ -223,9 +223,9 @@ class GridInfoInterface {
     virtual bool CheckNeedInfoFromFine(const ETimingInOneStep timing,
         const ETimeSteppingScheme time_scheme, const DefAmrIndexUint time_step) const;
     virtual int TransferInfoFromCoarseGrid(const SFBitsetAuxInterface& sfbitset_aux,
-        const DefAmrUint node_flag, const GridInfoInterface& grid_info_coarse) {return 1;}
+        const DefAmrUint node_flag, const GridInfoInterface& grid_info_coarse) {return -1;}
     virtual int TransferInfoFromFineGrid(const SFBitsetAuxInterface& sfbitset_aux,
-        const DefAmrUint node_flag, const GridInfoInterface& grid_info_fine) {return 1;}
+        const DefAmrUint node_flag, const GridInfoInterface& grid_info_fine) {return -1;}
 
     // debug
     virtual void DebugWrite() {}
@@ -292,7 +292,11 @@ class GridInfoInterface {
         return false;
     }
     virtual int SizeOfGridNodeInfoForMpiCommunication() const {return 0;}
-    virtual void CopyNodeInfoToBuffer(const DefMap<DefAmrIndexUint>& map_nodes, char* const ptr_buffer) {}
+    virtual int CopyNodeInfoToBuffer(const DefMap<DefAmrIndexUint>& map_nodes, char* const ptr_buffer) {return 0;}
+    virtual int CopyInterpolationNodeInfoToBuffer(const GridInfoInterface& grid_info_lower,
+        const DefMap<DefAmrIndexUint>& map_nodes, char* const ptr_buffer) {return 0;}
+    virtual int ReadInterpolationNodeInfoFromBuffer(
+        const DefSizet buffer_size, const std::unique_ptr<char[]>& buffer) {return 0;}
     virtual void ComputeInfoInMpiLayers(
         const std::map<int, DefMap<DefAmrIndexUint>>& map_inner_nodes,
         const DefMap<DefAmrIndexUint>& map_outer_nodes) {}

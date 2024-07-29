@@ -378,11 +378,11 @@ DefAmrUint GridManager2D::FindAllNeighborsWithSpecifiedDirection(
 * @param[in] i_level higher refinement level.
 * @param[in] map_outmost_layer outmost layer of the grid at the higher refinement level.
 * @param[out] ptr_map_exist existing nodes at the higher refinement level.
-* @param[out] ptr_interface_outmost nodes on the outmost layer.
+* @param[out] ptr_interface_outmost nodes on the outmost fine to coarse layer (innermost coarse to fine layer).
 * @param[out] ptr_layer_lower_level nodes at the lower refinement level.
 * @param[out] ptr_layer_lower_level_outer outer nodes at the lower refinement level.
 */
-void  GridManager2D::FindOutmostLayerForFineGrid(
+void GridManager2D::FindOutmostLayerForFineGrid(
     const DefAmrIndexUint i_level, const DefMap<DefAmrUint>& map_outmost_layer,
     DefMap<DefAmrIndexUint>* const map_exist,
     DefMap<DefAmrUint>* const ptr_interface_outmost,
@@ -464,8 +464,7 @@ void  GridManager2D::FindOutmostLayerForFineGrid(
                     bool_pos_not_boundary, &vec_neighbors);
                 sfbitset_tmp = SFBitsetToOneHigherLevel(bitset_lower_level);
                 if (map_exist->find(sfbitset_tmp) == map_exist->end()) {
-                    ptr_layer_lower_level_outer->insert({
-                        bitset_lower_level, kFlag0_ });
+                    ptr_layer_lower_level_outer->insert({bitset_lower_level, kFlag0_ });
                     for (const auto& iter_lower : vec_neighbors) {
                         bitset_neighbor = SFBitsetToOneHigherLevel(iter_lower);
                         if (map_exist->find(bitset_neighbor)
@@ -476,8 +475,7 @@ void  GridManager2D::FindOutmostLayerForFineGrid(
                 } else {
                     for (const auto& iter_lower : vec_neighbors) {
                         bitset_neighbor = SFBitsetToOneHigherLevel(iter_lower);
-                        if (map_exist->find(bitset_neighbor)
-                            == map_exist->end()) {
+                        if (map_exist->find(bitset_neighbor) == map_exist->end()) {
                             ptr_layer_lower_level->insert({ iter_lower, kFlagSize0_ });
                             ptr_layer_lower_level_outer->insert({ iter_lower, kFlag0_ });
                         }

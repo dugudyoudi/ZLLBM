@@ -526,8 +526,7 @@ DefAmrUint GridManager3D::FindAllNeighborsWithSpecifiedDirection(
     return flag_current_node;
 }
 /**
-* @brief   function to find interface between grids of different
-*          refinement levels.
+* @brief   function to find interface between grids of different refinement levels.
 * @param[in] i_level higher refinement level.
 * @param[in] map_outmost_layer outmost layer of the grid at the higher
 *            refinement level.

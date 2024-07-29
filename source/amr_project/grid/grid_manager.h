@@ -222,7 +222,8 @@ class GridManagerInterface{
         DefMap<DefAmrIndexUint>* const ptr_boundary_corner_y_max,
         DefMap<DefAmrIndexUint>* const ptr_boundary_corner_z_min,
         DefMap<DefAmrIndexUint>* const ptr_boundary_corner_z_max);
-    int MarkRefinementInterface(const DefAmrIndexUint i_level, const DefMap<DefAmrIndexUint>& sfbitset_one_lower_level);
+    int MarkRefinementInterface(const DefAmrIndexUint i_level, const DefMap<DefAmrIndexUint>& sfbitset_one_lower_level,
+        const DefMap<DefAmrIndexUint>& sfbitset_extra);
     void IdentifyInterfaceNodeOnEdgeInnermost(
         const std::array<DefSFBitset, 2>& arr_bitset_lower,
         const DefSFBitset bitset_mid_higher,

@@ -370,7 +370,7 @@ void SFBitsetAux2D::FindNodesInReginOfGivenLength(const DefSFBitset& sfbitset_in
 // * *  x  x
 // * o  x  x
 // * *  x  x
-DefAmrIndexLUint SFBitsetAux2D::FindNodesInPeriodicReginOfGivenLength(const DefSFBitset& sfbitset_in,
+DefAmrIndexLUint SFBitsetAux2D::FindNodesInPeriodicRegionCorner(const DefSFBitset& sfbitset_in,
     const DefAmrIndexLUint region_length,
     const std::vector<bool>& periodic_min, const std::vector<bool>& periodic_max,
     const std::vector<DefSFBitset>& domain_min_n_level,
@@ -459,7 +459,7 @@ DefAmrIndexLUint SFBitsetAux2D::FindNodesInPeriodicReginOfGivenLength(const DefS
     if ((sfbitset_tmp_y&k0SFBitsetTakeYRef_.at(kRefCurrent_))
         == domain_max_n_level.at(kYIndex)) {
         if (periodic_max.at(kYIndex)) {
-            sfbitset_tmp_y = (sfbitset_tmp_x&k0SFBitsetTakeYRef_.at(kRefOthers_))
+            sfbitset_tmp_y = (sfbitset_tmp_y&k0SFBitsetTakeYRef_.at(kRefOthers_))
                 |domain_min_n_level.at(kYIndex);
             sfbitset_tmp_y = FindYNeg(sfbitset_tmp_y);
         } else {
@@ -559,7 +559,7 @@ DefAmrIndexLUint SFBitsetAux2D::FindNodesInPeriodicReginOfGivenLength(const DefS
 // * * o * *
 // * * * * *
 // * * * * *
-DefAmrIndexLUint SFBitsetAux2D::FindNodesInPeriodicReginNearby(const DefSFBitset& sfbitset_in,
+DefAmrIndexLUint SFBitsetAux2D::FindNodesInPeriodicRegionCenter(const DefSFBitset& sfbitset_in,
     const DefAmrIndexLUint region_length,
     const std::vector<bool>& periodic_min, const std::vector<bool>& periodic_max,
     const std::vector<DefSFBitset>& domain_min_n_level,
@@ -1394,7 +1394,7 @@ void SFBitsetAux3D::FindNodesInReginOfGivenLength(const DefSFBitset& sfbitset_in
  * @param[in] domain_max_n_level maximum indicies of current refinement level.
  * @param[out] ptr_sfbitset_nodes pointer to nodes in the given region.
  */
-DefAmrIndexLUint SFBitsetAux3D::FindNodesInPeriodicReginOfGivenLength(const DefSFBitset& sfbitset_in,
+DefAmrIndexLUint SFBitsetAux3D::FindNodesInPeriodicRegionCorner(const DefSFBitset& sfbitset_in,
     const DefAmrIndexLUint region_length,
     const std::vector<bool>& periodic_min, const std::vector<bool>& periodic_max,
     const std::vector<DefSFBitset>& domain_min_n_level,
@@ -1486,7 +1486,7 @@ DefAmrIndexLUint SFBitsetAux3D::FindNodesInPeriodicReginOfGivenLength(const DefS
         if ((sfbitset_tmp_y&k0SFBitsetTakeYRef_.at(kRefCurrent_))
             == domain_max_n_level.at(kYIndex)) {
             if (periodic_max.at(kYIndex)) {
-                sfbitset_tmp_y = (sfbitset_tmp_x&k0SFBitsetTakeYRef_.at(kRefOthers_))
+                sfbitset_tmp_y = (sfbitset_tmp_y&k0SFBitsetTakeYRef_.at(kRefOthers_))
                     |domain_min_n_level.at(kYIndex);
                 sfbitset_tmp_y = FindYNeg(sfbitset_tmp_y);
             } else {
@@ -1587,7 +1587,7 @@ DefAmrIndexLUint SFBitsetAux3D::FindNodesInPeriodicReginOfGivenLength(const DefS
     if ((sfbitset_tmp_z&k0SFBitsetTakeZRef_.at(kRefCurrent_))
         == domain_max_n_level.at(kZIndex)) {
         if (periodic_max.at(kZIndex)) {
-            sfbitset_tmp_z = (sfbitset_tmp_x&k0SFBitsetTakeZRef_.at(kRefOthers_))
+            sfbitset_tmp_z = (sfbitset_tmp_z&k0SFBitsetTakeZRef_.at(kRefOthers_))
                 |domain_min_n_level.at(kZIndex);
             sfbitset_tmp_z = FindZNeg(sfbitset_tmp_z);
         } else {
@@ -1676,7 +1676,7 @@ DefAmrIndexLUint SFBitsetAux3D::FindNodesInPeriodicReginOfGivenLength(const DefS
             if ((sfbitset_tmp_y&k0SFBitsetTakeYRef_.at(kRefCurrent_))
                 == domain_max_n_level.at(kYIndex)) {
                 if (periodic_max.at(kYIndex)) {
-                    sfbitset_tmp_y = (sfbitset_tmp_x&k0SFBitsetTakeYRef_.at(kRefOthers_))
+                    sfbitset_tmp_y = (sfbitset_tmp_y&k0SFBitsetTakeYRef_.at(kRefOthers_))
                         |domain_min_n_level.at(kYIndex);
                     sfbitset_tmp_y = FindYNeg(sfbitset_tmp_y);
                 } else {
@@ -1785,7 +1785,7 @@ DefAmrIndexLUint SFBitsetAux3D::FindNodesInPeriodicReginOfGivenLength(const DefS
  * @return number of node in each direction within the region and domain range.
  * @note only indics within the return values are valid, otherwise may be undefined.
  */
-DefAmrIndexLUint SFBitsetAux3D::FindNodesInPeriodicReginNearby(const DefSFBitset& sfbitset_in,
+DefAmrIndexLUint SFBitsetAux3D::FindNodesInPeriodicRegionCenter(const DefSFBitset& sfbitset_in,
     const DefAmrIndexLUint region_length,
     const std::vector<bool>& periodic_min, const std::vector<bool>& periodic_max,
     const std::vector<DefSFBitset>& domain_min_n_level,

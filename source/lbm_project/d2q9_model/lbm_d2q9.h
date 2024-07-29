@@ -11,6 +11,7 @@
 #define ROOTPROJECT_SOURCE_LBM_LBM_D2Q9_H_
 #include <array>
 #include <memory>
+#include <vector>
 #include "d2q9_model/boundary_d2q9.h"
 #include "lbm_interface.h"
 namespace rootproject {
@@ -56,10 +57,8 @@ class SolverLbmD2Q9 :public SolverLbmInterface {
     // }
 
  protected:
-    void CalMacroD2Q9Compressible(const DefReal dt_lbm, GridNodeLbm* const ptr_node) const;
-    void CalMacroD2Q9Incompressible(const DefReal dt_lbm, GridNodeLbm* const ptr_node) const;
-    void CalMacroForceD2Q9Compressible(const DefReal dt_lbm, GridNodeLbm* const ptr_node) const;
-    void CalMacroForceD2Q9Incompressible(const DefReal dt_lbm, GridNodeLbm* const ptr_node) const;
+    void CalMacroD2Q9Incompressible(const GridNodeLbm& node,
+        DefReal* const ptr_rho, std::vector<DefReal>* const ptr_velocity) const;
 };
 class SolverCreatorLbmD2Q9 final :public amrproject::SolverCreatorInterface {
  public:

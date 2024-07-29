@@ -38,19 +38,10 @@ void SolverLbmD2Q9::InitialModelDependencies() {
             " 2 rather than: " + std::to_string(k0SolverDims_)
              + " in "+ std::string(__FILE__) + " at line " + std::to_string(__LINE__));
     }
-    if (k0BoolCompressible_) {
-        this->func_macro_without_force_ = [this](const DefReal dt_lbm, GridNodeLbm* const ptr_node) {
-            this->CalMacroD2Q9Compressible(dt_lbm, ptr_node);
-        };
-        this->func_macro_with_force_ = [this](const DefReal dt_lbm, GridNodeLbm* const ptr_node) {
-            this->CalMacroForceD2Q9Compressible(dt_lbm, ptr_node);
-        };
-    } else {
-        this->func_macro_without_force_ = [this](const DefReal dt_lbm, GridNodeLbm* const ptr_node) {
-            this->CalMacroD2Q9Incompressible(dt_lbm, ptr_node);
-        };
-        this->func_macro_with_force_ = [this](const DefReal dt_lbm, GridNodeLbm* const ptr_node) {
-            this->CalMacroForceD2Q9Incompressible(dt_lbm, ptr_node);
+    if (!k0BoolCompressible_) {
+        this->func_macro_without_force_ = [this](const GridNodeLbm& node,
+            DefReal* const ptr_rho, std::vector<DefReal>* const ptr_velocity) {
+            this->CalMacroD2Q9Incompressible(node, ptr_rho, ptr_velocity);
         };
     }
 }

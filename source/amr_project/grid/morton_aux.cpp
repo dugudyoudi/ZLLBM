@@ -172,7 +172,7 @@ int SFBitsetAux2D::ResetIndicesExceedingDomain(const std::array<DefAmrIndexLUint
     }
 #ifdef DEBUG_CHECK_GRID
     if (iter_count > max_reset_code_) {
-        return 1;
+        return -1;
     }
 #endif
     if (indices[kXIndex] < domain_min_indices[kXIndex]) {
@@ -188,6 +188,31 @@ int SFBitsetAux2D::ResetIndicesExceedingDomain(const std::array<DefAmrIndexLUint
         SFBitsetComputeIndices(sfbitset_tmp, &indices);
     }
     return 0;
+}
+/**
+ * @brief function to find coarse nodes lined to the fine nodes.
+ * @param[in] sfbitset_fine space filling code of the fine nodes.
+ * @param[out] ptr_vec_coarse pointer to space filling codes of the coarse nodes.
+ */
+void SFBitsetAux2D::FindNeighboringCoarseFromFine(const DefSFBitset& sfbitset_fine,
+    std::vector<DefSFBitset>* const ptr_vec_coarse) const {
+    ptr_vec_coarse->clear();
+    bool bool_x = sfbitset_fine.test(0);
+    bool bool_y = sfbitset_fine.test(1);
+    if (bool_x || bool_y) {
+        DefSFBitset sfbitset_coarse = SFBitsetToOneLowerLevel(sfbitset_fine);
+        ptr_vec_coarse->push_back(sfbitset_coarse);
+        if (bool_x) {
+            DefSFBitset sfbitset_coarse_tmp = FindXPos(sfbitset_coarse);
+            ptr_vec_coarse->push_back(sfbitset_coarse_tmp);
+            if (bool_y) {
+                ptr_vec_coarse->push_back(FindYPos(sfbitset_coarse_tmp));
+            }
+        }
+        if (bool_y) {
+            ptr_vec_coarse->push_back(FindYPos(sfbitset_coarse));
+        }
+    }
 }
 #endif  // DEBUG_DISABLE_2D_FUNCTIONS
 #ifndef  DEBUG_DISABLE_3D_FUNCTIONS
@@ -383,7 +408,7 @@ int SFBitsetAux3D::ResetIndicesExceedingDomain(const std::array<DefAmrIndexLUint
     }
 #ifdef DEBUG_CHECK_GRID
     if (iter_count > max_reset_code_) {
-        return 1;
+        return -1;
     }
 #endif
     if (indices[kXIndex] < domain_min_indices[kXIndex]) {
@@ -405,6 +430,43 @@ int SFBitsetAux3D::ResetIndicesExceedingDomain(const std::array<DefAmrIndexLUint
         SFBitsetComputeIndices(sfbitset_tmp, &indices);
     }
     return 0;
+}
+/**
+ * @brief function to find coarse nodes lined to the fine nodes.
+ * @param[in] sfbitset_fine space filling code of the fine nodes.
+ * @param[out] ptr_vec_coarse pointer to space filling codes of the coarse nodes.
+ */
+void SFBitsetAux3D::FindNeighboringCoarseFromFine(const DefSFBitset& sfbitset_fine,
+    std::vector<DefSFBitset>* const ptr_vec_coarse) const {
+    ptr_vec_coarse->clear();
+    bool bool_x = sfbitset_fine.test(0);
+    bool bool_y = sfbitset_fine.test(1);
+    bool bool_z = sfbitset_fine.test(2);
+    if (bool_x || bool_y || bool_z) {
+        DefSFBitset sfbitset_coarse = SFBitsetToOneLowerLevel(sfbitset_fine);
+        ptr_vec_coarse->push_back(sfbitset_coarse);
+        if (bool_x) {
+            DefSFBitset sfbitset_coarse_tmp = FindXPos(sfbitset_coarse);
+            ptr_vec_coarse->push_back(sfbitset_coarse_tmp);
+            if (bool_y) {
+                DefSFBitset sfbitset_coarse_tmp1 = FindYPos(sfbitset_coarse_tmp);
+                ptr_vec_coarse->push_back(sfbitset_coarse_tmp1);
+                if (bool_z) {
+                    ptr_vec_coarse->push_back(FindZPos(sfbitset_coarse_tmp1));
+                }
+            }
+        }
+        if (bool_y) {
+            DefSFBitset sfbitset_coarse_tmp = FindYPos(sfbitset_coarse);
+            ptr_vec_coarse->push_back(FindYPos(sfbitset_coarse));
+            if (bool_z) {
+                ptr_vec_coarse->push_back(FindZPos(sfbitset_coarse_tmp));
+            }
+        }
+        if (bool_z) {
+            ptr_vec_coarse->push_back(FindZPos(sfbitset_coarse));
+        }
+    }
 }
 #endif  // DEBUG_DISABLE_3D_FUNCTIONS
 }  // end namespace amrproject

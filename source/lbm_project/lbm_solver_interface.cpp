@@ -31,26 +31,30 @@ void SolverLbmInterface::SolverInitial() {
  */
 void SolverLbmInterface::SetDefault2DFunctions() {
     if (k0BoolCompressible_) {
-        this->func_macro_without_force_ = [this](const DefReal dt_lbm, GridNodeLbm* const ptr_node) {
-            this->CalMacro2DCompressible(dt_lbm, ptr_node);
+        this->func_macro_without_force_ = [this](const GridNodeLbm& node,
+            DefReal* const ptr_rho, std::vector<DefReal>* const ptr_velocity) {
+            this->CalMacro2DCompressible(node, ptr_rho, ptr_velocity);
         };
-        this->func_macro_with_force_ = [this](const DefReal dt_lbm, GridNodeLbm* const ptr_node) {
-            this->CalMacroForce2DCompressible(dt_lbm, ptr_node);
+        this->func_macro_with_force_ = [this](const DefReal dt_lbm, const GridNodeLbm& node,
+            DefReal* const ptr_rho, std::vector<DefReal>* const ptr_velocity) {
+            this->CalMacroForce2DCompressible(dt_lbm, node, ptr_rho, ptr_velocity);
         };
         this->func_cal_feq_ = [this](const DefReal rho, const std::vector<DefReal>& velocity,
             std::vector<DefReal>* const ptr_feq) {
-                this->CalFeq2DCompressible(rho, velocity, ptr_feq);
+            this->CalFeq2DCompressible(rho, velocity, ptr_feq);
         };
     } else {
-        this->func_macro_without_force_ = [this](const DefReal dt_lbm, GridNodeLbm* const ptr_node) {
-            this->CalMacro2DIncompressible(dt_lbm, ptr_node);
+        this->func_macro_without_force_ = [this](const GridNodeLbm& node,
+            DefReal* const ptr_rho, std::vector<DefReal>* const ptr_velocity) {
+            this->CalMacro2DIncompressible(node, ptr_rho, ptr_velocity);
         };
-        this->func_macro_with_force_ = [this](const DefReal dt_lbm, GridNodeLbm* const ptr_node) {
-            this->CalMacroForce2DIncompressible(dt_lbm, ptr_node);
+        this->func_macro_with_force_ = [this](const DefReal dt_lbm, const GridNodeLbm& node,
+            DefReal* const ptr_rho, std::vector<DefReal>* const ptr_velocity) {
+            this->CalMacroForce2DIncompressible(dt_lbm, node, ptr_rho, ptr_velocity);
         };
         this->func_cal_feq_ = [this](const DefReal rho, const std::vector<DefReal>& velocity,
             std::vector<DefReal>* const ptr_feq) {
-                this->CalFeq2DIncompressible(rho, velocity, ptr_feq);
+            this->CalFeq2DIncompressible(rho, velocity, ptr_feq);
         };
     }
     this->ptr_func_cal_force_iq_ = &SolverLbmInterface::CalForceIq2D;
@@ -60,22 +64,26 @@ void SolverLbmInterface::SetDefault2DFunctions() {
  */
 void SolverLbmInterface::SetDefault3DFunctions() {
     if (k0BoolCompressible_) {
-        this->func_macro_without_force_ = [this](const DefReal dt_lbm, GridNodeLbm* const ptr_node) {
-            this->CalMacro3DCompressible(dt_lbm, ptr_node);
+        this->func_macro_without_force_ = [this](const GridNodeLbm& node,
+            DefReal* const ptr_rho, std::vector<DefReal>* const ptr_velocity) {
+            this->CalMacro3DCompressible(node, ptr_rho, ptr_velocity);
         };
-        this->func_macro_with_force_ = [this](const DefReal dt_lbm, GridNodeLbm* const ptr_node) {
-            this->CalMacroForce3DCompressible(dt_lbm, ptr_node);
+        this->func_macro_with_force_ = [this](const DefReal dt_lbm, const GridNodeLbm& node,
+            DefReal* const ptr_rho, std::vector<DefReal>* const ptr_velocity) {
+            this->CalMacroForce3DCompressible(dt_lbm, node, ptr_rho, ptr_velocity);
         };
         this->func_cal_feq_ = [this](const DefReal rho, const std::vector<DefReal>& velocity,
             std::vector<DefReal>* const ptr_feq) {
                 this->CalFeq3DCompressible(rho, velocity, ptr_feq);
         };
     } else {
-        this->func_macro_without_force_ = [this](const DefReal dt_lbm, GridNodeLbm* const ptr_node) {
-            this->CalMacro3DIncompressible(dt_lbm, ptr_node);
+        this->func_macro_without_force_ = [this](const GridNodeLbm& node,
+            DefReal* const ptr_rho, std::vector<DefReal>* const ptr_velocity) {
+            this->CalMacro3DIncompressible(node, ptr_rho, ptr_velocity);
         };
-        this->func_macro_with_force_ = [this](const DefReal dt_lbm, GridNodeLbm* const ptr_node) {
-            this->CalMacroForce3DIncompressible(dt_lbm, ptr_node);
+        this->func_macro_with_force_ = [this](const DefReal dt_lbm, const GridNodeLbm& node,
+            DefReal* const ptr_rho, std::vector<DefReal>* const ptr_velocity) {
+            this->CalMacroForce3DIncompressible(dt_lbm, node, ptr_rho, ptr_velocity);
         };
         this->func_cal_feq_ = [this](const DefReal rho, const std::vector<DefReal>& velocity,
             std::vector<DefReal>* const ptr_feq) {
@@ -166,7 +174,7 @@ int SolverLbmInterface::InformationFromGridOfDifferentLevel(
             amrproject::LogManager::LogErrorMsg("transfer information from coarse grid to fine grid failed"
             " in function SolverLbmInterface::TransferInfoFromCoarseGrid in file "
             + std::string(__FILE__) + " at line " + std::to_string(__LINE__));
-            return 1;
+            return -1;
         }
     }
     if (i_level < ptr_grid_manager_->k0MaxLevel_ && ptr_grid_info->CheckNeedInfoFromFine(
@@ -186,9 +194,10 @@ int SolverLbmInterface::InformationFromGridOfDifferentLevel(
 void SolverLbmInterface::Collision(
     const DefAmrUint flag_not_compute, GridInfoLbmInteface* const ptr_lbm_grid_nodes_info) const {
     // choose function to compute macroscopic variables based on if the forces are considered
-    std::function<void(const DefReal, GridNodeLbm* const)> func_macro;
+    std::function<void(const DefReal, const GridNodeLbm&, DefReal* const, std::vector<DefReal>* const)> func_macro;
     DefReal dt_lbm = ptr_lbm_grid_nodes_info->ptr_collision_operator_->dt_lbm_;
     DefMap<std::unique_ptr<GridNodeLbm>>& grid_nodes = *ptr_lbm_grid_nodes_info->GetPointerToLbmGrid();
+
     if (ptr_lbm_grid_nodes_info->ptr_lbm_grid_nodes_ != nullptr) {
         if (ptr_lbm_grid_nodes_info->bool_forces_) {
             if (grid_nodes.begin()->second->force_.size() != k0SolverDims_) {
@@ -198,12 +207,14 @@ void SolverLbmInterface::Collision(
             }
             func_macro = func_macro_with_force_;
         } else {
-            func_macro = func_macro_without_force_;
+            func_macro = [this](const DefReal dt_lbm, const GridNodeLbm& node,
+            DefReal* const ptr_rho, std::vector<DefReal>* const ptr_velocity) {
+            func_macro_without_force_(node, ptr_rho, ptr_velocity);};
         }
         for (auto& iter_node : grid_nodes) {
             if (iter_node.second->flag_status_ & flag_not_compute) {
             } else {
-                func_macro(dt_lbm, iter_node.second.get());
+                func_macro(dt_lbm, *iter_node.second.get(), &iter_node.second->rho_, &iter_node.second->velocity_);
                 ptr_lbm_grid_nodes_info->ptr_collision_operator_->CollisionOperator(*this, iter_node.second.get());
             }
         }
@@ -349,139 +360,123 @@ DefReal SolverLbmInterface::CalForceIq3D(const int iq, const GridNodeLbm& node) 
 }
 /**
  * @brief function to calculate macroscopic variables based on distribution functions (without forcing term).
- * @param[in] dt_lbm time spacing of LBM at current refinement level.
- * @param ptr_node pointer to a grid node storing LBM related information.
+ * @param[in] node LBM node information.
+ * @param[out] ptr_rho pointer to fluid density.
+ * @param[out] ptr_rho pointer to fluid velocity.
  */
-void SolverLbmInterface::CalMacro2DCompressible(const DefReal dt_lbm, GridNodeLbm* const ptr_node) const {
-    ptr_node->rho_ = ptr_node->f_[0];
-    ptr_node->velocity_ = {0, 0};
-    for (DefAmrIndexUint iq = 1; iq < k0NumQ_; ++iq) {
-        ptr_node->rho_ += ptr_node->f_[iq];
-        ptr_node->velocity_[kXIndex] += k0Cx_[iq] * ptr_node->f_[iq];
-        ptr_node->velocity_[kYIndex] += k0Cy_[iq] * ptr_node->f_[iq];
-    }
-    ptr_node->velocity_[kXIndex]/=ptr_node->rho_;
-    ptr_node->velocity_[kYIndex]/=ptr_node->rho_;
+void SolverLbmInterface::CalMacro2DCompressible(const GridNodeLbm& node,
+    DefReal* const ptr_rho, std::vector<DefReal>* const ptr_velocity) const {
+    DefReal& rho = (*ptr_rho);
+    CalMacro2DIncompressible(node, ptr_rho, ptr_velocity);
+    ptr_velocity->at(kXIndex)/=rho;
+    ptr_velocity->at(kYIndex)/=rho;
 }
 /**
  * @brief function to calculate macroscopic variables based on distribution functions (without forcing term).
- * @param[in] dt_lbm time spacing of LBM at current refinement level.
- * @param ptr_node pointer to a grid node storing LBM related information.
+ * @param[in] node LBM node information.
+ * @param[out] ptr_rho pointer to fluid density.
+ * @param[out] ptr_velocity pointer to fluid velocity.
  */
-void SolverLbmInterface::CalMacro2DIncompressible(const DefReal dt_lbm, GridNodeLbm* const ptr_node) const {
-    ptr_node->rho_ = ptr_node->f_[0];
-    ptr_node->velocity_ = {0, 0};
+void SolverLbmInterface::CalMacro2DIncompressible(const GridNodeLbm& node,
+    DefReal* const ptr_rho, std::vector<DefReal>* const ptr_velocity) const {
+    DefReal& rho = (*ptr_rho);
+    rho = node.f_[0];
+    (*ptr_velocity) = {0, 0};
     for (DefAmrIndexUint iq = 1; iq < k0NumQ_; ++iq) {
-        ptr_node->rho_ += ptr_node->f_[iq];
-        ptr_node->velocity_[kXIndex] += k0Cx_[iq] * ptr_node->f_[iq];
-        ptr_node->velocity_[kYIndex] += k0Cy_[iq] * ptr_node->f_[iq];
+        (*ptr_rho) += node.f_[iq];
+        ptr_velocity->at(kXIndex) += k0Cx_[iq] * node.f_[iq];
+        ptr_velocity->at(kYIndex) += k0Cy_[iq] * node.f_[iq];
     }
 }
 /**
  * @brief function to calculate macroscopic variables based on distribution functions (without forcing term).
- * @param[in] dt_lbm time spacing of LBM at current refinement level.
- * @param ptr_node pointer to a grid node storing LBM related information.
+ * @param[in] node LBM node information.
+ * @param[out] ptr_rho pointer to fluid density.
+ * @param[out] ptr_velocity pointer to fluid velocity.
  */
-void SolverLbmInterface::CalMacro3DCompressible(const DefReal dt_lbm, GridNodeLbm* const ptr_node) const {
-    ptr_node->rho_ = ptr_node->f_[0];
-    ptr_node->velocity_ = {0, 0, 0};
-    for (DefAmrIndexUint iq = 1; iq < k0NumQ_; ++iq) {
-        ptr_node->rho_ += ptr_node->f_[iq];
-        ptr_node->velocity_[kXIndex] += k0Cx_[iq] * ptr_node->f_[iq];
-        ptr_node->velocity_[kYIndex] += k0Cy_[iq] * ptr_node->f_[iq];
-        ptr_node->velocity_[kZIndex] += k0Cz_[iq] * ptr_node->f_[iq];
-    }
-    ptr_node->velocity_[kXIndex]/=ptr_node->rho_;
-    ptr_node->velocity_[kYIndex]/=ptr_node->rho_;
-    ptr_node->velocity_[kZIndex]/=ptr_node->rho_;
+void SolverLbmInterface::CalMacro3DCompressible(const GridNodeLbm& node,
+    DefReal* const ptr_rho, std::vector<DefReal>* const ptr_velocity) const {
+    DefReal& rho = (*ptr_rho);
+    CalMacro3DIncompressible(node, ptr_rho, ptr_velocity);
+    ptr_velocity->at(kXIndex)/=rho;
+    ptr_velocity->at(kYIndex)/=rho;
+    ptr_velocity->at(kZIndex)/=rho;
 }
 /**
- * @brief function to calculate macroscopic variables based on distribution functions (incompressible without forcing term).
- * @param[in] dt_lbm time spacing of LBM at current refinement level.
- * @param ptr_node pointer to a grid node storing LBM related information.
+ * @brief function to calculate macroscopic variables based on distribution functions (without forcing term).
+ * @param[in] node LBM node information.
+ * @param[out] ptr_rho pointer to fluid density.
+ * @param[out] ptr_velocity pointer to fluid velocity.
  */
-void SolverLbmInterface::CalMacro3DIncompressible(const DefReal dt_lbm, GridNodeLbm* const ptr_node) const {
-    ptr_node->rho_ = ptr_node->f_[0];
-    ptr_node->velocity_ = {0, 0, 0};
+void SolverLbmInterface::CalMacro3DIncompressible(const GridNodeLbm& node,
+    DefReal* const ptr_rho, std::vector<DefReal>* const ptr_velocity) const {
+    DefReal& rho = (*ptr_rho);
+    rho = node.f_[0];
+    (*ptr_velocity) = {0, 0, 0};
     for (DefAmrIndexUint iq = 1; iq < k0NumQ_; ++iq) {
-        ptr_node->rho_ += ptr_node->f_[iq];
-        ptr_node->velocity_[kXIndex] += k0Cx_[iq] * ptr_node->f_[iq];
-        ptr_node->velocity_[kYIndex] += k0Cy_[iq] * ptr_node->f_[iq];
-        ptr_node->velocity_[kZIndex] += k0Cz_[iq] * ptr_node->f_[iq];
+        (*ptr_rho) += node.f_[iq];
+        ptr_velocity->at(kXIndex) += k0Cx_[iq] *  node.f_[iq];
+        ptr_velocity->at(kYIndex) += k0Cy_[iq] *  node.f_[iq];
+        ptr_velocity->at(kZIndex) += k0Cz_[iq] *  node.f_[iq];
     }
 }
 /**
  * @brief function to calculate macroscopic variables based on distribution functions (with forcing term).
  * @param[in] dt_lbm time spacing of LBM at current refinement level.
- * @param ptr_node pointer to a grid node storing LBM related information.
+ * @param[in] node LBM node information.
+ * @param[out] ptr_rho pointer to fluid density.
+ * @param[out] ptr_velocity pointer to fluid velocity.
  */
-void SolverLbmInterface::CalMacroForce2DCompressible(const DefReal dt_lbm, GridNodeLbm* const ptr_node) const {
-    ptr_node->rho_ = ptr_node->f_[0];
-    ptr_node->velocity_ = {0, 0};
-    for (DefAmrIndexUint iq = 1; iq < k0NumQ_; ++iq) {
-        ptr_node->rho_ += ptr_node->f_[iq];
-        ptr_node->velocity_[kXIndex] += k0Cx_[iq] * ptr_node->f_[iq];
-        ptr_node->velocity_[kYIndex] += k0Cy_[iq] * ptr_node->f_[iq];
-    }
-    ptr_node->velocity_[kXIndex] += 0.5 * ptr_node->force_[kXIndex] * dt_lbm;
-    ptr_node->velocity_[kYIndex] += 0.5 * ptr_node->force_[kYIndex] * dt_lbm;
-    ptr_node->velocity_[kXIndex]/=ptr_node->rho_;
-    ptr_node->velocity_[kYIndex]/=ptr_node->rho_;
-}
-/**
- * @brief function to calculate macroscopic variables based on distribution functions (incompressible with forcing term).
- * @param[in] dt_lbm time spacing of LBM at current refinement level.
- * @param ptr_node pointer to a grid node storing LBM related information.
- */
-void SolverLbmInterface::CalMacroForce2DIncompressible(const DefReal dt_lbm, GridNodeLbm* const ptr_node) const {
-    ptr_node->rho_ = ptr_node->f_[0];
-    ptr_node->velocity_ = {0, 0};
-    for (DefAmrIndexUint iq = 1; iq < k0NumQ_; ++iq) {
-        ptr_node->rho_ += ptr_node->f_[iq];
-        ptr_node->velocity_[kXIndex] += k0Cx_[iq] * ptr_node->f_[iq];
-        ptr_node->velocity_[kYIndex] += k0Cy_[iq] * ptr_node->f_[iq];
-    }
-    ptr_node->velocity_[kXIndex] += 0.5 * ptr_node->force_[kXIndex] * dt_lbm;
-    ptr_node->velocity_[kYIndex] += 0.5 * ptr_node->force_[kYIndex] * dt_lbm;
+void SolverLbmInterface::CalMacroForce2DCompressible(const DefReal dt_lbm, const GridNodeLbm& node,
+    DefReal* const ptr_rho, std::vector<DefReal>* const ptr_velocity) const {
+    DefReal& rho = (*ptr_rho);
+    CalMacroForce2DIncompressible(dt_lbm, node, ptr_rho, ptr_velocity);
+    ptr_velocity->at(kXIndex)/=rho;
+    ptr_velocity->at(kYIndex)/=rho;
 }
 /**
  * @brief function to calculate macroscopic variables based on distribution functions (with forcing term).
  * @param[in] dt_lbm time spacing of LBM at current refinement level.
- * @param ptr_node pointer to a grid node storing LBM related information.
+ * @param[in] node LBM node information.
+ * @param[out] ptr_rho pointer to fluid density.
+ * @param[out] ptr_velocity pointer to fluid velocity.
  */
-void SolverLbmInterface::CalMacroForce3DCompressible(const DefReal dt_lbm, GridNodeLbm* const ptr_node) const {
-    ptr_node->rho_ = ptr_node->f_[0];
-    ptr_node->velocity_ = {0, 0, 0};
-    for (DefAmrIndexUint iq = 1; iq < k0NumQ_; ++iq) {
-        ptr_node->rho_ += ptr_node->f_[iq];
-        ptr_node->velocity_[kXIndex] += k0Cx_[iq] * ptr_node->f_[iq];
-        ptr_node->velocity_[kYIndex] += k0Cy_[iq] * ptr_node->f_[iq];
-        ptr_node->velocity_[kZIndex] += k0Cz_[iq] * ptr_node->f_[iq];
-    }
-    ptr_node->velocity_[kXIndex] += 0.5 * ptr_node->force_[kXIndex] * dt_lbm;
-    ptr_node->velocity_[kYIndex] += 0.5 * ptr_node->force_[kYIndex] * dt_lbm;
-    ptr_node->velocity_[kZIndex] += 0.5 * ptr_node->force_[kZIndex] * dt_lbm;
-    ptr_node->velocity_[kXIndex]/=ptr_node->rho_;
-    ptr_node->velocity_[kYIndex]/=ptr_node->rho_;
-    ptr_node->velocity_[kZIndex]/=ptr_node->rho_;
+void SolverLbmInterface::CalMacroForce2DIncompressible(const DefReal dt_lbm, const GridNodeLbm& node,
+    DefReal* const ptr_rho, std::vector<DefReal>* const ptr_velocity) const {
+    DefReal& rho = (*ptr_rho);
+    CalMacro2DIncompressible(node, ptr_rho, ptr_velocity);
+    ptr_velocity->at(kXIndex) += 0.5 * node.force_[kXIndex] * dt_lbm;
+    ptr_velocity->at(kYIndex) += 0.5 * node.force_[kYIndex] * dt_lbm;
 }
 /**
- * @brief function to calculate macroscopic variables based on distribution functions (incompressible with forcing term).
+ * @brief function to calculate macroscopic variables based on distribution functions (with forcing term).
  * @param[in] dt_lbm time spacing of LBM at current refinement level.
- * @param[out] ptr_node pointer to a grid node storing LBM related information.
+ * @param[in] node LBM node information.
+ * @param[out] ptr_rho pointer to fluid density.
+ * @param[out] ptr_velocity pointer to fluid velocity.
  */
-void SolverLbmInterface::CalMacroForce3DIncompressible(const DefReal dt_lbm, GridNodeLbm* const ptr_node) const {
-    ptr_node->rho_ = ptr_node->f_[0];
-    ptr_node->velocity_ = {0, 0, 0};
-    for (DefAmrIndexUint iq = 1; iq < k0NumQ_; ++iq) {
-        ptr_node->rho_ += ptr_node->f_[iq];
-        ptr_node->velocity_[kXIndex] += k0Cx_[iq] * ptr_node->f_[iq];
-        ptr_node->velocity_[kYIndex] += k0Cy_[iq] * ptr_node->f_[iq];
-        ptr_node->velocity_[kZIndex] += k0Cz_[iq] * ptr_node->f_[iq];
-    }
-    ptr_node->velocity_[kXIndex] += 0.5 * ptr_node->force_[kXIndex] * dt_lbm;
-    ptr_node->velocity_[kYIndex] += 0.5 * ptr_node->force_[kYIndex] * dt_lbm;
-    ptr_node->velocity_[kZIndex] += 0.5 * ptr_node->force_[kZIndex] * dt_lbm;
+void SolverLbmInterface::CalMacroForce3DCompressible(const DefReal dt_lbm, const GridNodeLbm& node,
+    DefReal* const ptr_rho, std::vector<DefReal>* const ptr_velocity) const {
+    DefReal& rho = (*ptr_rho);
+    CalMacroForce3DIncompressible(dt_lbm, node, ptr_rho, ptr_velocity);
+    ptr_velocity->at(kXIndex)/=rho;
+    ptr_velocity->at(kYIndex)/=rho;
+    ptr_velocity->at(kZIndex)/=rho;
+}
+/**
+ * @brief function to calculate macroscopic variables based on distribution functions (with forcing term).
+ * @param[in] dt_lbm time spacing of LBM at current refinement level.
+ * @param[in] node LBM node information.
+ * @param[out] ptr_rho pointer to fluid density.
+ * @param[out] ptr_velocity pointer to fluid velocity.
+ */
+void SolverLbmInterface::CalMacroForce3DIncompressible(const DefReal dt_lbm, const GridNodeLbm& node,
+    DefReal* const ptr_rho, std::vector<DefReal>* const ptr_velocity) const {
+    DefReal& rho = (*ptr_rho);
+    CalMacro3DIncompressible(node, ptr_rho, ptr_velocity);
+    ptr_velocity->at(kXIndex) += 0.5 * node.force_[kXIndex] * dt_lbm;
+    ptr_velocity->at(kYIndex) += 0.5 * node.force_[kYIndex] * dt_lbm;
+    ptr_velocity->at(kZIndex) += 0.5 * node.force_[kZIndex] * dt_lbm;
 }
 }  // end namespace lbmproject
 }  // end namespace rootproject

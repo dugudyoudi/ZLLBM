@@ -12,6 +12,7 @@
 #include <bit>
 #include <set>
 #include <vector>
+#include <functional>
 #include <map>
 #include <limits>
 #include <utility>
@@ -333,6 +334,9 @@ class MpiManager{
         int num_chunks_ = 0;
         std::array<int, 2> array_buffer_size_ = {0, 0};
     };
+    int SendNReceiveRequestNodesSFbitset(const std::vector<int>& num_node_request_current,
+        const std::vector<int>& num_node_request_others, const std::vector<DefMap<DefAmrIndexUint>> &requested_nodes,
+        std::map<int, DefMap<DefAmrIndexUint>>* const ptr_vec_map_nodes_need_send) const;
     int SendGhostNodeForInterpolation(const SFBitsetAuxInterface& sfbitset_aux,
         const GridInfoInterface& grid_info_lower, GridInfoInterface* ptr_grid_info,
         std::vector<BufferSizeInfo>* const ptr_send_buffer_info,
@@ -340,7 +344,13 @@ class MpiManager{
         std::vector<std::vector<MPI_Request>>* const ptr_vec_vec_reqs_send,
         std::vector<std::vector<MPI_Request>>* const ptr_vec_vec_reqs_receive,
         std::vector<std::unique_ptr<char[]>>* const ptr_vec_ptr_buffer_send,
-        std::vector<std::unique_ptr<char[]>>* const ptr_vec_ptr_buffer_receive);
+        std::vector<std::unique_ptr<char[]>>* const ptr_vec_ptr_buffer_receive) const;
+    int WaitAndReadGhostNodeForInterpolation(const std::vector<BufferSizeInfo>& send_buffer_info,
+        const std::vector<BufferSizeInfo>& receive_buffer_info,
+        const std::vector<std::unique_ptr<char[]>>& vec_ptr_buffer_receive,
+        std::vector<std::vector<MPI_Request>>* const ptr_vec_vec_reqs_send,
+        std::vector<std::vector<MPI_Request>>* const ptr_vec_vec_reqs_receive,
+        GridInfoInterface* ptr_grid_inf);
     std::vector<bool> IdentifyRanksReceivingGridNode(const DefAmrIndexUint i_level) const;
     void SendNReceiveGridNodeBufferSize(const DefAmrIndexUint i_level,
         const int node_info_size, const std::vector<bool>& rank_id_sent,
@@ -348,13 +358,14 @@ class MpiManager{
         std::vector<BufferSizeInfo>* const ptr_receive_buffer_info) const;
     DefSizet CalculateBufferSizeForGridNode(
         const DefSizet num_nodes, const GridInfoInterface& grid_info) const;
-    void SendGridNodeInformation(const int i_rank, const BufferSizeInfo& send_buffer_info,
+    int SendGridNodeInformation(const int i_rank, const BufferSizeInfo& send_buffer_info,
         const std::map<int, DefMap<DefAmrIndexUint>>& nodes_to_send,
+        const std::function<int(const DefMap<DefAmrIndexUint>& , char* const)> func_copy_node_to_buffer,
         GridInfoInterface* ptr_grid_info, char* const ptr_buffer_send,
         std::vector<MPI_Request>* const ptr_reqs_send) const;
     std::unique_ptr<char[]> ReceiveGridNodeInformation(const int rank_receive, const int node_info_size,
         const BufferSizeInfo& receive_buffer_info, std::vector<MPI_Request>* const ptr_reqs_receive) const;
-    void SendNReceiveGridNodes(
+    int SendNReceiveGridNodes(
         std::vector<BufferSizeInfo>* const ptr_send_buffer_info,
         std::vector<BufferSizeInfo>* const ptr_receive_buffer_info,
         std::vector<std::vector<MPI_Request>>* const ptr_vec_vec_reqs_send,
@@ -382,6 +393,7 @@ class MpiManager{
  public:
     void CheckMpiNodesCorrespondence(const GridInfoInterface& grid_info) const;
 
+    // functions for the purpose of initialization
  public:
 #ifndef  DEBUG_DISABLE_2D_FUNCTION
     void IniTraverseBackgroundForPartitionRank0(

@@ -218,6 +218,7 @@ void MpiManager::IniSendNReceivePartitionedGrid(const DefAmrIndexUint dims,
     int int_interface_status;
     DefAmrIndexUint num_ghost_lower = k0NumPartitionOuterLayers_/2,
         num_ghost_upper = (k0NumPartitionOuterLayers_ + 1)/2;
+     DefAmrIndexLUint num_layer_near_interface = k0NumPartitionOuterLayers_;
     DefSizet num_max = ull_max.size();
     std::vector<DefMap<DefAmrIndexUint>> partition_interface_background(num_ranks);
     if (rank_id == 0) {  // partition nodes on rank 0
@@ -289,7 +290,6 @@ void MpiManager::IniSendNReceivePartitionedGrid(const DefAmrIndexUint dims,
             std::vector<DefSFBitset> nodes_in_region;
             DefAmrIndexUint num_extend_coarse2fine = ptr_vec_grid_info->at(i_level_lower)->k0NumCoarse2FineLayer_ - 1;
             DefMap<DefAmrIndexUint> map_extend_coarse2fine;
-            DefAmrIndexLUint num_layer_near_interface = k0NumPartitionOuterLayers_;
             std::vector<DefMap<DefAmrIndexUint>> map_partition_near_f2c_outmost(num_ranks);
             bool bool_near_coarse2fine;
 
@@ -338,7 +338,7 @@ void MpiManager::IniSendNReceivePartitionedGrid(const DefAmrIndexUint dims,
                     if (num_ghost_lower == 0) {  // only one ghost layer at given level
                         map_ghost_lower_tmp_ranks.at(i_rank).insert({iter_node.first, flag_size0});
                     } else {
-                        sfbitset_aux.FindNodesInPeriodicReginNearby(iter_node.first,
+                        sfbitset_aux.FindNodesInPeriodicRegionCenter(iter_node.first,
                             num_ghost_lower, periodic_min, periodic_max,
                             domain_min_n_level, domain_max_n_level, &nodes_in_region);
                         for (const auto& iter_node_in_region : nodes_in_region) {
@@ -351,7 +351,7 @@ void MpiManager::IniSendNReceivePartitionedGrid(const DefAmrIndexUint dims,
                 }
                 // find ghost layers for mpi communication in the outer layer based on upper interface
                 if ((int_interface_status&2) == 2) {
-                    sfbitset_aux.FindNodesInPeriodicReginNearby(iter_node.first,
+                    sfbitset_aux.FindNodesInPeriodicRegionCenter(iter_node.first,
                         num_ghost_upper, periodic_min, periodic_max,
                         domain_min_n_level, domain_max_n_level, &nodes_in_region);
                     for (const auto& iter_node_in_region : nodes_in_region) {
@@ -363,7 +363,7 @@ void MpiManager::IniSendNReceivePartitionedGrid(const DefAmrIndexUint dims,
                 }
                 if (int_interface_status) {
                     // find node on both partitioned interface and refinement interface
-                    sfbitset_aux.FindNodesInPeriodicReginNearby(iter_node.first,
+                    sfbitset_aux.FindNodesInPeriodicRegionCenter(iter_node.first,
                         num_layer_near_interface, periodic_min, periodic_max,
                         domain_min_n_level, domain_max_n_level, &nodes_in_region);
                     bool_near_coarse2fine = false;
@@ -403,7 +403,7 @@ void MpiManager::IniSendNReceivePartitionedGrid(const DefAmrIndexUint dims,
                         outmost_for_all_ranks.at(iter_node.first).insert(i_rank);
                     }
                     // find nodes in all coarse to fine layers
-                    sfbitset_aux.FindNodesInPeriodicReginNearby(iter_node.first,
+                    sfbitset_aux.FindNodesInPeriodicRegionCenter(iter_node.first,
                         num_extend_coarse2fine, periodic_min, periodic_max,
                         domain_min_n_level, domain_max_n_level, &nodes_in_region);
                     for (const auto& iter_region : nodes_in_region) {
@@ -453,7 +453,7 @@ void MpiManager::IniSendNReceivePartitionedGrid(const DefAmrIndexUint dims,
             // nodes in both refinement and mpi communication layers
             DefSFCodeToUint code_tmp;
             for (const auto& iter_ghost : map_partition_near_f2c_outmost.at(0)) {
-                sfbitset_aux.FindNodesInPeriodicReginNearby(iter_ghost.first,
+                sfbitset_aux.FindNodesInPeriodicRegionCenter(iter_ghost.first,
                     k0NumPartitionOuterLayers_, periodic_min, periodic_max,
                     domain_min_n_level, domain_max_n_level, &nodes_in_region);
                 for (const auto& iter_region : nodes_in_region) {
@@ -465,6 +465,9 @@ void MpiManager::IniSendNReceivePartitionedGrid(const DefAmrIndexUint dims,
                             != map_extend_coarse2fine.end()
                             || vec_sfbitset_rank0.at(i_level).find(iter_region)
                             == vec_sfbitset_rank0.at(i_level).end())) {
+                            // nodes not in vec_sfbitset_rank0 assumes that those nodes are
+                            // in grid at one lower level, to ensure enough nodes are
+                            // in the outer mpi communication layers
                             ptr_sfbitset_ghost_each->at(i_level).insert({iter_region, 0});
                         }
                     }
@@ -548,7 +551,7 @@ void MpiManager::IniSendNReceivePartitionedGrid(const DefAmrIndexUint dims,
                 // nodes on both refinement layers and outer mpi communication layers
                 DefMap<DefAmrIndexUint> map_ghost_n_refinement;
                 for (const auto& iter_ghost : map_partition_near_f2c_outmost.at(i_rank)) {
-                    sfbitset_aux.FindNodesInPeriodicReginNearby(iter_ghost.first,
+                    sfbitset_aux.FindNodesInPeriodicRegionCenter(iter_ghost.first,
                         k0NumPartitionOuterLayers_, periodic_min, periodic_max,
                         domain_min_n_level, domain_max_n_level, &nodes_in_region);
 
@@ -597,7 +600,7 @@ void MpiManager::IniSendNReceivePartitionedGrid(const DefAmrIndexUint dims,
 
             // find nodes on both outmost layer and mpi outer layers
             for (const auto& iter_node : outmost_for_all_ranks) {
-                sfbitset_aux.FindNodesInPeriodicReginNearby(iter_node.first, k0NumPartitionOuterLayers_,
+                sfbitset_aux.FindNodesInPeriodicRegionCenter(iter_node.first, k0NumPartitionOuterLayers_,
                     periodic_min, periodic_max, domain_min_n_level, domain_max_n_level, &nodes_in_region);
                 for (const auto& iter_region : nodes_in_region) {
                     if (outmost_for_all_ranks.find(iter_region) != outmost_for_all_ranks.end()) {

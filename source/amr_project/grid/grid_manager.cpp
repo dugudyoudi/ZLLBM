@@ -301,41 +301,41 @@ void GridManagerInterface::SetNumberOfExtendLayerForGrid(const DefAmrIndexUint i
 }
 /**
  * @brief function to find overlapping layers between grid of adjacent refinement levels based on the outermost coarse layer.
- * @param[in]  layer_coarse_m1  nodes in the coarse layer overlapping with ptr_layer_fine_outmost.
+ * @param[in]  layer_coarse_innermost  nodes in the coarse layer overlapping with ptr_layer_fine_outmost.
  * @param[in]  sfbitset_exist   existent nodes.
- * @param[out] ptr_layer_coarse_0 pointer to nodes in the coarse layer overlapping with ptr_layer_fine_inner.
+ * @param[out] ptr_layer_coarse_outer pointer to nodes in the coarse layer overlapping with ptr_layer_fine_inner.
  * @param[out] ptr_layer_fine_outmost pointer to nodes in the outermost fine layer.
  * @param[out] ptr_layer_fine_mid pointer to nodes in the second outermost fine layer.
  * @param[out] ptr_layer_fine_inner pointer to nodes in the third outermost fine layer.
  */
 void GridManagerInterface::FindOverlappingLayersBasedOnOutermostCoarse(
-    const DefMap<DefAmrUint>& layer_coarse_m1, const DefMap<DefAmrIndexUint>& sfbitset_exist,
-    DefMap<DefAmrUint>* const ptr_layer_coarse_0, DefMap<DefAmrUint>* const ptr_layer_fine_outmost,
+    const DefMap<DefAmrUint>& layer_coarse_innermost, const DefMap<DefAmrIndexUint>& sfbitset_exist,
+    DefMap<DefAmrUint>* const ptr_layer_coarse_outer, DefMap<DefAmrUint>* const ptr_layer_fine_outmost,
     DefMap<DefAmrUint>* const ptr_layer_fine_mid, DefMap<DefAmrUint>* const ptr_layer_fine_inner) {
 #ifdef DEBUG_CHECK_GRID
-    if (&layer_coarse_m1 == ptr_layer_coarse_0) {
-        LogManager::LogError("input (layer_coarse_m1)"
-         " should not be the same as output (ptr_layer_coarse_0) in "
+    if (&layer_coarse_innermost == ptr_layer_coarse_outer) {
+        LogManager::LogError("input (layer_coarse_innermost)"
+         " should not be the same as output (ptr_layer_coarse_outer) in "
         + std::string(__FILE__) + " at line " + std::to_string(__LINE__));
     }
 #endif  // DEBUG_CHECK_GRID
 
     std::vector<DefSFBitset> corner_bitsets;
-    for (const auto& iter_node : layer_coarse_m1) {
+    for (const auto& iter_node : layer_coarse_innermost) {
         FindCornersForNeighbourCells(iter_node.first, &corner_bitsets);
         for (auto& iter_conner : corner_bitsets) {
-            IdentifyInterfaceForACell(iter_conner, layer_coarse_m1, sfbitset_exist,
+            IdentifyInterfaceForACell(iter_conner, layer_coarse_innermost, sfbitset_exist,
                 ptr_layer_fine_inner, ptr_layer_fine_mid, ptr_layer_fine_outmost);
         }
     }
 #ifdef DEBUG_CHECK_GRID
-    if (ptr_layer_fine_outmost == ptr_layer_coarse_0) {
+    if (ptr_layer_fine_outmost == ptr_layer_coarse_outer) {
         LogManager::LogError("input (ptr_layer_fine_outmost)"
          " should not be the same as output (ptr_layer_coarse_0) in "
          + std::string(__FILE__) + " at line " + std::to_string(__LINE__));
     }
 #endif  // DEBUG_CHECK_GRID
-    OverlapLayerFromHighToLow(*ptr_layer_fine_inner, ptr_layer_coarse_0);
+    OverlapLayerFromHighToLow(*ptr_layer_fine_inner, ptr_layer_coarse_outer);
 }
 /**
  * @brief function to instantiates nodes on the overlap layers of refinement interface for all levels.
@@ -345,7 +345,7 @@ void GridManagerInterface::InstantiateOverlapLayerOfRefinementInterface(
     const std::vector<DefMap<DefAmrIndexUint>>& sfbitset_one_lower_level) {
     InterfaceLayerInfo* ptr_interface_info = nullptr;
     InterfaceLayerInfo* ptr_interface_info_lower = nullptr;
-    DefAmrIndexUint layer_coarse0, layer_coarse_m1, layer0, layer_m1, layer_m2;
+    DefAmrIndexUint layer_coarse_outer, layer_coarse_innermost, layer0, layer_m1, layer_m2;
     DefAmrUint flag_tmp, flag_refined = NodeBitStatus::kNodeStatus0_;
     int maxlayer;
     for (DefAmrIndexUint i_level = k0MaxLevel_; i_level > 0; --i_level) {
@@ -367,8 +367,8 @@ void GridManagerInterface::InstantiateOverlapLayerOfRefinementInterface(
         }
 #endif  // DEBUG_CHECK_GRID
         // find interface node at current level
-        layer_coarse0 = grid_info_lower.k0NumCoarse2FineLayer_ - 1;
-        layer_coarse_m1 = layer_coarse0 - 1;
+        layer_coarse_outer = 1;
+        layer_coarse_innermost = 0;
         layer0 = grid_info.k0NumFine2CoarseLayer_ - 1;
         layer_m1 = layer0 - 1;
         layer_m2 = layer_m1 - 1;
@@ -385,9 +385,9 @@ void GridManagerInterface::InstantiateOverlapLayerOfRefinementInterface(
             if (ptr_interface_info_lower->vec_inner_coarse2fine_.size() > 0) {
                 ptr_interface_info->vec_inner_fine2coarse_.resize(grid_info.k0NumFine2CoarseLayer_);
                 FindOverlappingLayersBasedOnOutermostCoarse(
-                    ptr_interface_info_lower->vec_inner_coarse2fine_.at(layer_coarse_m1),
+                    ptr_interface_info_lower->vec_inner_coarse2fine_.at(layer_coarse_innermost),
                     sfbitset_one_lower_level.at(i_level),
-                    &ptr_interface_info_lower->vec_inner_coarse2fine_.at(layer_coarse0),
+                    &ptr_interface_info_lower->vec_inner_coarse2fine_.at(layer_coarse_outer),
                     &ptr_interface_info->vec_inner_fine2coarse_.at(layer0),
                     &ptr_interface_info->vec_inner_fine2coarse_.at(layer_m1),
                     &ptr_interface_info->vec_inner_fine2coarse_.at(layer_m2));
@@ -439,10 +439,10 @@ void GridManagerInterface::InstantiateOverlapLayerOfRefinementInterface(
                     grid_info.k0NumFine2CoarseLayer_);
                 FindOverlappingLayersBasedOnOutermostCoarse(
                     ptr_interface_info_lower
-                    ->vec_outer_coarse2fine_.at(layer_coarse_m1),
+                    ->vec_outer_coarse2fine_.at(layer_coarse_innermost),
                     sfbitset_one_lower_level.at(i_level),
                     &ptr_interface_info_lower
-                    ->vec_outer_coarse2fine_.at(layer_coarse0),
+                    ->vec_outer_coarse2fine_.at(layer_coarse_outer),
                     &ptr_interface_info->vec_outer_fine2coarse_.at(layer0),
                     &ptr_interface_info->vec_outer_fine2coarse_.at(layer_m1),
                     &ptr_interface_info->vec_outer_fine2coarse_.at(layer_m2));
@@ -631,16 +631,17 @@ void GridManagerInterface::IdentifyInterfaceNodeOnEdgeInnermost(
         sfbitset_tmp = sfbitset_aux.SFBitsetToNHigherLevelVir(1, arr_bitset_lower[0]);
         if (node_current.find(sfbitset_tmp) != node_current.end()) {
             arr_ptr_layer[0]->insert({sfbitset_tmp, kFlag0_ });
-            ptr_node_coarse_interface_outer->insert({arr_bitset_lower[0], kFlag0_ });
         }
+        // node may exist on coarse grid but not on fine grid
+        ptr_node_coarse_interface_outer->insert({arr_bitset_lower[0], kFlag0_ });
         if (node_current.find(bitset_mid_higher) != node_current.end()) {
             arr_ptr_layer[0]->insert({bitset_mid_higher, kFlag0_});
         }
         sfbitset_tmp = sfbitset_aux.SFBitsetToNHigherLevelVir(1, arr_bitset_lower[1]);
         if (node_current.find(sfbitset_tmp) != node_current.end()) {
             arr_ptr_layer[0]->insert({sfbitset_tmp, kFlag0_ });
-            ptr_node_coarse_interface_outer->insert({arr_bitset_lower[1], kFlag0_ });
         }
+        ptr_node_coarse_interface_outer->insert({arr_bitset_lower[1], kFlag0_ });
         return;
     }
     if (node0_inner && (!node1_inner)) {
@@ -654,16 +655,16 @@ void GridManagerInterface::IdentifyInterfaceNodeOnEdgeInnermost(
         sfbitset_tmp = sfbitset_aux.SFBitsetToNHigherLevelVir(1, arr_bitset_lower[1]);
         if (node_current.find(sfbitset_tmp) != node_current.end()) {
             arr_ptr_layer[0]->insert({sfbitset_tmp, kFlag0_ });
-            ptr_node_coarse_interface_outer->insert({arr_bitset_lower[1], kFlag0_ });
         }
+        ptr_node_coarse_interface_outer->insert({arr_bitset_lower[1], kFlag0_ });
         return;
     }
     if ((!node0_inner) && node1_inner) {
         sfbitset_tmp = sfbitset_aux.SFBitsetToNHigherLevelVir(1, arr_bitset_lower[0]);
         if (node_current.find(sfbitset_tmp) != node_current.end()) {
             arr_ptr_layer[0]->insert({sfbitset_tmp, kFlag0_ });
-            ptr_node_coarse_interface_outer->insert({arr_bitset_lower[0], kFlag0_ });
         }
+        ptr_node_coarse_interface_outer->insert({arr_bitset_lower[0], kFlag0_ });
         if (node_current.find(bitset_mid_higher) != node_current.end()) {
             arr_ptr_layer[1]->insert({bitset_mid_higher, kFlag0_});
         }
