@@ -61,6 +61,10 @@ class AmrManager {
     void AddSolverToGridManager(const SolverCreatorInterface& solver_creator);
     void SetDependentInfoForAllLevelsTheSame(const std::shared_ptr<SolverInterface>& ptr_solver);
 
+    int MpiCommunicationForInterpolation(DefAmrIndexUint i_level,
+        const ETimingInOneStep timing, const ETimeSteppingScheme time_scheme,
+        const DefAmrIndexUint time_step_current, const amrproject::SFBitsetAuxInterface& sfbitset_aux);
+
  private:
     // mpi
     MpiManager* GetPointerToMpiManager() const {

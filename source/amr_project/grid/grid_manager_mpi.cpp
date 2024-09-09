@@ -11,7 +11,7 @@
 #include <string>
 #include <set>
 #include <functional>
-#include "auxiliary_inline_func.h"
+#include "./auxiliary_inline_func.h"
 #include "grid/grid_manager.h"
 #include "criterion/criterion_manager.h"
 #include "io/log_write.h"
@@ -671,12 +671,7 @@ void GridManagerInterface::InstantiateGridNodeAllLevelMpi(const int i_rank,
 
     for (DefAmrIndexUint i_level = 1; i_level <= k0MaxLevel_; ++i_level) {
         // setup flags for refinement interface
-        if (MarkRefinementInterface(i_level, sfbitset_one_lower_level.at(i_level),
-            sfbitset_extra_lower_level.at(i_level)) != 0) {
-            LogManager::LogError("Error setting up flags for refinement interface"
-                "  in fuction GridManagerInterface::InstantiateGridNodeAllLevelMpi in "
-                + std::string(__FILE__) + " at line " + std::to_string(__LINE__));
-        }
+        MarkRefinementInterface(i_level, sfbitset_one_lower_level.at(i_level), sfbitset_extra_lower_level.at(i_level));
         // add nodes for interpolation
         DefAmrIndexUint maxlayer = vec_ptr_grid_info_.at(i_level)->k0NumFine2CoarseLayer_;
         for (auto& iter_interface : vec_ptr_grid_info_.at(i_level)->map_ptr_interface_layer_info_) {
@@ -762,10 +757,7 @@ int GridManagerInterface::MarkRefinementInterface(const DefAmrIndexUint i_level,
                     != vec_ptr_grid_info_.at(i_level - 1)->map_grid_node_.end()) {
                     vec_ptr_grid_info_.at(i_level-1)->map_grid_node_.at(iter_node.first)->flag_status_ |= flag_tmp;
                 } else {
-                    LogManager::LogErrorMsg("node on coarse to fine interface does not exist in map_grid_node_"
-                        " in fuction GridManagerInterface::InstantiateGridNodeAllLevelMpi in "
-                        + std::string(__FILE__) + " at line " + std::to_string(__LINE__));
-                    return -1;
+                    LogManager::LogError("node on coarse to fine interface does not exist in map_grid_node_");
                 }
                 FindCornersForNeighbourCells(iter_node.first, &corner_bitsets);
                 for (auto& iter_conner : corner_bitsets) {
@@ -788,10 +780,7 @@ int GridManagerInterface::MarkRefinementInterface(const DefAmrIndexUint i_level,
                     != vec_ptr_grid_info_.at(i_level - 1)->map_grid_node_.end()) {
                     vec_ptr_grid_info_.at(i_level-1)->map_grid_node_.at(iter_node.first)->flag_status_ |= flag_tmp;
                 } else {
-                    LogManager::LogErrorMsg("node on coarse to fine interface does not exist in map_grid_node_"
-                        " in fuction GridManagerInterface::InstantiateGridNodeAllLevelMpi in "
-                        + std::string(__FILE__) + " at line " + std::to_string(__LINE__));
-                        return -1;
+                    LogManager::LogError("node on coarse to fine interface does not exist in map_grid_node_");
                 }
                 FindCornersForNeighbourCells(iter_node.first, &corner_bitsets);
                 for (auto& iter_conner : corner_bitsets) {
@@ -817,10 +806,7 @@ int GridManagerInterface::MarkRefinementInterface(const DefAmrIndexUint i_level,
                 != vec_ptr_grid_info_.at(i_level - 1)->map_grid_node_.end()) {
                 vec_ptr_grid_info_.at(i_level-1)->map_grid_node_.at(iter_node.first)->flag_status_ |= flag_tmp;
             } else {
-                LogManager::LogErrorMsg("node on coarse to fine interface does not exist in map_grid_node_"
-                    " in fuction GridManagerInterface::InstantiateGridNodeAllLevelMpi in "
-                    + std::string(__FILE__) + " at line " + std::to_string(__LINE__));
-                    return -1;
+                LogManager::LogError("node on coarse to fine interface does not exist in map_grid_node_");
             }
         }
         for (auto& iter_node : iter_interface.second->vec_inner_coarse2fine_.at(maxlayer)) {
@@ -828,10 +814,7 @@ int GridManagerInterface::MarkRefinementInterface(const DefAmrIndexUint i_level,
                 != vec_ptr_grid_info_.at(i_level - 1)->map_grid_node_.end()) {
                 vec_ptr_grid_info_.at(i_level-1)->map_grid_node_.at(iter_node.first)->flag_status_ |= flag_tmp;
             } else {
-                LogManager::LogErrorMsg("node on coarse to fine interface does not exist in map_grid_node_"
-                    " in fuction GridManagerInterface::InstantiateGridNodeAllLevelMpi in "
-                    + std::string(__FILE__) + " at line " + std::to_string(__LINE__));
-                    return -1;
+                LogManager::LogError("node on coarse to fine interface does not exist in map_grid_node_");
             }
         }
         maxlayer = vec_ptr_grid_info_.at(i_level)->k0NumFine2CoarseLayer_;
@@ -844,10 +827,7 @@ int GridManagerInterface::MarkRefinementInterface(const DefAmrIndexUint i_level,
                     != vec_ptr_grid_info_.at(i_level)->map_grid_node_.end()) {
                     vec_ptr_grid_info_.at(i_level)->map_grid_node_.at(iter_node.first)->flag_status_ |= flag_tmp;
                 } else {
-                    LogManager::LogErrorMsg("node on fine to coarse interface does not exist in map_grid_node_"
-                        " in fuction GridManagerInterface::InstantiateGridNodeAllLevelMpi in "
-                        + std::string(__FILE__) + " at line " + std::to_string(__LINE__));
-                        return -1;
+                    LogManager::LogError("node on fine to coarse interface does not exist in map_grid_node_");
                 }
             }
             for (auto& iter_node : vec_ptr_grid_info_.at(i_level)->map_ptr_interface_layer_info_
@@ -856,10 +836,7 @@ int GridManagerInterface::MarkRefinementInterface(const DefAmrIndexUint i_level,
                     != vec_ptr_grid_info_.at(i_level)->map_grid_node_.end()) {
                     vec_ptr_grid_info_.at(i_level)->map_grid_node_.at(iter_node.first)->flag_status_ |= flag_tmp;
                 } else {
-                    LogManager::LogErrorMsg("node on fine to coarse interface does not exist in map_grid_node_"
-                        " in fuction GridManagerInterface::InstantiateGridNodeAllLevelMpi in "
-                        + std::string(__FILE__) + " at line " + std::to_string(__LINE__));
-                        return -1;
+                    LogManager::LogError("node on fine to coarse interface does not exist in map_grid_node_");
                 }
             }
         }
@@ -870,10 +847,7 @@ int GridManagerInterface::MarkRefinementInterface(const DefAmrIndexUint i_level,
                 != vec_ptr_grid_info_.at(i_level)->map_grid_node_.end()) {
                 vec_ptr_grid_info_.at(i_level)->map_grid_node_.at(iter_node.first)->flag_status_ |= flag_tmp;
             } else {
-                LogManager::LogErrorMsg("node on fine to coarse interface does not exist in map_grid_node_"
-                    " in fuction GridManagerInterface::InstantiateGridNodeAllLevelMpi in "
-                    + std::string(__FILE__) + " at line " + std::to_string(__LINE__));
-                    return -1;
+                LogManager::LogError("node on fine to coarse interface does not exist in map_grid_node_");
             }
         }
         for (auto& iter_node : vec_ptr_grid_info_.at(i_level)->map_ptr_interface_layer_info_
@@ -882,10 +856,7 @@ int GridManagerInterface::MarkRefinementInterface(const DefAmrIndexUint i_level,
                 != vec_ptr_grid_info_.at(i_level)->map_grid_node_.end()) {
                 vec_ptr_grid_info_.at(i_level)->map_grid_node_.at(iter_node.first)->flag_status_ |= flag_tmp;
             } else {
-                LogManager::LogErrorMsg("node on fine to coarse interface does not exist in map_grid_node_"
-                    "  in fuction GridManagerInterface::InstantiateGridNodeAllLevelMpi in "
-                    + std::string(__FILE__) + " at line " + std::to_string(__LINE__));
-                    return -1;
+                LogManager::LogError("node on fine to coarse interface does not exist in map_grid_node_");
             }
         }
     }

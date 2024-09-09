@@ -82,19 +82,14 @@ void MpiManager::DeserializeNodeStoreUint(
  * @brief function to serialize space filling code (DefSFBitset) and save it to buffer
  * @param[in] map_nodes node information
  * @param[out] ptr_buffer_size pointer to size of the buffer in bytes.
- * @param[out] ptr_error_flag pointer to flag indicating the success or failure of this function.
  * @return unique pointer to a char array to store the serialized data.
  */
 std::unique_ptr<char[]> MpiManager::SerializeNodeSFBitset(
-    const DefMap<DefAmrIndexUint>& map_nodes, int* const ptr_buffer_size, int* const ptr_error_flag) const {
+    const DefMap<DefAmrIndexUint>& map_nodes, int* const ptr_buffer_size) const {
     int key_size = sizeof(DefSFBitset);
     int num_nodes = 1;
     if  (sizeof(int) + map_nodes.size() *(key_size) > (std::numeric_limits<int>::max)()) {
-        *ptr_error_flag = 1;
-        LogManager::LogErrorMsg("size of the buffer is greater than the"
-         " maximum of int in function MpiManager::SerializeData(DefMap<DefAmrUint>) in file "
-         + std::string(__FILE__) + " at line " + std::to_string(__LINE__));
-        return std::make_unique<char[]>(0);
+        LogManager::LogError("size of the buffer is greater than the maximum of int");
     } else {
         num_nodes = static_cast<int>(map_nodes.size());
     }
@@ -114,7 +109,6 @@ std::unique_ptr<char[]> MpiManager::SerializeNodeSFBitset(
         std::memcpy(ptr_buffer + position, &key_host, key_size);
         position += key_size;
     }
-    *ptr_error_flag = 0;
     return buffer;
 }
 /**
@@ -534,7 +528,7 @@ void MpiManager::IniSendNReceivePartitionedGrid(const DefAmrIndexUint dims,
                     }
                 }
                 // send grid nodes
-                int buffer_size_send = 0, error_flag;
+                int buffer_size_send = 0;
                 int num_chunks;
                 num_chunks = static_cast<int>(vec_nodes_ranks.at(i_rank).size());
                 vec_ptr_buffer.resize(num_chunks);
@@ -542,7 +536,7 @@ void MpiManager::IniSendNReceivePartitionedGrid(const DefAmrIndexUint dims,
                 MPI_Send(&num_chunks, 1, MPI_INT, i_rank, i_level, MPI_COMM_WORLD);
                 for (int i_chunk = 0; i_chunk < num_chunks; ++i_chunk) {
                     vec_ptr_buffer.at(i_chunk) = SerializeNodeSFBitset(vec_nodes_ranks.at(i_rank).at(i_chunk),
-                        &buffer_size_send, &error_flag);
+                        &buffer_size_send);
                     MPI_Send(&buffer_size_send, 1, MPI_INT, i_rank, i_chunk, MPI_COMM_WORLD);
                     MPI_Isend(vec_ptr_buffer.at(i_chunk).get(), buffer_size_send, MPI_BYTE, i_rank,
                     i_chunk, MPI_COMM_WORLD, &reqs_send[i_chunk]);
@@ -590,7 +584,7 @@ void MpiManager::IniSendNReceivePartitionedGrid(const DefAmrIndexUint dims,
                 MPI_Send(&num_chunks, 1, MPI_INT, i_rank, i_level, MPI_COMM_WORLD);
                 for (int i_chunk = 0; i_chunk < num_chunks; ++i_chunk) {
                     vec_ptr_buffer.at(i_chunk) = SerializeNodeSFBitset(
-                        vec_ghost_nodes_ranks.at(i_rank).at(i_chunk), &buffer_size_send, &error_flag);
+                        vec_ghost_nodes_ranks.at(i_rank).at(i_chunk), &buffer_size_send);
                     MPI_Send(&buffer_size_send, 1, MPI_INT, i_rank, i_chunk, MPI_COMM_WORLD);
                     MPI_Isend(vec_ptr_buffer.at(i_chunk).get(), buffer_size_send, MPI_BYTE, i_rank,
                         i_chunk, MPI_COMM_WORLD, &reqs_send[i_chunk]);

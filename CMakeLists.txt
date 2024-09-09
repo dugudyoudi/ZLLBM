@@ -18,7 +18,7 @@ option(DEBUG_TREAT_WARNING_AS_ERROR            "Treat warnings as errors"       
 option(DEBUG_CHECK_MEMORY_LEAKS                "Using AddressSanitizer to check memory leaks"              OFF)
 
 set(CMAKE_BUILD_TYPE "Debug")
-set(CXX_STANDARD "c++20")
+set(CMAKE_CXX_STANDARD 23)
 
 # config project
 project(${PROJECT_NAME}

@@ -96,6 +96,7 @@ bool GridManagerInterface::InstantiateGridNode(const DefSFBitset& bitset_in,
     int flag_node = ptr_grid_info->CheckIfNodeOutsideCubicDomain(k0GridDims_, bitset_in, *GetSFBitsetAuxPtr());
     if (flag_node >= GridInfoInterface::kFlagInsideDomain_) {
         ptr_grid_info->map_grid_node_.insert({bitset_in, ptr_grid_info->GridNodeCreator()});
+        (this->*ptr_func_insert_domain_boundary_)(flag_node, bitset_in, ptr_grid_info);
         return true;
     }
     return false;

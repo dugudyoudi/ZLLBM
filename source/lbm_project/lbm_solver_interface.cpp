@@ -13,6 +13,9 @@
 #include "io/log_write.h"
 namespace rootproject {
 namespace lbmproject {
+/**
+ * @brief function to initialize LBM solver.
+ */
 void SolverLbmInterface::SolverInitial() {
     if (k0LbmViscosity_ < kEps) {
         amrproject::LogManager::LogWarning("LBM viscosity is less than predefined kEps("
@@ -165,24 +168,18 @@ int SolverLbmInterface::InformationFromGridOfDifferentLevel(
     const DefAmrIndexUint time_step_current, const amrproject::SFBitsetAuxInterface& sfbitset_aux,
     amrproject::GridInfoInterface* const ptr_grid_info) {
     DefAmrIndexUint i_level = ptr_grid_info->i_level_;
-    GridInfoLbmInteface* ptr_lbm_grid_nodes_info = dynamic_cast<GridInfoLbmInteface*>(ptr_grid_info);
-    if (i_level > 0 && ptr_grid_info->CheckNeedInfoFromCoarse(
-        timing, time_scheme, time_step_current)) {
-        if (ptr_grid_info->TransferInfoFromCoarseGrid(*ptr_grid_manager_->GetSFBitsetAuxPtr(),
-            amrproject::NodeBitStatus::kNodeStatusCoarse2FineGhost_,
-            *(ptr_grid_manager_->vec_ptr_grid_info_.at(i_level - 1))) != 0) {
-            amrproject::LogManager::LogErrorMsg("transfer information from coarse grid to fine grid failed"
-            " in function SolverLbmInterface::TransferInfoFromCoarseGrid in file "
-            + std::string(__FILE__) + " at line " + std::to_string(__LINE__));
-            return -1;
-        }
-    }
-    if (i_level < ptr_grid_manager_->k0MaxLevel_ && ptr_grid_info->CheckNeedInfoFromFine(
-        timing, time_scheme, time_step_current)) {
-        ptr_grid_info->TransferInfoFromFineGrid(*ptr_grid_manager_->GetSFBitsetAuxPtr(),
-            amrproject::NodeBitStatus::kNodeStatusCoarse2FineGhost_,
-            *(ptr_grid_manager_->vec_ptr_grid_info_.at(i_level + 1)));
-        ptr_lbm_grid_nodes_info->NodeFlagNotCollision_ |= amrproject::NodeBitStatus::kNodeStatusCoarse2Fine0_;
+    if (i_level > 0 && (time_step_current%2 == 0)) {
+        GridInfoLbmInteface* ptr_lbm_grid_info = dynamic_cast<GridInfoLbmInteface*>(ptr_grid_info);
+        GridInfoLbmInteface* ptr_lbm_grid_info_coarse = dynamic_cast<GridInfoLbmInteface*>(
+            ptr_grid_manager_->vec_ptr_grid_info_.at(i_level - 1).get());
+
+        ptr_grid_info->TransferInfoFromCoarseGrid(*ptr_grid_manager_->GetSFBitsetAuxPtr(),
+            amrproject::NodeBitStatus::kNodeStatusCoarse2FineGhost_, *ptr_lbm_grid_info_coarse);
+
+        ptr_grid_info->TransferInfoToCoarseGrid(*ptr_grid_manager_->GetSFBitsetAuxPtr(),
+            amrproject::NodeBitStatus::kNodeStatusCoarse2FineGhost_, ptr_lbm_grid_info_coarse);
+        // ptr_lbm_grid_info->NodeFlagNotCollision_ |= amrproject::NodeBitStatus::kNodeStatusCoarse2Fine0_;
+        // ptr_lbm_grid_info_coarse->NodeFlagNotCollision_ |= amrproject::NodeBitStatus::kNodeStatusCoarse2Fine0_;
     }
     return 0;
 }
@@ -208,8 +205,8 @@ void SolverLbmInterface::Collision(
             func_macro = func_macro_with_force_;
         } else {
             func_macro = [this](const DefReal dt_lbm, const GridNodeLbm& node,
-            DefReal* const ptr_rho, std::vector<DefReal>* const ptr_velocity) {
-            func_macro_without_force_(node, ptr_rho, ptr_velocity);};
+                DefReal* const ptr_rho, std::vector<DefReal>* const ptr_velocity) {
+                func_macro_without_force_(node, ptr_rho, ptr_velocity);};
         }
         for (auto& iter_node : grid_nodes) {
             if (iter_node.second->flag_status_ & flag_not_compute) {

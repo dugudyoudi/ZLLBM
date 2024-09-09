@@ -266,7 +266,7 @@ class MpiManager{
     void DeserializeNodeStoreUint(const std::unique_ptr<char[]>& buffer,
         DefMap<DefAmrUint>* const map_nodes) const;
     std::unique_ptr<char[]> SerializeNodeSFBitset(const DefMap<DefAmrIndexUint>& map_nodes,
-        int* const ptr_buffer_size, int* const ptr_error_flag) const;
+        int* const ptr_buffer_size) const;
     void DeserializeNodeSFBitset(const DefAmrIndexUint flag_node, const std::unique_ptr<char[]>& buffer,
         DefMap<DefAmrIndexUint>* const map_nodes) const;
 
@@ -350,7 +350,7 @@ class MpiManager{
         const std::vector<std::unique_ptr<char[]>>& vec_ptr_buffer_receive,
         std::vector<std::vector<MPI_Request>>* const ptr_vec_vec_reqs_send,
         std::vector<std::vector<MPI_Request>>* const ptr_vec_vec_reqs_receive,
-        GridInfoInterface* ptr_grid_inf);
+        GridInfoInterface* const ptr_grid_info) const;
     std::vector<bool> IdentifyRanksReceivingGridNode(const DefAmrIndexUint i_level) const;
     void SendNReceiveGridNodeBufferSize(const DefAmrIndexUint i_level,
         const int node_info_size, const std::vector<bool>& rank_id_sent,
@@ -378,7 +378,7 @@ class MpiManager{
         const std::vector<std::unique_ptr<char[]>>& vec_ptr_buffer_receive,
         std::vector<std::vector<MPI_Request>>* const ptr_vec_vec_reqs_send,
         std::vector<std::vector<MPI_Request>>* const ptr_vec_vec_reqs_receive,
-        GridInfoInterface* ptr_grid_info) const;
+        GridInfoInterface* const ptr_grid_info) const;
 
  private:
     inline bool CheckBufferSizeNotExceedMax(DefSizet buffer_size) const {

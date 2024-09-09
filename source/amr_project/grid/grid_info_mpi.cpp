@@ -79,17 +79,6 @@ int GridInfoInterface::AddGhostNodesForInterpolation(const std::vector<bool>& bo
                 || ((map_nodes_lower.at(iter_node_region)->flag_status_ & NodeBitStatus::kNodeStatusCoarse2FineGhost_)
                 == NodeBitStatus::kNodeStatusCoarse2FineGhost_)) {
                 sfbitset_current = sfbitset_aux.SFBitsetToNHigherLevelVir(1, iter_node_region);
-
-// int rank_id;
-//                                                     MPI_Comm_rank(MPI_COMM_WORLD, &rank_id);
-//                                 if (i_level_ == 1 && rank_id==0) {
-//                     amrproject::SFBitsetAux3D aux3d;
-//                     std::array<DefAmrIndexLUint, 3> indices;
-                    
-//                     aux3d.SFBitsetComputeIndices(iter_node_region, &indices);
-//                     std::cout << indices[0] << " " << indices[1] << " " << indices[2] << std::endl;
-//                                 }
-
                 if (map_grid_node_.find(sfbitset_current) == map_grid_node_.end()
                     ||((map_grid_node_.at(sfbitset_current)->flag_status_ & NodeBitStatus::kNodeStatusFine2CoarseGhost_)
                     == NodeBitStatus::kNodeStatusFine2CoarseGhost_)) {

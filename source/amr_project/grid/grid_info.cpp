@@ -151,59 +151,5 @@ void GridInfoInterface::CheckNodesOnCubicPeriodicBoundary(const DefAmrIndexUint 
         }
     }
 }
-/**
- * @brief function to check if information from coarse node is needed.
- * @param timing enum class to identify timing in current time step.
- * @param time_scheme enum class to identify time stepping scheme used in computation.
- * @param time_step count of time steps of current level.
- * @return true: need for information from coarse grid.
- */
-bool GridInfoInterface::CheckNeedInfoFromCoarse(const ETimingInOneStep timing,
-    const ETimeSteppingScheme time_scheme, const DefAmrIndexUint time_step) const {
-    switch (time_scheme) {
-    case ETimeSteppingScheme::kMultiSteppingC2F: {
-        if (timing == ETimingInOneStep::kStepEnd) {
-            if (time_step%2 == 0) {
-                return true;
-            } else {
-                return false;
-            }
-        } else {
-            return false;
-        }
-        break;
-    }
-    default:
-        LogManager::LogError("undefined time stepping type in"
-            + std::string(__FILE__) + " at line " + std::to_string(__LINE__));
-        break;
-    }
-    return false;
-}
-/**
- * @brief function to check if information from fine node is needed.
- * @param timing enum class to identify timing in current time step.
- * @param time_scheme enum class to identify time stepping scheme used in computation.
- * @param time_step count of time steps of current level.
- * @return true: need for information from fine grid.
- */
-bool GridInfoInterface::CheckNeedInfoFromFine(const ETimingInOneStep timing,
-    const ETimeSteppingScheme time_scheme, const DefAmrIndexUint time_step) const {
-    switch (time_scheme) {
-    case ETimeSteppingScheme::kMultiSteppingC2F: {
-        if (timing == ETimingInOneStep::kStepBegin) {
-            return true;
-        } else {
-            return false;
-        }
-        break;
-    }
-    default:
-        LogManager::LogError("undefined time stepping type in"
-            + std::string(__FILE__) + " at line " + std::to_string(__LINE__));
-        break;
-    }
-    return false;
-}
 }  // end namespace amrproject
 }  // end namespace rootproject

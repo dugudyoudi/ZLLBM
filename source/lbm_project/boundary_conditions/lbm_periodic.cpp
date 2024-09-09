@@ -8,7 +8,7 @@
 * @date  2023-11-6
 */
 #include "boundary_conditions/lbm_boundary_conditions.h"
-#include "lbm_interface.h"
+#include "./lbm_interface.h"
 #include "grid/grid_manager.h"
 #include "io/log_write.h"
 namespace rootproject {
@@ -61,7 +61,7 @@ void BoundaryPeriodic2D::CalBoundaryCondition(const ELbmBoundaryType boundary_ty
             }
         } else {
             std::array<DefReal, 2> coordinates, coordinates2,
-                grid_space = {ptr_grid_info->grid_space_[kXIndex], ptr_grid_info->grid_space_[kYIndex]};
+            grid_space = {ptr_grid_info->grid_space_[kXIndex], ptr_grid_info->grid_space_[kYIndex]};
             grid_manager2d.SFBitsetComputeCoordinate(iter_node.first, grid_space, &coordinates2);
             grid_manager2d.SFBitsetComputeCoordinate(sfbitset_counterpart, grid_space, &coordinates);
             amrproject::LogManager::LogError("Node (" + std::to_string(coordinates2[kXIndex]) + ", "

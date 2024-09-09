@@ -17,6 +17,7 @@
 #include <memory>
 #include <utility>
 #include <string>
+#include <functional>
 #include "../defs_libs.h"
 #include "criterion/criterion_numerates.h"
 #include "./solver_info_interface.h"
@@ -55,6 +56,11 @@ struct GridNode {
  public:
     DefAmrUint flag_status_ = 0;
     virtual ~GridNode() {}
+
+    // functions need to be override for interpolation
+    virtual void InterpolationAdditionAssignCoefficient(const GridNode& node_in, const DefReal coefficient) {
+        // *this += node_in * coefficient;
+    }
 };
 /**
 * @struct OutputNodeVariableInfoInterface
@@ -186,8 +192,8 @@ class GridInfoInterface {
     // domain boundary related
     // noting that kFlagInsideDomain indicates nodes are not on the domain boundary
     static constexpr int kFlagInsideDomain_ = 0,  kFlagOutsideDomain_ = -1,
-        kFlagXMinBoundary_ = 1, kFlagXMaxBoundary_ = 8, kFlagYMinBoundary_ = 2,
-        kFlagYMaxBoundary_ = 16, kFlagZMinBoundary_ = 4, kFlagZMaxBoundary_ = 32;
+        kFlagXMinBoundary_ = 1, kFlagXMaxBoundary_ = 2, kFlagYMinBoundary_ = 4,
+        kFlagYMaxBoundary_ = 8, kFlagZMinBoundary_ = 16, kFlagZMaxBoundary_ = 32;
     std::vector<DefSFBitset> k0VecBitsetDomainMin_, k0VecBitsetDomainMax_;
     ///< space filling codes of bounds for computational domain
     std::vector<DefMap<DefAmrIndexUint>> domain_boundary_min_, domain_boundary_max_;
@@ -218,41 +224,40 @@ class GridInfoInterface {
         const DefAmrIndexUint time_step, GridManagerInterface* const ptr_grid_manager) {}
 
     // communication between grid of different refinement levels
-    virtual bool CheckNeedInfoFromCoarse(const ETimingInOneStep timing,
-        const ETimeSteppingScheme time_scheme, const DefAmrIndexUint time_step) const;
-    virtual bool CheckNeedInfoFromFine(const ETimingInOneStep timing,
-        const ETimeSteppingScheme time_scheme, const DefAmrIndexUint time_step) const;
     virtual int TransferInfoFromCoarseGrid(const SFBitsetAuxInterface& sfbitset_aux,
         const DefAmrUint node_flag, const GridInfoInterface& grid_info_coarse) {return -1;}
-    virtual int TransferInfoFromFineGrid(const SFBitsetAuxInterface& sfbitset_aux,
-        const DefAmrUint node_flag, const GridInfoInterface& grid_info_fine) {return -1;}
+    virtual int TransferInfoToCoarseGrid(const SFBitsetAuxInterface& sfbitset_aux,
+        const DefAmrUint node_flag, GridInfoInterface* const ptr_grid_info_coarse) {return -1;}
 
     // debug
     virtual void DebugWrite() {}
+    virtual void DebugWriteNode(const GridNode& node) {}
 
     // interpolation
+ public:
     EInterpolationMethod interp_method_ = EInterpolationMethod::kLinear;
     DefAmrIndexLUint max_interp_length_ = 2;
     ///< the maximum half length of a cubic region used for interpolation
+    std::function<int(const DefAmrIndexLUint, const DefAmrIndexLUint, const DefAmrUint, const DefSFBitset&,
+        const amrproject::SFBitsetAuxInterface&, const std::vector<DefSFBitset>&,
+        const DefMap<std::unique_ptr<GridNode>>& nodes_fine, const amrproject::GridInfoInterface& coarse_grid_info,
+        const DefMap<std::unique_ptr<GridNode>>& nodes_coarse, GridNode* const ptr_node)> func_node_interp_;
+    void ChooseInterpolationMethod();
     virtual void NodeInfoCoarse2fine(const GridNode& coarse_node, GridNode* const ptr_fine_node) const {}
     virtual void NodeInfoFine2Coarse(const GridNode& fine_node, GridNode* const ptr_coarse_node) const {}
     // linear interpolation
-    template <typename Node_T>
-    requires std::is_base_of_v<GridNode, Node_T>
     int InterpolationLinear2D(const DefAmrIndexLUint region_length,
         const DefAmrUint flag_not_for_interp_coarse, const DefSFBitset& sfbitset_in,
         const SFBitsetAuxInterface& sfbitset_aux, const std::vector<DefSFBitset>& sfbitset_region,
-        const DefMap<std::unique_ptr<Node_T>>& nodes_fine,
-        const GridInfoInterface& coarse_grid_info, const DefMap<std::unique_ptr<Node_T>>& nodes_coarse,
-        Node_T* const ptr_node);
-    template <typename Node_T>
-    requires std::is_base_of_v<GridNode, Node_T>
+        const DefMap<std::unique_ptr<GridNode>>& nodes_fine,
+        const GridInfoInterface& coarse_grid_info, const DefMap<std::unique_ptr<GridNode>>& nodes_coarse,
+        GridNode* const ptr_node);
     int InterpolationLinear3D(const DefAmrIndexLUint region_length,
         const DefAmrUint flag_not_for_interp_coarse, const DefSFBitset& sfbitset_in,
         const SFBitsetAuxInterface& sfbitset_aux, const std::vector<DefSFBitset>& sfbitset_region,
-        const DefMap<std::unique_ptr<Node_T>>& nodes_fine,
-        const GridInfoInterface& coarse_grid_info, const DefMap<std::unique_ptr<Node_T>>& nodes_coarse,
-        Node_T* const ptr_node);
+        const DefMap<std::unique_ptr<GridNode>>& nodes_fine,
+        const GridInfoInterface& coarse_grid_info, const DefMap<std::unique_ptr<GridNode>>& nodes_coarse,
+        GridNode* const ptr_node);
     // lagrangian interpolation
  private:
     struct LagrangianCoeff {
@@ -262,22 +267,18 @@ class GridInfoInterface {
 
  public:
     const LagrangianCoeff& CalculateLagrangianInterpCoeff(const DefAmrIndexLUint interp_half_length);
-    template <typename Node_T>
-    requires std::is_base_of_v<GridNode, Node_T>
     int InterpolationLagrangian2D(const DefAmrIndexLUint interpolation_length,
         const DefAmrIndexLUint region_length, const DefAmrUint flag_not_for_interp_coarse,
         const DefSFBitset& sfbitset_in, const SFBitsetAuxInterface& sfbitset_aux,
-        const std::vector<DefSFBitset>& sfbitset_region, const DefMap<std::unique_ptr<Node_T>>& nodes_fine,
+        const std::vector<DefSFBitset>& sfbitset_region, const DefMap<std::unique_ptr<GridNode>>& nodes_fine,
         const GridInfoInterface& coarse_grid_info,
-        const DefMap<std::unique_ptr<Node_T>>& nodes_coarse, Node_T* const ptr_node);
-    template <typename Node_T>
-    requires std::is_base_of_v<GridNode, Node_T>
+        const DefMap<std::unique_ptr<GridNode>>& nodes_coarse, GridNode* const ptr_node);
     int InterpolationLagrangian3D(const DefAmrIndexLUint interpolation_length,
         const DefAmrIndexLUint region_length, const DefAmrUint flag_not_for_interp_coarse,
         const DefSFBitset& sfbitset_in, const SFBitsetAuxInterface& sfbitset_aux,
-        const std::vector<DefSFBitset>& sfbitset_region, const DefMap<std::unique_ptr<Node_T>>& nodes_fine,
+        const std::vector<DefSFBitset>& sfbitset_region, const DefMap<std::unique_ptr<GridNode>>& nodes_fine,
         const GridInfoInterface& coarse_grid_info,
-        const DefMap<std::unique_ptr<Node_T>>& nodes_coarse, Node_T* const ptr_node);
+        const DefMap<std::unique_ptr<GridNode>>& nodes_coarse, GridNode* const ptr_node);
 
     // mpi related
  public:
@@ -321,5 +322,4 @@ class GridInfoCreatorInterface {
 };
 }  // end namespace amrproject
 }  // end namespace rootproject
-#include "grid/grid_interpolation.hpp"
 #endif  // SOURCE_AMR_PROJECT_GRID_GRID_INFO_INTERFACE_H_

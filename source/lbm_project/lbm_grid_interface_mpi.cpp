@@ -6,6 +6,7 @@
 * @author Zhengliang Liu
 * @brief functions used for manage LBM grid interface.
 */
+#include <mpi.h>  // for debug
 #include "./lbm_interface.h"
 #include "io/log_write.h"
 #include "io/vtk_writer.h"
@@ -100,10 +101,7 @@ int GridInfoLbmInteface::CopyNodeInfoToBuffer(
     const DefMap<DefAmrIndexUint>& map_nodes, char* const ptr_buffer) {
     GetPointerToLbmGrid();
     if (ptr_lbm_grid_nodes_ == nullptr) {
-        std::string msg = "pointer to lbm grid nodes is null in "
-            + std::string(__FILE__) + " at line " + std::to_string(__LINE__);
-        amrproject::LogManager::LogErrorMsg(msg);
-        return -1;
+        amrproject::LogManager::LogError("pointer to lbm grid nodes is null");
     } else  {
         DefSizet position = 0;
         SolverLbmInterface* ptr_lbm_solver = std::dynamic_pointer_cast<SolverLbmInterface>(ptr_solver_).get();
@@ -125,16 +123,13 @@ int GridInfoLbmInteface::CopyNodeInfoToBuffer(
                 std::string msg;
                 if (indices.size() == 2) {
                     msg = "grid node (" + std::to_string(indices[kXIndex]) + ", " + std::to_string(indices[kYIndex])
-                         + ") at " + std::to_string(i_level_) + " at level not exist for copying to a buffer in "
-                        + std::string(__FILE__) + " at line " + std::to_string(__LINE__);
+                         + ") at " + std::to_string(i_level_) + " at level not exist for copying to a buffer";
                 } else {
                     msg = "grid node (" + std::to_string(indices[kXIndex]) + ", " + std::to_string(indices[kYIndex])
                         + std::to_string(indices[kZIndex]) +  + ") at " + std::to_string(i_level_)
-                        + " level does not exist for copying to a buffer in "
-                        + std::string(__FILE__) + " at line " + std::to_string(__LINE__);
+                        + " level does not exist for copying to a buffer";
                 }
-                amrproject::LogManager::LogErrorMsg(msg);
-                return -1;
+                amrproject::LogManager::LogError(msg);
             }
         }
     }
@@ -150,17 +145,11 @@ int GridInfoLbmInteface::CopyInterpolationNodeInfoToBuffer(const GridInfoInterfa
     const DefMap<DefAmrIndexUint>& map_nodes, char* const ptr_buffer) {
     GetPointerToLbmGrid();
     if (ptr_lbm_grid_nodes_ == nullptr) {
-        std::string msg = "pointer to lbm grid nodes is null in "
-            + std::string(__FILE__) + " at line " + std::to_string(__LINE__);
-        amrproject::LogManager::LogErrorMsg(msg);
-        return -1;
+        amrproject::LogManager::LogError("pointer to lbm grid nodes is null");
     }
     const GridInfoLbmInteface& coarse_grid_info_lbm = dynamic_cast<const GridInfoLbmInteface&>(coarse_grid_info);
     if (coarse_grid_info_lbm.ptr_lbm_grid_nodes_ == nullptr) {
-        std::string msg = "pointer to lbm grid nodes at one lower refinement level is null in "
-            + std::string(__FILE__) + " at line " + std::to_string(__LINE__);
-        amrproject::LogManager::LogErrorMsg(msg);
-        return -1;
+        amrproject::LogManager::LogError("pointer to lbm grid nodes at one lower refinement level is null");
     }
     DefSizet position = 0;
     SolverLbmInterface* ptr_lbm_solver = std::dynamic_pointer_cast<SolverLbmInterface>(ptr_solver_).get();
@@ -200,15 +189,13 @@ int GridInfoLbmInteface::CopyInterpolationNodeInfoToBuffer(const GridInfoInterfa
                 std::string msg;
                 if (indices.size() == 2) {
                     msg = "grid node (" + std::to_string(indices[kXIndex]) + ", " + std::to_string(indices[kYIndex])
-                        + ") at " + std::to_string(i_level_) + " at level not exist for copying to a buffer in "
-                        + std::string(__FILE__) + " at line " + std::to_string(__LINE__);
+                        + ") at " + std::to_string(i_level_) + " at level not exist for copying to a buffer";
                 } else {
                     msg = "grid node (" + std::to_string(indices[kXIndex]) + ", " + std::to_string(indices[kYIndex])
                         + std::to_string(indices[kZIndex]) +  + ") at " + std::to_string(i_level_)
-                        + " level does not exist for copying to a buffer in "
-                        + std::string(__FILE__) + " at line " + std::to_string(__LINE__);
+                        + " level does not exist for copying to a buffer";
                 }
-                amrproject::LogManager::LogErrorMsg(msg);
+                amrproject::LogManager::LogError(msg);
                 return -1;
             }
         }
@@ -332,13 +319,11 @@ void GridInfoLbmInteface::ReadNodeInfoFromBuffer(
             std::string msg;
             if (indices.size() == 2) {
                 msg = "grid node (" + std::to_string(indices[kXIndex]) + ", " + std::to_string(indices[kYIndex])
-                    + ") at " + std::to_string(i_level_) + " level does not exist for copying from a buffer in "
-                    + std::string(__FILE__) + " at line " + std::to_string(__LINE__);
+                    + ") at " + std::to_string(i_level_) + " level does not exist for copying from a buffer";
             } else {
                 msg = "grid node (" + std::to_string(indices[kXIndex]) + ", " + std::to_string(indices[kYIndex])
                     + ", " + std::to_string(indices[kZIndex]) + ") at " + std::to_string(i_level_)
-                    + " level does not exist for copying from a buffer in "
-                    + std::string(__FILE__) + " at line " + std::to_string(__LINE__);
+                    + " level does not exist for copying from a buffer";
             }
             amrproject::LogManager::LogError(msg);
         }
@@ -381,15 +366,13 @@ int GridInfoLbmInteface::ReadInterpolationNodeInfoFromBuffer(
             std::string msg;
             if (indices.size() == 2) {
                 msg = "grid node (" + std::to_string(indices[kXIndex]) + ", " + std::to_string(indices[kYIndex])
-                    + ") at " + std::to_string(i_level_) + " level does not exist for copying from a buffer in "
-                    + std::string(__FILE__) + " at line " + std::to_string(__LINE__);
+                    + ") at " + std::to_string(i_level_) + " level does not exist for copying from a buffer";
             } else {
                 msg = "grid node (" + std::to_string(indices[kXIndex]) + ", " + std::to_string(indices[kYIndex])
                     + ", " + std::to_string(indices[kZIndex]) + ") at " + std::to_string(i_level_)
-                    + " level does not exist for copying from a buffer in "
-                    + std::string(__FILE__) + " at line " + std::to_string(__LINE__);
+                    + " level does not exist for copying from a buffer";
             }
-            amrproject::LogManager::LogErrorMsg(msg);
+            amrproject::LogManager::LogError(msg);
             return -1;
         }
     }

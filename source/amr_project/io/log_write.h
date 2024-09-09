@@ -6,8 +6,9 @@
 * @author Zhengliang Liu
 * @date  2022-8-14
 */
-#ifndef ROOTPROJECT_SOURCE_AMR_PROJECT_IO_LOG_WRITE_H_
-#define ROOTPROJECT_SOURCE_AMR_PROJECT_IO_LOG_WRITE_H_
+#ifndef SOURCE_AMR_PROJECT_IO_LOG_WRITE_H_
+#define SOURCE_AMR_PROJECT_IO_LOG_WRITE_H_
+#include <stacktrace>
 #include <string>
 #ifdef _WIN32
 #include <winsock2.h>
@@ -22,7 +23,6 @@ class LogManager {
     static void LogInfo(const std::string& msg);
     static void LogWarning(const std::string& msg);
     static void LogError(const std::string& msg);
-    static void LogErrorMsg(const std::string& msg);
     static void LogStartTime();
 };
 }  // end namespace amrproject

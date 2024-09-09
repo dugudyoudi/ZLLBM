@@ -110,54 +110,25 @@ void LogManager::LogError(const std::string& msg) {
     MPI_Comm_rank(MPI_COMM_WORLD, &rank_id);
 #endif  // ENABLE_MPI
     FILE* fp = nullptr;
-    errno_t err = fopen_s(&fp,
-        (logfile_name_ + std::to_string(rank_id)).c_str(), "a");
+    errno_t err = fopen_s(&fp, (logfile_name_ + std::to_string(rank_id)).c_str(), "a");
+    auto trace_msg = std::to_string(std::stacktrace::current());
     if (!fp) {
         printf_s("The log file was not opened\n");
     } else {
-        fprintf(fp, "Error: %s. \n",  msg.c_str());
+        fprintf(fp, "Error: %s. \n%s", msg.c_str(), trace_msg.c_str());
         fclose(fp);
     }
 #ifdef _WIN32
     SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE),
         FOREGROUND_INTENSITY | FOREGROUND_RED);
 #endif
-    printf("Error of rank %d: %s. \n", rank_id, msg.c_str());
+    printf("Error of rank %d: %s. \n%s", rank_id, msg.c_str(), trace_msg.c_str());
 #ifdef _WIN32
     SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE),
         FOREGROUND_INTENSITY | FOREGROUND_RED
         | FOREGROUND_GREEN | FOREGROUND_BLUE);
 #endif
     exit(0);
-}
-/**
-* @brief function to write error information to the logfile.
-* @param[in]  msg        information write to the logfile.
-*/
-void LogManager::LogErrorMsg(const std::string& msg) {
-    int rank_id = 0;
-#ifdef ENABLE_MPI
-    MPI_Comm_rank(MPI_COMM_WORLD, &rank_id);
-#endif  // ENABLE_MPI
-    FILE* fp = nullptr;
-    errno_t err = fopen_s(&fp,
-        (logfile_name_ + std::to_string(rank_id)).c_str(), "a");
-    if (!fp) {
-        printf_s("The log file was not opened\n");
-    } else {
-        fprintf(fp, "Error: %s. \n",  msg.c_str());
-        fclose(fp);
-    }
-#ifdef _WIN32
-    SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE),
-        FOREGROUND_INTENSITY | FOREGROUND_RED);
-#endif
-    printf("Error of rank %d: %s. \n", rank_id, msg.c_str());
-#ifdef _WIN32
-    SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE),
-        FOREGROUND_INTENSITY | FOREGROUND_RED
-        | FOREGROUND_GREEN | FOREGROUND_BLUE);
-#endif
 }
 }  // end namespace amrproject
 }  // end namespace rootproject

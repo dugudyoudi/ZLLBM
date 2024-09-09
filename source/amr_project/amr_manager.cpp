@@ -245,11 +245,6 @@ void AmrManager::TimeMarching(const DefAmrIndexLUint time_step_background) {
         GridInfoInterface& grid_ref = *(ptr_grid_manager_->vec_ptr_grid_info_.at(i_level));
         grid_ref.SetUpGridAtBeginningOfTimeStep(time_step_level[i_level], ptr_grid_manager_.get());
 
-        // use information from previous time step
-        grid_ref.ptr_solver_->InformationFromGridOfDifferentLevel(
-            ETimingInOneStep::kStepBegin, k0TimeSteppingType_,
-            time_step_level[i_level], *ptr_grid_manager_->GetSFBitsetAuxPtr(), &grid_ref);
-
 #ifdef ENABLE_MPI
         std::vector<MpiManager::BufferSizeInfo> send_buffer_info, receive_buffer_info;
         std::vector<std::vector<MPI_Request>> vec_vec_reqs_send, vec_vec_reqs_receive;
@@ -278,18 +273,18 @@ void AmrManager::TimeMarching(const DefAmrIndexLUint time_step_background) {
         ptr_mpi_manager_->WaitAndReadGridNodesFromBuffer(send_buffer_info,
             receive_buffer_info, vec_ptr_buffer_receive,
             &vec_vec_reqs_send, &vec_vec_reqs_receive, &grid_ref);
+
+        MpiCommunicationForInterpolation(i_level, ETimingInOneStep::kStepEnd,
+            k0TimeSteppingType_, time_step_level[i_level], *ptr_grid_manager_->GetSFBitsetAuxPtr());
 #endif  //  ENABLE_MPI
-
-        // use information in current time step
-        if (grid_ref.ptr_solver_->InformationFromGridOfDifferentLevel(
-            ETimingInOneStep::kStepEnd, k0TimeSteppingType_,
-            time_step_level[i_level], *ptr_grid_manager_->GetSFBitsetAuxPtr(), &grid_ref) != 0) {
-            LogManager::LogError("Error in AmrManager::TimeMarching in "
-                + std::string(__FILE__) + " at line " + std::to_string(__LINE__));
-        }
-
         grid_ref.ptr_solver_->CallDomainBoundaryCondition(k0TimeSteppingType_,
             time_step_level[i_level], *ptr_grid_manager_->GetSFBitsetAuxPtr(), &grid_ref);
+        // use information in current time step
+        grid_ref.ptr_solver_->InformationFromGridOfDifferentLevel(
+            ETimingInOneStep::kStepEnd, k0TimeSteppingType_,
+            time_step_level[i_level], *ptr_grid_manager_->GetSFBitsetAuxPtr(), &grid_ref);
+
+
     }
 }
 /**
@@ -323,6 +318,27 @@ void AmrManager::FinalizeSimulation() {
 #ifdef ENABLE_MPI
     ptr_mpi_manager_->FinalizeMpi();
 #endif  // ENABLE_MPI
+}
+int AmrManager::MpiCommunicationForInterpolation(DefAmrIndexUint i_level, const ETimingInOneStep timing,
+    const ETimeSteppingScheme time_scheme, const DefAmrIndexUint time_step_current,
+    const amrproject::SFBitsetAuxInterface& sfbitset_aux) {
+    GridInfoInterface& grid_info = *(ptr_grid_manager_->vec_ptr_grid_info_.at(i_level));
+    if (i_level > 0) {
+        MpiManager* ptr_mpi_manager = GetPointerToMpiManager();
+        const GridInfoInterface& grid_info_lower = *(ptr_grid_manager_->vec_ptr_grid_info_.at(i_level - 1));
+        if (ptr_mpi_manager != nullptr) {
+            std::vector<MpiManager::BufferSizeInfo> send_buffer_info, receive_buffer_info;
+            std::vector<std::vector<MPI_Request>> vec_vec_reqs_send, vec_vec_reqs_receive;
+            std::vector<std::unique_ptr<char[]>> vec_ptr_buffer_receive, vec_ptr_buffer_send;
+            ptr_mpi_manager->SendGhostNodeForInterpolation(sfbitset_aux,
+                grid_info_lower, &grid_info, &send_buffer_info, &receive_buffer_info, &vec_vec_reqs_send,
+                &vec_vec_reqs_receive, &vec_ptr_buffer_send, &vec_ptr_buffer_receive);
+
+            ptr_mpi_manager->WaitAndReadGhostNodeForInterpolation(send_buffer_info, receive_buffer_info,
+                vec_ptr_buffer_receive, &vec_vec_reqs_send, &vec_vec_reqs_receive, &grid_info);
+        }
+    }
+    return 0;
 }
 }  // end namespace amrproject
 }  // end namespace rootproject
