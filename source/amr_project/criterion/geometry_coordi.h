@@ -8,8 +8,8 @@
 * @brief  define struct to store geometry coordinates.
 */
 
-#ifndef ROOTPROJECT_AMR_PROJECT_CRITERION_GEOMETRY_COORDI_H_
-#define ROOTPROJECT_AMR_PROJECT_CRITERION_GEOMETRY_COORDI_H_
+#ifndef SOURCE_AMR_PROJECT_CRITERION_GEOMETRY_COORDI_H_
+#define SOURCE_AMR_PROJECT_CRITERION_GEOMETRY_COORDI_H_
 #include <array>
 #include "../defs_libs.h"
 namespace rootproject {
@@ -53,4 +53,4 @@ struct GeometryCoordinate3D {
 #endif  // DEBUG_DISABLE_3D_FUNCTIONS
 }  // end namespace amrproject
 }  // end namespace rootproject
-#endif  // ROOTPROJECT_AMR_PROJECT_CRITERION_GEOMETRY_COORDI_H_
+#endif  // SOURCE_AMR_PROJECT_CRITERION_GEOMETRY_COORDI_H_

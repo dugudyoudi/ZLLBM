@@ -8,8 +8,8 @@
 * @brief  define classes to store geometry information.
 */
 
-#ifndef ROOTPROJECT_AMR_PROJECT_CRITERION_GEOMETRY_INFO_INTERFACE_H_
-#define ROOTPROJECT_AMR_PROJECT_CRITERION_GEOMETRY_INFO_INTERFACE_H_
+#ifndef SOURCE_AMR_PROJECT_CRITERION_GEOMETRY_INFO_INTERFACE_H_
+#define SOURCE_AMR_PROJECT_CRITERION_GEOMETRY_INFO_INTERFACE_H_
 #include <vector>
 #include <array>
 #include <memory>
@@ -41,18 +41,18 @@ struct GeometryVertexInfo {
 class GeometryInfoInterface {
  public:
     // information of geometry itself
-    DefAmrUint computational_cost_ = 1;
+    DefInt computational_cost_ = 1;
     DefReal decompose_factor_ = 1.;
-    DefAmrIndexUint i_level_ = 0;
-    DefAmrIndexUint i_geo_ = ~0;
+    DefInt i_level_ = 0;
+    DefInt i_geo_ = ~0;
     EGeometryCellType geometry_cell_type_ = EGeometryCellType::kUndefined;
     EGridExtendType grid_extend_type_ = EGridExtendType::kSameInAllDirections;
     EGeometryStatus geometry_status_ = EGeometryStatus::kVirtual;
     std::string node_type_;
 
     // information stored on each vertex
-    DefAmrIndexUint k0NumIntForEachVertex_ = 0;
-    DefAmrIndexUint k0NumRealForEachVertex_ = 0;
+    DefInt k0NumIntForEachVertex_ = 0;
+    DefInt k0NumRealForEachVertex_ = 0;
     std::vector<GeometryVertexInfo> vec_vertices_info_{};
 
     TrackingGridInfoCreatorInterface* ptr_tracking_grid_info_creator_ = nullptr;
@@ -60,13 +60,13 @@ class GeometryInfoInterface {
 
 
     // number of extended layer based on geometry
-    std::vector<DefAmrIndexUint> k0XIntExtendPositive_, k0XIntExtendNegative_,
+    std::vector<DefInt> k0XIntExtendPositive_, k0XIntExtendNegative_,
      k0YIntExtendPositive_, k0YIntExtendNegative_, k0ZIntExtendPositive_, k0ZIntExtendNegative_;
      ///< number of extened layers
 
     /* number of layer extended inside the geometry
      at (i_level - 1) refinement level*/
-    std::vector<DefAmrIndexUint>  k0IntInnerExtend_;
+    std::vector<DefInt>  k0IntInnerExtend_;
     ///< number of extened layers inside the geometry
 
     virtual void SetIndex() = 0;
@@ -145,4 +145,4 @@ class GeometryInfo3DInterface: virtual public GeometryInfoInterface {
 #endif  // DEBUG_DISABLE_3D_FUNCTIONS
 }  // end namespace amrproject
 }  // end namespace rootproject
-#endif  // ROOTPROJECT_AMR_PROJECT_CRITERION_GEOMETRY_INFO_INTERFACE_H_
+#endif  // SOURCE_AMR_PROJECT_CRITERION_GEOMETRY_INFO_INTERFACE_H_

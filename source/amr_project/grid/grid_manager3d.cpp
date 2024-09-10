@@ -105,11 +105,11 @@ void GridManager3D::SetGridParameters() {
 
     // calculate number of background nodes in each direction
     k0MaxIndexOfBackgroundNode_ = {
-        static_cast<DefAmrIndexLUint>(k0DomainSize_[kXIndex]
+        static_cast<DefAmrLUint>(k0DomainSize_[kXIndex]
         / k0DomainDx_[kXIndex] + kEps) + k0MinIndexOfBackgroundNode_[kXIndex],
-        static_cast<DefAmrIndexLUint>(k0DomainSize_[kYIndex]
+        static_cast<DefAmrLUint>(k0DomainSize_[kYIndex]
         / k0DomainDx_[kYIndex] + kEps) + k0MinIndexOfBackgroundNode_[kYIndex],
-        static_cast<DefAmrIndexLUint>(k0DomainSize_[kZIndex]
+        static_cast<DefAmrLUint>(k0DomainSize_[kZIndex]
         / k0DomainDx_[kZIndex] + kEps) + k0MinIndexOfBackgroundNode_[kZIndex]};
 
     SFBitsetSetMinAndMaxBounds(
@@ -135,9 +135,9 @@ void GridManager3D::SetGridParameters() {
     *  could be used for larger domain
     */
     // number of bits available for background mesh in one dimension
-    DefAmrIndexUint bit_max = kSFBitsetBit / k0GridDims_ - k0MaxLevel_;
+    DefInt bit_max = kSFBitsetBit / k0GridDims_ - k0MaxLevel_;
     DefSizet index_max = TwoPowerN(bit_max);
-    DefAmrIndexLUint scale_i_level = static_cast<DefAmrIndexLUint>(TwoPowerN(k0MaxLevel_));
+    DefAmrLUint scale_i_level = static_cast<DefAmrLUint>(TwoPowerN(k0MaxLevel_));
     if (k0MaxIndexOfBackgroundNode_.at(kXIndex) > index_max) {
         LogManager::LogError("Domain size exceeds the limits of space filling code in"
             " x direction, try to increase number of bits for "
@@ -164,7 +164,7 @@ void GridManager3D::SetGridParameters() {
 * @param[in] sfbitset_max bitset corresponding to the maximum coordinate in each direction.
 * @return flag indicate node on which domain boundaries, 1: x min, 2: x max, 4: y min, 8: y max
 */
-void GridManager3D::CalDomainBoundsAtGivenLevel(const DefAmrIndexUint i_level,
+void GridManager3D::CalDomainBoundsAtGivenLevel(const DefInt i_level,
     std::vector<DefSFBitset>* const ptr_domain_min, std::vector<DefSFBitset>* const ptr_domain_max) const {
     ptr_domain_min->resize(3);
     ptr_domain_max->resize(3);
@@ -254,19 +254,19 @@ void GridManager3D::GridFindAllNeighborsVir(const DefSFBitset& bitset_in,
 *            in positive directions
 */
 void GridManager3D::ResetExtendLayerBasedOnDomainSize(
-    const DefAmrIndexUint i_level, const DefSFBitset& sfbitset_in,
-    std::vector<DefAmrIndexLUint>* const ptr_vec_extend_neg,
-    std::vector<DefAmrIndexLUint>* const ptr_vec_extend_pos) const {
+    const DefInt i_level, const DefSFBitset& sfbitset_in,
+    std::vector<DefAmrLUint>* const ptr_vec_extend_neg,
+    std::vector<DefAmrLUint>* const ptr_vec_extend_pos) const {
     //  extended layer at the background refinement level
-    DefAmrIndexLUint two_power_i_level = static_cast<DefAmrIndexLUint>(TwoPowerN(i_level));
-    DefAmrIndexLUint index_xmin = k0MinIndexOfBackgroundNode_[kXIndex] * two_power_i_level;
-    DefAmrIndexLUint index_xmax = k0MaxIndexOfBackgroundNode_[kXIndex] * two_power_i_level;
-    DefAmrIndexLUint index_ymin = k0MinIndexOfBackgroundNode_[kYIndex] * two_power_i_level;
-    DefAmrIndexLUint index_ymax = k0MaxIndexOfBackgroundNode_[kYIndex] * two_power_i_level;
-    DefAmrIndexLUint index_zmin = k0MinIndexOfBackgroundNode_[kZIndex] * two_power_i_level;
-    DefAmrIndexLUint index_zmax = k0MaxIndexOfBackgroundNode_[kZIndex] * two_power_i_level;
+    DefAmrLUint two_power_i_level = static_cast<DefAmrLUint>(TwoPowerN(i_level));
+    DefAmrLUint index_xmin = k0MinIndexOfBackgroundNode_[kXIndex] * two_power_i_level;
+    DefAmrLUint index_xmax = k0MaxIndexOfBackgroundNode_[kXIndex] * two_power_i_level;
+    DefAmrLUint index_ymin = k0MinIndexOfBackgroundNode_[kYIndex] * two_power_i_level;
+    DefAmrLUint index_ymax = k0MaxIndexOfBackgroundNode_[kYIndex] * two_power_i_level;
+    DefAmrLUint index_zmin = k0MinIndexOfBackgroundNode_[kZIndex] * two_power_i_level;
+    DefAmrLUint index_zmax = k0MaxIndexOfBackgroundNode_[kZIndex] * two_power_i_level;
 
-    std::array<DefAmrIndexLUint, 3> indices;
+    std::array<DefAmrLUint, 3> indices;
     SFBitsetComputeIndices(sfbitset_in, &indices);
 
     // reset extended layer
@@ -299,7 +299,7 @@ void GridManager3D::ResetExtendLayerBasedOnDomainSize(
 * @return flag indicate node on which domain boundaries, 1: x min, 2: x max, 4: y min, 8: y max, 16: z min, 32: z max
 */
 int GridManager3D::CheckNodeOnDomainBoundary(
-    const DefAmrIndexUint i_level, const DefSFBitset& sfbitset_in) const {
+    const DefInt i_level, const DefSFBitset& sfbitset_in) const {
     int node_status = 0;
     std::array<DefSFBitset, 3> sfbitset_min, sfbitset_max;
     sfbitset_min[kXIndex] = SFBitsetToNHigherLevel(i_level, SFBitsetMin_[kXIndex]);
@@ -368,7 +368,7 @@ bool GridManager3D::CheckNodeNotOutsideDomainBoundary(const DefSFBitset& sfbitse
 * @param[out] ptr_bitsets nodes of the cell
 */
 bool GridManager3D::NodesBelongToOneCell(const DefSFBitset bitset_in,
-    const DefMap<DefAmrIndexUint>& node_exist,
+    const DefMap<DefInt>& node_exist,
     std::vector<DefSFBitset>* const ptr_bitsets) const {
     bool bool_cell;
     ptr_bitsets->clear();
@@ -385,7 +385,7 @@ bool GridManager3D::NodesBelongToOneCell(const DefSFBitset bitset_in,
 * @param[out] ptr_sfbitset all nodes on the surface
 */
 bool GridManager3D::NodesBelongToOneSurfAtHigherLevel(const DefSFBitset sfbitset_in,
-    const DefAmrIndexUint dir_norm, const DefMap<DefAmrIndexUint>& map_node_exist,
+    const DefInt dir_norm, const DefMap<DefInt>& map_node_exist,
     std::vector<DefSFBitset>* const ptr_sfbitset) const {
     ptr_sfbitset->clear();
     DefSFBitset sfbitset_tmp1, sfbitset_tmp2, sfbitset_tmp3, sfbitset_mid2;
@@ -565,19 +565,19 @@ void GridManager3D::FindCornersForNeighbourCells(const DefSFBitset bitset_in,
 */
 // in node_exist_lower, only nodes on the refinement interface exist
 void GridManager3D::IdentifyInterfaceForACell(const DefSFBitset bitset_in,
-    const DefMap<DefAmrUint>& node_coarse_interface,
-    const DefMap<DefAmrIndexUint>& node_exist_lower,
-    DefMap<DefAmrUint>* const ptr_inner_layer, DefMap<DefAmrUint>* const ptr_mid_layer,
-    DefMap<DefAmrUint>* const ptr_outer_layer) {
+    const DefMap<DefInt>& node_coarse_interface,
+    const DefMap<DefInt>& node_exist_lower,
+    DefMap<DefInt>* const ptr_inner_layer, DefMap<DefInt>* const ptr_mid_layer,
+    DefMap<DefInt>* const ptr_outer_layer) {
     // bitset_neighbors[0]:(0, 0, 0);   bitset_neighbors[1]:(+x, 0, 0);
     // bitset_neighbors[2]:(0, +y, 0);  bitset_neighbors[3]:(+x, +y, 0);
     // bitset_neighbors[4]:(0, 0, +z);  bitset_neighbors[5]:(+x, 0, +z);
     // bitset_neighbors[6]:(0, +y, +z); bitset_neighbors[7]:(+x, +y, +z).
     std::array<DefSFBitset, 8> bitset_neighbors;
     DefSFBitset bitset_mid_higher;
-    std::array<DefMap<DefAmrUint>* const, 3> arr_ptr_layer = {
+    std::array<DefMap<DefInt>* const, 3> arr_ptr_layer = {
     ptr_inner_layer, ptr_mid_layer, ptr_outer_layer };
-    bool belong_to_cell =  SFBitsetBelongToOneCell<DefAmrIndexUint>(
+    bool belong_to_cell =  SFBitsetBelongToOneCell<DefInt>(
                 bitset_in, node_exist_lower, &bitset_neighbors);
     if (belong_to_cell) {
         // bottom surface
@@ -713,19 +713,19 @@ void GridManager3D::IdentifyInterfaceForACell(const DefSFBitset bitset_in,
 // in node_exist_current and node_exist_lower, all nodes exist since grid generation is done
 // the aim is to add nodes at current refinement level to refinement interfaces
 void GridManager3D::IdentifyInterfaceForACell(const DefSFBitset bitset_in,
-    const DefMap<DefAmrUint>& node_coarse_interface_previous,
-    const DefMap<DefAmrUint>& node_coarse_interface_inner,
+    const DefMap<DefInt>& node_coarse_interface_previous,
+    const DefMap<DefInt>& node_coarse_interface_inner,
     const DefMap<std::unique_ptr<GridNode>>& node_exist_current,
     const DefMap<std::unique_ptr<GridNode>>& node_exist_lower,
-    DefMap<DefAmrUint>* const ptr_inner_layer, DefMap<DefAmrUint>* const ptr_mid_layer,
-    DefMap<DefAmrUint>* const ptr_outer_layer, DefMap<DefAmrUint>* const ptr_node_coarse_interface_outer) {
+    DefMap<DefInt>* const ptr_inner_layer, DefMap<DefInt>* const ptr_mid_layer,
+    DefMap<DefInt>* const ptr_outer_layer, DefMap<DefInt>* const ptr_node_coarse_interface_outer) {
     // bitset_neighbors[0]:(0, 0, 0);   bitset_neighbors[1]:(+x, 0, 0);
     // bitset_neighbors[2]:(0, +y, 0);  bitset_neighbors[3]:(+x, +y, 0);
     // bitset_neighbors[4]:(0, 0, +z);  bitset_neighbors[5]:(+x, 0, +z);
     // bitset_neighbors[6]:(0, +y, +z); bitset_neighbors[7]:(+x, +y, +z).
     std::array<DefSFBitset, 8> bitset_neighbors;
     DefSFBitset bitset_mid_higher;
-    std::array<DefMap<DefAmrUint>* const, 3> arr_ptr_layer = {
+    std::array<DefMap<DefInt>* const, 3> arr_ptr_layer = {
     ptr_inner_layer, ptr_mid_layer, ptr_outer_layer };
     bool belong_to_cell =  SFBitsetBelongToOneCell<std::unique_ptr<GridNode>>(
         bitset_in, node_exist_lower, &bitset_neighbors);
@@ -845,15 +845,15 @@ void GridManager3D::IdentifyInterfaceForACell(const DefSFBitset bitset_in,
 * @param[out] ptr_node_coarse_interface_outer  pointer to map storing nodes on outer coarse to fine interface
 */
 void GridManager3D::IdentifyInnermostInterfaceForACell(const DefSFBitset sfbitset_in,
-    const DefMap<DefAmrUint>& node_coarse_interface_innermost,
+    const DefMap<DefInt>& node_coarse_interface_innermost,
     const DefMap<std::unique_ptr<GridNode>>& node_exist_current,
-    const DefMap<DefAmrIndexUint>& node_exist_lower,
-    DefMap<DefAmrUint>* const ptr_inner_layer, DefMap<DefAmrUint>* const ptr_mid_layer,
-    DefMap<DefAmrUint>* const ptr_outer_layer, DefMap<DefAmrUint>* const ptr_node_coarse_interface_outer) {
+    const DefMap<DefInt>& node_exist_lower,
+    DefMap<DefInt>* const ptr_inner_layer, DefMap<DefInt>* const ptr_mid_layer,
+    DefMap<DefInt>* const ptr_outer_layer, DefMap<DefInt>* const ptr_node_coarse_interface_outer) {
     std::array<DefSFBitset, 8> bitset_neighbors;
-    std::array<DefMap<DefAmrUint>* const, 3> arr_ptr_layer = {
+    std::array<DefMap<DefInt>* const, 3> arr_ptr_layer = {
         ptr_inner_layer, ptr_mid_layer, ptr_outer_layer };
-    bool belong_to_cell =  SFBitsetBelongToOneCell<DefAmrIndexUint>(
+    bool belong_to_cell =  SFBitsetBelongToOneCell<DefInt>(
         sfbitset_in, node_exist_lower, &bitset_neighbors);
     DefSFBitset bitset_mid_higher;
     if (belong_to_cell) {
@@ -1006,9 +1006,9 @@ void GridManager3D::IdentifyInnermostInterfaceForACell(const DefSFBitset sfbitse
 void GridManager3D::IdentifyInterfaceNodeDiagonal(
     const std::array<DefSFBitset, 4>& arr_bitset_lower,
     const DefSFBitset bitset_center_higher,
-    const DefMap<DefAmrUint>& node_coarse_interface,
-    const std::array<DefMap<DefAmrUint>* const, 3>& arr_ptr_layer) {
-    DefAmrUint node0_flag = node_coarse_interface.find(arr_bitset_lower[0]) != node_coarse_interface.end(),
+    const DefMap<DefInt>& node_coarse_interface,
+    const std::array<DefMap<DefInt>* const, 3>& arr_ptr_layer) {
+    DefInt node0_flag = node_coarse_interface.find(arr_bitset_lower[0]) != node_coarse_interface.end(),
         node1_flag = node_coarse_interface.find(arr_bitset_lower[1]) != node_coarse_interface.end(),
         node2_flag = node_coarse_interface.find(arr_bitset_lower[2]) != node_coarse_interface.end(),
         node3_flag = node_coarse_interface.find(arr_bitset_lower[3]) != node_coarse_interface.end();
@@ -1030,7 +1030,7 @@ void GridManager3D::IdentifyInterfaceNodeDiagonal(
 * @param[in] bitset_higher   space filling code at the given refinement level
 * @param[out] ptr_bitset   space filling code at the background level (level 0)
 */
-bool GridManager3D::CheckCoincideBackground(const DefAmrIndexUint i_level,
+bool GridManager3D::CheckCoincideBackground(const DefInt i_level,
     const DefSFBitset& bitset_higher, DefSFBitset* const ptr_bitset) const {
     DefSFBitset bitset_refine = SFBitsetBitsForRefinement(i_level);
     if ((bitset_higher & bitset_refine) == 0) {
@@ -1101,7 +1101,7 @@ void GridManager3D::FindAllNodesInACellAtOneLevelLower(
 * @return   space filling code at lower levels.
 */
 DefSFBitset GridManager3D::NodeAtNLowerLevel(
-    const DefAmrIndexUint n_level, const DefSFBitset& bitset_in) const {
+    const DefInt n_level, const DefSFBitset& bitset_in) const {
     return SFBitsetToNLowerLevel(n_level, bitset_in);
 }
 /**
@@ -1111,8 +1111,8 @@ DefSFBitset GridManager3D::NodeAtNLowerLevel(
 * @param[out] ptr_layer_low_level layer in the overlapping region at low level
 */
 void GridManager3D::OverlapLayerFromHighToLow(
-    const DefMap<DefAmrUint>& layer_high_level,
-    DefMap<DefAmrUint>* const ptr_layer_low_level) {
+    const DefMap<DefInt>& layer_high_level,
+    DefMap<DefInt>* const ptr_layer_low_level) {
     for (const auto& iter : layer_high_level) {
         if ((iter.first & k0SfBitsetCurrentLevelBits_) == 0) {
             ptr_layer_low_level->insert({
@@ -1126,7 +1126,7 @@ void GridManager3D::OverlapLayerFromHighToLow(
 * @return if node is in the offset region
 */
 bool GridManager3D::CheckBackgroundOffset(const DefSFBitset& bitset_in) const {
-    std::array<DefAmrIndexLUint, 3> indices;
+    std::array<DefAmrLUint, 3> indices;
     SFBitsetComputeIndices(bitset_in, &indices);
     if ((indices[kXIndex] < k0MinIndexOfBackgroundNode_[kXIndex])
         || (indices[kYIndex] < k0MinIndexOfBackgroundNode_[kYIndex])
@@ -1143,7 +1143,7 @@ bool GridManager3D::CheckBackgroundOffset(const DefSFBitset& bitset_in) const {
 * @param[in] map_occupied node exist in grid at high refinement level.
 */
 void GridManager3D::InstantiateBackgroundGrid(const DefSFCodeToUint code_min,
-    const DefSFCodeToUint code_max, const DefMap<DefAmrIndexUint>& map_occupied) {
+    const DefSFCodeToUint code_max, const DefMap<DefInt>& map_occupied) {
     DefSFBitset sfbitset_tmp;
     GridInfoInterface& grid_info = *(vec_ptr_grid_info_.at(0));
     DefSFCodeToUint i_code = code_min;

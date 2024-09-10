@@ -37,7 +37,7 @@ int GeometryInfoOrigin2D::InitialGeometry(const DefReal dx) {
 */
 void GeometryInfoOrigin2D::FindTrackingNodeBasedOnGeo(
     const SFBitsetAuxInterface& sfbitset_aux, GridInfoInterface* const ptr_grid_info) {
-    std::pair<ECriterionType, DefAmrIndexUint> key_tracking_grid = { ECriterionType::kGeometry, i_geo_ };
+    std::pair<ECriterionType, DefInt> key_tracking_grid = { ECriterionType::kGeometry, i_geo_ };
     ptr_grid_info->map_ptr_tracking_grid_info_
         .at(key_tracking_grid).get()->grid_extend_type_ = grid_extend_type_;
     DefMap<TrackingNode>* ptr_tracking_node = &(ptr_grid_info
@@ -88,7 +88,7 @@ int GeometryInfoOrigin3D::InitialGeometry(const DefReal dx) {
 */
 void GeometryInfoOrigin3D::FindTrackingNodeBasedOnGeo(
     const SFBitsetAuxInterface& sfbitset_aux, GridInfoInterface* const ptr_grid_info) {
-    std::pair<ECriterionType, DefAmrIndexUint> key_tracking_grid = { ECriterionType::kGeometry, i_geo_ };
+    std::pair<ECriterionType, DefInt> key_tracking_grid = { ECriterionType::kGeometry, i_geo_ };
     ptr_grid_info->map_ptr_tracking_grid_info_
         .at(key_tracking_grid).get()->grid_extend_type_ = grid_extend_type_;
     DefMap<TrackingNode>* ptr_tracking_node = &(ptr_grid_info

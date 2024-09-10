@@ -8,8 +8,8 @@
 * @brief contain definations and libraries will be used in all modules.
 */
 
-#ifndef ROOTPROJECT_SOURCE_DEF_LIB_H_
-#define ROOTPROJECT_SOURCE_DEF_LIB_H_
+#ifndef SOURCE_DEFS_LIBS_H_
+#define SOURCE_DEFS_LIBS_H_
 // libraries
 #include <bitset>
 #include <cstdint>
@@ -20,25 +20,19 @@
 namespace rootproject {
 using DefReal = double_t;
 using DefInt = int32_t;
-// unsigned integer for indices will be short like refinement level, index of geometries, searching directions
-using DefAmrIndexUint = uint16_t;
-// unsigned integer for indices will be long like indices of nodes and vertices
-using DefAmrIndexLUint = uint32_t;
-// unsigned integer to store information for amr, like flags
-using DefAmrUint = uint32_t;
-using DefAmrTypeUint = uint16_t;
-using DefSFCodeToUint = uint64_t;
+using DefUint = uint32_t;
 using DefSizet = size_t;
+// unsigned integer for indices will be long like indices of nodes and vertices
+using DefAmrLUint = uint32_t;
+// unsigned integer for space filling code
+using DefSFCodeToUint = uint64_t;
+
 
 #ifdef ENABLE_MPI
 // data type for mpi communication
 #define MPI_REAL_DATA_TYPE MPI_DOUBLE
 #define MPI_INT_DATA_TYPE MPI_INT32_T
-#define MPI_AMR_INDEX_UINT_TYPE MPI_UINT16_T
-#define MPI_AMR_INDEX_LUINT_TYPE MPI_INT32_T
-#define MPI_AMR_UINT_TYPE MPI_INT32_T
-#define MPI_AMR_TYPE_UINT_TYPE MPI_INT16_T
-#define MPI_CODE_UINT_TYPE MPI_UINT64_T
+#define MPI_UINT_DATA_TYPE MPI_INT32_T
 #if SIZE_MAX == UCHAR_MAX
 #define MPI_SIZET_DATA_TYPE MPI_UNSIGNED_CHAR
 #elif SIZE_MAX == USHRT_MAX
@@ -52,10 +46,13 @@ using DefSizet = size_t;
 #else
 #error "MPI_SIZET_DATA_TYPE is undefined"
 #endif
+#define MPI_AMR_LUINT_TYPE MPI_INT32_T
+#define MPI_CODE_UINT_TYPE MPI_UINT64_T
+
 #endif
 
 // bitset to store code for space filling curves
-static constexpr DefAmrIndexUint kSFBitsetBit = 64;
+static constexpr DefInt kSFBitsetBit = 64;
 using DefSFBitset = std::bitset<kSFBitsetBit>;
 class HashFunc {
  public:
@@ -73,7 +70,7 @@ const DefReal kEps = DefReal(1.e-6);
 const DefReal kPi = DefReal(4.) * atan(DefReal(1.));  /**< Constant: pi*/
 
 // global constants
-static constexpr DefAmrIndexUint kXIndex = 0, kYIndex = 1, kZIndex = 2;
+static constexpr DefInt kXIndex = 0, kYIndex = 1, kZIndex = 2;
 /**< indices of vectors for x, y, z directions*/
 }  // end namespace rootproject
 #endif  // ROOTPROJECT_SOURCE_DEF_LIB_H_

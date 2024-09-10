@@ -8,11 +8,11 @@
 * @brief  define the class to manager numerates for criteria.
 */
 
-#ifndef ROOTPROJECT_AMR_PROJECT_CRITERION_CRITERION_NUMERATES_H_
-#define ROOTPROJECT_AMR_PROJECT_CRITERION_CRITERION_NUMERATES_H_
+#ifndef SOURCE_AMR_PROJECT_CRITERION_CRITERION_NUMERATES_H_
+#define SOURCE_AMR_PROJECT_CRITERION_CRITERION_NUMERATES_H_
 namespace rootproject {
 namespace amrproject {
-enum class ECriterionType : DefAmrTypeUint {
+enum class ECriterionType : DefInt {
     kUndefined = 0,
     kGeometry = 1
 };
@@ -20,7 +20,7 @@ enum class ECriterionType : DefAmrTypeUint {
 * @struct EGridExtendType
 * @brief enum class to store grid extending type
 */
-enum class EGridExtendType : DefAmrTypeUint {
+enum class EGridExtendType : DefInt {
     kSameInAllDirections = 1,
     kInAndOut = 2
 };
@@ -30,7 +30,7 @@ enum class EGridExtendType : DefAmrTypeUint {
 * @brief enum class to store data type for geometry connection type
 * @note numbering is the same as the cell types of vtk
 */
-enum class EGeometryCellType : DefAmrTypeUint {
+enum class EGeometryCellType : DefInt {
     kUndefined = 0,
     kPolyLine = 4,
     kTriangle = 5
@@ -39,7 +39,7 @@ enum class EGeometryCellType : DefAmrTypeUint {
 * @class EGeometryStatus
 * @brief enum class to identify geometry status whether it cause dynamic mesh adaptation
 */
-enum class EGeometryStatus : DefAmrTypeUint {
+enum class EGeometryStatus : DefInt {
     kVirtual = 0,
     kStatic = 1,
     kMoving = 2
@@ -48,7 +48,7 @@ enum class EGeometryStatus : DefAmrTypeUint {
 * @class DefaultGeometryShapeType
 * @brief enum class to store default geometry shape type
 */
-enum class DefaultGeoShapeType : DefAmrTypeUint {
+enum class DefaultGeoShapeType : DefInt {
     kUndefined = 0,
     kReadFromFile = 1,
     kCircle = 2,
@@ -56,4 +56,4 @@ enum class DefaultGeoShapeType : DefAmrTypeUint {
 };
 }  // end namespace amrproject
 }  // end namespace rootproject
-#endif  // ROOTPROJECT_AMR_PROJECT_CRITERION_CRITERION_NUMERATES_H_
+#endif  // SOURCE_AMR_PROJECT_CRITERION_CRITERION_NUMERATES_H_

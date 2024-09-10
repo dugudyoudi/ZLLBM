@@ -16,9 +16,9 @@
 namespace rootproject {
 namespace amrproject {
 // static member
-void DebugWriterManager::WriteCoordinatesInPts(const DefAmrIndexUint dims, const std::string& datafile_name,
+void DebugWriterManager::WriteCoordinatesInPts(const DefInt dims, const std::string& datafile_name,
     const std::vector<DefReal>& grid_offset, const std::vector<DefReal>& grid_space,
-    const SFBitsetAuxInterface& sfbitset_aux, const DefMap<DefAmrUint>& map_points) {
+    const SFBitsetAuxInterface& sfbitset_aux, const DefMap<DefInt>& map_points) {
     FILE* fp = nullptr;
     errno_t err = fopen_s(&fp, ("pointdata_rank_" + datafile_name + ".pts").c_str(), "w");
     if (!fp) {

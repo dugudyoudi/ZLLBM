@@ -17,7 +17,7 @@ namespace amrproject {
 * @param[in]  grid_info   reference to grid information.
 */
 void MpiManager::CheckMpiNodesCorrespondence(const GridInfoInterface& grid_info) const {
-    DefAmrIndexUint i_level = grid_info.i_level_;
+    DefInt i_level = grid_info.i_level_;
     std::vector<bool> vec_receive_ranks(IdentifyRanksReceivingGridNode(i_level));
     std::vector<BufferSizeInfo> send_buffer_info, receive_buffer_info;
     std::vector<std::vector<MPI_Request>> vec_vec_reqs_send, vec_vec_reqs_receive;
@@ -78,11 +78,11 @@ void MpiManager::CheckMpiNodesCorrespondence(const GridInfoInterface& grid_info)
     }
 
     int i_rev = 0;
-    DefAmrIndexUint flag_receive_once = 1, flag_receive_more = 2;
-    DefMap<DefAmrIndexUint> map_received;
+    DefInt flag_receive_once = 1, flag_receive_more = 2;
+    DefMap<DefInt> map_received;
     for (int i_rank = 0; i_rank < num_of_ranks_; ++i_rank) {
         if (receive_buffer_info.at(i_rank).bool_exist_) {
-            DefMap<DefAmrIndexUint> map_received_tmp;
+            DefMap<DefInt> map_received_tmp;
             MPI_Waitall(static_cast<int>(vec_vec_reqs_receive.at(i_rev).size()),
                 vec_vec_reqs_receive.at(i_rev).data(), MPI_STATUSES_IGNORE);
             DefSizet buffer_size = sizeof(int) + receive_buffer_info.at(i_rank).array_buffer_size_.at(1)
@@ -106,7 +106,7 @@ void MpiManager::CheckMpiNodesCorrespondence(const GridInfoInterface& grid_info)
     //     std::ofstream file1("test0.txt");
     //     for (auto iter : mpi_communication_inner_layers_.at(1).at(1)) {
     //         amrproject::SFBitsetAux2D aux2d;
-    //         std::array<DefAmrIndexLUint, 2> indices;
+    //         std::array<DefAmrLUint, 2> indices;
     //         aux2d.SFBitsetComputeIndices(iter.first, &indices);
     //         file1  << indices[0] << " " << indices[1] << std::endl;
 
@@ -116,7 +116,7 @@ void MpiManager::CheckMpiNodesCorrespondence(const GridInfoInterface& grid_info)
     //     std::ofstream file1("test1.txt");
     //     for (auto iter : mpi_communication_outer_layers_.at(1)) {
     //         amrproject::SFBitsetAux2D aux2d;
-    //         std::array<DefAmrIndexLUint, 2> indices;
+    //         std::array<DefAmrLUint, 2> indices;
     //         aux2d.SFBitsetComputeIndices(iter.first, &indices);
     //         file1 << indices[0] << " " << indices[1] << std::endl;
     //     }

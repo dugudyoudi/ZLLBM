@@ -8,8 +8,8 @@
 * @brief incline functions to manipulate morton code
 */
 
-#ifndef ROOTPROJECT_SOURCE_AMR_PROJECT_GRID_MORTON_AUX_H_
-#define ROOTPROJECT_SOURCE_AMR_PROJECT_GRID_MORTON_AUX_H_
+#ifndef SOURCE_AMR_PROJECT_GRID_MORTON_AUX_HPP_
+#define SOURCE_AMR_PROJECT_GRID_MORTON_AUX_HPP_
 #ifdef DEBUG_CHECK_GRID
 #include <bit>
 #include "io/log_write.h"
@@ -42,7 +42,7 @@ inline DefSFBitset SFBitsetAux2D::SFBitsetToOneHigherLevel(
 * @return   morton code at n lower levels.
 */
 inline DefSFBitset SFBitsetAux2D::SFBitsetToNLowerLevel(
-    const DefAmrIndexUint n_level,
+    const DefInt n_level,
     const DefSFBitset& morton_in)  const {
     return morton_in >> (2 * n_level);
 }
@@ -53,7 +53,7 @@ inline DefSFBitset SFBitsetAux2D::SFBitsetToNLowerLevel(
 * @return   morton code at n higher levels.
 */
 inline DefSFBitset SFBitsetAux2D::SFBitsetToNHigherLevel(
-    const DefAmrIndexUint n_level, const DefSFBitset& morton_in) const {
+    const DefInt n_level, const DefSFBitset& morton_in) const {
     return morton_in << (2 * n_level);
 }
 /**
@@ -132,8 +132,8 @@ inline DefSFBitset SFBitsetAux2D::FindYPos(
 * @param[in]  bitset_in   morton code of the current node.
 * @return  number of coincident lower refinement levels.
 */
-inline DefAmrIndexUint SFBitsetAux2D::SFBitsetCoincideLevel(const DefSFBitset& bitset_in) const {
-    return static_cast<DefAmrIndexUint>(std::countr_zero(bitset_in.to_ullong()))/2;
+inline DefInt SFBitsetAux2D::SFBitsetCoincideLevel(const DefSFBitset& bitset_in) const {
+    return static_cast<DefInt>(std::countr_zero(bitset_in.to_ullong()))/2;
 }
 #endif  // DEBUG_DISABLE_2D_FUNCTIONS
 #ifndef  DEBUG_DISABLE_3D_FUNCTIONS
@@ -162,7 +162,7 @@ inline DefSFBitset SFBitsetAux3D::SFBitsetToOneHigherLevel(
 * @return   morton code at n lower levels.
 */
 inline DefSFBitset SFBitsetAux3D::SFBitsetToNLowerLevel(
-    const DefAmrIndexUint n_level, const DefSFBitset& morton_in) const {
+    const DefInt n_level, const DefSFBitset& morton_in) const {
     return morton_in >> (3 * n_level);
 }
 /**
@@ -172,7 +172,7 @@ inline DefSFBitset SFBitsetAux3D::SFBitsetToNLowerLevel(
 * @return   morton code at n higher levels.
 */
 inline DefSFBitset SFBitsetAux3D::SFBitsetToNHigherLevel(
-    const DefAmrIndexUint n_level, const DefSFBitset& morton_in)  const {
+    const DefInt n_level, const DefSFBitset& morton_in)  const {
     return morton_in << (3 * n_level);
 }
 /**
@@ -300,10 +300,10 @@ inline DefSFBitset SFBitsetAux3D::FindZPos(
 * @param[in]  bitset_in   morton code of the current node.
 * @return  number of coincident lower refinement levels.
 */
-inline DefAmrIndexUint SFBitsetAux3D::SFBitsetCoincideLevel(const DefSFBitset& bitset_in) const {
-    return static_cast<DefAmrIndexUint>(std::countr_zero(bitset_in.to_ullong()))/3;
+inline DefInt SFBitsetAux3D::SFBitsetCoincideLevel(const DefSFBitset& bitset_in) const {
+    return static_cast<DefInt>(std::countr_zero(bitset_in.to_ullong()))/3;
 }
 #endif  // DEBUG_DISABLE_3D_FUNCTIONS
 }  // end namespace amrproject
 }  // end namespace rootproject
-#endif  // ROOTPROJECT_SOURCE_AMR_PROJECT_GRID_MORTON_AUX_H_
+#endif  // SOURCE_AMR_PROJECT_GRID_MORTON_AUX_HPP_

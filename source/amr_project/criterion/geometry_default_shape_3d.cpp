@@ -25,15 +25,15 @@ void GeoShapeDefaultCubic3D::InitialShape(const DefReal dx) {
             + std::string(__FILE__) + " at line " + std::to_string(__LINE__));
     }
     GeometryInfo3DInterface* ptr_geo = dynamic_cast<GeometryInfo3DInterface*>(ptr_geo_info_);
-    DefAmrUint num_point = static_cast<DefAmrUint>(length_ / dx + kEps);
+    DefInt num_point = static_cast<DefInt>(length_ / dx + kEps);
     ptr_geo->flood_fill_origin_ = ptr_geo->geometry_center_;
     ptr_geo->coordinate_origin_ = std::vector<GeometryCoordinate3D>(
         6 * num_point * num_point);
-    DefAmrUint num_sum = 0;
+    DefInt num_sum = 0;
     DefReal x_coordi, y_coordi, z_coordi;
     z_coordi = ptr_geo->geometry_center_[kZIndex] - length_ / 2;
-    for (DefAmrUint iy = 0; iy < num_point; ++iy) {
-        for (DefAmrUint ix = 0; ix < num_point; ++ix) {
+    for (DefInt iy = 0; iy < num_point; ++iy) {
+        for (DefInt ix = 0; ix < num_point; ++ix) {
             ptr_geo->coordinate_origin_.at(num_sum)
                 .coordinate.at(kXIndex) = dx / 2 + ix * dx - length_ / 2
                 + ptr_geo->geometry_center_[kXIndex];
@@ -46,8 +46,8 @@ void GeoShapeDefaultCubic3D::InitialShape(const DefReal dx) {
         }
     }
     z_coordi = ptr_geo->geometry_center_[kZIndex] + length_ / 2;
-    for (DefAmrUint iy = 0; iy < num_point; ++iy) {
-        for (DefAmrUint ix = 0; ix < num_point; ++ix) {
+    for (DefInt iy = 0; iy < num_point; ++iy) {
+        for (DefInt ix = 0; ix < num_point; ++ix) {
             ptr_geo->coordinate_origin_.at(num_sum)
                 .coordinate.at(kXIndex) = dx / 2 + ix * dx - length_ / 2
                 + ptr_geo->geometry_center_[kXIndex];
@@ -60,8 +60,8 @@ void GeoShapeDefaultCubic3D::InitialShape(const DefReal dx) {
         }
     }
     y_coordi = ptr_geo->geometry_center_[kYIndex] - length_ / 2;
-    for (DefAmrUint iz = 0; iz < num_point; ++iz) {
-        for (DefAmrUint ix = 0; ix < num_point; ++ix) {
+    for (DefInt iz = 0; iz < num_point; ++iz) {
+        for (DefInt ix = 0; ix < num_point; ++ix) {
             ptr_geo->coordinate_origin_.at(num_sum)
                 .coordinate.at(kXIndex) = dx / 2 + ix * dx - length_ / 2
                 + ptr_geo->geometry_center_[kXIndex];
@@ -74,8 +74,8 @@ void GeoShapeDefaultCubic3D::InitialShape(const DefReal dx) {
         }
     }
     y_coordi = ptr_geo->geometry_center_[kYIndex] + length_ / 2;
-    for (DefAmrUint iz = 0; iz < num_point; ++iz) {
-        for (DefAmrUint ix = 0; ix < num_point; ++ix) {
+    for (DefInt iz = 0; iz < num_point; ++iz) {
+        for (DefInt ix = 0; ix < num_point; ++ix) {
             ptr_geo->coordinate_origin_.at(num_sum)
                 .coordinate.at(kXIndex) = dx / 2 + ix * dx - length_ / 2
                 + ptr_geo->geometry_center_[kXIndex];
@@ -88,8 +88,8 @@ void GeoShapeDefaultCubic3D::InitialShape(const DefReal dx) {
         }
     }
     x_coordi = ptr_geo->geometry_center_[kXIndex] - length_ / 2;
-    for (DefAmrUint iz = 0; iz < num_point; ++iz) {
-        for (DefAmrUint iy = 0; iy < num_point; ++iy) {
+    for (DefInt iz = 0; iz < num_point; ++iz) {
+        for (DefInt iy = 0; iy < num_point; ++iy) {
             ptr_geo->coordinate_origin_.at(num_sum)
                 .coordinate.at(kXIndex) = x_coordi;
             ptr_geo->coordinate_origin_.at(num_sum)
@@ -102,8 +102,8 @@ void GeoShapeDefaultCubic3D::InitialShape(const DefReal dx) {
         }
     }
     x_coordi = ptr_geo->geometry_center_[kXIndex] + length_ / 2;
-    for (DefAmrUint iz = 0; iz < num_point; ++iz) {
-        for (DefAmrUint iy = 0; iy < num_point; ++iy) {
+    for (DefInt iz = 0; iz < num_point; ++iz) {
+        for (DefInt iy = 0; iy < num_point; ++iy) {
             ptr_geo->coordinate_origin_.at(num_sum)
                 .coordinate.at(kXIndex) = x_coordi;
             ptr_geo->coordinate_origin_.at(num_sum)

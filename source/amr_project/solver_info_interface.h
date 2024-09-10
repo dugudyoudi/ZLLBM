@@ -7,8 +7,8 @@
 * @date  2022-5-12
 * @brief  define the class for Solver interface.
 */
-#ifndef ROOTPROJECT_AMR_PROJECT_SOLVER_INFO_INTERFACE_H_
-#define ROOTPROJECT_AMR_PROJECT_SOLVER_INFO_INTERFACE_H_
+#ifndef SOURCE_AMR_PROJECT_SOLVER_INFO_INTERFACE_H_
+#define SOURCE_AMR_PROJECT_SOLVER_INFO_INTERFACE_H_
 #include <string>
 #include <memory>
 #include <vector>
@@ -26,21 +26,21 @@ class MpiManager;
 */
 class SolverInterface {
  public:
-    DefAmrIndexUint k0SolverDims_ = 0;  ///< dimension
+    DefInt k0SolverDims_ = 0;  ///< dimension
     std::string solver_type_;
     std::unique_ptr<GridInfoCreatorInterface> ptr_grid_info_creator_;
     GridManagerInterface* ptr_grid_manager_ = nullptr;
     virtual std::string GetSolverMethod() = 0;
     virtual void SolverInitial() = 0;
-    virtual void RunSolverOnGrid(const ETimeSteppingScheme time_scheme,
-        const DefAmrIndexUint time_step_current, const SFBitsetAuxInterface& sfbitset_aux,
+    virtual void RunSolverForNodesOnNormalGrid(const ETimeSteppingScheme time_scheme,
+        const DefInt time_step_current, const SFBitsetAuxInterface& sfbitset_aux,
         GridInfoInterface* const ptr_grid_info) = 0;
     virtual void CallDomainBoundaryCondition(const ETimeSteppingScheme time_scheme,
-        const DefAmrIndexUint time_step_current, const SFBitsetAuxInterface& sfbitset_aux,
+        const DefInt time_step_current, const SFBitsetAuxInterface& sfbitset_aux,
         GridInfoInterface* const ptr_grid_info) {}
     virtual int InformationFromGridOfDifferentLevel(
         const ETimingInOneStep timing, const ETimeSteppingScheme time_scheme,
-        const DefAmrIndexUint time_step_current, const SFBitsetAuxInterface& sfbitset_aux,
+        const DefInt time_step_current, const SFBitsetAuxInterface& sfbitset_aux,
         GridInfoInterface* const ptr_grid_info) {return 0;}
 };
 /**
@@ -53,4 +53,4 @@ class SolverCreatorInterface {
 };
 }  // end namespace amrproject
 }  // end namespace rootproject
-#endif  // ROOTPROJECT_AMR_PROJECT_SOLVER_INFO_INTERFACE_H_
+#endif  // SOURCE_AMR_PROJECT_SOLVER_INFO_INTERFACE_H_

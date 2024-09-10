@@ -20,7 +20,7 @@ namespace lbmproject {
  * @return if true, at least one of the domain boundaries is periodic.
  * @note initially designed for finding periodic boundary in order to setup communication layers for them.
  */
-bool GridInfoLbmInteface::CheckIfPeriodicDomainRequired(const DefAmrIndexUint dims,
+bool GridInfoLbmInteface::CheckIfPeriodicDomainRequired(const DefInt dims,
     std::vector<bool>* const ptr_periodic_min, std::vector<bool>* const ptr_periodic_max) const {
     ptr_periodic_min->assign(dims, false);
     ptr_periodic_max->assign(dims, false);
@@ -98,7 +98,7 @@ void GridInfoLbmInteface::ComputeNodeInfoBeforeMpiCommunication(
  * @note this function is a non-constant function since some information on nodes will be calculated before sending.
  */
 int GridInfoLbmInteface::CopyNodeInfoToBuffer(
-    const DefMap<DefAmrIndexUint>& map_nodes, char* const ptr_buffer) {
+    const DefMap<DefInt>& map_nodes, char* const ptr_buffer) {
     GetPointerToLbmGrid();
     if (ptr_lbm_grid_nodes_ == nullptr) {
         amrproject::LogManager::LogError("pointer to lbm grid nodes is null");
@@ -142,7 +142,7 @@ int GridInfoLbmInteface::CopyNodeInfoToBuffer(
  * @param[out] ptr_buffer pointer to the buffer storing node information.
  */
 int GridInfoLbmInteface::CopyInterpolationNodeInfoToBuffer(const GridInfoInterface& coarse_grid_info,
-    const DefMap<DefAmrIndexUint>& map_nodes, char* const ptr_buffer) {
+    const DefMap<DefInt>& map_nodes, char* const ptr_buffer) {
     GetPointerToLbmGrid();
     if (ptr_lbm_grid_nodes_ == nullptr) {
         amrproject::LogManager::LogError("pointer to lbm grid nodes is null");
@@ -208,12 +208,14 @@ int GridInfoLbmInteface::CopyInterpolationNodeInfoToBuffer(const GridInfoInterfa
  * @param map_outer_nodes container storing space filling codes of outer mpi communication layer of the current rank.
  */
 void GridInfoLbmInteface::ComputeInfoInMpiLayers(
-    const std::map<int, DefMap<DefAmrIndexUint>>& map_inner_nodes,
-    const DefMap<DefAmrIndexUint>& map_outer_nodes) {
+    const std::map<int, DefMap<DefInt>>& map_inner_nodes,
+    const DefMap<DefInt>& map_outer_nodes) {
     DefReal dt_lbm = ptr_collision_operator_->dt_lbm_;
-    std::function<void(const DefReal, const GridNodeLbm&, DefReal* const, std::vector<DefReal>* const)> func_macro;
+    DefInt dims = ptr_solver_->k0SolverDims_;
+    std::function<void(const DefReal, const GridNodeLbm&, const std::vector<DefReal>&,
+        DefReal* const, std::vector<DefReal>* const)> func_macro;
     SolverLbmInterface* ptr_lbm_solver = std::dynamic_pointer_cast<SolverLbmInterface>(ptr_solver_).get();
-    GetPointerToLbmGrid();
+    DefMap<std::unique_ptr<GridNodeLbm>>* ptr_lbm_grid_nodes = GetPointerToLbmGrid();
     if (bool_forces_) {
         if (ptr_lbm_grid_nodes_->begin()->second->force_.size() != ptr_solver_->k0SolverDims_) {
             amrproject::LogManager::LogError("Size of forces should be "
@@ -224,30 +226,25 @@ void GridInfoLbmInteface::ComputeInfoInMpiLayers(
         func_macro = ptr_lbm_solver->func_macro_with_force_;
     } else {
         func_macro = [ptr_lbm_solver](const DefReal dt_lbm, const GridNodeLbm& node,
-            DefReal* const ptr_rho, std::vector<DefReal>* const ptr_velocity) {
+            const std::vector<DefReal>& force, DefReal* const ptr_rho, std::vector<DefReal>* const ptr_velocity) {
             ptr_lbm_solver->func_macro_without_force_(node, ptr_rho, ptr_velocity);};
     }
-    DefAmrIndexUint flag_not_compute = NodeFlagNotCollision_&(~(amrproject::NodeBitStatus::kNodeStatusMpiPartitionOuter_
-        |amrproject::NodeBitStatus::kNodeStatusMpiPartitionInner_));
 
     // collision for nodes in outer and inner MPI communication layers
-    for (const auto& iter_node : map_outer_nodes) {
-        if (!(ptr_lbm_grid_nodes_->at(iter_node.first)->flag_status_&flag_not_compute)) {
-            func_macro(dt_lbm, *ptr_lbm_grid_nodes_->at(iter_node.first).get(),
-                &ptr_lbm_grid_nodes_->at(iter_node.first)->rho_, &ptr_lbm_grid_nodes_->at(iter_node.first)->velocity_);
-            ptr_collision_operator_->CollisionOperator(*ptr_lbm_solver,
-                ptr_lbm_grid_nodes_->at(iter_node.first).get());
-        }
-    }
-    DefMap<DefAmrIndexUint> map_one_layer_near_inner;
+    DefInt flag_not_collide = NodeFlagNotCollision_&(~(amrproject::NodeBitStatus::kNodeStatusMpiPartitionOuter_
+        |amrproject::NodeBitStatus::kNodeStatusMpiPartitionInner_));
+    ptr_lbm_solver->CollisionForGivenNodes<DefInt>(flag_not_collide, map_outer_nodes, this);
+    DefMap<DefInt> map_one_layer_near_inner;
     std::vector<DefSFBitset> vec_neighbor;
+    std::vector<DefReal> force;
     for (const auto& iter_layer : map_inner_nodes) {
         for (const auto& iter_node : iter_layer.second) {
-            if (!(ptr_lbm_grid_nodes_->at(iter_node.first)->flag_status_&flag_not_compute)) {
-                func_macro(dt_lbm, *ptr_lbm_grid_nodes_->at(iter_node.first).get(),
+            if (!(ptr_lbm_grid_nodes_->at(iter_node.first)->flag_status_&flag_not_collide)) {
+                force = ptr_lbm_solver->GetAllForcesForANode(dims, *ptr_lbm_grid_nodes_->at(iter_node.first).get());
+                func_macro(dt_lbm, *ptr_lbm_grid_nodes_->at(iter_node.first).get(), force,
                     &ptr_lbm_grid_nodes_->at(iter_node.first)->rho_,
                     &ptr_lbm_grid_nodes_->at(iter_node.first)->velocity_);
-                ptr_collision_operator_->CollisionOperator(*ptr_lbm_solver,
+                ptr_collision_operator_->CollisionOperator(*ptr_lbm_solver, force,
                     ptr_lbm_grid_nodes_->at(iter_node.first).get());
             }
             ptr_sfbitset_aux_->SFBitsetFindAllNeighborsVir(iter_node.first, &vec_neighbor);
@@ -260,20 +257,13 @@ void GridInfoLbmInteface::ComputeInfoInMpiLayers(
     }
     // Since stream step will be performed before mpi communication, post-collision distribution
     // functions of neighboring nodes are need
-    for (const auto& iter_node : map_one_layer_near_inner) {
-        if (ptr_lbm_grid_nodes_->find(iter_node.first) != ptr_lbm_grid_nodes_->end()
-            &&(!(ptr_lbm_grid_nodes_->at(iter_node.first)->flag_status_&flag_not_compute))) {
-            func_macro(dt_lbm, *ptr_lbm_grid_nodes_->at(iter_node.first).get(),
-                &ptr_lbm_grid_nodes_->at(iter_node.first)->rho_, &ptr_lbm_grid_nodes_->at(iter_node.first)->velocity_);
-            ptr_collision_operator_->CollisionOperator(*ptr_lbm_solver,
-                ptr_lbm_grid_nodes_->at(iter_node.first).get());
-        }
-    }
+    ptr_lbm_solver->CollisionForGivenNodes<DefInt>(flag_not_collide, map_one_layer_near_inner, this);
 
+    DefInt flag_not_stream = NodeFlagNotStream_&(~(amrproject::NodeBitStatus::kNodeStatusMpiPartitionOuter_
+        |amrproject::NodeBitStatus::kNodeStatusMpiPartitionInner_));
     for (const auto& iter_layer : map_inner_nodes) {
-        for (const auto& iter_node : iter_layer.second) {
-            ptr_lbm_solver->StreamInForAGivenNode(iter_node.first, *ptr_sfbitset_aux_, ptr_lbm_grid_nodes_);
-        }
+        ptr_lbm_solver->StreamInForGivenNodes<DefInt>(
+            flag_not_stream, *ptr_sfbitset_aux_, iter_layer.second, this);
     }
 }
 /**

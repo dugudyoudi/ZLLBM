@@ -8,11 +8,11 @@
 * @brief define enumerate classes for grid information
 */
 
-#ifndef ROOTPROJECT_SOURCE_AMR_PROJECT_GRID_GRID_ENUMERATES_H_
-#define ROOTPROJECT_SOURCE_AMR_PROJECT_GRID_GRID_ENUMERATES_H_
+#ifndef SOURCE_AMR_PROJECT_GRID_GRID_ENUMERATES_H_
+#define SOURCE_AMR_PROJECT_GRID_GRID_ENUMERATES_H_
 namespace rootproject {
 namespace amrproject {
-enum class EInterpolationMethod : DefAmrTypeUint {
+enum class EInterpolationMethod : DefInt {
     kLinear = 1,
     kLagrangian = 2
 };
@@ -32,4 +32,4 @@ enum class ETimingInOneStep {
 };
 }  // end namespace amrproject
 }  // end namespace rootproject
-#endif  // ROOTPROJECT_SOURCE_AMR_PROJECT_GRID_GRID_ENUMERATES_H_
+#endif  // SOURCE_AMR_PROJECT_GRID_GRID_ENUMERATES_H_

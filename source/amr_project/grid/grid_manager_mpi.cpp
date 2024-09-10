@@ -32,22 +32,22 @@ namespace amrproject {
  * @param[out] ptr_outer_layer_lower_level pointer to nodes on the outer layer at one lower refinement level.
  */
 void GridManagerInterface::InstantiateOverlapLayerOfRefinementInterfaceMpi(
-    const DefAmrIndexUint i_level, const DefAmrIndexUint num_partition_outer_layer,
-    const DefAmrUint flag_outmost_refinement_n_outer_mpi,
+    const DefInt i_level, const DefInt num_partition_outer_layer,
+    const DefInt flag_outmost_refinement_n_outer_mpi,
     const DefSFCodeToUint code_min, const DefSFCodeToUint code_max,
-    const SFBitsetAuxInterface& sfbitset_aux, const DefMap<DefAmrIndexUint>& map_sfbitset_one_lower_level,
-    const DefMap<DefAmrIndexUint>& sfbitset_partition_interface_background,
-    DefMap<DefAmrIndexUint>* const ptr_outer_layer_current_level,
-    DefMap<DefAmrIndexUint>* const ptr_outer_layer_lower_level) {
+    const SFBitsetAuxInterface& sfbitset_aux, const DefMap<DefInt>& map_sfbitset_one_lower_level,
+    const DefMap<DefInt>& sfbitset_partition_interface_background,
+    DefMap<DefInt>* const ptr_outer_layer_current_level,
+    DefMap<DefInt>* const ptr_outer_layer_lower_level) {
     InterfaceLayerInfo* ptr_interface_info = nullptr;
     InterfaceLayerInfo* ptr_interface_info_lower = nullptr;
-    DefAmrUint flag_tmp, flag_0 = NodeBitStatus::kNodeStatus0_;
+    DefInt flag_tmp, flag_0 = NodeBitStatus::kNodeStatus0_;
     int maxlayer;
     if (i_level == 0) {
         LogManager::LogError("input refinement level should be greater than 0 in "
             + std::string(__FILE__) + " at line " + std::to_string(__LINE__));
     }
-    DefAmrIndexUint i_lower_level = i_level - 1;
+    DefInt i_lower_level = i_level - 1;
     GridInfoInterface& grid_info = *(vec_ptr_grid_info_.at(i_level));
     GridInfoInterface& grid_info_lower = *(vec_ptr_grid_info_.at(i_lower_level));
     DefMap<std::unique_ptr<GridNode>>& map_grid = grid_info.map_grid_node_;
@@ -66,7 +66,7 @@ void GridManagerInterface::InstantiateOverlapLayerOfRefinementInterfaceMpi(
     }
 #endif  // DEBUG_CHECK_GRID
     // find interface node at current level
-    DefAmrIndexUint layer_coarse_outer = 1,
+    DefInt layer_coarse_outer = 1,
         layer_coarse_innermost = 0,
         layer0 = grid_info.k0NumFine2CoarseLayer_ - 1,
         layer_m1 = layer0 - 1,
@@ -127,8 +127,8 @@ void GridManagerInterface::InstantiateOverlapLayerOfRefinementInterfaceMpi(
                     }
                 }
             }
-            maxlayer = DefAmrIndexUint(ptr_interface_info_lower->vec_inner_coarse2fine_.size());
-            for (DefAmrIndexUint ilayer = 0; ilayer < maxlayer; ++ilayer) {
+            maxlayer = DefInt(ptr_interface_info_lower->vec_inner_coarse2fine_.size());
+            for (DefInt ilayer = 0; ilayer < maxlayer; ++ilayer) {
                 flag_tmp = flag_0;
                 if (ilayer == maxlayer - 1) {
                     flag_tmp |= NodeBitStatus::kNodeStatusCoarse2Fine0_;
@@ -177,8 +177,8 @@ void GridManagerInterface::InstantiateOverlapLayerOfRefinementInterfaceMpi(
                 &ptr_interface_info->vec_outer_fine2coarse_.at(layer_m2));
 
             // insert node instance
-            DefAmrIndexUint maxlayer = DefAmrIndexUint(ptr_interface_info->vec_outer_fine2coarse_.size());
-            for (DefAmrIndexUint ilayer = 0; ilayer < maxlayer; ++ilayer) {
+            DefInt maxlayer = DefInt(ptr_interface_info->vec_outer_fine2coarse_.size());
+            for (DefInt ilayer = 0; ilayer < maxlayer; ++ilayer) {
                 flag_tmp = flag_0;
                 if (ilayer == maxlayer - 1) {
                     flag_tmp |= NodeBitStatus::kNodeStatusFine2Coarse0_;
@@ -212,8 +212,8 @@ void GridManagerInterface::InstantiateOverlapLayerOfRefinementInterfaceMpi(
                     }
                 }
             }
-            maxlayer = DefAmrIndexUint(ptr_interface_info_lower->vec_outer_coarse2fine_.size());
-            for (DefAmrIndexUint ilayer = 0; ilayer < maxlayer; ++ilayer) {
+            maxlayer = DefInt(ptr_interface_info_lower->vec_outer_coarse2fine_.size());
+            for (DefInt ilayer = 0; ilayer < maxlayer; ++ilayer) {
                 flag_tmp = flag_0;
                 if (ilayer == maxlayer - 1) {
                     flag_tmp |= NodeBitStatus::kNodeStatusCoarse2Fine0_;
@@ -265,16 +265,16 @@ void GridManagerInterface::InstantiateOverlapLayerOfRefinementInterfaceMpi(
  * @param[out] ptr_mpi_outer_layer pointer to nodes on the outer layer for mpi communication (receiving). 
  */
 void GridManagerInterface::InstantiateGridNodeAllLevelMpi(const int i_rank,
-    const DefAmrIndexUint num_partition_inner_layer, const DefAmrIndexUint num_partition_outer_layer,
+    const DefInt num_partition_inner_layer, const DefInt num_partition_outer_layer,
     const std::vector<DefSFCodeToUint>& vec_sfcode_min, const std::vector<DefSFCodeToUint>& vec_sfcode_max,
-    const SFBitsetAuxInterface& sfbitset_aux, const std::vector<DefMap<DefAmrIndexUint>>& sfbitset_one_lower_level,
-    const std::vector<DefMap<DefAmrIndexUint>>& sfbitset_ghost_one_lower_level,
-    const DefMap<DefAmrIndexUint>& sfbitset_partition_interface_0,
-    std::vector<std::map<int, DefMap<DefAmrIndexUint>>>* const ptr_mpi_inner_layer,
-    std::vector<DefMap<DefAmrIndexUint>>* const ptr_mpi_outer_layer) {
-    DefAmrIndexUint flag_normal_outer_node = ~0, flag_on_coarse2fine = ~0 - 1,
+    const SFBitsetAuxInterface& sfbitset_aux, const std::vector<DefMap<DefInt>>& sfbitset_one_lower_level,
+    const std::vector<DefMap<DefInt>>& sfbitset_ghost_one_lower_level,
+    const DefMap<DefInt>& sfbitset_partition_interface_0,
+    std::vector<std::map<int, DefMap<DefInt>>>* const ptr_mpi_inner_layer,
+    std::vector<DefMap<DefInt>>* const ptr_mpi_outer_layer) {
+    DefInt flag_normal_outer_node = ~0, flag_on_coarse2fine = ~0 - 1,
         flag_outmost_refinement_n_outer_mpi = flag_on_coarse2fine, flag_on_periodic = flag_on_coarse2fine;
-    DefMap<DefAmrIndexUint> background_occupied;  // background nodes coincide with those at higher levels
+    DefMap<DefInt> background_occupied;  // background nodes coincide with those at higher levels
     ptr_mpi_inner_layer->resize(k0MaxLevel_ + 1);
     ptr_mpi_outer_layer->resize(k0MaxLevel_ + 1);
     DefSFCodeToUint code_min_background_level = vec_sfcode_min.at(i_rank),
@@ -283,16 +283,16 @@ void GridManagerInterface::InstantiateGridNodeAllLevelMpi(const int i_rank,
     std::vector<DefSFCodeToUint>::iterator iter_index;
 
     // initialize grid information, will be used for instantiate grid nodes
-    for (DefAmrIndexUint i_level = 0; i_level <= k0MaxLevel_; ++i_level) {
+    for (DefInt i_level = 0; i_level <= k0MaxLevel_; ++i_level) {
         vec_ptr_grid_info_.at(i_level)->InitialGridInfo();
     }
     std::vector<DefSFCodeToUint> ull_max(vec_sfcode_max);
-    std::vector<DefAmrIndexLUint> indices_min = GetMinIndexOfBackgroundNodeArrAsVec(),
+    std::vector<DefAmrLUint> indices_min = GetMinIndexOfBackgroundNodeArrAsVec(),
         indices_max = GetMaxIndexOfBackgroundNodeArrAsVec();
 
-    std::vector<DefMap<DefAmrIndexUint>> sfbitset_extra_lower_level(k0MaxLevel_ + 1);
-    for (DefAmrIndexUint i_level = k0MaxLevel_; i_level > 0; --i_level) {
-        DefAmrIndexUint i_level_lower = i_level - 1;
+    std::vector<DefMap<DefInt>> sfbitset_extra_lower_level(k0MaxLevel_ + 1);
+    for (DefInt i_level = k0MaxLevel_; i_level > 0; --i_level) {
+        DefInt i_level_lower = i_level - 1;
         GridInfoInterface& grid_info = *(vec_ptr_grid_info_.at(i_level));
         std::vector<bool> periodic_min(k0GridDims_, false), periodic_max(k0GridDims_, false);
         grid_info.CheckIfPeriodicDomainRequired(k0GridDims_, &periodic_min, &periodic_max);
@@ -329,8 +329,8 @@ void GridManagerInterface::InstantiateGridNodeAllLevelMpi(const int i_rank,
             sfbitset_partition_interface_0, &ptr_mpi_outer_layer->at(i_level), &ptr_mpi_outer_layer->at(i_level_lower));
 
         // instantiate nodes stored in sfbitset_one_lower_level
-        DefMap<DefAmrIndexUint> partition_interface_level;   // nodes on partition interface at current level
-        DefMap<DefAmrIndexUint> outer_layer_tmp;
+        DefMap<DefInt> partition_interface_level;   // nodes on partition interface at current level
+        DefMap<DefInt> outer_layer_tmp;
         int flag_node;
         DefSFCodeToUint code_tmp, code_neighbor_tmp;
         DefSFBitset sfbitset_current_level;
@@ -390,7 +390,7 @@ void GridManagerInterface::InstantiateGridNodeAllLevelMpi(const int i_rank,
             }
         }
 
-        DefMap<DefAmrIndexUint> inner_layer_tmp;
+        DefMap<DefInt> inner_layer_tmp;
         InstantiateDomainBoundaryForMpi(num_partition_outer_layer - 1, code_min_background_level,
             code_max_background_level, periodic_min, periodic_max, sfbitset_one_lower_level.at(i_level),
             sfbitset_aux, vec_ptr_grid_info_.at(i_level).get(), &inner_layer_tmp, &ptr_mpi_outer_layer->at(i_level));
@@ -426,7 +426,7 @@ void GridManagerInterface::InstantiateGridNodeAllLevelMpi(const int i_rank,
         }
 
         // extend one mpi layer when necessary since mesh generation is based on one lower level
-        DefMap<DefAmrIndexUint> map_extra_expand_outer;
+        DefMap<DefInt> map_extra_expand_outer;
         bool bool_interface_upper_extra = ((num_partition_outer_layer%2) == 0);
         DefSFBitset sfbitset_tmp;
         DefSFCodeToUint code_interface;
@@ -546,9 +546,9 @@ void GridManagerInterface::InstantiateGridNodeAllLevelMpi(const int i_rank,
 
     // find background nodes on mpi communication interface
     DefMap<std::unique_ptr<GridNode>>& map_grid_level_0 = vec_ptr_grid_info_.at(0)->map_grid_node_;
-    DefMap<DefAmrIndexUint> map_outmost_current, map_outmost_pre;
+    DefMap<DefInt> map_outmost_current, map_outmost_pre;
     std::vector<DefSFBitset> vec_neighbors;
-    DefMap<DefAmrIndexUint> partition_interface_level(sfbitset_partition_interface_0);
+    DefMap<DefInt> partition_interface_level(sfbitset_partition_interface_0);
     std::vector<bool> periodic_min(k0GridDims_, false), periodic_max(k0GridDims_, false);;
     vec_ptr_grid_info_.at(0)->CheckIfPeriodicDomainRequired(k0GridDims_, &periodic_min, &periodic_max);
     for (const auto& iter_interface : partition_interface_level) {
@@ -557,7 +557,7 @@ void GridManagerInterface::InstantiateGridNodeAllLevelMpi(const int i_rank,
         }
     }
 
-    DefMap<DefAmrIndexUint> inner_layer_tmp;
+    DefMap<DefInt> inner_layer_tmp;
     std::vector<DefSFBitset> domain_min_n_level(k0GridDims_), domain_max_n_level(k0GridDims_);
     sfbitset_aux.GetMinAtGivenLevel(0, indices_min, &domain_min_n_level);
     sfbitset_aux.GetMaxAtGivenLevel(0, indices_max, &domain_max_n_level);
@@ -669,13 +669,13 @@ void GridManagerInterface::InstantiateGridNodeAllLevelMpi(const int i_rank,
             &ptr_mpi_inner_layer->at(0), &vec_ptr_grid_info_.at(0)->map_grid_node_);
     }
 
-    for (DefAmrIndexUint i_level = 1; i_level <= k0MaxLevel_; ++i_level) {
+    for (DefInt i_level = 1; i_level <= k0MaxLevel_; ++i_level) {
         // setup flags for refinement interface
         MarkRefinementInterface(i_level, sfbitset_one_lower_level.at(i_level), sfbitset_extra_lower_level.at(i_level));
         // add nodes for interpolation
-        DefAmrIndexUint maxlayer = vec_ptr_grid_info_.at(i_level)->k0NumFine2CoarseLayer_;
+        DefInt maxlayer = vec_ptr_grid_info_.at(i_level)->k0NumFine2CoarseLayer_;
         for (auto& iter_interface : vec_ptr_grid_info_.at(i_level)->map_ptr_interface_layer_info_) {
-            for (DefAmrIndexUint i_layer = maxlayer - vec_ptr_grid_info_.at(i_level)->k0NumFine2CoarseGhostLayer_;
+            for (DefInt i_layer = maxlayer - vec_ptr_grid_info_.at(i_level)->k0NumFine2CoarseGhostLayer_;
                 i_layer < maxlayer; ++i_layer) {
                 vec_ptr_grid_info_.at(i_level)->AddGhostNodesForInterpolation(periodic_min, periodic_max,
                     sfbitset_aux, iter_interface.second->vec_inner_fine2coarse_.at(i_layer),
@@ -693,16 +693,16 @@ void GridManagerInterface::InstantiateGridNodeAllLevelMpi(const int i_rank,
  * @param[in] sfbitset_one_lower_level_current space filling codes at one lower refinement level for current refinement level
  * @param[in] sfbitset_extra space filling codes in extended mpi layer.
  */
-int GridManagerInterface::MarkRefinementInterface(const DefAmrIndexUint i_level,
-    const DefMap<DefAmrIndexUint>& sfbitset_one_lower_level_current,
-    const DefMap<DefAmrIndexUint>& sfbitset_extra) {
+int GridManagerInterface::MarkRefinementInterface(const DefInt i_level,
+    const DefMap<DefInt>& sfbitset_one_lower_level_current,
+    const DefMap<DefInt>& sfbitset_extra) {
     for (auto& iter_interface : vec_ptr_grid_info_.at(i_level - 1)->map_ptr_interface_layer_info_) {
-        DefAmrIndexUint layer_fine = vec_ptr_grid_info_.at(i_level)->k0NumFine2CoarseLayer_ - 1;
+        DefInt layer_fine = vec_ptr_grid_info_.at(i_level)->k0NumFine2CoarseLayer_ - 1;
         std::vector<DefSFBitset> corner_bitsets;
         // find overlap nodes based on the outmost fine to coarse refinement interface
         int layer0 = 0;
         layer_fine = vec_ptr_grid_info_.at(i_level)->k0NumFine2CoarseLayer_ - 1;
-        DefMap<DefAmrIndexUint> sfbitset_one_lower_level_tmp(sfbitset_one_lower_level_current);
+        DefMap<DefInt> sfbitset_one_lower_level_tmp(sfbitset_one_lower_level_current);
         sfbitset_one_lower_level_tmp.insert(sfbitset_extra.begin(), sfbitset_extra.end());
 
         for (const auto& iter_node : iter_interface.second->vec_outer_coarse2fine_.at(layer0)) {
@@ -743,9 +743,9 @@ int GridManagerInterface::MarkRefinementInterface(const DefAmrIndexUint i_level,
         }
 
         // find overlap nodes based on layers other than the outmost fine to coarse refinement interface
-        DefAmrUint flag_tmp = NodeBitStatus::kNodeStatus0_;
-        DefAmrIndexUint maxlayer = vec_ptr_grid_info_.at(i_level - 1)->k0NumCoarse2FineLayer_ - 1;
-        for (DefAmrIndexUint i_layer = 1;
+        DefInt flag_tmp = NodeBitStatus::kNodeStatus0_;
+        DefInt maxlayer = vec_ptr_grid_info_.at(i_level - 1)->k0NumCoarse2FineLayer_ - 1;
+        for (DefInt i_layer = 1;
             i_layer < vec_ptr_grid_info_.at(i_level - 1)->k0NumCoarse2FineLayer_ - 1; ++i_layer) {
             layer_fine = (vec_ptr_grid_info_.at(i_level - 1)->k0NumCoarse2FineLayer_ - i_layer - 1)*2;
             flag_tmp = NodeBitStatus::kNodeStatus0_;
@@ -819,7 +819,7 @@ int GridManagerInterface::MarkRefinementInterface(const DefAmrIndexUint i_level,
         }
         maxlayer = vec_ptr_grid_info_.at(i_level)->k0NumFine2CoarseLayer_;
         flag_tmp = NodeBitStatus::kNodeStatusFine2CoarseGhost_;
-        for (DefAmrIndexUint i_layer = maxlayer - vec_ptr_grid_info_.at(i_level)->k0NumFine2CoarseGhostLayer_;
+        for (DefInt i_layer = maxlayer - vec_ptr_grid_info_.at(i_level)->k0NumFine2CoarseGhostLayer_;
             i_layer < maxlayer - 1; ++i_layer) {
             for (auto& iter_node : vec_ptr_grid_info_.at(i_level)->map_ptr_interface_layer_info_
                 .at(iter_interface.first)->vec_outer_fine2coarse_.at(i_layer)) {
@@ -880,15 +880,15 @@ int GridManagerInterface::MarkRefinementInterface(const DefAmrIndexUint i_level,
  * @param[out] ptr_boundary_corner_z_max pointer to nodes at the conner of z max boundary. 
  */
 void GridManagerInterface::InstantiatePeriodicNodes(const bool bool_min,
-    const DefAmrIndexUint i_dim, const DefAmrIndexUint i_level,
-    const DefAmrIndexUint num_ghost_layer, const int boundary_min, const DefSFBitset sfbitset_in,
+    const DefInt i_dim, const DefInt i_level,
+    const DefInt num_ghost_layer, const int boundary_min, const DefSFBitset sfbitset_in,
     const DefSFCodeToUint code_min_background_level, const DefSFCodeToUint code_max_background_level,
     const SFBitsetAuxInterface& sfbitset_aux, GridInfoInterface* const ptr_grid_info,
-    DefMap<DefAmrIndexUint>* const ptr_inner_layer, DefMap<DefAmrIndexUint>* const ptr_outer_layer,
-    DefMap<DefAmrIndexUint>* const ptr_boundary_corner_y_min,
-    DefMap<DefAmrIndexUint>* const ptr_boundary_corner_y_max,
-    DefMap<DefAmrIndexUint>* const ptr_boundary_corner_z_min,
-    DefMap<DefAmrIndexUint>* const ptr_boundary_corner_z_max) {
+    DefMap<DefInt>* const ptr_inner_layer, DefMap<DefInt>* const ptr_outer_layer,
+    DefMap<DefInt>* const ptr_boundary_corner_y_min,
+    DefMap<DefInt>* const ptr_boundary_corner_y_max,
+    DefMap<DefInt>* const ptr_boundary_corner_z_min,
+    DefMap<DefInt>* const ptr_boundary_corner_z_max) {
     DefSFBitset sfbitset_tmp = sfbitset_in;
     DefMap<std::unique_ptr<GridNode>>& map_grid = ptr_grid_info->map_grid_node_;
     int boundary_flag;
@@ -897,7 +897,7 @@ void GridManagerInterface::InstantiatePeriodicNodes(const bool bool_min,
         ptr_inner_layer->insert({sfbitset_tmp, kFlag0_});
     }
     DefSFBitset sfbitset_tmp_pre = sfbitset_tmp;
-    for (DefAmrIndexUint i = 0; i < num_ghost_layer; ++i) {
+    for (DefInt i = 0; i < num_ghost_layer; ++i) {
         if (bool_min) {
             sfbitset_tmp = sfbitset_aux.FindNodeInPos(i_dim, sfbitset_tmp);
         } else {
@@ -952,21 +952,21 @@ void GridManagerInterface::InstantiatePeriodicNodes(const bool bool_min,
  * @param[out] ptr_outer_layer pointer to nodes on the outer layer for mpi communication.
  * @note num_ghost_layer only valid for boundaries where periodic_min or periodic_max is true
  */
-void  GridManagerInterface::InstantiateDomainBoundaryForMpi(const DefAmrIndexLUint num_ghost_layer,
+void  GridManagerInterface::InstantiateDomainBoundaryForMpi(const DefAmrLUint num_ghost_layer,
     const DefSFCodeToUint code_min_background_level, const DefSFCodeToUint code_max_background_level,
     const std::vector<bool>& periodic_min, const std::vector<bool>& periodic_max,
-    const DefMap<DefAmrIndexUint>& sfbitset_one_lower_level,
+    const DefMap<DefInt>& sfbitset_one_lower_level,
     const SFBitsetAuxInterface& sfbitset_aux, GridInfoInterface* const ptr_grid_info,
-    DefMap<DefAmrIndexUint>* const ptr_inner_layer, DefMap<DefAmrIndexUint>* const ptr_outer_layer) {
-    DefAmrIndexUint i_level = ptr_grid_info->i_level_;
+    DefMap<DefInt>* const ptr_inner_layer, DefMap<DefInt>* const ptr_outer_layer) {
+    DefInt i_level = ptr_grid_info->i_level_;
     DefSFBitset sfbitset_tmp, sfbitset_tmp_pre;
     DefMap<std::unique_ptr<GridNode>>& map_grid = ptr_grid_info->map_grid_node_;
     std::vector<DefSFBitset> nodes_on_surface;
     DefSFCodeToUint code_tmp;
-    DefMap<DefAmrIndexUint> boundary_corner_y_min, boundary_corner_y_max,
+    DefMap<DefInt> boundary_corner_y_min, boundary_corner_y_max,
         boundary_corner_z_min, boundary_corner_z_max;
-    for (DefAmrIndexUint i_dim = 0; i_dim < k0GridDims_; ++i_dim) {
-        DefMap<DefAmrIndexUint> boundary_min_tmp;
+    for (DefInt i_dim = 0; i_dim < k0GridDims_; ++i_dim) {
+        DefMap<DefInt> boundary_min_tmp;
         int boundary_min = (1 << (i_dim + 2)) - 1;
         for (const auto& iter_node : ptr_grid_info->domain_boundary_min_.at(i_dim)) {
             NodesBelongToOneSurfAtHigherLevel(sfbitset_aux.SFBitsetToNLowerLevelVir(
@@ -994,7 +994,7 @@ void  GridManagerInterface::InstantiateDomainBoundaryForMpi(const DefAmrIndexLUi
             }
         }
 
-        DefMap<DefAmrIndexUint> boundary_max_tmp;
+        DefMap<DefInt> boundary_max_tmp;
         for (const auto& iter_node : ptr_grid_info->domain_boundary_max_.at(i_dim)) {
             NodesBelongToOneSurfAtHigherLevel(sfbitset_aux.SFBitsetToNLowerLevelVir(
                 1, iter_node.first), i_dim, sfbitset_one_lower_level, &nodes_on_surface);
@@ -1067,8 +1067,8 @@ void  GridManagerInterface::InstantiateDomainBoundaryForMpi(const DefAmrIndexLUi
  */
 void GridManagerInterface::SetUpRanksSentForMpiInnerLayer(int i_rank,
     const DefSFCodeToUint interface_code_background_level, const std::vector<DefSFBitset>& vec_nodes_in_region,
-    const std::vector<DefSFCodeToUint>& ull_max, const DefMap<DefAmrIndexUint>& mpi_inner_layer_tmp,
-    std::map<int, DefMap<DefAmrIndexUint>>* const ptr_mpi_inner_layer) {
+    const std::vector<DefSFCodeToUint>& ull_max, const DefMap<DefInt>& mpi_inner_layer_tmp,
+    std::map<int, DefMap<DefInt>>* const ptr_mpi_inner_layer) {
     int node_rank;
     std::vector<DefSFCodeToUint>::const_iterator iter_index;
     for (const auto& iter_node : vec_nodes_in_region) {
@@ -1110,13 +1110,13 @@ void GridManagerInterface::SetUpRanksSentForMpiInnerLayer(int i_rank,
  * @param[out] ptr_map_grid_node the pointer to target grid nodes at given refinement level.
  */
 void GridManagerInterface::SetUpMpiInnerLayerForHigherLevel(int i_rank,
-    const DefAmrIndexUint i_level, const DefAmrIndexLUint num_partition_outer_layer,
+    const DefInt i_level, const DefAmrLUint num_partition_outer_layer,
     const DefSFCodeToUint code_min_background_level, const DefSFCodeToUint code_max_background_level,
     const std::vector<bool>& periodic_min, const std::vector<bool>& periodic_max,
     const std::vector<DefSFBitset>& domain_min_n_level, const std::vector<DefSFBitset>& domain_max_n_level,
-    const std::vector<DefSFCodeToUint>& ull_max, const DefMap<DefAmrIndexUint>& partition_interface_level,
-    const DefMap<DefAmrIndexUint>& mpi_outer_layer, const DefMap<std::unique_ptr<GridNode>>& map_grid_node_higher_level,
-    const SFBitsetAuxInterface& sfbitset_aux, std::map<int, DefMap<DefAmrIndexUint>>* const ptr_mpi_inner_layer,
+    const std::vector<DefSFCodeToUint>& ull_max, const DefMap<DefInt>& partition_interface_level,
+    const DefMap<DefInt>& mpi_outer_layer, const DefMap<std::unique_ptr<GridNode>>& map_grid_node_higher_level,
+    const SFBitsetAuxInterface& sfbitset_aux, std::map<int, DefMap<DefInt>>* const ptr_mpi_inner_layer,
     DefMap<std::unique_ptr<GridNode>> *const ptr_map_grid_node) {
     // find nodes on outer communication layer but not in ptr_mpi_outer_layer,
     // such as those in layers across grids of different refinement levels

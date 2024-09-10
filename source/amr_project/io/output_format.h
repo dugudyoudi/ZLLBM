@@ -6,8 +6,8 @@
 * @author Zhengliang Liu
 * @date  2022-8-14
 */
-#ifndef ROOTPROJECT_SOURCE_AMR_PROJECT_IO_OUTPUT_FORMAT_H_
-#define ROOTPROJECT_SOURCE_AMR_PROJECT_IO_OUTPUT_FORMAT_H_
+#ifndef SOURCE_AMR_PROJECT_IO_OUTPUT_FORMAT_H_
+#define SOURCE_AMR_PROJECT_IO_OUTPUT_FORMAT_H_
 #include <string>
 #include "../defs_libs.h"
 namespace rootproject {
@@ -76,6 +76,6 @@ class OutputDataFormat {
     OutputDataFormatUint output_uint_;
     OutputDataFormatInt output_int_;
 };
-}  // end amrproject
+}  // end namespace amrproject
 }  // end namespace rootproject
-#endif  // ROOTPROJECT_SOURCE_AMR_PROJECT_IO_OUTPUT_FORMAT_H_
+#endif  // SOURCE_AMR_PROJECT_IO_OUTPUT_FORMAT_H_

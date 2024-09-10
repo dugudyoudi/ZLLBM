@@ -20,7 +20,7 @@ namespace amrproject {
  * @param[out] ptr_last_ones pointer to spacing fill codes
  * @throws ErrorType if the size of last_ones is not 3
  */
-void MpiManager::GetNLevelCorrespondingOnes3D(const DefAmrIndexUint i_level,
+void MpiManager::GetNLevelCorrespondingOnes3D(const DefInt i_level,
     const SFBitsetAux3D& bitset_aux3d, std::vector<DefSFBitset>* const ptr_last_ones) const {
     if (ptr_last_ones->size() != 3) {
         LogManager::LogError("size of ptr_last_ones should be 3 in MpiManager::GetNLevelCorrespondingOnes3D in "
@@ -46,12 +46,12 @@ void MpiManager::GetNLevelCorrespondingOnes3D(const DefAmrIndexUint i_level,
  * @param[out] partitioned_interface_background  background nodes on the partitioned interface.
  * @return 0 is not on the partitioned interface; 1 is on the lower interface; and 2 on the upper interface
  */
-int MpiManager::CheckNodeOnPartitionInterface3D(DefAmrIndexUint i_level,
+int MpiManager::CheckNodeOnPartitionInterface3D(DefInt i_level,
     const DefSFCodeToUint code_min, const DefSFCodeToUint code_max,
     const DefSFBitset bitset_in, const SFBitsetAux3D& bitset_aux3d,
     const std::vector<DefSFBitset>& domain_min_m1_n_level, const std::vector<DefSFBitset>& domain_max_p1_n_level,
     const std::vector<DefSFBitset>& bitset_level_ones,
-    const DefMap<DefAmrIndexUint>& partitioned_interface_background) const {
+    const DefMap<DefInt>& partitioned_interface_background) const {
     // noting that some neighbors of a nodes can be less than the minimum and some are greater than the maximum
     // thus |= operator other than a single return value is used to take this into consideration
     int interface_status = 0;
@@ -115,25 +115,25 @@ int MpiManager::CheckNodeOnPartitionInterface3D(DefAmrIndexUint i_level,
  * @param[out] ptr_map_ghost_layer pointer to nodes on ghost layers near the given node.
  */
 void MpiManager::SearchForGhostLayerForMinNMax3D(const DefSFBitset sfbitset_in,
-    const DefAmrIndexUint num_of_ghost_layers, const DefSFCodeToUint code_bound,
+    const DefInt num_of_ghost_layers, const DefSFCodeToUint code_bound,
     bool (MpiManager::*ptr_func_compare)(const DefSFCodeToUint, const DefSFCodeToUint) const,
-    const DefAmrIndexUint flag_ini, const SFBitsetAux3D& bitset_aux3d,
+    const DefInt flag_ini, const SFBitsetAux3D& bitset_aux3d,
     const std::vector<DefSFBitset>& domain_min_m1_n_level,
     const std::vector<DefSFBitset>& domain_max_p1_n_level,
-    DefMap<DefAmrIndexUint>* const ptr_map_ghost_layer) const {
+    DefMap<DefInt>* const ptr_map_ghost_layer) const {
     DefSFCodeToUint code_tmp;
     DefSFBitset sfbitset_tmp_y, sfbitset_tmp_x, sfbitset_tmp_z = sfbitset_in;
     // negative z direction
-    for (DefAmrIndexUint iz = 0; iz <= num_of_ghost_layers; ++iz) {
+    for (DefInt iz = 0; iz <= num_of_ghost_layers; ++iz) {
         if ((sfbitset_tmp_z&bitset_aux3d.k0SFBitsetTakeZRef_.at(bitset_aux3d.kRefCurrent_))
          != domain_min_m1_n_level.at(kZIndex)) {
             sfbitset_tmp_y = sfbitset_tmp_z;
             // negative y direction
-            for (DefAmrIndexUint iy = 0; iy <= num_of_ghost_layers; ++iy) {
+            for (DefInt iy = 0; iy <= num_of_ghost_layers; ++iy) {
                 if ((sfbitset_tmp_y&bitset_aux3d.k0SFBitsetTakeYRef_.at(bitset_aux3d.kRefCurrent_))
                  != domain_min_m1_n_level.at(kYIndex)) {
                     sfbitset_tmp_x = sfbitset_tmp_y;
-                    for (DefAmrIndexUint ix = 0; ix <= num_of_ghost_layers; ++ix) {
+                    for (DefInt ix = 0; ix <= num_of_ghost_layers; ++ix) {
                         if ((sfbitset_tmp_x&bitset_aux3d.k0SFBitsetTakeXRef_.at(bitset_aux3d.kRefCurrent_))
                          != domain_min_m1_n_level.at(kXIndex)) {
                             code_tmp = sfbitset_tmp_x.to_ullong();
@@ -146,7 +146,7 @@ void MpiManager::SearchForGhostLayerForMinNMax3D(const DefSFBitset sfbitset_in,
                         sfbitset_tmp_x = bitset_aux3d.FindXNeg(sfbitset_tmp_x);
                     }
                     sfbitset_tmp_x = sfbitset_tmp_y;
-                    for (DefAmrIndexUint ix = 0; ix < num_of_ghost_layers; ++ix) {
+                    for (DefInt ix = 0; ix < num_of_ghost_layers; ++ix) {
                         sfbitset_tmp_x = bitset_aux3d.FindXPos(sfbitset_tmp_x);
                         if ((sfbitset_tmp_x&bitset_aux3d.k0SFBitsetTakeXRef_.at(bitset_aux3d.kRefCurrent_))
                          != domain_max_p1_n_level.at(kXIndex)) {
@@ -165,12 +165,12 @@ void MpiManager::SearchForGhostLayerForMinNMax3D(const DefSFBitset sfbitset_in,
             }
             // positive y direction
             sfbitset_tmp_y = sfbitset_tmp_z;
-            for (DefAmrIndexUint iy = 0; iy < num_of_ghost_layers; ++iy) {
+            for (DefInt iy = 0; iy < num_of_ghost_layers; ++iy) {
                 sfbitset_tmp_y = bitset_aux3d.FindYPos(sfbitset_tmp_y);
                 if ((sfbitset_tmp_y&bitset_aux3d.k0SFBitsetTakeYRef_.at(bitset_aux3d.kRefCurrent_))
                  != domain_max_p1_n_level.at(kYIndex)) {
                     sfbitset_tmp_x = sfbitset_tmp_y;
-                    for (DefAmrIndexUint ix = 0; ix <= num_of_ghost_layers; ++ix) {
+                    for (DefInt ix = 0; ix <= num_of_ghost_layers; ++ix) {
                         if ((sfbitset_tmp_x&bitset_aux3d.k0SFBitsetTakeXRef_.at(bitset_aux3d.kRefCurrent_))
                          != domain_min_m1_n_level.at(kXIndex)) {
                             code_tmp = sfbitset_tmp_x.to_ullong();
@@ -183,7 +183,7 @@ void MpiManager::SearchForGhostLayerForMinNMax3D(const DefSFBitset sfbitset_in,
                         sfbitset_tmp_x = bitset_aux3d.FindXNeg(sfbitset_tmp_x);
                     }
                     sfbitset_tmp_x = sfbitset_tmp_y;
-                    for (DefAmrIndexUint ix = 0; ix < num_of_ghost_layers; ++ix) {
+                    for (DefInt ix = 0; ix < num_of_ghost_layers; ++ix) {
                         sfbitset_tmp_x = bitset_aux3d.FindXPos(sfbitset_tmp_x);
                         if ((sfbitset_tmp_x&bitset_aux3d.k0SFBitsetTakeXRef_.at(bitset_aux3d.kRefCurrent_))
                          != domain_max_p1_n_level.at(kXIndex)) {
@@ -206,17 +206,17 @@ void MpiManager::SearchForGhostLayerForMinNMax3D(const DefSFBitset sfbitset_in,
     }
     // positive z direction
     sfbitset_tmp_z = sfbitset_in;
-    for (DefAmrIndexUint iz = 0; iz < num_of_ghost_layers; ++iz) {
+    for (DefInt iz = 0; iz < num_of_ghost_layers; ++iz) {
         sfbitset_tmp_z = bitset_aux3d.FindZPos(sfbitset_tmp_z);
         if ((sfbitset_tmp_z&bitset_aux3d.k0SFBitsetTakeZRef_.at(bitset_aux3d.kRefCurrent_))
          != domain_max_p1_n_level.at(kZIndex)) {
             sfbitset_tmp_y = sfbitset_tmp_z;
             // negative y direction
-            for (DefAmrIndexUint iy = 0; iy <= num_of_ghost_layers; ++iy) {
+            for (DefInt iy = 0; iy <= num_of_ghost_layers; ++iy) {
                 if ((sfbitset_tmp_y&bitset_aux3d.k0SFBitsetTakeYRef_.at(bitset_aux3d.kRefCurrent_))
                  != domain_min_m1_n_level.at(kYIndex)) {
                     sfbitset_tmp_x = sfbitset_tmp_y;
-                    for (DefAmrIndexUint ix = 0; ix <= num_of_ghost_layers; ++ix) {
+                    for (DefInt ix = 0; ix <= num_of_ghost_layers; ++ix) {
                         if ((sfbitset_tmp_x&bitset_aux3d.k0SFBitsetTakeXRef_.at(bitset_aux3d.kRefCurrent_))
                          != domain_min_m1_n_level.at(kXIndex)) {
                             code_tmp = sfbitset_tmp_x.to_ullong();
@@ -229,7 +229,7 @@ void MpiManager::SearchForGhostLayerForMinNMax3D(const DefSFBitset sfbitset_in,
                         sfbitset_tmp_x = bitset_aux3d.FindXNeg(sfbitset_tmp_x);
                     }
                     sfbitset_tmp_x = sfbitset_tmp_y;
-                    for (DefAmrIndexUint ix = 0; ix < num_of_ghost_layers; ++ix) {
+                    for (DefInt ix = 0; ix < num_of_ghost_layers; ++ix) {
                         sfbitset_tmp_x = bitset_aux3d.FindXPos(sfbitset_tmp_x);
                         if ((sfbitset_tmp_x&bitset_aux3d.k0SFBitsetTakeXRef_.at(bitset_aux3d.kRefCurrent_))
                          != domain_max_p1_n_level.at(kXIndex)) {
@@ -248,12 +248,12 @@ void MpiManager::SearchForGhostLayerForMinNMax3D(const DefSFBitset sfbitset_in,
             }
             // positive y direction
             sfbitset_tmp_y = sfbitset_tmp_z;
-            for (DefAmrIndexUint iy = 0; iy < num_of_ghost_layers; ++iy) {
+            for (DefInt iy = 0; iy < num_of_ghost_layers; ++iy) {
                 sfbitset_tmp_y = bitset_aux3d.FindYPos(sfbitset_tmp_y);
                 if ((sfbitset_tmp_y&bitset_aux3d.k0SFBitsetTakeYRef_.at(bitset_aux3d.kRefCurrent_))
                  != domain_max_p1_n_level.at(kYIndex)) {
                     sfbitset_tmp_x = sfbitset_tmp_y;
-                    for (DefAmrIndexUint ix = 0; ix <= num_of_ghost_layers; ++ix) {
+                    for (DefInt ix = 0; ix <= num_of_ghost_layers; ++ix) {
                         if ((sfbitset_tmp_x&bitset_aux3d.k0SFBitsetTakeXRef_.at(bitset_aux3d.kRefCurrent_))
                          != domain_min_m1_n_level.at(kXIndex)) {
                             code_tmp = sfbitset_tmp_x.to_ullong();
@@ -266,7 +266,7 @@ void MpiManager::SearchForGhostLayerForMinNMax3D(const DefSFBitset sfbitset_in,
                         sfbitset_tmp_x = bitset_aux3d.FindXNeg(sfbitset_tmp_x);
                     }
                     sfbitset_tmp_x = sfbitset_tmp_y;
-                    for (DefAmrIndexUint ix = 0; ix < num_of_ghost_layers; ++ix) {
+                    for (DefInt ix = 0; ix < num_of_ghost_layers; ++ix) {
                         sfbitset_tmp_x = bitset_aux3d.FindXPos(sfbitset_tmp_x);
                         if ((sfbitset_tmp_x&bitset_aux3d.k0SFBitsetTakeXRef_.at(bitset_aux3d.kRefCurrent_))
                          != domain_max_p1_n_level.at(kXIndex)) {
@@ -299,23 +299,23 @@ void MpiManager::SearchForGhostLayerForMinNMax3D(const DefSFBitset sfbitset_in,
 */
 void MpiManager::IniTraverseBackgroundForPartitionRank0(
     const DefSFBitset bitset_domain_min, const DefSFBitset bitset_domain_max,
-    const std::vector<DefAmrIndexLUint>& vec_cost, const std::vector<DefMap<DefAmrIndexUint>>& vec_sfbitset,
+    const std::vector<DefInt>& vec_cost, const std::vector<DefMap<DefInt>>& vec_sfbitset,
     const SFBitsetAux3D& bitset_aux3d, std::vector<DefSFBitset>* const ptr_bitset_min,
     std::vector<DefSFBitset>* const ptr_bitset_max) const {
-    DefMap<DefAmrUint> background_occupied;
+    DefMap<DefInt> background_occupied;
     DefSFBitset bitset_background;
-    DefAmrIndexUint max_level = DefAmrIndexUint(vec_cost.size()) - 1;
-    DefAmrUint bk_cost =  vec_cost.at(0);
-    std::array<DefAmrIndexLUint, 3> indices_min,  indices_max;
+    DefInt max_level = DefInt(vec_cost.size()) - 1;
+    DefInt bk_cost =  vec_cost.at(0);
+    std::array<DefAmrLUint, 3> indices_min,  indices_max;
     bitset_aux3d.SFBitsetComputeIndices(bitset_domain_min, &indices_min);
     bitset_aux3d.SFBitsetComputeIndices(bitset_domain_max, &indices_max);
-    DefAmrIndexLUint num_background_nodes = (indices_max[kXIndex] - indices_min[kXIndex] + 1)
+    DefAmrLUint num_background_nodes = (indices_max[kXIndex] - indices_min[kXIndex] + 1)
         *(indices_max[kYIndex] - indices_min[kYIndex] + 1)*(indices_max[kZIndex] - indices_min[kZIndex] + 1);
-    DefAmrIndexLUint sum_load = num_background_nodes * bk_cost;
+    DefAmrLUint sum_load = num_background_nodes * bk_cost;
     // add computational cost of refined nodes
-    for (DefAmrIndexUint i_level = max_level; i_level > 0; --i_level) {
-        DefAmrIndexUint i_level_lower = i_level - 1;
-        DefAmrUint node_cost = vec_cost.at(i_level);
+    for (DefInt i_level = max_level; i_level > 0; --i_level) {
+        DefInt i_level_lower = i_level - 1;
+        DefInt node_cost = vec_cost.at(i_level);
         for (const auto& iter_low : vec_sfbitset.at(i_level)) {
             bitset_background = bitset_aux3d.SFBitsetToNLowerLevel(i_level_lower, iter_low.first);
             if (background_occupied.find(bitset_background) ==
@@ -330,23 +330,23 @@ void MpiManager::IniTraverseBackgroundForPartitionRank0(
     }
     // calculate loads on each rank
     const int num_ranks = num_of_ranks_;
-    DefAmrIndexLUint ave_load = static_cast<DefAmrIndexLUint>(sum_load / num_ranks) + 1;
-    DefAmrIndexLUint load_rank0 = sum_load - (num_ranks - 1) * ave_load;
-    std::vector<DefAmrIndexLUint> rank_load(num_ranks, ave_load);
+    DefAmrLUint ave_load = static_cast<DefAmrLUint>(sum_load / num_ranks) + 1;
+    DefAmrLUint load_rank0 = sum_load - (num_ranks - 1) * ave_load;
+    std::vector<DefAmrLUint> rank_load(num_ranks, ave_load);
     rank_load.at(0) = load_rank0;   // load at rank 0, assuming lower than other ranks
     // traverse background nodes
     ptr_bitset_min->resize(num_ranks);
     ptr_bitset_max->resize(num_ranks);
-    DefAmrIndexLUint load_count = 0;
+    DefAmrLUint load_count = 0;
     int status;
     int i_rank = 0;
     ptr_bitset_min->at(i_rank) = 0;
     ptr_bitset_max->back() = bitset_domain_max;
-    DefAmrIndexLUint cost_background = vec_cost.at(0);
-    std::array<DefAmrIndexLUint, 3> indices(indices_min);
+    DefAmrLUint cost_background = vec_cost.at(0);
+    std::array<DefAmrLUint, 3> indices(indices_min);
     DefSFCodeToUint i_code = bitset_domain_min.to_ullong();
     DefSFBitset sfbitset_tmp = static_cast<DefSFBitset>(i_code);
-    for (DefAmrIndexLUint i_node = 0; i_node < num_background_nodes - 1; ++i_node) {
+    for (DefAmrLUint i_node = 0; i_node < num_background_nodes - 1; ++i_node) {
         if (load_count >= rank_load.at(i_rank)) {
             load_count = 0;
             ++i_rank;
@@ -382,12 +382,12 @@ void MpiManager::IniTraverseBackgroundForPartitionRank0(
  * @param[out] ptr_partition_interface_background pointer to nodes on the interface of partitioned blocks at the background level. 
  */
 void MpiManager::IniFindInterfaceForPartitionFromMinNMax(const DefSFCodeToUint& code_min,
-    const DefSFCodeToUint& code_max, const std::array<DefAmrIndexLUint, 3>& array_domain_min,
-    const std::array<DefAmrIndexLUint, 3>& array_domain_max, const SFBitsetAux3D& bitset_aux3d,
-    DefMap<DefAmrIndexUint>* const ptr_partition_interface_background) const {
+    const DefSFCodeToUint& code_max, const std::array<DefAmrLUint, 3>& array_domain_min,
+    const std::array<DefAmrLUint, 3>& array_domain_max, const SFBitsetAux3D& bitset_aux3d,
+    DefMap<DefInt>* const ptr_partition_interface_background) const {
     DefSFCodeToUint code_tmp = code_max + 1;
-    DefAmrIndexUint block_level = 0;
-    DefAmrIndexLUint block_length = 1 << block_level;  // block size of space filling code
+    DefInt block_level = 0;
+    DefAmrLUint block_length = 1 << block_level;  // block size of space filling code
     DefSFCodeToUint code_cri = ((code_tmp + 1) / 8)*block_length*block_length*block_length *8;
 
     DefSFCodeToUint code_max_criterion, code_remain;

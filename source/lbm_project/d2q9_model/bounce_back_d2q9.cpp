@@ -21,7 +21,7 @@ namespace lbmproject {
  * @param[out] ptr_grid_info pointer to class storing grid information.
  */
 void BoundaryBounceBackD2Q9::CalBoundaryCondition(const ELbmBoundaryType boundary_type,
-    const DefMap<DefAmrIndexUint>& boundary_nodes, GridInfoLbmInteface* const ptr_grid_info) const {
+    const DefMap<DefInt>& boundary_nodes, GridInfoLbmInteface* const ptr_grid_info) const {
     const SolverLbmD2Q9& lbm_solver = *(std::dynamic_pointer_cast<SolverLbmD2Q9>(ptr_grid_info->ptr_solver_));
     const DefReal rho0 = lbm_solver.k0Rho_;
     const std::array<DefReal, 2>& velocity = boundary_velocity_;

@@ -122,8 +122,8 @@ void GeometryInfoConnection3D::InitialCoordinateGivenLevel(
 * @return  distance.
 */
 DefReal GeometryInfoConnection3D::ComputeDistanceFromCoordinates(
-    const std::pair<DefAmrIndexUint, DefSizet>& vertex0,
-    const std::pair<DefAmrIndexUint, DefSizet>& vertex1) {
+    const std::pair<DefInt, DefSizet>& vertex0,
+    const std::pair<DefInt, DefSizet>& vertex1) {
     DefReal x_dis = std::fabs(vertex_given_level_.at(vertex0.first)
         .vec_vertex_coordinate.at(vertex0.second).coordinates.at(kXIndex)
         - vertex_given_level_.at(vertex1.first)
@@ -145,8 +145,8 @@ DefReal GeometryInfoConnection3D::ComputeDistanceFromCoordinates(
 * @param[out]  ptr_coordinates mid point coordinates.
 */
 void GeometryInfoConnection3D::ComputeMidCoordinates(
-    const std::pair<DefAmrIndexUint, DefSizet>& vertex0,
-    const std::pair<DefAmrIndexUint, DefSizet>& vertex1,
+    const std::pair<DefInt, DefSizet>& vertex0,
+    const std::pair<DefInt, DefSizet>& vertex1,
     std::vector<DefReal>* const ptr_coordinates) {
     ptr_coordinates->at(kXIndex) = (vertex_given_level_.at(vertex0.first)
         .vec_vertex_coordinate.at(vertex0.second).coordinates.at(kXIndex)

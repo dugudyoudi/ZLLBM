@@ -18,8 +18,8 @@ namespace amrproject {
 /**
 * @brief function to get background time step of current level.
 */
-DefReal MultiTimeSteppingC2F::GetCurrentTimeStep(const DefAmrIndexUint i_level,
-    const DefAmrIndexLUint time_step_background, const DefAmrIndexUint time_step_level) const {
+DefReal MultiTimeSteppingC2F::GetCurrentTimeStep(const DefInt i_level,
+    const DefAmrLUint time_step_background, const DefInt time_step_level) const {
     return time_step_background
         + static_cast<DefReal>(time_step_level) / static_cast<DefReal>(TwoPowerN(i_level));
 }
@@ -27,7 +27,7 @@ DefReal MultiTimeSteppingC2F::GetCurrentTimeStep(const DefAmrIndexUint i_level,
 * @brief function to setup default grid related parameters.
 * @param[in]  max_level  maximum refinement level.
 */
-void GridManagerInterface::DefaultInitialization(const DefAmrIndexUint max_level) {
+void GridManagerInterface::DefaultInitialization(const DefInt max_level) {
     k0MaxLevel_ = max_level;
 }
 /**
@@ -35,9 +35,9 @@ void GridManagerInterface::DefaultInitialization(const DefAmrIndexUint max_level
 * @param[in] i_geo  index of the geometry.
 * @param[in] geo_info object containing the geometry information.
 */ 
-void GridManagerInterface::CreateTrackingGridInstanceForAGeo(const DefAmrIndexUint i_geo,
+void GridManagerInterface::CreateTrackingGridInstanceForAGeo(const DefInt i_geo,
     const GeometryInfoInterface& geo_info) {
-    std::pair<ECriterionType, DefAmrIndexUint> key_tracking_grid = { ECriterionType::kGeometry, i_geo };
+    std::pair<ECriterionType, DefInt> key_tracking_grid = { ECriterionType::kGeometry, i_geo };
     if (vec_ptr_grid_info_.at(geo_info.i_level_)->map_ptr_tracking_grid_info_.find(key_tracking_grid)
         == vec_ptr_grid_info_.at(geo_info.i_level_)->map_ptr_tracking_grid_info_.end()) {
         vec_ptr_grid_info_.at(geo_info.i_level_)->map_ptr_tracking_grid_info_.insert(
@@ -52,7 +52,7 @@ void GridManagerInterface::CreateTrackingGridInstanceForAGeo(const DefAmrIndexUi
 void GridManagerInterface::CreateSameGridInstanceForAllLevel(const std::shared_ptr<SolverInterface>& ptr_solver,
     const GridInfoCreatorInterface& grid_creator) {
     ptr_solver->ptr_grid_manager_ = this;
-    for (DefAmrIndexUint i_level = 0; i_level < k0MaxLevel_ + 1; ++i_level) {
+    for (DefInt i_level = 0; i_level < k0MaxLevel_ + 1; ++i_level) {
         vec_ptr_grid_info_.emplace_back(grid_creator.CreateGridInfo());
         GridInfoInterface& grid_ref = *(vec_ptr_grid_info_).back();
         grid_ref.i_level_ = i_level;
@@ -64,13 +64,13 @@ void GridManagerInterface::CreateSameGridInstanceForAllLevel(const std::shared_p
         }
 
         // set computational cost for each node 2^i_level
-        grid_ref.computational_cost_ = static_cast<DefAmrUint>(TwoPowerN(i_level));
+        grid_ref.computational_cost_ = static_cast<DefInt>(TwoPowerN(i_level));
         grid_ref.InitialNotComputeNodeFlag();
 
         // grid spacing
         grid_ref.grid_space_ = std::vector<DefReal>(k0GridDims_, 0.);
         std::vector<DefReal> domain_dx_ = GetDomainDxArrAsVec();
-        for (DefAmrIndexUint idim = 0; idim < k0GridDims_; ++idim) {
+        for (DefInt idim = 0; idim < k0GridDims_; ++idim) {
             grid_ref.grid_space_.at(idim) =
                 domain_dx_.at(idim) / static_cast<DefReal>(TwoPowerN(i_level));
         }
@@ -216,13 +216,13 @@ int GridManagerInterface::CheckIfPointOutsideDomain(
 * @param[out]  ptr_outer_layer_pos  number of extended layer outside geometry
 *               in positive directions.
 */
-void GridManagerInterface::SetNumberOfExtendLayerForGrid(const DefAmrIndexUint i_level,
+void GridManagerInterface::SetNumberOfExtendLayerForGrid(const DefInt i_level,
     const GeometryInfoInterface& geo_info,
-    std::vector<DefAmrIndexLUint>* const ptr_inner_layer_neg,
-    std::vector<DefAmrIndexLUint>* const ptr_inner_layer_pos,
-    std::vector<DefAmrIndexLUint>* const ptr_outer_layer_neg,
-    std::vector<DefAmrIndexLUint>* const ptr_outer_layer_pos) {
-    std::vector<DefAmrIndexLUint> layer_min(k0GridDims_, k0IntExtendMin_);
+    std::vector<DefAmrLUint>* const ptr_inner_layer_neg,
+    std::vector<DefAmrLUint>* const ptr_inner_layer_pos,
+    std::vector<DefAmrLUint>* const ptr_outer_layer_neg,
+    std::vector<DefAmrLUint>* const ptr_outer_layer_pos) {
+    std::vector<DefAmrLUint> layer_min(k0GridDims_, k0IntExtendMin_);
     ptr_inner_layer_neg->assign(layer_min.begin(), layer_min.end());
     ptr_inner_layer_pos->assign(layer_min.begin(), layer_min.end());
     ptr_outer_layer_neg->assign(layer_min.begin(), layer_min.end());
@@ -310,9 +310,9 @@ void GridManagerInterface::SetNumberOfExtendLayerForGrid(const DefAmrIndexUint i
  * @param[out] ptr_layer_fine_inner pointer to nodes in the third outermost fine layer.
  */
 void GridManagerInterface::FindOverlappingLayersBasedOnOutermostCoarse(
-    const DefMap<DefAmrUint>& layer_coarse_innermost, const DefMap<DefAmrIndexUint>& sfbitset_exist,
-    DefMap<DefAmrUint>* const ptr_layer_coarse_outer, DefMap<DefAmrUint>* const ptr_layer_fine_outmost,
-    DefMap<DefAmrUint>* const ptr_layer_fine_mid, DefMap<DefAmrUint>* const ptr_layer_fine_inner) {
+    const DefMap<DefInt>& layer_coarse_innermost, const DefMap<DefInt>& sfbitset_exist,
+    DefMap<DefInt>* const ptr_layer_coarse_outer, DefMap<DefInt>* const ptr_layer_fine_outmost,
+    DefMap<DefInt>* const ptr_layer_fine_mid, DefMap<DefInt>* const ptr_layer_fine_inner) {
 #ifdef DEBUG_CHECK_GRID
     if (&layer_coarse_innermost == ptr_layer_coarse_outer) {
         LogManager::LogError("input (layer_coarse_innermost)"
@@ -343,13 +343,13 @@ void GridManagerInterface::FindOverlappingLayersBasedOnOutermostCoarse(
  * @param sfbitset_one_lower_level nodes indices encoded by space filling code at one lower level.
  */
 void GridManagerInterface::InstantiateOverlapLayerOfRefinementInterface(
-    const std::vector<DefMap<DefAmrIndexUint>>& sfbitset_one_lower_level) {
+    const std::vector<DefMap<DefInt>>& sfbitset_one_lower_level) {
     InterfaceLayerInfo* ptr_interface_info = nullptr;
     InterfaceLayerInfo* ptr_interface_info_lower = nullptr;
-    DefAmrIndexUint layer_coarse_outer, layer_coarse_innermost, layer0, layer_m1, layer_m2;
-    DefAmrUint flag_tmp, flag_refined = NodeBitStatus::kNodeStatus0_;
+    DefInt layer_coarse_outer, layer_coarse_innermost, layer0, layer_m1, layer_m2;
+    DefInt flag_tmp, flag_refined = NodeBitStatus::kNodeStatus0_;
     int maxlayer;
-    for (DefAmrIndexUint i_level = k0MaxLevel_; i_level > 0; --i_level) {
+    for (DefInt i_level = k0MaxLevel_; i_level > 0; --i_level) {
         GridInfoInterface& grid_info = *(vec_ptr_grid_info_.at(i_level));
         GridInfoInterface& grid_info_lower =
             *(vec_ptr_grid_info_.at(i_level - 1));
@@ -413,8 +413,8 @@ void GridManagerInterface::InstantiateOverlapLayerOfRefinementInterface(
                         }
                     }
                 }
-                maxlayer = DefAmrIndexUint(ptr_interface_info_lower->vec_inner_coarse2fine_.size());
-                for (DefAmrIndexUint ilayer = 0; ilayer < maxlayer; ++ilayer) {
+                maxlayer = DefInt(ptr_interface_info_lower->vec_inner_coarse2fine_.size());
+                for (DefInt ilayer = 0; ilayer < maxlayer; ++ilayer) {
                     flag_tmp = flag_refined;
                     if (ilayer == maxlayer - 1) {
                         flag_tmp |= NodeBitStatus::kNodeStatusCoarse2Fine0_;
@@ -448,8 +448,8 @@ void GridManagerInterface::InstantiateOverlapLayerOfRefinementInterface(
                     &ptr_interface_info->vec_outer_fine2coarse_.at(layer_m1),
                     &ptr_interface_info->vec_outer_fine2coarse_.at(layer_m2));
                 // insert node instance
-                DefAmrIndexUint maxlayer = DefAmrIndexUint(ptr_interface_info->vec_outer_fine2coarse_.size());
-                for (DefAmrIndexUint ilayer = 0; ilayer < maxlayer; ++ilayer) {
+                DefInt maxlayer = DefInt(ptr_interface_info->vec_outer_fine2coarse_.size());
+                for (DefInt ilayer = 0; ilayer < maxlayer; ++ilayer) {
                     flag_tmp = flag_refined;
                     if (ilayer == maxlayer - 1) {
                         flag_tmp |= NodeBitStatus::kNodeStatusFine2Coarse0_;
@@ -468,8 +468,8 @@ void GridManagerInterface::InstantiateOverlapLayerOfRefinementInterface(
                         }
                     }
                 }
-                maxlayer = DefAmrIndexUint(ptr_interface_info_lower->vec_outer_coarse2fine_.size());
-                for (DefAmrIndexUint ilayer = 0; ilayer < maxlayer; ++ilayer) {
+                maxlayer = DefInt(ptr_interface_info_lower->vec_outer_coarse2fine_.size());
+                for (DefInt ilayer = 0; ilayer < maxlayer; ++ilayer) {
                     flag_tmp = flag_refined;
                     if (ilayer == maxlayer - 1) {
                         flag_tmp |= NodeBitStatus::kNodeStatusCoarse2Fine0_;
@@ -499,16 +499,16 @@ void GridManagerInterface::InstantiateOverlapLayerOfRefinementInterface(
  * @param[in] sfbitset_one_lower_level space filling codes at one lower refinement level.
  */
 void GridManagerInterface::InstantiateGridNodeAllLevel(const DefSFBitset sfbitset_min,
-    const DefSFBitset sfbitset_max, const std::vector<DefMap<DefAmrIndexUint>>& sfbitset_one_lower_level) {
-    DefMap<DefAmrIndexUint> background_occupied;
+    const DefSFBitset sfbitset_max, const std::vector<DefMap<DefInt>>& sfbitset_one_lower_level) {
+    DefMap<DefInt> background_occupied;
     // initialize grid information, will be used for instantiate grid nodes
-    for (DefAmrIndexUint i_level = 0; i_level <= k0MaxLevel_; ++i_level) {
+    for (DefInt i_level = 0; i_level <= k0MaxLevel_; ++i_level) {
         vec_ptr_grid_info_.at(i_level)->InitialGridInfo();
     }
     InstantiateOverlapLayerOfRefinementInterface(sfbitset_one_lower_level);
     DefSFCodeToUint code_min = sfbitset_min.to_ullong(), code_max = sfbitset_max.to_ullong();
-    for (DefAmrIndexUint i_level = k0MaxLevel_; i_level > 0; --i_level) {
-        DefAmrIndexUint i_level_lower = i_level - 1;
+    for (DefInt i_level = k0MaxLevel_; i_level > 0; --i_level) {
+        DefInt i_level_lower = i_level - 1;
         GridInfoInterface& grid_info = *(vec_ptr_grid_info_.at(i_level));
         // initialize grid information
         DefMap<std::unique_ptr<GridNode>>& map_grid = grid_info.map_grid_node_;
@@ -558,8 +558,8 @@ void GridManagerInterface::IdentifyInterfaceNodeOnEdge(
     const std::array<DefSFBitset, 2>& arr_bitset_lower,
     const DefSFBitset bitset_mid_higher,
     const SFBitsetAuxInterface& sfbitset_aux,
-    const DefMap<DefAmrUint>& node_coarse_interface,
-    const std::array<DefMap<DefAmrUint>* const, 3>& arr_ptr_layer) {
+    const DefMap<DefInt>& node_coarse_interface,
+    const std::array<DefMap<DefInt>* const, 3>& arr_ptr_layer) {
     bool node0_flag = node_coarse_interface.find(arr_bitset_lower[0]) != node_coarse_interface.end(),
         node1_flag = node_coarse_interface.find(arr_bitset_lower[1]) != node_coarse_interface.end();
     if (node0_flag == node1_flag) {
@@ -605,10 +605,10 @@ void GridManagerInterface::IdentifyInterfaceNodeOnEdgeInnermost(
     const std::array<DefSFBitset, 2>& arr_bitset_lower,
     const DefSFBitset bitset_mid_higher,
     const SFBitsetAuxInterface& sfbitset_aux,
-    const DefMap<DefAmrUint>& node_coarse_interface_innermost,
+    const DefMap<DefInt>& node_coarse_interface_innermost,
     const DefMap<std::unique_ptr<GridNode>>& node_current,
-    const std::array<DefMap<DefAmrUint>* const, 3>& arr_ptr_layer,
-    DefMap<DefAmrUint>* const ptr_node_coarse_interface_outer) {
+    const std::array<DefMap<DefInt>* const, 3>& arr_ptr_layer,
+    DefMap<DefInt>* const ptr_node_coarse_interface_outer) {
     bool node0_inner =
         node_coarse_interface_innermost.find(arr_bitset_lower[0]) != node_coarse_interface_innermost.end();
     bool node1_inner =
@@ -690,11 +690,11 @@ void GridManagerInterface::IdentifyInterfaceNodeOnEdge(
     const std::array<DefSFBitset, 2>& arr_bitset_lower,
     const DefSFBitset bitset_mid_higher,
     const SFBitsetAuxInterface& sfbitset_aux,
-    const DefMap<DefAmrUint>& node_coarse_interface_previous,
-    const DefMap<DefAmrUint>& node_coarse_interface_inner,
+    const DefMap<DefInt>& node_coarse_interface_previous,
+    const DefMap<DefInt>& node_coarse_interface_inner,
     const DefMap<std::unique_ptr<GridNode>>& node_current,
-    const std::array<DefMap<DefAmrUint>* const, 3>& arr_ptr_layer,
-    DefMap<DefAmrUint>* const ptr_node_coarse_interface_outer) {
+    const std::array<DefMap<DefInt>* const, 3>& arr_ptr_layer,
+    DefMap<DefInt>* const ptr_node_coarse_interface_outer) {
     DefSFBitset sfbitset_tmp;
     bool node0_previous =
         node_coarse_interface_previous.find(arr_bitset_lower[0]) != node_coarse_interface_previous.end(),
@@ -769,14 +769,14 @@ void GridManagerInterface::IdentifyInterfaceNodeOnEdge(
 * @brief function to set k0TimeSteppingOrder_ as multi-stepping scheme
 *        from the background level to the finest (ratio of 2).
 */
-MultiTimeSteppingC2F::MultiTimeSteppingC2F(const DefAmrIndexUint max_level) {
+MultiTimeSteppingC2F::MultiTimeSteppingC2F(const DefInt max_level) {
     if (max_level == 0) {
         k0TimeSteppingOrder_ = {0};
     } else if (max_level == 1) {
         k0TimeSteppingOrder_ = {0, 1, 1};
     } else {
         std::vector<DefSizet> accumulate_t(max_level + 1, 0);
-        DefAmrIndexUint i_level = 1;
+        DefInt i_level = 1;
         accumulate_t[0] = TwoPowerN(max_level);
         k0TimeSteppingOrder_ = {0};
         while (i_level > 0) {

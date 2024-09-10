@@ -8,8 +8,8 @@
 * @brief  define classes to generate default shapes.
 */
 
-#ifndef ROOTPROJECT_AMR_PROJECT_CRITERION_GEOMETRY_DEFAULT_SHAPE_H_
-#define ROOTPROJECT_AMR_PROJECT_CRITERION_GEOMETRY_DEFAULT_SHAPE_H_
+#ifndef SOURCE_AMR_PROJECT_CRITERION_GEOMETRY_DEFAULT_SHAPE_H_
+#define SOURCE_AMR_PROJECT_CRITERION_GEOMETRY_DEFAULT_SHAPE_H_
 #include <array>
 #include "../defs_libs.h"
 namespace rootproject {
@@ -55,4 +55,4 @@ class GeoShapeDefaultQuadrilateral3D : public GeoShapeInterface {
 #endif  // DEBUG_DISABLE_3D_FUNCTIONS
 }  // end namespace amrproject
 }  // end namespace rootproject
-#endif  // ROOTPROJECT_AMR_PROJECT_CRITERION_GEOMETRY_DEFAULT_SHAPE_H_
+#endif  // SOURCE_AMR_PROJECT_CRITERION_GEOMETRY_DEFAULT_SHAPE_H_

@@ -8,8 +8,8 @@
 * @brief  define the class to write vtk files.
 */
 
-#ifndef ROOTPROJECT_SOURCE_IO_VTK_WRITER_H_
-#define ROOTPROJECT_SOURCE_IO_VTK_WRITER_H_
+#ifndef SOURCE_AMR_PROJECT_IO_VTK_WRITER_H_
+#define SOURCE_AMR_PROJECT_IO_VTK_WRITER_H_
 #include <string>
 #include <memory>
 #include <vector>
@@ -78,14 +78,14 @@ class VtkWriterManager {
         const CriterionManager& criterion_manager);
     void WriteVtuGrid(const std::string& datafile_name,
         const bool bool_binary, const bool bool_overlap,
-        const DefAmrUint overlap_flag,
-        const std::vector<DefAmrIndexUint>& vec_level_in_one_vtu,
+        const DefInt overlap_flag,
+        const std::vector<DefInt>& vec_level_in_one_vtu,
         const OutputDataFormat& output_data_format,
         const GridManagerInterface& grid_manager);
     void WriteVtuGeo(const std::string& datafile_name,
         const bool bool_binary, const bool bool_overlap,
-        const DefAmrUint overlap_flag, const DefAmrIndexUint dims,
-        const std::vector<DefAmrIndexUint>& vec_level_in_one_vtu,
+        const DefInt overlap_flag, const DefInt dims,
+        const std::vector<DefInt>& vec_level_in_one_vtu,
         const std::array<DefReal, 3>& space_offset,
         const OutputDataFormat& output_data_format,
         const CriterionManager& criterion_manager);
@@ -114,28 +114,28 @@ class VtkWriterManager {
         const std::vector<std::unique_ptr<OutputNodeVariableInfoInterface>>& output_variables);
 
     void WriteGridPieces(FILE* const fp, const bool bool_binary,
-        const bool bool_overlap, const DefAmrUint overlap_flag,
+        const bool bool_overlap, const DefInt overlap_flag,
         const GridInfoInterface& grid_info,
         const OutputDataFormat& output_data_format,
         const GridManagerInterface& grid_manager);
     void WriteGridCellOffsets(FILE* const fp, const bool bool_binary,
-        const DefAmrIndexUint dims, const DefSizet num_cell,
+        const DefInt dims, const DefSizet num_cell,
         const OutputDataFormat& output_data_format);
     void WriteGridCellTypes(FILE* const fp, const bool bool_binary,
-        const DefAmrIndexUint dims, const DefSizet num_cell);
+        const DefInt dims, const DefSizet num_cell);
     void WriteGridNodeFlagStatus(FILE* const fp, const bool bool_binary,
         const OutputDataFormat& output_data_format,
         const DefMap<DefSizet>& map_node_index,
         const DefMap<std::unique_ptr<GridNode>>& map_grid_node);
     void WriteGridNodeVtkVisualization(FILE* const fp, const bool bool_binary,
-        const DefAmrUint flag_overlap_visual,
+        const DefInt flag_overlap_visual,
         const OutputDataFormat& output_data_format,
         const DefMap<DefSizet>& map_node_index,
         const DefMap<std::unique_ptr<GridNode>>& map_grid_node);
 
 #ifndef  DEBUG_DISABLE_2D_FUNCTIONS
     std::array<DefSizet, 2> CalculateNumOfGridCells(
-        const bool bool_overlap, const DefAmrUint overlap_flag,
+        const bool bool_overlap, const DefInt overlap_flag,
         const SFBitsetAux2D& sfbitset_aux,
         const DefMap<std::unique_ptr<GridNode>>& map_grid_node,
         DefMap<DefSizet>* ptr_map_node_index) const;
@@ -156,7 +156,7 @@ class VtkWriterManager {
         const GridInfoInterface& grid_info,
         DefMap<DefSizet>* const ptr_map_node_index);
     std::array<DefSizet, 2> CalculateNumOfGridCells(
-        const bool bool_overlap, const DefAmrUint overlap_flag,
+        const bool bool_overlap, const DefInt overlap_flag,
         const SFBitsetAux3D& sfbitset_aux,
         const DefMap<std::unique_ptr<GridNode>>& map_grid_node,
         DefMap<DefSizet>* ptr_map_node_index) const;
@@ -167,7 +167,7 @@ class VtkWriterManager {
 #endif  // DEBUG_DISABLE_3D_FUNCTIONS
 
     void WriteGeometryPieces(FILE* const fp, const bool bool_binary,
-        const DefAmrIndexUint dims, const std::array<DefReal, 3>& grid_offset,
+        const DefInt dims, const std::array<DefReal, 3>& grid_offset,
         const OutputDataFormat& output_data_format,
         const GeometryInfoInterface& geo_info);
     DefSizet CalculateNumOfGeometryCells(
@@ -183,17 +183,17 @@ class VtkWriterManager {
 
 #ifndef  DEBUG_DISABLE_2D_FUNCTIONS
     DefSizet WriteGeometryCoordinates(FILE* const fp, const bool bool_binary,
-        const DefAmrIndexUint dims, const std::array<DefReal, 3>& grid_offset,
+        const DefInt dims, const std::array<DefReal, 3>& grid_offset,
         const OutputDataFormat& output_data_format,
         const GeometryInfo2DInterface& geo_info);
 #endif  // DEBUG_DISABLE_2D_FUNCTIONS
 #ifndef  DEBUG_DISABLE_3D_FUNCTIONS
     DefSizet WriteGeometryCoordinates(FILE* const fp, const bool bool_binary,
-        const DefAmrIndexUint dims, const std::array<DefReal, 3>& grid_offset,
+        const DefInt dims, const std::array<DefReal, 3>& grid_offset,
         const OutputDataFormat& output_data_format,
         const GeometryInfo3DInterface& geo_info);
 #endif  // DEBUG_DISABLE_3D_FUNCTIONS
 };
 }  // end namespace amrproject
 }  // end namespace rootproject
-#endif  // ROOTPROJECT_SOURCE_IO_VTK_WRITER_MANAGER_H_
+#endif  // SOURCE_AMR_PROJECT_IO_VTK_WRITER_H_

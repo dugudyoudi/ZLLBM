@@ -8,8 +8,8 @@
 * @brief define class and functions for space fill code.
 */
 
-#ifndef ROOTPROJECT_SOURCE_AMR_PROJECT_GRID_SFBITSET_AUX_H_
-#define ROOTPROJECT_SOURCE_AMR_PROJECT_GRID_SFBITSET_AUX_H_
+#ifndef SOURCE_AMR_PROJECT_GRID_SFBITSET_AUX_H_
+#define SOURCE_AMR_PROJECT_GRID_SFBITSET_AUX_H_
 #include <array>
 #include <vector>
 #ifdef DEBUG_UNIT_TEST
@@ -34,7 +34,7 @@ class SFBitsetAuxInterface {
     // for k0SFBitsetTakeXRef_, k0SFBitsetTakeYRef_ and k0SFBitsetTakeZRef_
     // .at(kRefCurrent) takes the given direction (x, y, or z) while
     // .at(kRefOthers) takes directions other than the given one (y z, x z, or x y)
-    static constexpr DefAmrIndexUint kRefOthers_ = 0, kRefCurrent_ = 1;
+    static constexpr DefInt kRefOthers_ = 0, kRefCurrent_ = 1;
     DefSFBitset k0SfBitsetCurrentLevelBits_ = 0;
     /**< reference bitset used to take digitals at the center of
     a cell of one level lower.*/
@@ -44,45 +44,45 @@ class SFBitsetAuxInterface {
         const std::vector<DefReal>& grid_space, const std::vector<DefReal>& coordi) const = 0;
     virtual void SFBitsetFindEdgeNode(const DefSFBitset& morton_in,
         std::vector<DefSFBitset>* const ptr_vec_edge_nodes) const = 0;
-    virtual DefSFBitset FindNodeInNeg(const DefAmrIndexUint dir, const DefSFBitset& sfbitset_in) const = 0;
-    virtual DefSFBitset FindNodeInPos(const DefAmrIndexUint dir, const DefSFBitset& sfbitset_in) const = 0;
+    virtual DefSFBitset FindNodeInNeg(const DefInt dir, const DefSFBitset& sfbitset_in) const = 0;
+    virtual DefSFBitset FindNodeInPos(const DefInt dir, const DefSFBitset& sfbitset_in) const = 0;
     virtual void FindNodesInReginOfGivenLength(const DefSFBitset& sfbitset_in,
-        const DefAmrIndexLUint region_length,
+        const DefAmrLUint region_length,
         const std::vector<DefSFBitset>& domain_min_m1_n_level,
         const std::vector<DefSFBitset>& domain_max_p1_n_level,
         std::vector<DefSFBitset>* const ptr_sfbitset_nodes) const = 0;
-    virtual DefAmrIndexLUint FindNodesInPeriodicRegionCorner(const DefSFBitset& sfbitset_in,
-        const DefAmrIndexLUint region_length,
+    virtual DefAmrLUint FindNodesInPeriodicRegionCorner(const DefSFBitset& sfbitset_in,
+        const DefAmrLUint region_length,
         const std::vector<bool>& periodic_min, const std::vector<bool>& periodic_max,
         const std::vector<DefSFBitset>& domain_min_n_level,
         const std::vector<DefSFBitset>& domain_max_n_level,
         std::vector<DefSFBitset>* const ptr_sfbitset_node) const = 0;
-    virtual DefAmrIndexLUint FindNodesInPeriodicRegionCenter(const DefSFBitset& sfbitset_in,
-        const DefAmrIndexLUint region_length,
+    virtual DefAmrLUint FindNodesInPeriodicRegionCenter(const DefSFBitset& sfbitset_in,
+        const DefAmrLUint region_length,
         const std::vector<bool>& periodic_min, const std::vector<bool>& periodic_max,
         const std::vector<DefSFBitset>& domain_min_n_level,
         const std::vector<DefSFBitset>& domain_max_n_level,
         std::vector<DefSFBitset>* const ptr_sfbitset_node) const = 0;
-    virtual void GetMinM1AtGivenLevel(const DefAmrIndexUint i_level,
-        std::vector<DefAmrIndexLUint> indices_min,
+    virtual void GetMinM1AtGivenLevel(const DefInt i_level,
+        std::vector<DefAmrLUint> indices_min,
         std::vector<DefSFBitset>* const ptr_min_m1_bitsets) const = 0;
-    virtual void GetMaxP1AtGivenLevel(const DefAmrIndexUint i_level,
-        std::vector<DefAmrIndexLUint> indices_max,
+    virtual void GetMaxP1AtGivenLevel(const DefInt i_level,
+        std::vector<DefAmrLUint> indices_max,
         std::vector<DefSFBitset>* const ptr_max_p1_bitset) const = 0;
-    virtual void GetMinAtGivenLevel(const DefAmrIndexUint i_level,
-        std::vector<DefAmrIndexLUint> indices_min,
+    virtual void GetMinAtGivenLevel(const DefInt i_level,
+        std::vector<DefAmrLUint> indices_min,
         std::vector<DefSFBitset>* const ptr_min_bitsets) const = 0;
-    virtual void GetMaxAtGivenLevel(const DefAmrIndexUint i_level,
-        std::vector<DefAmrIndexLUint> indices_max,
+    virtual void GetMaxAtGivenLevel(const DefInt i_level,
+        std::vector<DefAmrLUint> indices_max,
         std::vector<DefSFBitset>* const ptr_max_bitset) const = 0;
     virtual void FindNeighboringCoarseFromFine(const DefSFBitset& sfbitset_fine,
         std::vector<DefSFBitset>* const ptr_vec_coarse) const = 0;
     // compared to inline function, this virtual is costly, avoiding using this if possible
     virtual DefSFBitset SFBitsetToNLowerLevelVir(
-        const DefAmrIndexUint n_level, const DefSFBitset& sfbitset_in) const = 0;
+        const DefInt n_level, const DefSFBitset& sfbitset_in) const = 0;
     virtual DefSFBitset SFBitsetToNHigherLevelVir(
-        const DefAmrIndexUint n_level, const DefSFBitset& sfbitset_in) const = 0;
-    virtual DefAmrIndexUint SFBitsetCoincideLevelVir(const DefSFBitset& sfbitset_in) const = 0;
+        const DefInt n_level, const DefSFBitset& sfbitset_in) const = 0;
+    virtual DefInt SFBitsetCoincideLevelVir(const DefSFBitset& sfbitset_in) const = 0;
     virtual void SFBitsetFindAllNeighborsVir(const DefSFBitset& sfbitset_in,
         std::vector<DefSFBitset>* const ptr_vec_neighbors) const = 0;
     virtual void SFBitsetFindAllBondedNeighborsVir(const DefSFBitset& sfbitset_in,
@@ -95,13 +95,13 @@ class SFBitsetAuxInterface {
     virtual ~SFBitsetAuxInterface() {}
 
  protected:
-    const DefAmrUint max_reset_code_ = 1000;
+    const DefInt max_reset_code_ = 1000;
     ///<  maximum iteration for reseting indices
 };
 #ifndef  DEBUG_DISABLE_2D_FUNCTION
 class  SFBitsetAux2D : public SFBitsetAuxInterface {
  public:
-    static constexpr DefAmrIndexUint  kNodeIndexX0Y0_ = 0, kNodeIndexXnY0_ = 1,
+    static constexpr DefInt  kNodeIndexX0Y0_ = 0, kNodeIndexXnY0_ = 1,
      kNodeIndexXpY0_ = 2, kNodeIndexX0Yn_ = 3, kNodeIndexX0Yp_ = 4,
      kNodeIndexXnYn_ = 5, kNodeIndexXnYp_ = 6, kNodeIndexXpYn_ = 7,
      kNodeIndexXpYp_ = 8;
@@ -113,9 +113,9 @@ class  SFBitsetAux2D : public SFBitsetAuxInterface {
     /* give an offset to avoid exceeding the boundary limits when searching nodes.
     The offset distance is (k0MinIndexOfBackgroundNode_ * kDomainDx),
     and the default value is 1. */
-    std::array<DefAmrIndexLUint, 2> k0MinIndexOfBackgroundNode_ = {1, 1};
+    std::array<DefAmrLUint, 2> k0MinIndexOfBackgroundNode_ = {1, 1};
     ///< the minimum index of background nodes in each direction*/
-    std::array<DefAmrIndexLUint, 2> k0MaxIndexOfBackgroundNode_{};
+    std::array<DefAmrLUint, 2> k0MaxIndexOfBackgroundNode_{};
     ///< the maximum index of background nodes in each direction*/
     // k0MinIndexOfBackgroundNode_ is included in k0MaxIndexOfBackgroundNode_
     // k0DomainSize_ is k0DomainDx_ * (k0MaxIndexOfBackgroundNode_ - k0MinIndexOfBackgroundNode_)
@@ -130,23 +130,23 @@ class  SFBitsetAux2D : public SFBitsetAuxInterface {
     as inline functions.*/
     inline DefSFBitset SFBitsetToOneLowerLevel(const DefSFBitset& morton_in) const;
     inline DefSFBitset SFBitsetToOneHigherLevel(const DefSFBitset& morton_in) const;
-    inline DefSFBitset SFBitsetToNLowerLevel(const DefAmrIndexUint n_level, const DefSFBitset& morton_in) const;
-    inline DefSFBitset SFBitsetToNHigherLevel(const DefAmrIndexUint n_level, const DefSFBitset& morton_in) const;
+    inline DefSFBitset SFBitsetToNLowerLevel(const DefInt n_level, const DefSFBitset& morton_in) const;
+    inline DefSFBitset SFBitsetToNHigherLevel(const DefInt n_level, const DefSFBitset& morton_in) const;
     inline DefSFBitset FindXNeg(const DefSFBitset& bitset_in) const;
     inline DefSFBitset FindXPos(const DefSFBitset& bitset_in) const;
     inline DefSFBitset FindYNeg(const DefSFBitset& bitset_in) const;
     inline DefSFBitset FindYPos(const DefSFBitset& bitset_in) const;
-    inline DefAmrIndexUint SFBitsetCoincideLevel(const DefSFBitset& bitset_in) const;
+    inline DefInt SFBitsetCoincideLevel(const DefSFBitset& bitset_in) const;
 
     void SFBitsetComputeIndices(const DefSFBitset& bitset_in,
-        std::array<DefAmrIndexLUint, 2>* const ptr_indiex) const;
+        std::array<DefAmrLUint, 2>* const ptr_indiex) const;
     void SFBitsetComputeCoordinate(const DefSFBitset& bitset_in,
         const std::array<DefReal, 2>& grid_space, std::array<DefReal, 2>* const ptr_coordi) const;
-    DefSFBitset SFBitsetEncoding(const std::array<DefAmrIndexLUint, 2>& coordi_index) const;
+    DefSFBitset SFBitsetEncoding(const std::array<DefAmrLUint, 2>& coordi_index) const;
 
-    DefSFBitset SFBitsetBitsForRefinement(const DefAmrIndexUint i_level) const;
+    DefSFBitset SFBitsetBitsForRefinement(const DefInt i_level) const;
     void SFBitsetSetMinAndMaxBounds(
-        const std::array<DefAmrIndexLUint, 2>& indices_min, const std::array<DefAmrIndexLUint, 2>& indices_max);
+        const std::array<DefAmrLUint, 2>& indices_min, const std::array<DefAmrLUint, 2>& indices_max);
     void SFBitsetNotOnDomainBoundary(const DefSFBitset& sfbitset_in,
         const std::array<DefSFBitset, 2>& sfbitset_min, const std::array<DefSFBitset, 2>& sfbitset_max,
         std::array<bool, 2>* const ptr_bool_not_at_boundary_neg,
@@ -161,14 +161,14 @@ class  SFBitsetAux2D : public SFBitsetAuxInterface {
     void SFBitsetFindCellNeighbors(const DefSFBitset& sfbitset_corner,
         std::array<DefSFBitset, 4>* const ptr_bitset_neighbour) const;
     void SFBitsetHigherLevelInACell(
-        const DefAmrIndexUint level_diff, const DefSFBitset& sfbitset_corner,
+        const DefInt level_diff, const DefSFBitset& sfbitset_corner,
         std::vector<DefSFBitset>* const ptr_vec_bitset_neighbour) const;
     template<typename DataType>
     bool SFBitsetBelongToOneCell(const DefSFBitset& sfbitset_in,
         const DefMap<DataType>& map_node_exist,
         std::array<DefSFBitset, 4>* const ptr_sfbitsets) const;
-    int ResetIndicesExceedingDomain(const std::array<DefAmrIndexLUint, 2>& domain_min_indices,
-        const std::array<DefAmrIndexLUint, 2>& domain_max_indices,
+    int ResetIndicesExceedingDomain(const std::array<DefAmrLUint, 2>& domain_min_indices,
+        const std::array<DefAmrLUint, 2>& domain_max_indices,
         DefSFCodeToUint* const ptr_i_code, DefSFBitset* ptr_bitset_tmp) const;
 
     // virtual functions
@@ -183,14 +183,14 @@ class  SFBitsetAux2D : public SFBitsetAuxInterface {
         ptr_vec_edge_nodes->at(2) = FindYNeg(morton_in);
         ptr_vec_edge_nodes->at(3) = FindYPos(morton_in);
     }
-    DefSFBitset FindNodeInNeg(const DefAmrIndexUint dir, const DefSFBitset& sfbitset_in) const override {
+    DefSFBitset FindNodeInNeg(const DefInt dir, const DefSFBitset& sfbitset_in) const override {
         if (dir == 0) {
             return FindXNeg(sfbitset_in);
         } else {
             return FindYNeg(sfbitset_in);
         }
     }
-    DefSFBitset FindNodeInPos(const DefAmrIndexUint dir, const DefSFBitset& sfbitset_in) const override {
+    DefSFBitset FindNodeInPos(const DefInt dir, const DefSFBitset& sfbitset_in) const override {
         if (dir == 0) {
             return FindXPos(sfbitset_in);
         } else {
@@ -206,44 +206,44 @@ class  SFBitsetAux2D : public SFBitsetAuxInterface {
         ptr_coordi->at(kYIndex) = arr_coordi[kYIndex];
     }
     void FindNodesInReginOfGivenLength(const DefSFBitset& sfbitset_in,
-        const DefAmrIndexLUint region_length,
+        const DefAmrLUint region_length,
         const std::vector<DefSFBitset>& domain_min_m1_n_level,
         const std::vector<DefSFBitset>& domain_max_p1_n_level,
         std::vector<DefSFBitset>* const ptr_sfbitset_nodes) const final;
-    DefAmrIndexLUint FindNodesInPeriodicRegionCorner(const DefSFBitset& sfbitset_in,
-        const DefAmrIndexLUint region_length,
+    DefAmrLUint FindNodesInPeriodicRegionCorner(const DefSFBitset& sfbitset_in,
+        const DefAmrLUint region_length,
         const std::vector<bool>& periodic_min, const std::vector<bool>& periodic_max,
         const std::vector<DefSFBitset>& domain_min_n_level,
         const std::vector<DefSFBitset>& domain_max_n_level,
         std::vector<DefSFBitset>* const ptr_sfbitset_node) const final;
-    DefAmrIndexLUint FindNodesInPeriodicRegionCenter(const DefSFBitset& sfbitset_in,
-        const DefAmrIndexLUint region_length,
+    DefAmrLUint FindNodesInPeriodicRegionCenter(const DefSFBitset& sfbitset_in,
+        const DefAmrLUint region_length,
         const std::vector<bool>& periodic_min, const std::vector<bool>& periodic_max,
         const std::vector<DefSFBitset>& domain_min_n_level,
         const std::vector<DefSFBitset>& domain_max_n_level,
         std::vector<DefSFBitset>* const ptr_sfbitset_node) const final;
-    void GetMinM1AtGivenLevel(const DefAmrIndexUint i_level,
-        std::vector<DefAmrIndexLUint> indices_min,
+    void GetMinM1AtGivenLevel(const DefInt i_level,
+        std::vector<DefAmrLUint> indices_min,
         std::vector<DefSFBitset>* const ptr_min_m1_bitsets) const final;
-    void GetMaxP1AtGivenLevel(const DefAmrIndexUint i_level,
-        std::vector<DefAmrIndexLUint> indices_max,
+    void GetMaxP1AtGivenLevel(const DefInt i_level,
+        std::vector<DefAmrLUint> indices_max,
         std::vector<DefSFBitset>* const ptr_max_p1_bitset) const final;
-    void GetMinAtGivenLevel(const DefAmrIndexUint i_level,
-        std::vector<DefAmrIndexLUint> indices_min,
+    void GetMinAtGivenLevel(const DefInt i_level,
+        std::vector<DefAmrLUint> indices_min,
         std::vector<DefSFBitset>* const ptr_min_bitsets) const final;
-    void GetMaxAtGivenLevel(const DefAmrIndexUint i_level,
-        std::vector<DefAmrIndexLUint> indices_max,
+    void GetMaxAtGivenLevel(const DefInt i_level,
+        std::vector<DefAmrLUint> indices_max,
         std::vector<DefSFBitset>* const ptr_max_bitset) const final;
     void FindNeighboringCoarseFromFine(const DefSFBitset& sfbitset_fine,
         std::vector<DefSFBitset>* const ptr_vec_coarse) const  final;
-    DefSFBitset SFBitsetToNLowerLevelVir(const DefAmrIndexUint n_level,
+    DefSFBitset SFBitsetToNLowerLevelVir(const DefInt n_level,
         const DefSFBitset& morton_in) const final {
         return SFBitsetToNLowerLevel(n_level, morton_in);
     }
-    DefSFBitset  SFBitsetToNHigherLevelVir(const DefAmrIndexUint n_level, const DefSFBitset& morton_in) const final {
+    DefSFBitset  SFBitsetToNHigherLevelVir(const DefInt n_level, const DefSFBitset& morton_in) const final {
         return SFBitsetToNHigherLevel(n_level, morton_in);
     }
-    DefAmrIndexUint SFBitsetCoincideLevelVir(const DefSFBitset& morton_in) const final {
+    DefInt SFBitsetCoincideLevelVir(const DefSFBitset& morton_in) const final {
         return SFBitsetCoincideLevel(morton_in);
     }
     void SFBitsetFindAllNeighborsVir(const DefSFBitset& bitset_in,
@@ -260,32 +260,32 @@ class  SFBitsetAux2D : public SFBitsetAuxInterface {
 #ifdef ENABLE_MPI
     // mpi related
  public:
-    void FindPartitionBlocksMax(const DefSFCodeToUint& code_in, const DefAmrIndexLUint block_length,
+    void FindPartitionBlocksMax(const DefSFCodeToUint& code_in, const DefAmrLUint block_length,
         const DefSFCodeToUint& code_partition_min, const DefSFCodeToUint& code_partition_max,
-        const std::array<DefAmrIndexLUint, 2>& code_domain_min, const std::array<DefAmrIndexLUint, 2>& code_domain_max,
-        DefMap<DefAmrIndexUint>* const ptr_map_partitioned) const;
-    void FindPartitionBlocksMin(const DefSFCodeToUint& code_in, const DefAmrIndexLUint block_length,
+        const std::array<DefAmrLUint, 2>& code_domain_min, const std::array<DefAmrLUint, 2>& code_domain_max,
+        DefMap<DefInt>* const ptr_map_partitioned) const;
+    void FindPartitionBlocksMin(const DefSFCodeToUint& code_in, const DefAmrLUint block_length,
         const DefSFCodeToUint& code_partition_min, const DefSFCodeToUint& code_partition_max,
-        const std::array<DefAmrIndexLUint, 2>& code_domain_min, const std::array<DefAmrIndexLUint, 2>& code_domain_max,
-        DefMap<DefAmrIndexUint>* const ptr_map_partitioned) const;
-    void FindPartitionRemainMax(const DefSFCodeToUint& code_in, const DefAmrIndexLUint block_length,
+        const std::array<DefAmrLUint, 2>& code_domain_min, const std::array<DefAmrLUint, 2>& code_domain_max,
+        DefMap<DefInt>* const ptr_map_partitioned) const;
+    void FindPartitionRemainMax(const DefSFCodeToUint& code_in, const DefAmrLUint block_length,
         const DefSFCodeToUint& code_partition_min, const DefSFCodeToUint& code_partition_max,
-        const std::array<DefAmrIndexLUint, 2>& code_domain_min, const std::array<DefAmrIndexLUint, 2>& code_domain_max,
-        DefMap<DefAmrIndexUint>* const ptr_map_partitioned) const;
-    void FindPartitionRemainMin(const DefSFCodeToUint& code_in, const DefAmrIndexLUint block_length,
+        const std::array<DefAmrLUint, 2>& code_domain_min, const std::array<DefAmrLUint, 2>& code_domain_max,
+        DefMap<DefInt>* const ptr_map_partitioned) const;
+    void FindPartitionRemainMin(const DefSFCodeToUint& code_in, const DefAmrLUint block_length,
         const DefSFCodeToUint& code_partition_min, const DefSFCodeToUint& code_partition_max,
-        const std::array<DefAmrIndexLUint, 2>& code_domain_min, const std::array<DefAmrIndexLUint, 2>& code_domain_max,
-        DefMap<DefAmrIndexUint>* const ptr_map_partitioned) const;
+        const std::array<DefAmrLUint, 2>& code_domain_min, const std::array<DefAmrLUint, 2>& code_domain_max,
+        DefMap<DefInt>* const ptr_map_partitioned) const;
 
  protected:
-    void FindPartitionOneBlock(const DefSFBitset& bitset_corner, const DefAmrIndexLUint block_length,
+    void FindPartitionOneBlock(const DefSFBitset& bitset_corner, const DefAmrLUint block_length,
         const DefSFCodeToUint& code_partition_min, const DefSFCodeToUint& code_partition_max,
-        const std::array<DefAmrIndexLUint, 2>& code_domain_min, const std::array<DefAmrIndexLUint, 2>& code_domain_max,
-        DefMap<DefAmrIndexUint>* const ptr_map_partitioned) const;
+        const std::array<DefAmrLUint, 2>& code_domain_min, const std::array<DefAmrLUint, 2>& code_domain_max,
+        DefMap<DefInt>* const ptr_map_partitioned) const;
     bool CheckPartitionLimits(const DefSFBitset& code_in,
         const DefSFCodeToUint& code_partition_min, const DefSFCodeToUint& code_partition_max,
-        const std::array<DefAmrIndexLUint, 2>& code_domain_min,
-        const std::array<DefAmrIndexLUint, 2>& code_domain_max) const;
+        const std::array<DefAmrLUint, 2>& code_domain_min,
+        const std::array<DefAmrLUint, 2>& code_domain_max) const;
 #endif  // ENABLE_MPI
 };
 #endif  // DEBUG_DISABLE_2D_FUNCTIONS
@@ -293,7 +293,7 @@ class  SFBitsetAux2D : public SFBitsetAuxInterface {
 class  SFBitsetAux3D : public SFBitsetAuxInterface {
  public:
     // p is positive and n is negative
-    static constexpr DefAmrIndexUint  kNodeIndexX0Y0Z0_ = 0, kNodeIndexXnY0Z0_ = 1,
+    static constexpr DefInt  kNodeIndexX0Y0Z0_ = 0, kNodeIndexXnY0Z0_ = 1,
      kNodeIndexXpY0Z0_ = 2, kNodeIndexX0YnZ0_ = 3, kNodeIndexX0YpZ0_ = 4,
      kNodeIndexX0Y0Zn_ = 9, kNodeIndexX0Y0Zp_ = 10, kNodeIndexXnYnZ0_ = 5,
      kNodeIndexXnYpZ0_ = 6, kNodeIndexXpYnZ0_ = 7, kNodeIndexXpYpZ0_ = 8,
@@ -309,9 +309,9 @@ class  SFBitsetAux3D : public SFBitsetAuxInterface {
     /* give an offset to avoid exceeding the boundary limits when searching nodes.
     The offset distance is (k0MinIndexOfBackgroundNode_ * kDomainDx),
     and the default value is 1. */
-    std::array<DefAmrIndexLUint, 3> k0MinIndexOfBackgroundNode_ = {1, 1, 1};
+    std::array<DefAmrLUint, 3> k0MinIndexOfBackgroundNode_ = {1, 1, 1};
     ///< the minimum index of background nodes in each direction*/
-    std::array<DefAmrIndexLUint, 3> k0MaxIndexOfBackgroundNode_{};
+    std::array<DefAmrLUint, 3> k0MaxIndexOfBackgroundNode_{};
     ///< the maximum index of background nodes in each direction*/
     // k0MinIndexOfBackgroundNode_ is included in k0MaxIndexOfBackgroundNode_
     std::array<DefReal, 3> k0DomainSize_{};  ///< domain size
@@ -321,24 +321,24 @@ class  SFBitsetAux3D : public SFBitsetAuxInterface {
 
     inline DefSFBitset SFBitsetToOneLowerLevel(const DefSFBitset& morton_in) const;
     inline DefSFBitset SFBitsetToOneHigherLevel(const DefSFBitset& morton_in) const;
-    inline DefSFBitset SFBitsetToNLowerLevel(const DefAmrIndexUint n_level, const DefSFBitset& morton_in) const;
-    inline DefSFBitset SFBitsetToNHigherLevel(const DefAmrIndexUint n_level, const DefSFBitset& morton_in) const;
+    inline DefSFBitset SFBitsetToNLowerLevel(const DefInt n_level, const DefSFBitset& morton_in) const;
+    inline DefSFBitset SFBitsetToNHigherLevel(const DefInt n_level, const DefSFBitset& morton_in) const;
     inline DefSFBitset FindXNeg(const DefSFBitset& bitset_in) const;
     inline DefSFBitset FindXPos(const DefSFBitset& bitset_in) const;
     inline DefSFBitset FindYNeg(const DefSFBitset& bitset_in) const;
     inline DefSFBitset FindYPos(const DefSFBitset& bitset_in) const;
     inline DefSFBitset FindZNeg(const DefSFBitset& bitset_in) const;
     inline DefSFBitset FindZPos(const DefSFBitset& bitset_in) const;
-    inline DefAmrIndexUint SFBitsetCoincideLevel(const DefSFBitset& bitset_in) const;
+    inline DefInt SFBitsetCoincideLevel(const DefSFBitset& bitset_in) const;
 
-    DefSFBitset SFBitsetEncoding(const std::array<DefAmrIndexLUint, 3>& coordi_index) const;
-    void SFBitsetComputeIndices(const DefSFBitset& bitset_in, std::array<DefAmrIndexLUint, 3>* const ptr_indices) const;
+    DefSFBitset SFBitsetEncoding(const std::array<DefAmrLUint, 3>& coordi_index) const;
+    void SFBitsetComputeIndices(const DefSFBitset& bitset_in, std::array<DefAmrLUint, 3>* const ptr_indices) const;
     void SFBitsetComputeCoordinate(const DefSFBitset& bitset_in,
     const std::array<DefReal, 3>& grid_space, std::array<DefReal, 3>* const ptr_coordi) const;
 
-    DefSFBitset SFBitsetBitsForRefinement(const DefAmrIndexUint i_level) const;
+    DefSFBitset SFBitsetBitsForRefinement(const DefInt i_level) const;
     void SFBitsetSetMinAndMaxBounds(
-       const std::array<DefAmrIndexLUint, 3>& indices_min, const std::array<DefAmrIndexLUint, 3>& indices_max);
+       const std::array<DefAmrLUint, 3>& indices_min, const std::array<DefAmrLUint, 3>& indices_max);
     void SFBitsetNotOnDomainBoundary(const DefSFBitset& sfbitset_in,
         const std::array<DefSFBitset, 3>& sfbitset_min,
         const std::array<DefSFBitset, 3>& sfbitset_max,
@@ -353,13 +353,13 @@ class  SFBitsetAux3D : public SFBitsetAuxInterface {
         const std::vector<DefSFBitset>& domain_min_m1_n_level,
         const std::vector<DefSFBitset>& domain_max_p1_n_level,
         std::vector<DefSFBitset>* const ptr_vec_neighbors) const;
-    void SFBitsetHigherLevelInACell(const DefAmrIndexUint level_diff, const DefSFBitset& sfbitset_corner,
+    void SFBitsetHigherLevelInACell(const DefInt level_diff, const DefSFBitset& sfbitset_corner,
         std::vector<DefSFBitset>* const ptr_ptr_sfbitsets_higher_level) const;
     template<typename DataType>
     bool SFBitsetBelongToOneCell(const DefSFBitset& sfbitset_in,
         const DefMap<DataType>& map_node_exist, std::array<DefSFBitset, 8>* const ptr_sfbitsets) const;
-    int ResetIndicesExceedingDomain(const std::array<DefAmrIndexLUint, 3>& domain_min_indices,
-        const std::array<DefAmrIndexLUint, 3>& domain_max_indices,
+    int ResetIndicesExceedingDomain(const std::array<DefAmrLUint, 3>& domain_min_indices,
+        const std::array<DefAmrLUint, 3>& domain_max_indices,
         DefSFCodeToUint* const ptr_i_code, DefSFBitset* ptr_bitset_tmp) const;
 
     // virtual functions
@@ -376,7 +376,7 @@ class  SFBitsetAux3D : public SFBitsetAuxInterface {
         ptr_vec_edge_nodes->at(4) = FindZNeg(morton_in);
         ptr_vec_edge_nodes->at(5) = FindZPos(morton_in);
     }
-    DefSFBitset FindNodeInNeg(const DefAmrIndexUint dir, const DefSFBitset& sfbitset_in) const override {
+    DefSFBitset FindNodeInNeg(const DefInt dir, const DefSFBitset& sfbitset_in) const override {
         if (dir == 0) {
             return FindXNeg(sfbitset_in);
         } else if (dir == 1) {
@@ -385,7 +385,7 @@ class  SFBitsetAux3D : public SFBitsetAuxInterface {
             return FindZNeg(sfbitset_in);
         }
     }
-    DefSFBitset FindNodeInPos(const DefAmrIndexUint dir, const DefSFBitset& sfbitset_in) const override {
+    DefSFBitset FindNodeInPos(const DefInt dir, const DefSFBitset& sfbitset_in) const override {
         if (dir == 0) {
             return FindXPos(sfbitset_in);
         } else if (dir == 1) {
@@ -405,43 +405,43 @@ class  SFBitsetAux3D : public SFBitsetAuxInterface {
         ptr_coordi->at(kZIndex) = arr_coordi[kZIndex];
     }
     void FindNodesInReginOfGivenLength(const DefSFBitset& sfbitset_in,
-        const DefAmrIndexLUint region_length,
+        const DefAmrLUint region_length,
         const std::vector<DefSFBitset>& domain_min_m1_n_level,
         const std::vector<DefSFBitset>& domain_max_p1_n_level,
         std::vector<DefSFBitset>* const ptr_sfbitset_nodes) const final;
-    DefAmrIndexLUint FindNodesInPeriodicRegionCorner(const DefSFBitset& sfbitset_in,
-        const DefAmrIndexLUint region_length,
+    DefAmrLUint FindNodesInPeriodicRegionCorner(const DefSFBitset& sfbitset_in,
+        const DefAmrLUint region_length,
         const std::vector<bool>& periodic_min, const std::vector<bool>& periodic_max,
         const std::vector<DefSFBitset>& domain_min_n_level,
         const std::vector<DefSFBitset>& domain_max_n_level,
         std::vector<DefSFBitset>* const ptr_sfbitset_node) const final;
-    DefAmrIndexLUint FindNodesInPeriodicRegionCenter(const DefSFBitset& sfbitset_in,
-        const DefAmrIndexLUint region_length,
+    DefAmrLUint FindNodesInPeriodicRegionCenter(const DefSFBitset& sfbitset_in,
+        const DefAmrLUint region_length,
         const std::vector<bool>& periodic_min, const std::vector<bool>& periodic_max,
         const std::vector<DefSFBitset>& domain_min_n_level,
         const std::vector<DefSFBitset>& domain_max_n_level,
         std::vector<DefSFBitset>* const ptr_sfbitset_node) const final;
-    void GetMinM1AtGivenLevel(const DefAmrIndexUint i_level,
-        std::vector<DefAmrIndexLUint> indices_min,
+    void GetMinM1AtGivenLevel(const DefInt i_level,
+        std::vector<DefAmrLUint> indices_min,
         std::vector<DefSFBitset>* const ptr_min_m1_bitsets) const final;
-    void GetMaxP1AtGivenLevel(const DefAmrIndexUint i_level,
-        std::vector<DefAmrIndexLUint> indices_max,
+    void GetMaxP1AtGivenLevel(const DefInt i_level,
+        std::vector<DefAmrLUint> indices_max,
         std::vector<DefSFBitset>* const ptr_max_p1_bitset) const final;
-    void GetMinAtGivenLevel(const DefAmrIndexUint i_level,
-        std::vector<DefAmrIndexLUint> indices_min,
+    void GetMinAtGivenLevel(const DefInt i_level,
+        std::vector<DefAmrLUint> indices_min,
         std::vector<DefSFBitset>* const ptr_min_bitsets) const final;
-    void GetMaxAtGivenLevel(const DefAmrIndexUint i_level,
-        std::vector<DefAmrIndexLUint> indices_max,
+    void GetMaxAtGivenLevel(const DefInt i_level,
+        std::vector<DefAmrLUint> indices_max,
         std::vector<DefSFBitset>* const ptr_max_bitset) const final;
     void FindNeighboringCoarseFromFine(const DefSFBitset& sfbitset_fine,
         std::vector<DefSFBitset>* const ptr_vec_coarse) const final;
-    DefSFBitset  SFBitsetToNLowerLevelVir(const DefAmrIndexUint n_level, const DefSFBitset& morton_in) const final {
+    DefSFBitset  SFBitsetToNLowerLevelVir(const DefInt n_level, const DefSFBitset& morton_in) const final {
         return SFBitsetToNLowerLevel(n_level, morton_in);
     }
-    DefSFBitset  SFBitsetToNHigherLevelVir(const DefAmrIndexUint n_level, const DefSFBitset& morton_in) const final {
+    DefSFBitset  SFBitsetToNHigherLevelVir(const DefInt n_level, const DefSFBitset& morton_in) const final {
         return SFBitsetToNHigherLevel(n_level, morton_in);
     }
-    DefAmrIndexUint SFBitsetCoincideLevelVir(const DefSFBitset& morton_in) const final {
+    DefInt SFBitsetCoincideLevelVir(const DefSFBitset& morton_in) const final {
         return SFBitsetCoincideLevel(morton_in);
     }
     void SFBitsetFindAllNeighborsVir(const DefSFBitset& bitset_in,
@@ -458,80 +458,80 @@ class  SFBitsetAux3D : public SFBitsetAuxInterface {
 #ifdef ENABLE_MPI
     // mpi related
  public:
-    void FindPartitionBlocksMax(const DefSFCodeToUint& code_in, const DefAmrIndexUint block_level,
+    void FindPartitionBlocksMax(const DefSFCodeToUint& code_in, const DefInt block_level,
         const DefSFCodeToUint& code_partition_min, const DefSFCodeToUint& code_partition_max,
-        const std::array<DefAmrIndexLUint, 3>& code_domain_min, const std::array<DefAmrIndexLUint, 3>& code_domain_max,
-        DefMap<DefAmrIndexUint>* const ptr_map_partitioned) const;
-    void FindPartitionBlocksMin(const DefSFCodeToUint& code_in, const DefAmrIndexUint block_level,
+        const std::array<DefAmrLUint, 3>& code_domain_min, const std::array<DefAmrLUint, 3>& code_domain_max,
+        DefMap<DefInt>* const ptr_map_partitioned) const;
+    void FindPartitionBlocksMin(const DefSFCodeToUint& code_in, const DefInt block_level,
         const DefSFCodeToUint& code_partition_min, const DefSFCodeToUint& code_partition_max,
-        const std::array<DefAmrIndexLUint, 3>& code_domain_min, const std::array<DefAmrIndexLUint, 3>& code_domain_max,
-        DefMap<DefAmrIndexUint>* const ptr_map_partitioned) const;
-    void FindPartitionRemainMax(const DefSFCodeToUint& code_in, const DefAmrIndexUint block_level,
+        const std::array<DefAmrLUint, 3>& code_domain_min, const std::array<DefAmrLUint, 3>& code_domain_max,
+        DefMap<DefInt>* const ptr_map_partitioned) const;
+    void FindPartitionRemainMax(const DefSFCodeToUint& code_in, const DefInt block_level,
         const DefSFCodeToUint& code_partition_min, const DefSFCodeToUint& code_partition_max,
-        const std::array<DefAmrIndexLUint, 3>& code_domain_min, const std::array<DefAmrIndexLUint, 3>& code_domain_max,
-        DefMap<DefAmrIndexUint>* const ptr_map_partitioned) const;
-    void FindPartitionRemainMin(const DefSFCodeToUint& code_in, const DefAmrIndexUint block_level,
+        const std::array<DefAmrLUint, 3>& code_domain_min, const std::array<DefAmrLUint, 3>& code_domain_max,
+        DefMap<DefInt>* const ptr_map_partitioned) const;
+    void FindPartitionRemainMin(const DefSFCodeToUint& code_in, const DefInt block_level,
         const DefSFCodeToUint& code_partition_min, const DefSFCodeToUint& code_partition_max,
-        const std::array<DefAmrIndexLUint, 3>& code_domain_min, const std::array<DefAmrIndexLUint, 3>& code_domain_max,
-        DefMap<DefAmrIndexUint>* const ptr_map_partitioned) const;
+        const std::array<DefAmrLUint, 3>& code_domain_min, const std::array<DefAmrLUint, 3>& code_domain_max,
+        DefMap<DefInt>* const ptr_map_partitioned) const;
 
  protected:
-    void FindPartitionOneBlock(const DefSFBitset& bitset_corner, const DefAmrIndexUint block_level,
+    void FindPartitionOneBlock(const DefSFBitset& bitset_corner, const DefInt block_level,
         const DefSFCodeToUint& code_partition_min, const DefSFCodeToUint& code_partition_max,
-        const std::array<DefAmrIndexLUint, 3>& code_domain_min, const std::array<DefAmrIndexLUint, 3>& code_domain_max,
-        DefMap<DefAmrIndexUint>* const ptr_map_partitioned) const;
-    void FindPartition2BlocksMax(const DefSFBitset& bitset_corner, const DefAmrIndexUint block_level,
+        const std::array<DefAmrLUint, 3>& code_domain_min, const std::array<DefAmrLUint, 3>& code_domain_max,
+        DefMap<DefInt>* const ptr_map_partitioned) const;
+    void FindPartition2BlocksMax(const DefSFBitset& bitset_corner, const DefInt block_level,
         const DefSFCodeToUint& code_partition_min, const DefSFCodeToUint& code_partition_max,
-        const std::array<DefAmrIndexLUint, 3>& code_domain_min, const std::array<DefAmrIndexLUint, 3>& code_domain_max,
-        DefMap<DefAmrIndexUint>* const ptr_map_partitioned) const;
-    void FindPartition3BlocksMax(const DefSFBitset& bitset_corner, const DefAmrIndexUint block_level,
+        const std::array<DefAmrLUint, 3>& code_domain_min, const std::array<DefAmrLUint, 3>& code_domain_max,
+        DefMap<DefInt>* const ptr_map_partitioned) const;
+    void FindPartition3BlocksMax(const DefSFBitset& bitset_corner, const DefInt block_level,
         const DefSFCodeToUint& code_partition_min, const DefSFCodeToUint& code_partition_max,
-        const std::array<DefAmrIndexLUint, 3>& code_domain_min, const std::array<DefAmrIndexLUint, 3>& code_domain_max,
-        DefMap<DefAmrIndexUint>* const ptr_map_partitioned) const;
-    void FindPartition4BlocksMax(const DefSFBitset& bitset_corner, const DefAmrIndexUint block_level,
+        const std::array<DefAmrLUint, 3>& code_domain_min, const std::array<DefAmrLUint, 3>& code_domain_max,
+        DefMap<DefInt>* const ptr_map_partitioned) const;
+    void FindPartition4BlocksMax(const DefSFBitset& bitset_corner, const DefInt block_level,
         const DefSFCodeToUint& code_partition_min, const DefSFCodeToUint& code_partition_max,
-        const std::array<DefAmrIndexLUint, 3>& code_domain_min, const std::array<DefAmrIndexLUint, 3>& code_domain_max,
-        DefMap<DefAmrIndexUint>* const ptr_map_partitioned) const;
-    void FindPartition5BlocksMax(const DefSFBitset& bitset_corner, const DefAmrIndexUint block_level,
+        const std::array<DefAmrLUint, 3>& code_domain_min, const std::array<DefAmrLUint, 3>& code_domain_max,
+        DefMap<DefInt>* const ptr_map_partitioned) const;
+    void FindPartition5BlocksMax(const DefSFBitset& bitset_corner, const DefInt block_level,
         const DefSFCodeToUint& code_partition_min, const DefSFCodeToUint& code_partition_max,
-        const std::array<DefAmrIndexLUint, 3>& code_domain_min, const std::array<DefAmrIndexLUint, 3>& code_domain_max,
-        DefMap<DefAmrIndexUint>* const ptr_map_partitioned) const;
-    void FindPartition6BlocksMax(const DefSFBitset& bitset_corner, const DefAmrIndexUint block_level,
+        const std::array<DefAmrLUint, 3>& code_domain_min, const std::array<DefAmrLUint, 3>& code_domain_max,
+        DefMap<DefInt>* const ptr_map_partitioned) const;
+    void FindPartition6BlocksMax(const DefSFBitset& bitset_corner, const DefInt block_level,
         const DefSFCodeToUint& code_partition_min, const DefSFCodeToUint& code_partition_max,
-        const std::array<DefAmrIndexLUint, 3>& code_domain_min, const std::array<DefAmrIndexLUint, 3>& code_domain_max,
-        DefMap<DefAmrIndexUint>* const ptr_map_partitioned) const;
-    void FindPartition7BlocksMax(const DefSFBitset& bitset_corner, const DefAmrIndexUint block_level,
+        const std::array<DefAmrLUint, 3>& code_domain_min, const std::array<DefAmrLUint, 3>& code_domain_max,
+        DefMap<DefInt>* const ptr_map_partitioned) const;
+    void FindPartition7BlocksMax(const DefSFBitset& bitset_corner, const DefInt block_level,
         const DefSFCodeToUint& code_partition_min, const DefSFCodeToUint& code_partition_max,
-        const std::array<DefAmrIndexLUint, 3>& code_domain_min, const std::array<DefAmrIndexLUint, 3>& code_domain_max,
-        DefMap<DefAmrIndexUint>* const ptr_map_partitioned) const;
-    void FindPartition2BlocksMin(const DefSFBitset& bitset_corner, const DefAmrIndexUint block_level,
+        const std::array<DefAmrLUint, 3>& code_domain_min, const std::array<DefAmrLUint, 3>& code_domain_max,
+        DefMap<DefInt>* const ptr_map_partitioned) const;
+    void FindPartition2BlocksMin(const DefSFBitset& bitset_corner, const DefInt block_level,
         const DefSFCodeToUint& code_partition_min, const DefSFCodeToUint& code_partition_max,
-        const std::array<DefAmrIndexLUint, 3>& code_domain_min, const std::array<DefAmrIndexLUint, 3>& code_domain_max,
-        DefMap<DefAmrIndexUint>* const ptr_map_partitioned) const;
-    void FindPartition3BlocksMin(const DefSFBitset& bitset_corner, const DefAmrIndexUint block_level,
+        const std::array<DefAmrLUint, 3>& code_domain_min, const std::array<DefAmrLUint, 3>& code_domain_max,
+        DefMap<DefInt>* const ptr_map_partitioned) const;
+    void FindPartition3BlocksMin(const DefSFBitset& bitset_corner, const DefInt block_level,
         const DefSFCodeToUint& code_partition_min, const DefSFCodeToUint& code_partition_max,
-        const std::array<DefAmrIndexLUint, 3>& code_domain_min, const std::array<DefAmrIndexLUint, 3>& code_domain_max,
-        DefMap<DefAmrIndexUint>* const ptr_map_partitioned) const;
-    void FindPartition4BlocksMin(const DefSFBitset& bitset_corner, const DefAmrIndexUint block_level,
+        const std::array<DefAmrLUint, 3>& code_domain_min, const std::array<DefAmrLUint, 3>& code_domain_max,
+        DefMap<DefInt>* const ptr_map_partitioned) const;
+    void FindPartition4BlocksMin(const DefSFBitset& bitset_corner, const DefInt block_level,
         const DefSFCodeToUint& code_partition_min, const DefSFCodeToUint& code_partition_max,
-        const std::array<DefAmrIndexLUint, 3>& code_domain_min, const std::array<DefAmrIndexLUint, 3>& code_domain_max,
-        DefMap<DefAmrIndexUint>* const ptr_map_partitioned) const;
-    void FindPartition5BlocksMin(const DefSFBitset& bitset_corner, const DefAmrIndexUint block_level,
+        const std::array<DefAmrLUint, 3>& code_domain_min, const std::array<DefAmrLUint, 3>& code_domain_max,
+        DefMap<DefInt>* const ptr_map_partitioned) const;
+    void FindPartition5BlocksMin(const DefSFBitset& bitset_corner, const DefInt block_level,
         const DefSFCodeToUint& code_partition_min, const DefSFCodeToUint& code_partition_max,
-        const std::array<DefAmrIndexLUint, 3>& code_domain_min, const std::array<DefAmrIndexLUint, 3>& code_domain_max,
-        DefMap<DefAmrIndexUint>* const ptr_map_partitioned) const;
-    void FindPartition6BlocksMin(const DefSFBitset& bitset_corner, const DefAmrIndexUint block_level,
+        const std::array<DefAmrLUint, 3>& code_domain_min, const std::array<DefAmrLUint, 3>& code_domain_max,
+        DefMap<DefInt>* const ptr_map_partitioned) const;
+    void FindPartition6BlocksMin(const DefSFBitset& bitset_corner, const DefInt block_level,
         const DefSFCodeToUint& code_partition_min, const DefSFCodeToUint& code_partition_max,
-        const std::array<DefAmrIndexLUint, 3>& code_domain_min, const std::array<DefAmrIndexLUint, 3>& code_domain_max,
-        DefMap<DefAmrIndexUint>* const ptr_map_partitioned) const;
-    void FindPartition7BlocksMin(const DefSFBitset& bitset_corner, const DefAmrIndexUint block_level,
+        const std::array<DefAmrLUint, 3>& code_domain_min, const std::array<DefAmrLUint, 3>& code_domain_max,
+        DefMap<DefInt>* const ptr_map_partitioned) const;
+    void FindPartition7BlocksMin(const DefSFBitset& bitset_corner, const DefInt block_level,
         const DefSFCodeToUint& code_partition_min, const DefSFCodeToUint& code_partition_max,
-        const std::array<DefAmrIndexLUint, 3>& code_domain_min, const std::array<DefAmrIndexLUint, 3>& code_domain_max,
-        DefMap<DefAmrIndexUint>* const ptr_map_partitioned) const;
+        const std::array<DefAmrLUint, 3>& code_domain_min, const std::array<DefAmrLUint, 3>& code_domain_max,
+        DefMap<DefInt>* const ptr_map_partitioned) const;
     bool CheckPartitionLimits(const DefSFBitset& code_in,
         const DefSFCodeToUint& code_partition_min, const DefSFCodeToUint& code_partition_max,
-        const std::array<DefAmrIndexLUint, 3>& code_domain_min,
-        const std::array<DefAmrIndexLUint, 3>& code_domain_max) const;
+        const std::array<DefAmrLUint, 3>& code_domain_min,
+        const std::array<DefAmrLUint, 3>& code_domain_max) const;
 
 #ifdef DEBUG_UNIT_TEST
      // gtest to access private member functions
@@ -648,4 +648,4 @@ bool SFBitsetAux3D::SFBitsetBelongToOneCell(
 #endif  // DEBUG_DISABLE_3D_FUNCTIONS
 }  // end namespace amrproject
 }  // end namespace rootproject
-#endif  // ROOTPROJECT_SOURCE_AMR_PROJECT_GRID_SFBITSET_AUX_H_
+#endif  // SOURCE_AMR_PROJECT_GRID_SFBITSET_AUX_H_

@@ -92,8 +92,8 @@ void CalFeqLinear(const DefReal rho,
 int main(int argc, char** argv) {
     MPI_Init(&argc, &argv);
     ptr_amr_instance_ = amrproject::AmrManager::GetInstance();
-    DefAmrIndexUint dims = 2;   // dimension
-    DefAmrIndexUint max_refinement_level = 1;  // maximum refinement level
+    DefInt dims = 2;   // dimension
+    DefInt max_refinement_level = 1;  // maximum refinement level
     ptr_amr_instance_->DefaultInitialization(dims, max_refinement_level);
 
     // geometry related parameters //
@@ -163,7 +163,7 @@ int main(int argc, char** argv) {
     // }
 
 
-    for (DefAmrIndexLUint it = 0; it < 1; ++it) {
+    for (DefAmrLUint it = 0; it < 1; ++it) {
         ptr_amr_instance_->TimeMarching(it);
     }
     MPI_Finalize();

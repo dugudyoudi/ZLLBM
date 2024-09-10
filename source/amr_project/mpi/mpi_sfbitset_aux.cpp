@@ -26,24 +26,24 @@ namespace amrproject {
  * @param[in] code_domain_max maximum indicies of computational domain.
  * @param[out] ptr_map_partitioned  map of unsigned integers to unsigned integers representing the partitioned results.
  */
-void SFBitsetAux2D::FindPartitionBlocksMax(const DefSFCodeToUint& code_in, const DefAmrIndexLUint block_length,
+void SFBitsetAux2D::FindPartitionBlocksMax(const DefSFCodeToUint& code_in, const DefAmrLUint block_length,
     const DefSFCodeToUint& code_partition_min, const DefSFCodeToUint& code_partition_max,
-    const std::array<DefAmrIndexLUint, 2>& code_domain_min, const std::array<DefAmrIndexLUint, 2>& code_domain_max,
-    DefMap<DefAmrIndexUint>* const ptr_map_partitioned) const {
+    const std::array<DefAmrLUint, 2>& code_domain_min, const std::array<DefAmrLUint, 2>& code_domain_max,
+    DefMap<DefInt>* const ptr_map_partitioned) const {
     DefSFCodeToUint code_remain;
     DefSFBitset bitset_current, bitset_tmp;
     DefSFCodeToUint code_current;
     code_current = code_in * block_length * block_length - 1;
     code_remain = (code_in - 1) % 4;
-    std::array<DefAmrIndexLUint, 2> indices;
+    std::array<DefAmrLUint, 2> indices;
     bitset_current = static_cast<DefSFBitset>(code_current);
     SFBitsetComputeIndices(bitset_current, &indices);
-    DefAmrIndexLUint index_x = indices[kXIndex], index_y = indices[kYIndex];
-    DefAmrIndexLUint i_max1 = block_length - 1, i_max2 = block_length * 2 - 1;
+    DefAmrLUint index_x = indices[kXIndex], index_y = indices[kYIndex];
+    DefAmrLUint i_max1 = block_length - 1, i_max2 = block_length * 2 - 1;
     bitset_tmp = bitset_current;
     switch (code_remain) {
     case 0: {
-            for (DefAmrIndexLUint ix = 0; ix < i_max1; ++ix) {
+            for (DefAmrLUint ix = 0; ix < i_max1; ++ix) {
                 if (index_x >= code_domain_min[kXIndex] && index_x <= code_domain_max[kXIndex]
                     && index_y >= code_domain_min[kYIndex] && index_y <= code_domain_max[kYIndex]
                     && CheckPartitionLimits(bitset_tmp, code_partition_min, code_partition_max,
@@ -54,7 +54,7 @@ void SFBitsetAux2D::FindPartitionBlocksMax(const DefSFCodeToUint& code_in, const
                 bitset_tmp = FindXNeg(bitset_tmp);
                 --index_x;
             }
-            for (DefAmrIndexLUint iy = 0; iy < i_max1; ++iy) {
+            for (DefAmrLUint iy = 0; iy < i_max1; ++iy) {
                 if (index_x >= code_domain_min[kXIndex] && index_x <= code_domain_max[kXIndex]
                     && index_y >= code_domain_min[kYIndex] && index_y <= code_domain_max[kYIndex]
                     && CheckPartitionLimits(bitset_tmp, code_partition_min, code_partition_max,
@@ -65,7 +65,7 @@ void SFBitsetAux2D::FindPartitionBlocksMax(const DefSFCodeToUint& code_in, const
                 bitset_tmp = FindYNeg(bitset_tmp);
                 --index_y;
             }
-            for (DefAmrIndexLUint ix = 0; ix < i_max1; ++ix) {
+            for (DefAmrLUint ix = 0; ix < i_max1; ++ix) {
                 if (index_x >= code_domain_min[kXIndex] && index_x <= code_domain_max[kXIndex]
                     && index_y >= code_domain_min[kYIndex] && index_y <= code_domain_max[kYIndex]
                     && CheckPartitionLimits(bitset_tmp, code_partition_min, code_partition_max,
@@ -76,7 +76,7 @@ void SFBitsetAux2D::FindPartitionBlocksMax(const DefSFCodeToUint& code_in, const
                 bitset_tmp = FindXPos(bitset_tmp);
                 ++index_x;
             }
-            for (DefAmrIndexLUint iy = 0; iy < i_max1; ++iy) {
+            for (DefAmrLUint iy = 0; iy < i_max1; ++iy) {
                 if (index_x >= code_domain_min[kXIndex] && index_x <= code_domain_max[kXIndex]
                     && index_y >= code_domain_min[kYIndex] && index_y <= code_domain_max[kYIndex]
                     && CheckPartitionLimits(bitset_tmp, code_partition_min, code_partition_max,
@@ -97,7 +97,7 @@ void SFBitsetAux2D::FindPartitionBlocksMax(const DefSFCodeToUint& code_in, const
         }
         break;
     case 1: {
-            for (DefAmrIndexLUint ix = 0; ix < i_max2; ++ix) {
+            for (DefAmrLUint ix = 0; ix < i_max2; ++ix) {
                 if (index_x >= code_domain_min[kXIndex] && index_x <= code_domain_max[kXIndex]
                     && index_y >= code_domain_min[kYIndex] && index_y <= code_domain_max[kYIndex]
                     && CheckPartitionLimits(bitset_tmp, code_partition_min, code_partition_max,
@@ -108,7 +108,7 @@ void SFBitsetAux2D::FindPartitionBlocksMax(const DefSFCodeToUint& code_in, const
                 bitset_tmp = FindXNeg(bitset_tmp);
                 --index_x;
             }
-            for (DefAmrIndexLUint iy = 0; iy < i_max1; ++iy) {
+            for (DefAmrLUint iy = 0; iy < i_max1; ++iy) {
                 if (index_x >= code_domain_min[kXIndex] && index_x <= code_domain_max[kXIndex]
                     && index_y >= code_domain_min[kYIndex] && index_y <= code_domain_max[kYIndex]
                     && CheckPartitionLimits(bitset_tmp, code_partition_min, code_partition_max,
@@ -119,7 +119,7 @@ void SFBitsetAux2D::FindPartitionBlocksMax(const DefSFCodeToUint& code_in, const
                 bitset_tmp = FindYNeg(bitset_tmp);
                 --index_y;
             }
-            for (DefAmrIndexLUint ix = 0; ix < i_max2; ++ix) {
+            for (DefAmrLUint ix = 0; ix < i_max2; ++ix) {
                 if (index_x >= code_domain_min[kXIndex] && index_x <= code_domain_max[kXIndex]
                     && index_y >= code_domain_min[kYIndex] && index_y <= code_domain_max[kYIndex]
                     && CheckPartitionLimits(bitset_tmp, code_partition_min, code_partition_max,
@@ -130,7 +130,7 @@ void SFBitsetAux2D::FindPartitionBlocksMax(const DefSFCodeToUint& code_in, const
                 bitset_tmp = FindXPos(bitset_tmp);
                 ++index_x;
             }
-            for (DefAmrIndexLUint iy = 0; iy < i_max1; ++iy) {
+            for (DefAmrLUint iy = 0; iy < i_max1; ++iy) {
                 if (index_x >= code_domain_min[kXIndex] && index_x <= code_domain_max[kXIndex]
                     && index_y >= code_domain_min[kYIndex] && index_y <= code_domain_max[kYIndex]
                     &&CheckPartitionLimits(bitset_tmp, code_partition_min, code_partition_max,
@@ -151,7 +151,7 @@ void SFBitsetAux2D::FindPartitionBlocksMax(const DefSFCodeToUint& code_in, const
         }
         break;
     case 2: {
-            for (DefAmrIndexLUint ix = 0; ix < i_max1; ++ix) {
+            for (DefAmrLUint ix = 0; ix < i_max1; ++ix) {
                 if (index_x >= code_domain_min[kXIndex] && index_x <= code_domain_max[kXIndex]
                     && index_y >= code_domain_min[kYIndex] && index_y <= code_domain_max[kYIndex]
                     && CheckPartitionLimits(bitset_tmp, code_partition_min, code_partition_max,
@@ -162,7 +162,7 @@ void SFBitsetAux2D::FindPartitionBlocksMax(const DefSFCodeToUint& code_in, const
                 bitset_tmp = FindXNeg(bitset_tmp);
                 --index_x;
             }
-            for (DefAmrIndexLUint iy = 0; iy < i_max2; ++iy) {
+            for (DefAmrLUint iy = 0; iy < i_max2; ++iy) {
                 if (index_x >= code_domain_min[kXIndex] && index_x <= code_domain_max[kXIndex]
                     && index_y >= code_domain_min[kYIndex] && index_y <= code_domain_max[kYIndex]
                     && CheckPartitionLimits(bitset_tmp, code_partition_min, code_partition_max,
@@ -173,7 +173,7 @@ void SFBitsetAux2D::FindPartitionBlocksMax(const DefSFCodeToUint& code_in, const
                 bitset_tmp = FindYNeg(bitset_tmp);
                 --index_y;
             }
-            for (DefAmrIndexLUint ix = 0; ix < i_max2; ++ix) {
+            for (DefAmrLUint ix = 0; ix < i_max2; ++ix) {
                 if (index_x >= code_domain_min[kXIndex] && index_x <= code_domain_max[kXIndex]
                     && index_y >= code_domain_min[kYIndex] && index_y <= code_domain_max[kYIndex]
                     && CheckPartitionLimits(bitset_tmp, code_partition_min, code_partition_max,
@@ -184,7 +184,7 @@ void SFBitsetAux2D::FindPartitionBlocksMax(const DefSFCodeToUint& code_in, const
                 bitset_tmp = FindXPos(bitset_tmp);
                 ++index_x;
             }
-            for (DefAmrIndexLUint iy = 0; iy < i_max1; ++iy) {
+            for (DefAmrLUint iy = 0; iy < i_max1; ++iy) {
                 if (index_x >= code_domain_min[kXIndex] && index_x <= code_domain_max[kXIndex]
                     && index_y >= code_domain_min[kYIndex] && index_y <= code_domain_max[kYIndex]
                     && CheckPartitionLimits(bitset_tmp, code_partition_min, code_partition_max,
@@ -195,7 +195,7 @@ void SFBitsetAux2D::FindPartitionBlocksMax(const DefSFCodeToUint& code_in, const
                 bitset_tmp = FindYPos(bitset_tmp);
                 ++index_y;
             }
-            for (DefAmrIndexLUint ix = 0;  ix < i_max1 + 1; ++ix) {
+            for (DefAmrLUint ix = 0;  ix < i_max1 + 1; ++ix) {
                 if (index_x >= code_domain_min[kXIndex] && index_x <= code_domain_max[kXIndex]
                     && index_y >= code_domain_min[kYIndex] && index_y <= code_domain_max[kYIndex]
                     && CheckPartitionLimits(bitset_tmp, code_partition_min, code_partition_max,
@@ -206,7 +206,7 @@ void SFBitsetAux2D::FindPartitionBlocksMax(const DefSFCodeToUint& code_in, const
                 bitset_tmp = FindXNeg(bitset_tmp);
                 --index_x;
             }
-            for (DefAmrIndexLUint iy = 0;  iy < i_max1 + 1; ++iy) {
+            for (DefAmrLUint iy = 0;  iy < i_max1 + 1; ++iy) {
                 if (index_x >= code_domain_min[kXIndex] && index_x <= code_domain_max[kXIndex]
                     && index_y >= code_domain_min[kYIndex] && index_y <= code_domain_max[kYIndex]
                     && CheckPartitionLimits(bitset_tmp, code_partition_min, code_partition_max,
@@ -227,7 +227,7 @@ void SFBitsetAux2D::FindPartitionBlocksMax(const DefSFCodeToUint& code_in, const
         }
         break;
     case 3: {
-            for (DefAmrIndexLUint ix = 0;  ix < i_max2; ++ix) {
+            for (DefAmrLUint ix = 0;  ix < i_max2; ++ix) {
                 if (index_x >= code_domain_min[kXIndex] && index_x <= code_domain_max[kXIndex]
                     && index_y >= code_domain_min[kYIndex] && index_y <= code_domain_max[kYIndex]
                     && CheckPartitionLimits(bitset_tmp, code_partition_min, code_partition_max,
@@ -238,7 +238,7 @@ void SFBitsetAux2D::FindPartitionBlocksMax(const DefSFCodeToUint& code_in, const
                 bitset_tmp = FindXNeg(bitset_tmp);
                 --index_x;
             }
-            for (DefAmrIndexLUint iy = 0;  iy < i_max2; ++iy) {
+            for (DefAmrLUint iy = 0;  iy < i_max2; ++iy) {
                 if (index_x >= code_domain_min[kXIndex] && index_x <= code_domain_max[kXIndex]
                     && index_y >= code_domain_min[kYIndex] && index_y <= code_domain_max[kYIndex]
                     && CheckPartitionLimits(bitset_tmp, code_partition_min, code_partition_max,
@@ -249,7 +249,7 @@ void SFBitsetAux2D::FindPartitionBlocksMax(const DefSFCodeToUint& code_in, const
                 bitset_tmp = FindYNeg(bitset_tmp);
                 --index_y;
             }
-            for (DefAmrIndexLUint ix = 0;  ix < i_max2; ++ix) {
+            for (DefAmrLUint ix = 0;  ix < i_max2; ++ix) {
                 if (index_x >= code_domain_min[kXIndex] && index_x <= code_domain_max[kXIndex]
                     && index_y >= code_domain_min[kYIndex] && index_y <= code_domain_max[kYIndex]
                     && CheckPartitionLimits(bitset_tmp, code_partition_min, code_partition_max,
@@ -260,7 +260,7 @@ void SFBitsetAux2D::FindPartitionBlocksMax(const DefSFCodeToUint& code_in, const
                 bitset_tmp = FindXPos(bitset_tmp);
                 ++index_x;
             }
-            for (DefAmrIndexLUint iy = 0;  iy < i_max2; ++iy) {
+            for (DefAmrLUint iy = 0;  iy < i_max2; ++iy) {
                 if (index_x >= code_domain_min[kXIndex] && index_x <= code_domain_max[kXIndex]
                     && index_y >= code_domain_min[kYIndex] && index_y <= code_domain_max[kYIndex]
                     && CheckPartitionLimits(bitset_tmp, code_partition_min, code_partition_max,
@@ -294,24 +294,24 @@ void SFBitsetAux2D::FindPartitionBlocksMax(const DefSFCodeToUint& code_in, const
  * @param[in] code_domain_max maximum indicies of computational domain.
  * @param[out] ptr_map_partitioned  map of unsigned integers to unsigned integers representing the partitioned results.
  */
-void SFBitsetAux2D::FindPartitionBlocksMin(const DefSFCodeToUint& code_in, const DefAmrIndexLUint block_length,
+void SFBitsetAux2D::FindPartitionBlocksMin(const DefSFCodeToUint& code_in, const DefAmrLUint block_length,
     const DefSFCodeToUint& code_partition_min, const DefSFCodeToUint& code_partition_max,
-    const std::array<DefAmrIndexLUint, 2>& code_domain_min, const std::array<DefAmrIndexLUint, 2>& code_domain_max,
-    DefMap<DefAmrIndexUint>* const ptr_map_partitioned) const {
+    const std::array<DefAmrLUint, 2>& code_domain_min, const std::array<DefAmrLUint, 2>& code_domain_max,
+    DefMap<DefInt>* const ptr_map_partitioned) const {
     DefSFCodeToUint code_remain;
     DefSFBitset bitset_current, bitset_tmp;
     DefSFCodeToUint code_current;
     code_current = code_in * block_length * block_length;
     code_remain = code_in % 4;
-    std::array<DefAmrIndexLUint, 2> indices;
+    std::array<DefAmrLUint, 2> indices;
     bitset_current = static_cast<DefSFBitset>(code_current);
     SFBitsetComputeIndices(bitset_current, &indices);
-    DefAmrIndexLUint index_x = indices[kXIndex], index_y = indices[kYIndex];
-    DefAmrIndexLUint i_max1 = block_length - 1, i_max2 = block_length * 2 - 1;
+    DefAmrLUint index_x = indices[kXIndex], index_y = indices[kYIndex];
+    DefAmrLUint i_max1 = block_length - 1, i_max2 = block_length * 2 - 1;
     bitset_tmp = bitset_current;
     switch (code_remain) {
     case 3: {
-            for (DefAmrIndexLUint ix = 0;  ix < i_max1; ++ix) {
+            for (DefAmrLUint ix = 0;  ix < i_max1; ++ix) {
                 if (index_x >= code_domain_min[kXIndex] && index_x <= code_domain_max[kXIndex]
                     && index_y >= code_domain_min[kYIndex] && index_y <= code_domain_max[kYIndex]
                     && CheckPartitionLimits(bitset_tmp, code_partition_min, code_partition_max,
@@ -322,7 +322,7 @@ void SFBitsetAux2D::FindPartitionBlocksMin(const DefSFCodeToUint& code_in, const
                 bitset_tmp = FindXPos(bitset_tmp);
                 ++index_x;
             }
-            for (DefAmrIndexLUint iy = 0;  iy < i_max1; ++iy) {
+            for (DefAmrLUint iy = 0;  iy < i_max1; ++iy) {
                 if (index_x >= code_domain_min[kXIndex] && index_x <= code_domain_max[kXIndex]
                     && index_y >= code_domain_min[kYIndex] && index_y <= code_domain_max[kYIndex]
                     && CheckPartitionLimits(bitset_tmp, code_partition_min, code_partition_max,
@@ -333,7 +333,7 @@ void SFBitsetAux2D::FindPartitionBlocksMin(const DefSFCodeToUint& code_in, const
                 bitset_tmp = FindYPos(bitset_tmp);
                 ++index_y;
             }
-            for (DefAmrIndexLUint ix = 0;  ix < i_max1; ++ix) {
+            for (DefAmrLUint ix = 0;  ix < i_max1; ++ix) {
                 if (index_x >= code_domain_min[kXIndex] && index_x <= code_domain_max[kXIndex]
                     && index_y >= code_domain_min[kYIndex] && index_y <= code_domain_max[kYIndex]
                     && CheckPartitionLimits(bitset_tmp, code_partition_min, code_partition_max,
@@ -344,7 +344,7 @@ void SFBitsetAux2D::FindPartitionBlocksMin(const DefSFCodeToUint& code_in, const
                 bitset_tmp = FindXNeg(bitset_tmp);
                 --index_x;
             }
-            for (DefAmrIndexLUint iy = 0;  iy < i_max1; ++iy) {
+            for (DefAmrLUint iy = 0;  iy < i_max1; ++iy) {
                 if (index_x >= code_domain_min[kXIndex] && index_x <= code_domain_max[kXIndex]
                     && index_y >= code_domain_min[kYIndex] && index_y <= code_domain_max[kYIndex]
                     && CheckPartitionLimits(bitset_tmp, code_partition_min, code_partition_max,
@@ -365,7 +365,7 @@ void SFBitsetAux2D::FindPartitionBlocksMin(const DefSFCodeToUint& code_in, const
         }
         break;
     case 2: {
-            for (DefAmrIndexLUint ix = 0;  ix < i_max2; ++ix) {
+            for (DefAmrLUint ix = 0;  ix < i_max2; ++ix) {
                 if (index_x >= code_domain_min[kXIndex] && index_x <= code_domain_max[kXIndex]
                     && index_y >= code_domain_min[kYIndex] && index_y <= code_domain_max[kYIndex]
                     && CheckPartitionLimits(bitset_tmp, code_partition_min, code_partition_max,
@@ -376,7 +376,7 @@ void SFBitsetAux2D::FindPartitionBlocksMin(const DefSFCodeToUint& code_in, const
                 bitset_tmp = FindXPos(bitset_tmp);
                 ++index_x;
             }
-            for (DefAmrIndexLUint iy = 0;  iy < i_max1; ++iy) {
+            for (DefAmrLUint iy = 0;  iy < i_max1; ++iy) {
                 if (index_x >= code_domain_min[kXIndex] && index_x <= code_domain_max[kXIndex]
                     && index_y >= code_domain_min[kYIndex] && index_y <= code_domain_max[kYIndex]
                     && CheckPartitionLimits(bitset_tmp, code_partition_min, code_partition_max,
@@ -387,7 +387,7 @@ void SFBitsetAux2D::FindPartitionBlocksMin(const DefSFCodeToUint& code_in, const
                 bitset_tmp = FindYPos(bitset_tmp);
                 ++index_y;
             }
-            for (DefAmrIndexLUint ix = 0;  ix < i_max2; ++ix) {
+            for (DefAmrLUint ix = 0;  ix < i_max2; ++ix) {
                 if (index_x >= code_domain_min[kXIndex] && index_x <= code_domain_max[kXIndex]
                     && index_y >= code_domain_min[kYIndex] && index_y <= code_domain_max[kYIndex]
                     && CheckPartitionLimits(bitset_tmp, code_partition_min, code_partition_max,
@@ -398,7 +398,7 @@ void SFBitsetAux2D::FindPartitionBlocksMin(const DefSFCodeToUint& code_in, const
                 bitset_tmp = FindXNeg(bitset_tmp);
                 --index_x;
             }
-            for (DefAmrIndexLUint iy = 0;  iy < i_max1; ++iy) {
+            for (DefAmrLUint iy = 0;  iy < i_max1; ++iy) {
                 if (index_x >= code_domain_min[kXIndex] && index_x <= code_domain_max[kXIndex]
                     && index_y >= code_domain_min[kYIndex] && index_y <= code_domain_max[kYIndex]
                     && CheckPartitionLimits(bitset_tmp, code_partition_min, code_partition_max,
@@ -419,7 +419,7 @@ void SFBitsetAux2D::FindPartitionBlocksMin(const DefSFCodeToUint& code_in, const
         }
         break;
     case 1: {
-            for (DefAmrIndexLUint iy = 0;  iy < i_max1 + 1; ++iy) {
+            for (DefAmrLUint iy = 0;  iy < i_max1 + 1; ++iy) {
                 if (index_x >= code_domain_min[kXIndex] && index_x <= code_domain_max[kXIndex]
                     && index_y >= code_domain_min[kYIndex] && index_y <= code_domain_max[kYIndex]
                     && CheckPartitionLimits(bitset_tmp, code_partition_min, code_partition_max,
@@ -430,7 +430,7 @@ void SFBitsetAux2D::FindPartitionBlocksMin(const DefSFCodeToUint& code_in, const
                 bitset_tmp = FindYPos(bitset_tmp);
                 ++index_y;
             }
-            for (DefAmrIndexLUint ix = 0;  ix < i_max1 + 1; ++ix) {
+            for (DefAmrLUint ix = 0;  ix < i_max1 + 1; ++ix) {
                 if (index_x >= code_domain_min[kXIndex] && index_x <= code_domain_max[kXIndex]
                     && index_y >= code_domain_min[kYIndex] && index_y <= code_domain_max[kYIndex]
                     && CheckPartitionLimits(bitset_tmp, code_partition_min, code_partition_max,
@@ -441,7 +441,7 @@ void SFBitsetAux2D::FindPartitionBlocksMin(const DefSFCodeToUint& code_in, const
                 bitset_tmp = FindXNeg(bitset_tmp);
                 --index_x;
             }
-            for (DefAmrIndexLUint iy = 0;  iy < i_max1; ++iy) {
+            for (DefAmrLUint iy = 0;  iy < i_max1; ++iy) {
                 if (index_x >= code_domain_min[kXIndex] && index_x <= code_domain_max[kXIndex]
                     && index_y >= code_domain_min[kYIndex] && index_y <= code_domain_max[kYIndex]
                     && CheckPartitionLimits(bitset_tmp, code_partition_min, code_partition_max,
@@ -452,7 +452,7 @@ void SFBitsetAux2D::FindPartitionBlocksMin(const DefSFCodeToUint& code_in, const
                 bitset_tmp = FindYPos(bitset_tmp);
                 ++index_y;
             }
-            for (DefAmrIndexLUint ix = 0;  ix < i_max2; ++ix) {
+            for (DefAmrLUint ix = 0;  ix < i_max2; ++ix) {
                 if (index_x >= code_domain_min[kXIndex] && index_x <= code_domain_max[kXIndex]
                     && index_y >= code_domain_min[kYIndex] && index_y <= code_domain_max[kYIndex]
                     && CheckPartitionLimits(bitset_tmp, code_partition_min, code_partition_max,
@@ -463,7 +463,7 @@ void SFBitsetAux2D::FindPartitionBlocksMin(const DefSFCodeToUint& code_in, const
                 bitset_tmp = FindXPos(bitset_tmp);
                 ++index_x;
             }
-            for (DefAmrIndexLUint iy = 0;  iy < i_max2; ++iy) {
+            for (DefAmrLUint iy = 0;  iy < i_max2; ++iy) {
                 if (index_x >= code_domain_min[kXIndex] && index_x <= code_domain_max[kXIndex]
                     && index_y >= code_domain_min[kYIndex] && index_y <= code_domain_max[kYIndex]
                     && CheckPartitionLimits(bitset_tmp, code_partition_min, code_partition_max,
@@ -474,7 +474,7 @@ void SFBitsetAux2D::FindPartitionBlocksMin(const DefSFCodeToUint& code_in, const
                 bitset_tmp = FindYNeg(bitset_tmp);
                 --index_y;
             }
-            for (DefAmrIndexLUint ix = 0;  ix < i_max1; ++ix) {
+            for (DefAmrLUint ix = 0;  ix < i_max1; ++ix) {
                 if (index_x >= code_domain_min[kXIndex] && index_x <= code_domain_max[kXIndex]
                     && index_y >= code_domain_min[kYIndex] && index_y <= code_domain_max[kYIndex]
                     && CheckPartitionLimits(bitset_tmp, code_partition_min, code_partition_max,
@@ -495,7 +495,7 @@ void SFBitsetAux2D::FindPartitionBlocksMin(const DefSFCodeToUint& code_in, const
         }
         break;
     case 0: {
-            for (DefAmrIndexLUint ix = 0;  ix < i_max2; ++ix) {
+            for (DefAmrLUint ix = 0;  ix < i_max2; ++ix) {
                 if (index_x >= code_domain_min[kXIndex] && index_x <= code_domain_max[kXIndex]
                     && index_y >= code_domain_min[kYIndex] && index_y <= code_domain_max[kYIndex]
                     && CheckPartitionLimits(bitset_tmp, code_partition_min, code_partition_max,
@@ -506,7 +506,7 @@ void SFBitsetAux2D::FindPartitionBlocksMin(const DefSFCodeToUint& code_in, const
                 bitset_tmp = FindXPos(bitset_tmp);
                 ++index_x;
             }
-            for (DefAmrIndexLUint iy = 0;  iy < i_max2; ++iy) {
+            for (DefAmrLUint iy = 0;  iy < i_max2; ++iy) {
                 if (index_x >= code_domain_min[kXIndex] && index_x <= code_domain_max[kXIndex]
                     && index_y >= code_domain_min[kYIndex] && index_y <= code_domain_max[kYIndex]
                     && CheckPartitionLimits(bitset_tmp, code_partition_min, code_partition_max,
@@ -517,7 +517,7 @@ void SFBitsetAux2D::FindPartitionBlocksMin(const DefSFCodeToUint& code_in, const
                 bitset_tmp = FindYPos(bitset_tmp);
                 ++index_y;
             }
-            for (DefAmrIndexLUint ix = 0;  ix < i_max2; ++ix) {
+            for (DefAmrLUint ix = 0;  ix < i_max2; ++ix) {
                 if (index_x >= code_domain_min[kXIndex] && index_x <= code_domain_max[kXIndex]
                     && index_y >= code_domain_min[kYIndex] && index_y <= code_domain_max[kYIndex]
                     && CheckPartitionLimits(bitset_tmp, code_partition_min, code_partition_max,
@@ -528,7 +528,7 @@ void SFBitsetAux2D::FindPartitionBlocksMin(const DefSFCodeToUint& code_in, const
                 bitset_tmp = FindXNeg(bitset_tmp);
                 --index_x;
             }
-            for (DefAmrIndexLUint iy = 0;  iy < i_max2; ++iy) {
+            for (DefAmrLUint iy = 0;  iy < i_max2; ++iy) {
                 if (index_x >= code_domain_min[kXIndex] && index_x <= code_domain_max[kXIndex]
                     && index_y >= code_domain_min[kYIndex] && index_y <= code_domain_max[kYIndex]
                     && CheckPartitionLimits(bitset_tmp, code_partition_min, code_partition_max,
@@ -562,10 +562,10 @@ void SFBitsetAux2D::FindPartitionBlocksMin(const DefSFCodeToUint& code_in, const
  * @param[in] code_domain_max maximum indicies of computational domain.
  * @param[out] ptr_map_partitioned  map of unsigned integers to unsigned integers representing the partitioned results.
  */
-void SFBitsetAux2D::FindPartitionRemainMax(const DefSFCodeToUint& code_in, const DefAmrIndexLUint block_length,
+void SFBitsetAux2D::FindPartitionRemainMax(const DefSFCodeToUint& code_in, const DefAmrLUint block_length,
     const DefSFCodeToUint& code_partition_min, const DefSFCodeToUint& code_partition_max,
-    const std::array<DefAmrIndexLUint, 2>& code_domain_min, const std::array<DefAmrIndexLUint, 2>& code_domain_max,
-    DefMap<DefAmrIndexUint>* const ptr_map_partitioned) const {
+    const std::array<DefAmrLUint, 2>& code_domain_min, const std::array<DefAmrLUint, 2>& code_domain_max,
+    DefMap<DefInt>* const ptr_map_partitioned) const {
     DefSFCodeToUint code_remain;
     DefSFCodeToUint code_current;
     code_current = (code_in - 1) * block_length * block_length;
@@ -645,20 +645,20 @@ void SFBitsetAux2D::FindPartitionRemainMax(const DefSFCodeToUint& code_in, const
  * @param[in] code_domain_max maximum indicies of computational domain.
  * @param[out] ptr_map_partitioned  map of unsigned integers to unsigned integers representing the partitioned results.
  */
-void SFBitsetAux2D::FindPartitionRemainMin(const DefSFCodeToUint& code_in, const DefAmrIndexLUint block_length,
+void SFBitsetAux2D::FindPartitionRemainMin(const DefSFCodeToUint& code_in, const DefAmrLUint block_length,
     const DefSFCodeToUint& code_partition_min, const DefSFCodeToUint& code_partition_max,
-    const std::array<DefAmrIndexLUint, 2>& code_domain_min, const std::array<DefAmrIndexLUint, 2>& code_domain_max,
-    DefMap<DefAmrIndexUint>* const ptr_map_partitioned) const {
+    const std::array<DefAmrLUint, 2>& code_domain_min, const std::array<DefAmrLUint, 2>& code_domain_max,
+    DefMap<DefInt>* const ptr_map_partitioned) const {
     DefSFCodeToUint code_remain;
     DefSFBitset bitset_current, bitset_tmp;
     DefSFCodeToUint code_current;
     code_current = code_in * block_length * block_length;
     code_remain = code_in % 4;
-    std::array<DefAmrIndexLUint, 2> indices;
+    std::array<DefAmrLUint, 2> indices;
     bitset_current = static_cast<DefSFBitset>(code_current);
     SFBitsetComputeIndices(bitset_current, &indices);
-    DefAmrIndexLUint index_x = indices[kXIndex], index_y = indices[kYIndex];
-    DefAmrIndexLUint i_max1 = block_length - 1, i_max2 = block_length * 2 - 1;
+    DefAmrLUint index_x = indices[kXIndex], index_y = indices[kYIndex];
+    DefAmrLUint i_max1 = block_length - 1, i_max2 = block_length * 2 - 1;
     DefSFCodeToUint code_max_current = code_partition_max/ block_length/ block_length;
     bitset_tmp = bitset_current;
     switch (code_remain) {
@@ -730,14 +730,14 @@ void SFBitsetAux2D::FindPartitionRemainMin(const DefSFCodeToUint& code_in, const
  * @param[in] code_domain_max maximum indicies of computational domain.
  * @param[out] ptr_map_partitioned  map of unsigned integers to unsigned integers representing the partitioned results.
  */
-void SFBitsetAux2D::FindPartitionOneBlock(const DefSFBitset& bitset_corner, const DefAmrIndexLUint block_length,
+void SFBitsetAux2D::FindPartitionOneBlock(const DefSFBitset& bitset_corner, const DefAmrLUint block_length,
     const DefSFCodeToUint& code_partition_min, const DefSFCodeToUint& code_partition_max,
-    const std::array<DefAmrIndexLUint, 2>& code_domain_min, const std::array<DefAmrIndexLUint, 2>& code_domain_max,
-    DefMap<DefAmrIndexUint>* const ptr_map_partitioned) const {
-         std::array<DefAmrIndexLUint, 2> indices;
+    const std::array<DefAmrLUint, 2>& code_domain_min, const std::array<DefAmrLUint, 2>& code_domain_max,
+    DefMap<DefInt>* const ptr_map_partitioned) const {
+         std::array<DefAmrLUint, 2> indices;
     DefSFBitset bitset_tmp = bitset_corner;
     SFBitsetComputeIndices(bitset_corner, &indices);
-    DefAmrIndexLUint index_x = indices[kXIndex], index_y = indices[kYIndex];
+    DefAmrLUint index_x = indices[kXIndex], index_y = indices[kYIndex];
     if (block_length == 1) {
         if (index_x >= code_domain_min[kXIndex] && index_x <= code_domain_max[kXIndex]
         && index_y >= code_domain_min[kYIndex] && index_y <= code_domain_max[kYIndex]
@@ -747,8 +747,8 @@ void SFBitsetAux2D::FindPartitionOneBlock(const DefSFBitset& bitset_corner, cons
         ptr_map_partitioned->insert({bitset_tmp, 0});
         }
     } else {
-        DefAmrIndexLUint i_max1 = block_length - 1;
-        for (DefAmrIndexLUint ix = 0;  ix < i_max1; ++ix) {
+        DefAmrLUint i_max1 = block_length - 1;
+        for (DefAmrLUint ix = 0;  ix < i_max1; ++ix) {
             if (index_x >= code_domain_min[kXIndex] && index_x <= code_domain_max[kXIndex]
                 && index_y >= code_domain_min[kYIndex] && index_y <= code_domain_max[kYIndex]
                 && CheckPartitionLimits(bitset_tmp, code_partition_min, code_partition_max,
@@ -759,7 +759,7 @@ void SFBitsetAux2D::FindPartitionOneBlock(const DefSFBitset& bitset_corner, cons
             bitset_tmp = FindXPos(bitset_tmp);
             ++index_x;
         }
-        for (DefAmrIndexLUint iy = 0;  iy < i_max1; ++iy) {
+        for (DefAmrLUint iy = 0;  iy < i_max1; ++iy) {
             if (index_x >= code_domain_min[kXIndex] && index_x <= code_domain_max[kXIndex]
                 && index_y >= code_domain_min[kYIndex] && index_y <= code_domain_max[kYIndex]
                 && CheckPartitionLimits(bitset_tmp, code_partition_min, code_partition_max,
@@ -770,7 +770,7 @@ void SFBitsetAux2D::FindPartitionOneBlock(const DefSFBitset& bitset_corner, cons
             bitset_tmp = FindYPos(bitset_tmp);
             ++index_y;
         }
-        for (DefAmrIndexLUint ix = 0;  ix < i_max1; ++ix) {
+        for (DefAmrLUint ix = 0;  ix < i_max1; ++ix) {
             if (index_x >= code_domain_min[kXIndex] && index_x <= code_domain_max[kXIndex]
                 && index_y >= code_domain_min[kYIndex] && index_y <= code_domain_max[kYIndex]
                 && CheckPartitionLimits(bitset_tmp, code_partition_min, code_partition_max,
@@ -781,7 +781,7 @@ void SFBitsetAux2D::FindPartitionOneBlock(const DefSFBitset& bitset_corner, cons
             bitset_tmp = FindXNeg(bitset_tmp);
             --index_x;
         }
-        for (DefAmrIndexLUint iy = 0;  iy < i_max1; ++iy) {
+        for (DefAmrLUint iy = 0;  iy < i_max1; ++iy) {
             if (index_x >= code_domain_min[kXIndex] && index_x <= code_domain_max[kXIndex]
                 && index_y >= code_domain_min[kYIndex] && index_y <= code_domain_max[kYIndex]
                 && CheckPartitionLimits(bitset_tmp, code_partition_min, code_partition_max,
@@ -805,12 +805,12 @@ void SFBitsetAux2D::FindPartitionOneBlock(const DefSFBitset& bitset_corner, cons
  */
 bool SFBitsetAux2D::CheckPartitionLimits(const DefSFBitset& sfbitset_in,
     const DefSFCodeToUint& code_partition_min, const DefSFCodeToUint& code_partition_max,
-    const std::array<DefAmrIndexLUint, 2>& code_domain_min, const std::array<DefAmrIndexLUint, 2>& code_domain_max) const {
+    const std::array<DefAmrLUint, 2>& code_domain_min, const std::array<DefAmrLUint, 2>& code_domain_max) const {
     std::array<DefSFBitset, 9> neighbors;
     DefSFCodeToUint code_neighbour;
-    std::array<DefAmrIndexLUint, 2> indices;
+    std::array<DefAmrLUint, 2> indices;
     SFBitsetFindAllNeighbors(sfbitset_in, &neighbors);
-    for (DefAmrIndexUint i = 1; i < 9; ++i) {
+    for (DefInt i = 1; i < 9; ++i) {
         code_neighbour = neighbors[i].to_ullong();
         if (code_neighbour < code_partition_min || code_neighbour > code_partition_max) {
             SFBitsetComputeIndices(neighbors[i], &indices);
@@ -835,14 +835,14 @@ bool SFBitsetAux2D::CheckPartitionLimits(const DefSFBitset& sfbitset_in,
  * @param[in] code_domain_max maximum indicies of computational domain.
  * @param[out] ptr_map_partitioned  map of unsigned integers to unsigned integers representing the partitioned results.
  */
-void SFBitsetAux3D::FindPartitionBlocksMax(const DefSFCodeToUint& code_in, const DefAmrIndexUint block_level,
+void SFBitsetAux3D::FindPartitionBlocksMax(const DefSFCodeToUint& code_in, const DefInt block_level,
     const DefSFCodeToUint& code_partition_min, const DefSFCodeToUint& code_partition_max,
-    const std::array<DefAmrIndexLUint, 3>& code_domain_min, const std::array<DefAmrIndexLUint, 3>& code_domain_max,
-    DefMap<DefAmrIndexUint>* const ptr_map_partitioned) const {
+    const std::array<DefAmrLUint, 3>& code_domain_min, const std::array<DefAmrLUint, 3>& code_domain_max,
+    DefMap<DefInt>* const ptr_map_partitioned) const {
     DefSFCodeToUint code_remain;
     DefSFBitset bitset_tmp;
     DefSFCodeToUint code_current;
-    const DefAmrIndexLUint block_length = 1 << block_level;
+    const DefAmrLUint block_length = 1 << block_level;
     DefSFCodeToUint block_length_cubic = block_length * block_length * block_length;
     code_remain = (code_in - 1) % 8;
     code_current = (code_in - 1 - code_remain) * block_length_cubic - code_remain;
@@ -894,19 +894,19 @@ void SFBitsetAux3D::FindPartitionBlocksMax(const DefSFCodeToUint& code_in, const
  * @param[in] code_domain_max maximum indicies of computational domain.
  * @param[out] ptr_map_partitioned  map of unsigned integers to unsigned integers representing the partitioned results.
  */
-void SFBitsetAux3D::FindPartitionBlocksMin(const DefSFCodeToUint& code_in, const DefAmrIndexUint block_level,
+void SFBitsetAux3D::FindPartitionBlocksMin(const DefSFCodeToUint& code_in, const DefInt block_level,
     const DefSFCodeToUint& code_partition_min, const DefSFCodeToUint& code_partition_max,
-    const std::array<DefAmrIndexLUint, 3>& code_domain_min, const std::array<DefAmrIndexLUint, 3>& code_domain_max,
-    DefMap<DefAmrIndexUint>* const ptr_map_partitioned) const {
+    const std::array<DefAmrLUint, 3>& code_domain_min, const std::array<DefAmrLUint, 3>& code_domain_max,
+    DefMap<DefInt>* const ptr_map_partitioned) const {
     DefSFCodeToUint code_remain;
     DefSFCodeToUint code_current;
-    const DefAmrIndexLUint block_length = 1 << block_level;
-    const DefAmrIndexLUint block_length_cubic =  block_length * block_length * block_length;
+    const DefAmrLUint block_length = 1 << block_level;
+    const DefAmrLUint block_length_cubic =  block_length * block_length * block_length;
     code_remain = code_in % 8;
     code_current = (code_in + 8 - code_remain)* block_length_cubic - 1;
     DefSFBitset bitset_tmp = static_cast<DefSFBitset>(code_current);
 
-    std::array<DefAmrIndexLUint, 3> indices;
+    std::array<DefAmrLUint, 3> indices;
     SFBitsetComputeIndices(bitset_tmp, &indices);
     switch (code_remain) {
     case 7:
@@ -957,14 +957,14 @@ void SFBitsetAux3D::FindPartitionBlocksMin(const DefSFCodeToUint& code_in, const
  * @param[in] code_domain_max maximum indicies of computational domain.
  * @param[out] ptr_map_partitioned  map of unsigned integers to unsigned integers representing the partitioned results.
  */
-void SFBitsetAux3D::FindPartitionRemainMax(const DefSFCodeToUint& code_in, const DefAmrIndexUint block_level,
+void SFBitsetAux3D::FindPartitionRemainMax(const DefSFCodeToUint& code_in, const DefInt block_level,
     const DefSFCodeToUint& code_partition_min, const DefSFCodeToUint& code_partition_max,
-    const std::array<DefAmrIndexLUint, 3>& code_domain_min, const std::array<DefAmrIndexLUint, 3>& code_domain_max,
-    DefMap<DefAmrIndexUint>* const ptr_map_partitioned) const {
+    const std::array<DefAmrLUint, 3>& code_domain_min, const std::array<DefAmrLUint, 3>& code_domain_max,
+    DefMap<DefInt>* const ptr_map_partitioned) const {
     DefSFCodeToUint code_remain;
     DefSFCodeToUint code_current;
-    const DefAmrIndexLUint block_length = 1 << block_level;
-    const DefAmrIndexLUint block_length_cubic =  block_length * block_length * block_length;
+    const DefAmrLUint block_length = 1 << block_level;
+    const DefAmrLUint block_length_cubic =  block_length * block_length * block_length;
     code_current = (code_in - 1) * block_length_cubic;
     code_remain = (code_in - 1) % 8;
     DefSFCodeToUint code_min_current = code_partition_min/ block_length_cubic;
@@ -989,14 +989,14 @@ void SFBitsetAux3D::FindPartitionRemainMax(const DefSFCodeToUint& code_in, const
  * @param[in] code_domain_max maximum indicies of computational domain.
  * @param[out] ptr_map_partitioned  map of unsigned integers to unsigned integers representing the partitioned results.
  */
-void SFBitsetAux3D::FindPartitionRemainMin(const DefSFCodeToUint& code_in, const DefAmrIndexUint block_level,
+void SFBitsetAux3D::FindPartitionRemainMin(const DefSFCodeToUint& code_in, const DefInt block_level,
     const DefSFCodeToUint& code_partition_min, const DefSFCodeToUint& code_partition_max,
-    const std::array<DefAmrIndexLUint, 3>& code_domain_min, const std::array<DefAmrIndexLUint, 3>& code_domain_max,
-    DefMap<DefAmrIndexUint>* const ptr_map_partitioned) const {
+    const std::array<DefAmrLUint, 3>& code_domain_min, const std::array<DefAmrLUint, 3>& code_domain_max,
+    DefMap<DefInt>* const ptr_map_partitioned) const {
     DefSFCodeToUint code_remain;
     DefSFCodeToUint code_current;
-    const DefAmrIndexLUint block_length = 1 << block_level;
-    const DefAmrIndexLUint block_length_cubic =  block_length * block_length * block_length;
+    const DefAmrLUint block_length = 1 << block_level;
+    const DefAmrLUint block_length_cubic =  block_length * block_length * block_length;
     code_current = code_in * block_length_cubic;
     code_remain = code_in % 8;
     DefSFCodeToUint code_max_current = code_partition_max/ block_length_cubic;
@@ -1022,16 +1022,16 @@ void SFBitsetAux3D::FindPartitionRemainMin(const DefSFCodeToUint& code_in, const
  * @param[in] code_domain_max maximum indicies of computational domain.
  * @param[out] ptr_map_partitioned  map of unsigned integers to unsigned integers representing the partitioned results.
  */
-void SFBitsetAux3D::FindPartitionOneBlock(const DefSFBitset& bitset_corner, const DefAmrIndexUint block_level,
+void SFBitsetAux3D::FindPartitionOneBlock(const DefSFBitset& bitset_corner, const DefInt block_level,
     const DefSFCodeToUint& code_partition_min, const DefSFCodeToUint& code_partition_max,
-    const std::array<DefAmrIndexLUint, 3>& code_domain_min, const std::array<DefAmrIndexLUint, 3>& code_domain_max,
-    DefMap<DefAmrIndexUint>* const ptr_map_partitioned) const {
-    std::array<DefAmrIndexLUint, 3> indices;
-    const DefAmrIndexLUint block_length = 1 << block_level;
-    DefAmrIndexLUint i_max1 = block_length - 1;
+    const std::array<DefAmrLUint, 3>& code_domain_min, const std::array<DefAmrLUint, 3>& code_domain_max,
+    DefMap<DefInt>* const ptr_map_partitioned) const {
+    std::array<DefAmrLUint, 3> indices;
+    const DefAmrLUint block_length = 1 << block_level;
+    DefAmrLUint i_max1 = block_length - 1;
     SFBitsetComputeIndices(bitset_corner, &indices);
     DefSFBitset bitset_tmp = bitset_corner, bitset_tmp2 = bitset_corner;
-    DefAmrIndexLUint index_x = indices[kXIndex], index_y = indices[kYIndex], index_z = indices[kZIndex];
+    DefAmrLUint index_x = indices[kXIndex], index_y = indices[kYIndex], index_z = indices[kZIndex];
     if (block_length == 1) {
         if (index_x >= code_domain_min[kXIndex] && index_x <= code_domain_max[kXIndex]
             && index_y >= code_domain_min[kYIndex] && index_y <= code_domain_max[kYIndex]
@@ -1043,9 +1043,9 @@ void SFBitsetAux3D::FindPartitionOneBlock(const DefSFBitset& bitset_corner, cons
         }
     } else {
         // bottom surface
-        for (DefAmrIndexLUint iy = 0;  iy <= i_max1; ++iy) {
+        for (DefAmrLUint iy = 0;  iy <= i_max1; ++iy) {
             bitset_tmp = bitset_tmp2;
-            for (DefAmrIndexLUint ix = 0;  ix <= i_max1; ++ix) {
+            for (DefAmrLUint ix = 0;  ix <= i_max1; ++ix) {
                 if (index_x >= code_domain_min[kXIndex] && index_x <= code_domain_max[kXIndex]
                     && index_y >= code_domain_min[kYIndex] && index_y <= code_domain_max[kYIndex]
                     && index_z >= code_domain_min[kZIndex] && index_z <= code_domain_max[kZIndex]
@@ -1065,11 +1065,11 @@ void SFBitsetAux3D::FindPartitionOneBlock(const DefSFBitset& bitset_corner, cons
         index_x = indices[kXIndex];
         index_y = indices[kYIndex];
         bitset_tmp2 = bitset_corner;
-        for (DefAmrIndexLUint iz = 1; iz < i_max1; ++iz) {
+        for (DefAmrLUint iz = 1; iz < i_max1; ++iz) {
             bitset_tmp2 =  FindZPos(bitset_tmp2);
             bitset_tmp = bitset_tmp2;
             ++index_z;
-            for (DefAmrIndexLUint ix = 0;  ix < i_max1; ++ix) {
+            for (DefAmrLUint ix = 0;  ix < i_max1; ++ix) {
                 if (index_x >= code_domain_min[kXIndex] && index_x <= code_domain_max[kXIndex]
                     && index_y >= code_domain_min[kYIndex] && index_y <= code_domain_max[kYIndex]
                     && index_z >= code_domain_min[kZIndex] && index_z <= code_domain_max[kZIndex]
@@ -1081,7 +1081,7 @@ void SFBitsetAux3D::FindPartitionOneBlock(const DefSFBitset& bitset_corner, cons
                 bitset_tmp = FindXPos(bitset_tmp);
                 ++index_x;
             }
-            for (DefAmrIndexLUint iy = 0;  iy < i_max1; ++iy) {
+            for (DefAmrLUint iy = 0;  iy < i_max1; ++iy) {
                 if (index_x >= code_domain_min[kXIndex] && index_x <= code_domain_max[kXIndex]
                     && index_y >= code_domain_min[kYIndex] && index_y <= code_domain_max[kYIndex]
                     && index_z >= code_domain_min[kZIndex] && index_z <= code_domain_max[kZIndex]
@@ -1093,7 +1093,7 @@ void SFBitsetAux3D::FindPartitionOneBlock(const DefSFBitset& bitset_corner, cons
                 bitset_tmp = FindYPos(bitset_tmp);
                 ++index_y;
             }
-            for (DefAmrIndexLUint ix = 0;  ix < i_max1; ++ix) {
+            for (DefAmrLUint ix = 0;  ix < i_max1; ++ix) {
                 if (index_x >= code_domain_min[kXIndex] && index_x <= code_domain_max[kXIndex]
                     && index_y >= code_domain_min[kYIndex] && index_y <= code_domain_max[kYIndex]
                     && index_z >= code_domain_min[kZIndex] && index_z <= code_domain_max[kZIndex]
@@ -1105,7 +1105,7 @@ void SFBitsetAux3D::FindPartitionOneBlock(const DefSFBitset& bitset_corner, cons
                 bitset_tmp = FindXNeg(bitset_tmp);
                 --index_x;
             }
-            for (DefAmrIndexLUint iy = 0;  iy < i_max1; ++iy) {
+            for (DefAmrLUint iy = 0;  iy < i_max1; ++iy) {
                 if (index_x >= code_domain_min[kXIndex] && index_x <= code_domain_max[kXIndex]
                     && index_y >= code_domain_min[kYIndex] && index_y <= code_domain_max[kYIndex]
                     && index_z >= code_domain_min[kZIndex] && index_z <= code_domain_max[kZIndex]
@@ -1123,9 +1123,9 @@ void SFBitsetAux3D::FindPartitionOneBlock(const DefSFBitset& bitset_corner, cons
         index_y = indices[kYIndex];
         bitset_tmp2 =  FindZPos(bitset_tmp2);
         ++index_z;
-        for (DefAmrIndexLUint iy = 0;  iy <= i_max1; ++iy) {
+        for (DefAmrLUint iy = 0;  iy <= i_max1; ++iy) {
             bitset_tmp = bitset_tmp2;
-            for (DefAmrIndexLUint ix = 0;  ix <= i_max1; ++ix) {
+            for (DefAmrLUint ix = 0;  ix <= i_max1; ++ix) {
                 if (index_x >= code_domain_min[kXIndex] && index_x <= code_domain_max[kXIndex]
                     && index_y >= code_domain_min[kYIndex] && index_y <= code_domain_max[kYIndex]
                     && index_z >= code_domain_min[kZIndex] && index_z <= code_domain_max[kZIndex]
@@ -1153,16 +1153,16 @@ void SFBitsetAux3D::FindPartitionOneBlock(const DefSFBitset& bitset_corner, cons
  * @param[in] code_domain_max maximum indicies of computational domain.
  * @param[out] ptr_map_partitioned  map of unsigned integers to unsigned integers representing the partitioned results.
  */
-void SFBitsetAux3D::FindPartition2BlocksMax(const DefSFBitset& bitset_min_corner, const DefAmrIndexUint block_level,
+void SFBitsetAux3D::FindPartition2BlocksMax(const DefSFBitset& bitset_min_corner, const DefInt block_level,
     const DefSFCodeToUint& code_partition_min, const DefSFCodeToUint& code_partition_max,
-    const std::array<DefAmrIndexLUint, 3>& code_domain_min, const std::array<DefAmrIndexLUint, 3>& code_domain_max,
-    DefMap<DefAmrIndexUint>* const ptr_map_partitioned) const {
-    std::array<DefAmrIndexLUint, 3> indices;
-    const DefAmrIndexLUint block_length = 1 << block_level;
-    DefAmrIndexLUint i_max1 = block_length - 1, i_max2 = block_length *2 - 1;
+    const std::array<DefAmrLUint, 3>& code_domain_min, const std::array<DefAmrLUint, 3>& code_domain_max,
+    DefMap<DefInt>* const ptr_map_partitioned) const {
+    std::array<DefAmrLUint, 3> indices;
+    const DefAmrLUint block_length = 1 << block_level;
+    DefAmrLUint i_max1 = block_length - 1, i_max2 = block_length *2 - 1;
     SFBitsetComputeIndices(bitset_min_corner, &indices);
     DefSFBitset bitset_tmp = bitset_min_corner, bitset_tmp2 = bitset_min_corner;
-    DefAmrIndexLUint index_x = indices[kXIndex], index_y = indices[kYIndex], index_z = indices[kZIndex];
+    DefAmrLUint index_x = indices[kXIndex], index_y = indices[kYIndex], index_z = indices[kZIndex];
     if (block_length == 1) {
         if (index_x >= code_domain_min[kXIndex] && index_x <= code_domain_max[kXIndex]
             && index_y >= code_domain_min[kYIndex] && index_y <= code_domain_max[kYIndex]
@@ -1184,9 +1184,9 @@ void SFBitsetAux3D::FindPartition2BlocksMax(const DefSFBitset& bitset_min_corner
         }
     } else {
         // bottom surface
-        for (DefAmrIndexLUint iy = 0;  iy <= i_max1; ++iy) {
+        for (DefAmrLUint iy = 0;  iy <= i_max1; ++iy) {
             bitset_tmp = bitset_tmp2;
-            for (DefAmrIndexLUint ix = 0;  ix <= i_max2; ++ix) {
+            for (DefAmrLUint ix = 0;  ix <= i_max2; ++ix) {
                 if (index_x >= code_domain_min[kXIndex] && index_x <= code_domain_max[kXIndex]
                     && index_y >= code_domain_min[kYIndex] && index_y <= code_domain_max[kYIndex]
                     && index_z >= code_domain_min[kZIndex] && index_z <= code_domain_max[kZIndex]
@@ -1206,11 +1206,11 @@ void SFBitsetAux3D::FindPartition2BlocksMax(const DefSFBitset& bitset_min_corner
         index_x = indices[kXIndex];
         index_y = indices[kYIndex];
         bitset_tmp2 = bitset_min_corner;
-        for (DefAmrIndexLUint iz = 1; iz < i_max1; ++iz) {
+        for (DefAmrLUint iz = 1; iz < i_max1; ++iz) {
             bitset_tmp2 =  FindZPos(bitset_tmp2);
             bitset_tmp = bitset_tmp2;
             ++index_z;
-            for (DefAmrIndexLUint ix = 0;  ix < i_max2; ++ix) {
+            for (DefAmrLUint ix = 0;  ix < i_max2; ++ix) {
                 if (index_x >= code_domain_min[kXIndex] && index_x <= code_domain_max[kXIndex]
                     && index_y >= code_domain_min[kYIndex] && index_y <= code_domain_max[kYIndex]
                     && index_z >= code_domain_min[kZIndex] && index_z <= code_domain_max[kZIndex]
@@ -1222,7 +1222,7 @@ void SFBitsetAux3D::FindPartition2BlocksMax(const DefSFBitset& bitset_min_corner
                 bitset_tmp = FindXPos(bitset_tmp);
                 ++index_x;
             }
-            for (DefAmrIndexLUint iy = 0;  iy < i_max1; ++iy) {
+            for (DefAmrLUint iy = 0;  iy < i_max1; ++iy) {
                 if (index_x >= code_domain_min[kXIndex] && index_x <= code_domain_max[kXIndex]
                     && index_y >= code_domain_min[kYIndex] && index_y <= code_domain_max[kYIndex]
                     && index_z >= code_domain_min[kZIndex] && index_z <= code_domain_max[kZIndex]
@@ -1234,7 +1234,7 @@ void SFBitsetAux3D::FindPartition2BlocksMax(const DefSFBitset& bitset_min_corner
                 bitset_tmp = FindYPos(bitset_tmp);
                 ++index_y;
             }
-            for (DefAmrIndexLUint ix = 0;  ix < i_max2; ++ix) {
+            for (DefAmrLUint ix = 0;  ix < i_max2; ++ix) {
                 if (index_x >= code_domain_min[kXIndex] && index_x <= code_domain_max[kXIndex]
                     && index_y >= code_domain_min[kYIndex] && index_y <= code_domain_max[kYIndex]
                     && index_z >= code_domain_min[kZIndex] && index_z <= code_domain_max[kZIndex]
@@ -1246,7 +1246,7 @@ void SFBitsetAux3D::FindPartition2BlocksMax(const DefSFBitset& bitset_min_corner
                 bitset_tmp = FindXNeg(bitset_tmp);
                 --index_x;
             }
-            for (DefAmrIndexLUint iy = 0;  iy < i_max1; ++iy) {
+            for (DefAmrLUint iy = 0;  iy < i_max1; ++iy) {
                 if (index_x >= code_domain_min[kXIndex] && index_x <= code_domain_max[kXIndex]
                     && index_y >= code_domain_min[kYIndex] && index_y <= code_domain_max[kYIndex]
                     && index_z >= code_domain_min[kZIndex] && index_z <= code_domain_max[kZIndex]
@@ -1264,9 +1264,9 @@ void SFBitsetAux3D::FindPartition2BlocksMax(const DefSFBitset& bitset_min_corner
         index_y = indices[kYIndex];
         bitset_tmp2 =  FindZPos(bitset_tmp2);
         ++index_z;
-        for (DefAmrIndexLUint iy = 0;  iy <= i_max1; ++iy) {
+        for (DefAmrLUint iy = 0;  iy <= i_max1; ++iy) {
             bitset_tmp = bitset_tmp2;
-            for (DefAmrIndexLUint ix = 0;  ix <= i_max2; ++ix) {
+            for (DefAmrLUint ix = 0;  ix <= i_max2; ++ix) {
                 if (index_x >= code_domain_min[kXIndex] && index_x <= code_domain_max[kXIndex]
                     && index_y >= code_domain_min[kYIndex] && index_y <= code_domain_max[kYIndex]
                     && index_z >= code_domain_min[kZIndex] && index_z <= code_domain_max[kZIndex]
@@ -1294,16 +1294,16 @@ void SFBitsetAux3D::FindPartition2BlocksMax(const DefSFBitset& bitset_min_corner
  * @param[in] code_domain_max maximum indicies of computational domain.
  * @param[out] ptr_map_partitioned  map of unsigned integers to unsigned integers representing the partitioned results.
  */
-void SFBitsetAux3D::FindPartition3BlocksMax(const DefSFBitset& bitset_min_corner, const DefAmrIndexUint block_level,
+void SFBitsetAux3D::FindPartition3BlocksMax(const DefSFBitset& bitset_min_corner, const DefInt block_level,
     const DefSFCodeToUint& code_partition_min, const DefSFCodeToUint& code_partition_max,
-    const std::array<DefAmrIndexLUint, 3>& code_domain_min, const std::array<DefAmrIndexLUint, 3>& code_domain_max,
-    DefMap<DefAmrIndexUint>* const ptr_map_partitioned) const {
-    std::array<DefAmrIndexLUint, 3> indices;
-    const DefAmrIndexLUint block_length = 1 << block_level;
-    DefAmrIndexLUint i_max1 = block_length - 1, i_max2 = block_length *2 - 1;
+    const std::array<DefAmrLUint, 3>& code_domain_min, const std::array<DefAmrLUint, 3>& code_domain_max,
+    DefMap<DefInt>* const ptr_map_partitioned) const {
+    std::array<DefAmrLUint, 3> indices;
+    const DefAmrLUint block_length = 1 << block_level;
+    DefAmrLUint i_max1 = block_length - 1, i_max2 = block_length *2 - 1;
     SFBitsetComputeIndices(bitset_min_corner, &indices);
     DefSFBitset bitset_tmp = bitset_min_corner, bitset_tmp2 = bitset_min_corner;
-    DefAmrIndexLUint index_x = indices[kXIndex], index_y = indices[kYIndex], index_z = indices[kZIndex];
+    DefAmrLUint index_x = indices[kXIndex], index_y = indices[kYIndex], index_z = indices[kZIndex];
     if (block_length == 1) {
         if (index_x >= code_domain_min[kXIndex] && index_x <= code_domain_max[kXIndex]
             && index_y >= code_domain_min[kYIndex] && index_y <= code_domain_max[kYIndex]
@@ -1336,9 +1336,9 @@ void SFBitsetAux3D::FindPartition3BlocksMax(const DefSFBitset& bitset_min_corner
         }
     } else {
         // bottom surface
-        for (DefAmrIndexLUint iy = 0;  iy <= i_max1; ++iy) {
+        for (DefAmrLUint iy = 0;  iy <= i_max1; ++iy) {
             bitset_tmp = bitset_tmp2;
-            for (DefAmrIndexLUint ix = 0;  ix <= i_max2; ++ix) {
+            for (DefAmrLUint ix = 0;  ix <= i_max2; ++ix) {
                 if (index_x >= code_domain_min[kXIndex] && index_x <= code_domain_max[kXIndex]
                     && index_y >= code_domain_min[kYIndex] && index_y <= code_domain_max[kYIndex]
                     && index_z >= code_domain_min[kZIndex] && index_z <= code_domain_max[kZIndex]
@@ -1354,9 +1354,9 @@ void SFBitsetAux3D::FindPartition3BlocksMax(const DefSFBitset& bitset_min_corner
             index_x = indices[kXIndex];
             ++index_y;
         }
-        for (DefAmrIndexLUint iy = 0;  iy <= i_max1; ++iy) {
+        for (DefAmrLUint iy = 0;  iy <= i_max1; ++iy) {
             bitset_tmp = bitset_tmp2;
-            for (DefAmrIndexLUint ix = 0;  ix <= i_max1; ++ix) {
+            for (DefAmrLUint ix = 0;  ix <= i_max1; ++ix) {
                 if (index_x >= code_domain_min[kXIndex] && index_x <= code_domain_max[kXIndex]
                     && index_y >= code_domain_min[kYIndex] && index_y <= code_domain_max[kYIndex]
                     && index_z >= code_domain_min[kZIndex] && index_z <= code_domain_max[kZIndex]
@@ -1376,11 +1376,11 @@ void SFBitsetAux3D::FindPartition3BlocksMax(const DefSFBitset& bitset_min_corner
         index_x = indices[kXIndex];
         index_y = indices[kYIndex];
         bitset_tmp2 = bitset_min_corner;
-        for (DefAmrIndexLUint iz = 1; iz < i_max1; ++iz) {
+        for (DefAmrLUint iz = 1; iz < i_max1; ++iz) {
             bitset_tmp2 =  FindZPos(bitset_tmp2);
             bitset_tmp = bitset_tmp2;
             ++index_z;
-            for (DefAmrIndexLUint ix = 0; ix < i_max2; ++ix) {
+            for (DefAmrLUint ix = 0; ix < i_max2; ++ix) {
                 if (index_x >= code_domain_min[kXIndex] && index_x <= code_domain_max[kXIndex]
                     && index_y >= code_domain_min[kYIndex] && index_y <= code_domain_max[kYIndex]
                     && index_z >= code_domain_min[kZIndex] && index_z <= code_domain_max[kZIndex]
@@ -1392,7 +1392,7 @@ void SFBitsetAux3D::FindPartition3BlocksMax(const DefSFBitset& bitset_min_corner
                 bitset_tmp = FindXPos(bitset_tmp);
                 ++index_x;
             }
-            for (DefAmrIndexLUint iy = 0; iy < i_max1; ++iy) {
+            for (DefAmrLUint iy = 0; iy < i_max1; ++iy) {
                 if (index_x >= code_domain_min[kXIndex] && index_x <= code_domain_max[kXIndex]
                     && index_y >= code_domain_min[kYIndex] && index_y <= code_domain_max[kYIndex]
                     && index_z >= code_domain_min[kZIndex] && index_z <= code_domain_max[kZIndex]
@@ -1404,7 +1404,7 @@ void SFBitsetAux3D::FindPartition3BlocksMax(const DefSFBitset& bitset_min_corner
                 bitset_tmp = FindYPos(bitset_tmp);
                 ++index_y;
             }
-            for (DefAmrIndexLUint ix = 0; ix <= i_max1; ++ix) {
+            for (DefAmrLUint ix = 0; ix <= i_max1; ++ix) {
                 if (index_x >= code_domain_min[kXIndex] && index_x <= code_domain_max[kXIndex]
                     && index_y >= code_domain_min[kYIndex] && index_y <= code_domain_max[kYIndex]
                     && index_z >= code_domain_min[kZIndex] && index_z <= code_domain_max[kZIndex]
@@ -1416,7 +1416,7 @@ void SFBitsetAux3D::FindPartition3BlocksMax(const DefSFBitset& bitset_min_corner
                 bitset_tmp = FindXNeg(bitset_tmp);
                 --index_x;
             }
-            for (DefAmrIndexLUint iy = 0; iy <= i_max1; ++iy) {
+            for (DefAmrLUint iy = 0; iy <= i_max1; ++iy) {
                 if (index_x >= code_domain_min[kXIndex] && index_x <= code_domain_max[kXIndex]
                     && index_y >= code_domain_min[kYIndex] && index_y <= code_domain_max[kYIndex]
                     && index_z >= code_domain_min[kZIndex] && index_z <= code_domain_max[kZIndex]
@@ -1428,7 +1428,7 @@ void SFBitsetAux3D::FindPartition3BlocksMax(const DefSFBitset& bitset_min_corner
                 bitset_tmp = FindYPos(bitset_tmp);
                 ++index_y;
             }
-            for (DefAmrIndexLUint ix = 0; ix < i_max1; ++ix) {
+            for (DefAmrLUint ix = 0; ix < i_max1; ++ix) {
                 if (index_x >= code_domain_min[kXIndex] && index_x <= code_domain_max[kXIndex]
                     && index_y >= code_domain_min[kYIndex] && index_y <= code_domain_max[kYIndex]
                     && index_z >= code_domain_min[kZIndex] && index_z <= code_domain_max[kZIndex]
@@ -1440,7 +1440,7 @@ void SFBitsetAux3D::FindPartition3BlocksMax(const DefSFBitset& bitset_min_corner
                 bitset_tmp = FindXNeg(bitset_tmp);
                 --index_x;
             }
-            for (DefAmrIndexLUint iy = 0; iy < i_max2; ++iy) {
+            for (DefAmrLUint iy = 0; iy < i_max2; ++iy) {
                 if (index_x >= code_domain_min[kXIndex] && index_x <= code_domain_max[kXIndex]
                     && index_y >= code_domain_min[kYIndex] && index_y <= code_domain_max[kYIndex]
                     && index_z >= code_domain_min[kZIndex] && index_z <= code_domain_max[kZIndex]
@@ -1458,9 +1458,9 @@ void SFBitsetAux3D::FindPartition3BlocksMax(const DefSFBitset& bitset_min_corner
         index_y = indices[kYIndex];
         bitset_tmp2 =  FindZPos(bitset_tmp2);
         ++index_z;
-        for (DefAmrIndexLUint iy = 0;  iy <= i_max1; ++iy) {
+        for (DefAmrLUint iy = 0;  iy <= i_max1; ++iy) {
             bitset_tmp = bitset_tmp2;
-            for (DefAmrIndexLUint ix = 0;  ix <= i_max2; ++ix) {
+            for (DefAmrLUint ix = 0;  ix <= i_max2; ++ix) {
                 if (index_x >= code_domain_min[kXIndex] && index_x <= code_domain_max[kXIndex]
                     && index_y >= code_domain_min[kYIndex] && index_y <= code_domain_max[kYIndex]
                     && index_z >= code_domain_min[kZIndex] && index_z <= code_domain_max[kZIndex]
@@ -1476,9 +1476,9 @@ void SFBitsetAux3D::FindPartition3BlocksMax(const DefSFBitset& bitset_min_corner
             index_x = indices[kXIndex];
             ++index_y;
         }
-        for (DefAmrIndexLUint iy = 0;  iy <= i_max1; ++iy) {
+        for (DefAmrLUint iy = 0;  iy <= i_max1; ++iy) {
             bitset_tmp = bitset_tmp2;
-            for (DefAmrIndexLUint ix = 0;  ix <= i_max1; ++ix) {
+            for (DefAmrLUint ix = 0;  ix <= i_max1; ++ix) {
                 if (index_x >= code_domain_min[kXIndex] && index_x <= code_domain_max[kXIndex]
                     && index_y >= code_domain_min[kYIndex] && index_y <= code_domain_max[kYIndex]
                     && index_z >= code_domain_min[kZIndex] && index_z <= code_domain_max[kZIndex]
@@ -1506,16 +1506,16 @@ void SFBitsetAux3D::FindPartition3BlocksMax(const DefSFBitset& bitset_min_corner
  * @param[in] code_domain_max maximum indicies of computational domain.
  * @param[out] ptr_map_partitioned  map of unsigned integers to unsigned integers representing the partitioned results.
  */
-void SFBitsetAux3D::FindPartition4BlocksMax(const DefSFBitset& bitset_min_corner, const DefAmrIndexUint block_level,
+void SFBitsetAux3D::FindPartition4BlocksMax(const DefSFBitset& bitset_min_corner, const DefInt block_level,
     const DefSFCodeToUint& code_partition_min, const DefSFCodeToUint& code_partition_max,
-    const std::array<DefAmrIndexLUint, 3>& code_domain_min, const std::array<DefAmrIndexLUint, 3>& code_domain_max,
-    DefMap<DefAmrIndexUint>* const ptr_map_partitioned) const {
-    std::array<DefAmrIndexLUint, 3> indices;
-    const DefAmrIndexLUint block_length = 1 << block_level;
-    DefAmrIndexLUint i_max1 = block_length - 1, i_max2 = block_length *2 - 1;
+    const std::array<DefAmrLUint, 3>& code_domain_min, const std::array<DefAmrLUint, 3>& code_domain_max,
+    DefMap<DefInt>* const ptr_map_partitioned) const {
+    std::array<DefAmrLUint, 3> indices;
+    const DefAmrLUint block_length = 1 << block_level;
+    DefAmrLUint i_max1 = block_length - 1, i_max2 = block_length *2 - 1;
     SFBitsetComputeIndices(bitset_min_corner, &indices);
     DefSFBitset bitset_tmp = bitset_min_corner, bitset_tmp2 = bitset_min_corner;
-    DefAmrIndexLUint index_x = indices[kXIndex], index_y = indices[kYIndex], index_z = indices[kZIndex];
+    DefAmrLUint index_x = indices[kXIndex], index_y = indices[kYIndex], index_z = indices[kZIndex];
     if (block_length == 1) {
         if (index_x >= code_domain_min[kXIndex] && index_x <= code_domain_max[kXIndex]
             && index_y >= code_domain_min[kYIndex] && index_y <= code_domain_max[kYIndex]
@@ -1557,9 +1557,9 @@ void SFBitsetAux3D::FindPartition4BlocksMax(const DefSFBitset& bitset_min_corner
         }
     } else {
         // bottom surface
-        for (DefAmrIndexLUint iy = 0;  iy <= i_max2; ++iy) {
+        for (DefAmrLUint iy = 0;  iy <= i_max2; ++iy) {
             bitset_tmp = bitset_tmp2;
-            for (DefAmrIndexLUint ix = 0;  ix <= i_max2; ++ix) {
+            for (DefAmrLUint ix = 0;  ix <= i_max2; ++ix) {
                 if (index_x >= code_domain_min[kXIndex] && index_x <= code_domain_max[kXIndex]
                     && index_y >= code_domain_min[kYIndex] && index_y <= code_domain_max[kYIndex]
                     && index_z >= code_domain_min[kZIndex] && index_z <= code_domain_max[kZIndex]
@@ -1579,11 +1579,11 @@ void SFBitsetAux3D::FindPartition4BlocksMax(const DefSFBitset& bitset_min_corner
         index_x = indices[kXIndex];
         index_y = indices[kYIndex];
         bitset_tmp2 = bitset_min_corner;
-        for (DefAmrIndexLUint iz = 1; iz < i_max1; ++iz) {
+        for (DefAmrLUint iz = 1; iz < i_max1; ++iz) {
             bitset_tmp2 =  FindZPos(bitset_tmp2);
             bitset_tmp = bitset_tmp2;
             ++index_z;
-            for (DefAmrIndexLUint ix = 0;  ix < i_max2; ++ix) {
+            for (DefAmrLUint ix = 0;  ix < i_max2; ++ix) {
                 if (index_x >= code_domain_min[kXIndex] && index_x <= code_domain_max[kXIndex]
                     && index_y >= code_domain_min[kYIndex] && index_y <= code_domain_max[kYIndex]
                     && index_z >= code_domain_min[kZIndex] && index_z <= code_domain_max[kZIndex]
@@ -1595,7 +1595,7 @@ void SFBitsetAux3D::FindPartition4BlocksMax(const DefSFBitset& bitset_min_corner
                 bitset_tmp = FindXPos(bitset_tmp);
                 ++index_x;
             }
-            for (DefAmrIndexLUint iy = 0;  iy < i_max2; ++iy) {
+            for (DefAmrLUint iy = 0;  iy < i_max2; ++iy) {
                 if (index_x >= code_domain_min[kXIndex] && index_x <= code_domain_max[kXIndex]
                     && index_y >= code_domain_min[kYIndex] && index_y <= code_domain_max[kYIndex]
                     && index_z >= code_domain_min[kZIndex] && index_z <= code_domain_max[kZIndex]
@@ -1607,7 +1607,7 @@ void SFBitsetAux3D::FindPartition4BlocksMax(const DefSFBitset& bitset_min_corner
                 bitset_tmp = FindYPos(bitset_tmp);
                 ++index_y;
             }
-            for (DefAmrIndexLUint ix = 0;  ix < i_max2; ++ix) {
+            for (DefAmrLUint ix = 0;  ix < i_max2; ++ix) {
                 if (index_x >= code_domain_min[kXIndex] && index_x <= code_domain_max[kXIndex]
                     && index_y >= code_domain_min[kYIndex] && index_y <= code_domain_max[kYIndex]
                     && index_z >= code_domain_min[kZIndex] && index_z <= code_domain_max[kZIndex]
@@ -1619,7 +1619,7 @@ void SFBitsetAux3D::FindPartition4BlocksMax(const DefSFBitset& bitset_min_corner
                 bitset_tmp = FindXNeg(bitset_tmp);
                 --index_x;
             }
-            for (DefAmrIndexLUint iy = 0;  iy < i_max2; ++iy) {
+            for (DefAmrLUint iy = 0;  iy < i_max2; ++iy) {
                 if (index_x >= code_domain_min[kXIndex] && index_x <= code_domain_max[kXIndex]
                     && index_y >= code_domain_min[kYIndex] && index_y <= code_domain_max[kYIndex]
                     && index_z >= code_domain_min[kZIndex] && index_z <= code_domain_max[kZIndex]
@@ -1637,9 +1637,9 @@ void SFBitsetAux3D::FindPartition4BlocksMax(const DefSFBitset& bitset_min_corner
         index_y = indices[kYIndex];
         bitset_tmp2 =  FindZPos(bitset_tmp2);
         ++index_z;
-        for (DefAmrIndexLUint iy = 0;  iy <= i_max2; ++iy) {
+        for (DefAmrLUint iy = 0;  iy <= i_max2; ++iy) {
             bitset_tmp = bitset_tmp2;
-            for (DefAmrIndexLUint ix = 0;  ix <= i_max2; ++ix) {
+            for (DefAmrLUint ix = 0;  ix <= i_max2; ++ix) {
                 if (index_x >= code_domain_min[kXIndex] && index_x <= code_domain_max[kXIndex]
                     && index_y >= code_domain_min[kYIndex] && index_y <= code_domain_max[kYIndex]
                     && index_z >= code_domain_min[kZIndex] && index_z <= code_domain_max[kZIndex]
@@ -1667,16 +1667,16 @@ void SFBitsetAux3D::FindPartition4BlocksMax(const DefSFBitset& bitset_min_corner
  * @param[in] code_domain_max maximum indicies of computational domain.
  * @param[out] ptr_map_partitioned  map of unsigned integers to unsigned integers representing the partitioned results.
  */
-void SFBitsetAux3D::FindPartition5BlocksMax(const DefSFBitset& bitset_min_corner, const DefAmrIndexUint block_level,
+void SFBitsetAux3D::FindPartition5BlocksMax(const DefSFBitset& bitset_min_corner, const DefInt block_level,
     const DefSFCodeToUint& code_partition_min, const DefSFCodeToUint& code_partition_max,
-    const std::array<DefAmrIndexLUint, 3>& code_domain_min, const std::array<DefAmrIndexLUint, 3>& code_domain_max,
-    DefMap<DefAmrIndexUint>* const ptr_map_partitioned) const {
-    std::array<DefAmrIndexLUint, 3> indices;
-    const DefAmrIndexLUint block_length = 1 << block_level;
-    DefAmrIndexLUint i_max1 = block_length - 1, i_max2 = block_length *2 - 1;
+    const std::array<DefAmrLUint, 3>& code_domain_min, const std::array<DefAmrLUint, 3>& code_domain_max,
+    DefMap<DefInt>* const ptr_map_partitioned) const {
+    std::array<DefAmrLUint, 3> indices;
+    const DefAmrLUint block_length = 1 << block_level;
+    DefAmrLUint i_max1 = block_length - 1, i_max2 = block_length *2 - 1;
     SFBitsetComputeIndices(bitset_min_corner, &indices);
     DefSFBitset bitset_tmp = bitset_min_corner, bitset_tmp2 = bitset_min_corner;
-    DefAmrIndexLUint index_x = indices[kXIndex], index_y = indices[kYIndex], index_z = indices[kZIndex];
+    DefAmrLUint index_x = indices[kXIndex], index_y = indices[kYIndex], index_z = indices[kZIndex];
     if (block_length == 1) {
          if (index_x >= code_domain_min[kXIndex] && index_x <= code_domain_max[kXIndex]
             && index_y >= code_domain_min[kYIndex] && index_y <= code_domain_max[kYIndex]
@@ -1730,9 +1730,9 @@ void SFBitsetAux3D::FindPartition5BlocksMax(const DefSFBitset& bitset_min_corner
         }
     } else {
         // bottom surface
-        for (DefAmrIndexLUint iy = 0;  iy <= i_max2; ++iy) {
+        for (DefAmrLUint iy = 0;  iy <= i_max2; ++iy) {
             bitset_tmp = bitset_tmp2;
-            for (DefAmrIndexLUint ix = 0;  ix <= i_max2; ++ix) {
+            for (DefAmrLUint ix = 0;  ix <= i_max2; ++ix) {
                 if (index_x >= code_domain_min[kXIndex] && index_x <= code_domain_max[kXIndex]
                     && index_y >= code_domain_min[kYIndex] && index_y <= code_domain_max[kYIndex]
                     && index_z >= code_domain_min[kZIndex] && index_z <= code_domain_max[kZIndex]
@@ -1752,11 +1752,11 @@ void SFBitsetAux3D::FindPartition5BlocksMax(const DefSFBitset& bitset_min_corner
         index_x = indices[kXIndex];
         index_y = indices[kYIndex];
         bitset_tmp2 = bitset_min_corner;
-        for (DefAmrIndexLUint iz = 1; iz < i_max1; ++iz) {
+        for (DefAmrLUint iz = 1; iz < i_max1; ++iz) {
             bitset_tmp2 =  FindZPos(bitset_tmp2);
             ++index_z;
             bitset_tmp = bitset_tmp2;
-            for (DefAmrIndexLUint ix = 0;  ix < i_max2; ++ix) {
+            for (DefAmrLUint ix = 0;  ix < i_max2; ++ix) {
                 if (index_x >= code_domain_min[kXIndex] && index_x <= code_domain_max[kXIndex]
                     && index_y >= code_domain_min[kYIndex] && index_y <= code_domain_max[kYIndex]
                     && index_z >= code_domain_min[kZIndex] && index_z <= code_domain_max[kZIndex]
@@ -1768,7 +1768,7 @@ void SFBitsetAux3D::FindPartition5BlocksMax(const DefSFBitset& bitset_min_corner
                 bitset_tmp = FindXPos(bitset_tmp);
                 ++index_x;
             }
-            for (DefAmrIndexLUint iy = 0;  iy < i_max2; ++iy) {
+            for (DefAmrLUint iy = 0;  iy < i_max2; ++iy) {
                 if (index_x >= code_domain_min[kXIndex] && index_x <= code_domain_max[kXIndex]
                     && index_y >= code_domain_min[kYIndex] && index_y <= code_domain_max[kYIndex]
                     && index_z >= code_domain_min[kZIndex] && index_z <= code_domain_max[kZIndex]
@@ -1780,7 +1780,7 @@ void SFBitsetAux3D::FindPartition5BlocksMax(const DefSFBitset& bitset_min_corner
                 bitset_tmp = FindYPos(bitset_tmp);
                 ++index_y;
             }
-            for (DefAmrIndexLUint ix = 0;  ix < i_max2; ++ix) {
+            for (DefAmrLUint ix = 0;  ix < i_max2; ++ix) {
                 if (index_x >= code_domain_min[kXIndex] && index_x <= code_domain_max[kXIndex]
                     && index_y >= code_domain_min[kYIndex] && index_y <= code_domain_max[kYIndex]
                     && index_z >= code_domain_min[kZIndex] && index_z <= code_domain_max[kZIndex]
@@ -1792,7 +1792,7 @@ void SFBitsetAux3D::FindPartition5BlocksMax(const DefSFBitset& bitset_min_corner
                 bitset_tmp = FindXNeg(bitset_tmp);
                 --index_x;
             }
-            for (DefAmrIndexLUint iy = 0;  iy < i_max2; ++iy) {
+            for (DefAmrLUint iy = 0;  iy < i_max2; ++iy) {
                 if (index_x >= code_domain_min[kXIndex] && index_x <= code_domain_max[kXIndex]
                     && index_y >= code_domain_min[kYIndex] && index_y <= code_domain_max[kYIndex]
                     && index_z >= code_domain_min[kZIndex] && index_z <= code_domain_max[kZIndex]
@@ -1806,7 +1806,7 @@ void SFBitsetAux3D::FindPartition5BlocksMax(const DefSFBitset& bitset_min_corner
             }
         }
         // middle top surface
-        std::array<DefAmrIndexLUint, 3> indices2;
+        std::array<DefAmrLUint, 3> indices2;
         bitset_tmp = SFBitsetToNLowerLevel(block_level, bitset_min_corner);
         bitset_tmp = FindXPos(bitset_tmp);
         bitset_tmp = FindZPos(bitset_tmp);
@@ -1816,9 +1816,9 @@ void SFBitsetAux3D::FindPartition5BlocksMax(const DefSFBitset& bitset_min_corner
         index_x = indices2[kXIndex];
         index_y = indices2[kYIndex];
         index_z = indices2[kZIndex];
-        for (DefAmrIndexLUint iy = 0;  iy <= i_max1; ++iy) {
+        for (DefAmrLUint iy = 0;  iy <= i_max1; ++iy) {
             bitset_tmp = bitset_tmp2;
-            for (DefAmrIndexLUint ix = 0;  ix <= i_max1; ++ix) {
+            for (DefAmrLUint ix = 0;  ix <= i_max1; ++ix) {
                 if (index_x >= code_domain_min[kXIndex] && index_x <= code_domain_max[kXIndex]
                     && index_y >= code_domain_min[kYIndex] && index_y <= code_domain_max[kYIndex]
                     && index_z >= code_domain_min[kZIndex] && index_z <= code_domain_max[kZIndex]
@@ -1843,9 +1843,9 @@ void SFBitsetAux3D::FindPartition5BlocksMax(const DefSFBitset& bitset_min_corner
         index_x = indices2[kXIndex];
         index_y = indices2[kYIndex];
         index_z = indices2[kZIndex];
-        for (DefAmrIndexLUint iy = 0;  iy <= i_max1; ++iy) {
+        for (DefAmrLUint iy = 0;  iy <= i_max1; ++iy) {
             bitset_tmp = bitset_tmp2;
-            for (DefAmrIndexLUint ix = 0;  ix <= i_max2; ++ix) {
+            for (DefAmrLUint ix = 0;  ix <= i_max2; ++ix) {
                 if (index_x >= code_domain_min[kXIndex] && index_x <= code_domain_max[kXIndex]
                     && index_y >= code_domain_min[kYIndex] && index_y <= code_domain_max[kYIndex]
                     && index_z >= code_domain_min[kZIndex] && index_z <= code_domain_max[kZIndex]
@@ -1870,9 +1870,9 @@ void SFBitsetAux3D::FindPartition5BlocksMax(const DefSFBitset& bitset_min_corner
         index_x = indices2[kXIndex];
         index_y = indices2[kYIndex];
         index_z = indices2[kZIndex];
-        for (DefAmrIndexLUint iz = 0; iz <= i_max1; ++iz) {
+        for (DefAmrLUint iz = 0; iz <= i_max1; ++iz) {
             bitset_tmp = bitset_tmp2;
-            for (DefAmrIndexLUint ix = 0;  ix < i_max1; ++ix) {
+            for (DefAmrLUint ix = 0;  ix < i_max1; ++ix) {
                 if (index_x >= code_domain_min[kXIndex] && index_x <= code_domain_max[kXIndex]
                     && index_y >= code_domain_min[kYIndex] && index_y <= code_domain_max[kYIndex]
                     && index_z >= code_domain_min[kZIndex] && index_z <= code_domain_max[kZIndex]
@@ -1884,7 +1884,7 @@ void SFBitsetAux3D::FindPartition5BlocksMax(const DefSFBitset& bitset_min_corner
                 bitset_tmp = FindXPos(bitset_tmp);
                 ++index_x;
             }
-            for (DefAmrIndexLUint iy = 0;  iy < i_max1; ++iy) {
+            for (DefAmrLUint iy = 0;  iy < i_max1; ++iy) {
                 if (index_x >= code_domain_min[kXIndex] && index_x <= code_domain_max[kXIndex]
                     && index_y >= code_domain_min[kYIndex] && index_y <= code_domain_max[kYIndex]
                     && index_z >= code_domain_min[kZIndex] && index_z <= code_domain_max[kZIndex]
@@ -1896,7 +1896,7 @@ void SFBitsetAux3D::FindPartition5BlocksMax(const DefSFBitset& bitset_min_corner
                 bitset_tmp = FindYPos(bitset_tmp);
                 ++index_y;
             }
-            for (DefAmrIndexLUint ix = 0;  ix < i_max1; ++ix) {
+            for (DefAmrLUint ix = 0;  ix < i_max1; ++ix) {
                 if (index_x >= code_domain_min[kXIndex] && index_x <= code_domain_max[kXIndex]
                     && index_y >= code_domain_min[kYIndex] && index_y <= code_domain_max[kYIndex]
                     && index_z >= code_domain_min[kZIndex] && index_z <= code_domain_max[kZIndex]
@@ -1908,7 +1908,7 @@ void SFBitsetAux3D::FindPartition5BlocksMax(const DefSFBitset& bitset_min_corner
                 bitset_tmp = FindXNeg(bitset_tmp);
                 --index_x;
             }
-            for (DefAmrIndexLUint iy = 0;  iy < i_max1; ++iy) {
+            for (DefAmrLUint iy = 0;  iy < i_max1; ++iy) {
                 if (index_x >= code_domain_min[kXIndex] && index_x <= code_domain_max[kXIndex]
                     && index_y >= code_domain_min[kYIndex] && index_y <= code_domain_max[kYIndex]
                     && index_z >= code_domain_min[kZIndex] && index_z <= code_domain_max[kZIndex]
@@ -1926,9 +1926,9 @@ void SFBitsetAux3D::FindPartition5BlocksMax(const DefSFBitset& bitset_min_corner
         // top surface
         index_x = indices2[kXIndex];
         index_y = indices2[kYIndex];
-        for (DefAmrIndexLUint iy = 0;  iy <= i_max1; ++iy) {
+        for (DefAmrLUint iy = 0;  iy <= i_max1; ++iy) {
             bitset_tmp = bitset_tmp2;
-            for (DefAmrIndexLUint ix = 0;  ix <= i_max1; ++ix) {
+            for (DefAmrLUint ix = 0;  ix <= i_max1; ++ix) {
                 if (index_x >= code_domain_min[kXIndex] && index_x <= code_domain_max[kXIndex]
                     && index_y >= code_domain_min[kYIndex] && index_y <= code_domain_max[kYIndex]
                     && index_z >= code_domain_min[kZIndex] && index_z <= code_domain_max[kZIndex]
@@ -1956,16 +1956,16 @@ void SFBitsetAux3D::FindPartition5BlocksMax(const DefSFBitset& bitset_min_corner
  * @param[in] code_domain_max maximum indicies of computational domain.
  * @param[out] ptr_map_partitioned  map of unsigned integers to unsigned integers representing the partitioned results.
  */
-void SFBitsetAux3D::FindPartition6BlocksMax(const DefSFBitset& bitset_min_corner, const DefAmrIndexUint block_level,
+void SFBitsetAux3D::FindPartition6BlocksMax(const DefSFBitset& bitset_min_corner, const DefInt block_level,
     const DefSFCodeToUint& code_partition_min, const DefSFCodeToUint& code_partition_max,
-    const std::array<DefAmrIndexLUint, 3>& code_domain_min, const std::array<DefAmrIndexLUint, 3>& code_domain_max,
-    DefMap<DefAmrIndexUint>* const ptr_map_partitioned) const {
-    std::array<DefAmrIndexLUint, 3> indices;
-    const DefAmrIndexLUint block_length = 1 << block_level;
-    DefAmrIndexLUint i_max1 = block_length - 1, i_max2 = block_length *2 - 1;
+    const std::array<DefAmrLUint, 3>& code_domain_min, const std::array<DefAmrLUint, 3>& code_domain_max,
+    DefMap<DefInt>* const ptr_map_partitioned) const {
+    std::array<DefAmrLUint, 3> indices;
+    const DefAmrLUint block_length = 1 << block_level;
+    DefAmrLUint i_max1 = block_length - 1, i_max2 = block_length *2 - 1;
     SFBitsetComputeIndices(bitset_min_corner, &indices);
     DefSFBitset bitset_tmp = bitset_min_corner, bitset_tmp2 = bitset_min_corner;
-    DefAmrIndexLUint index_x = indices[kXIndex], index_y = indices[kYIndex], index_z = indices[kZIndex];
+    DefAmrLUint index_x = indices[kXIndex], index_y = indices[kYIndex], index_z = indices[kZIndex];
     if (block_length == 1) {
         if (index_x >= code_domain_min[kXIndex] && index_x <= code_domain_max[kXIndex]
             && index_y >= code_domain_min[kYIndex] && index_y <= code_domain_max[kYIndex]
@@ -2029,9 +2029,9 @@ void SFBitsetAux3D::FindPartition6BlocksMax(const DefSFBitset& bitset_min_corner
         }
     } else {
         // bottom surface
-        for (DefAmrIndexLUint iy = 0;  iy <= i_max2; ++iy) {
+        for (DefAmrLUint iy = 0;  iy <= i_max2; ++iy) {
             bitset_tmp = bitset_tmp2;
-            for (DefAmrIndexLUint ix = 0;  ix <= i_max2; ++ix) {
+            for (DefAmrLUint ix = 0;  ix <= i_max2; ++ix) {
                 if (index_x >= code_domain_min[kXIndex] && index_x <= code_domain_max[kXIndex]
                     && index_y >= code_domain_min[kYIndex] && index_y <= code_domain_max[kYIndex]
                     && index_z >= code_domain_min[kZIndex] && index_z <= code_domain_max[kZIndex]
@@ -2051,11 +2051,11 @@ void SFBitsetAux3D::FindPartition6BlocksMax(const DefSFBitset& bitset_min_corner
         index_x = indices[kXIndex];
         index_y = indices[kYIndex];
         bitset_tmp2 = bitset_min_corner;
-        for (DefAmrIndexLUint iz = 1; iz < i_max1; ++iz) {
+        for (DefAmrLUint iz = 1; iz < i_max1; ++iz) {
             bitset_tmp2 =  FindZPos(bitset_tmp2);
             ++index_z;
             bitset_tmp = bitset_tmp2;
-            for (DefAmrIndexLUint ix = 0;  ix < i_max2; ++ix) {
+            for (DefAmrLUint ix = 0;  ix < i_max2; ++ix) {
                 if (index_x >= code_domain_min[kXIndex] && index_x <= code_domain_max[kXIndex]
                     && index_y >= code_domain_min[kYIndex] && index_y <= code_domain_max[kYIndex]
                     && index_z >= code_domain_min[kZIndex] && index_z <= code_domain_max[kZIndex]
@@ -2067,7 +2067,7 @@ void SFBitsetAux3D::FindPartition6BlocksMax(const DefSFBitset& bitset_min_corner
                 bitset_tmp = FindXPos(bitset_tmp);
                 ++index_x;
             }
-            for (DefAmrIndexLUint iy = 0;  iy < i_max2; ++iy) {
+            for (DefAmrLUint iy = 0;  iy < i_max2; ++iy) {
                 if (index_x >= code_domain_min[kXIndex] && index_x <= code_domain_max[kXIndex]
                     && index_y >= code_domain_min[kYIndex] && index_y <= code_domain_max[kYIndex]
                     && index_z >= code_domain_min[kZIndex] && index_z <= code_domain_max[kZIndex]
@@ -2079,7 +2079,7 @@ void SFBitsetAux3D::FindPartition6BlocksMax(const DefSFBitset& bitset_min_corner
                 bitset_tmp = FindYPos(bitset_tmp);
                 ++index_y;
             }
-            for (DefAmrIndexLUint ix = 0;  ix < i_max2; ++ix) {
+            for (DefAmrLUint ix = 0;  ix < i_max2; ++ix) {
                 if (index_x >= code_domain_min[kXIndex] && index_x <= code_domain_max[kXIndex]
                     && index_y >= code_domain_min[kYIndex] && index_y <= code_domain_max[kYIndex]
                     && index_z >= code_domain_min[kZIndex] && index_z <= code_domain_max[kZIndex]
@@ -2091,7 +2091,7 @@ void SFBitsetAux3D::FindPartition6BlocksMax(const DefSFBitset& bitset_min_corner
                 bitset_tmp = FindXNeg(bitset_tmp);
                 --index_x;
             }
-            for (DefAmrIndexLUint iy = 0;  iy < i_max2; ++iy) {
+            for (DefAmrLUint iy = 0;  iy < i_max2; ++iy) {
                 if (index_x >= code_domain_min[kXIndex] && index_x <= code_domain_max[kXIndex]
                     && index_y >= code_domain_min[kYIndex] && index_y <= code_domain_max[kYIndex]
                     && index_z >= code_domain_min[kZIndex] && index_z <= code_domain_max[kZIndex]
@@ -2105,7 +2105,7 @@ void SFBitsetAux3D::FindPartition6BlocksMax(const DefSFBitset& bitset_min_corner
             }
         }
         // middle top surface
-        std::array<DefAmrIndexLUint, 3> indices2;
+        std::array<DefAmrLUint, 3> indices2;
         bitset_tmp = SFBitsetToNLowerLevel(block_level, bitset_min_corner);
         bitset_tmp = FindYPos(bitset_tmp);
         bitset_tmp = FindZPos(bitset_tmp);
@@ -2115,9 +2115,9 @@ void SFBitsetAux3D::FindPartition6BlocksMax(const DefSFBitset& bitset_min_corner
         index_x = indices2[kXIndex];
         index_y = indices2[kYIndex];
         index_z = indices2[kZIndex];
-        for (DefAmrIndexLUint iy = 0;  iy <= i_max1; ++iy) {
+        for (DefAmrLUint iy = 0;  iy <= i_max1; ++iy) {
             bitset_tmp = bitset_tmp2;
-            for (DefAmrIndexLUint ix = 0;  ix <= i_max2; ++ix) {
+            for (DefAmrLUint ix = 0;  ix <= i_max2; ++ix) {
                 if (index_x >= code_domain_min[kXIndex] && index_x <= code_domain_max[kXIndex]
                     && index_y >= code_domain_min[kYIndex] && index_y <= code_domain_max[kYIndex]
                     && index_z >= code_domain_min[kZIndex] && index_z <= code_domain_max[kZIndex]
@@ -2142,9 +2142,9 @@ void SFBitsetAux3D::FindPartition6BlocksMax(const DefSFBitset& bitset_min_corner
         index_x = indices2[kXIndex];
         index_y = indices2[kYIndex];
         index_z = indices2[kZIndex];
-        for (DefAmrIndexLUint iz = 0; iz <= i_max1; ++iz) {
+        for (DefAmrLUint iz = 0; iz <= i_max1; ++iz) {
             bitset_tmp = bitset_tmp2;
-            for (DefAmrIndexLUint ix = 0;  ix < i_max2; ++ix) {
+            for (DefAmrLUint ix = 0;  ix < i_max2; ++ix) {
                 if (index_x >= code_domain_min[kXIndex] && index_x <= code_domain_max[kXIndex]
                     && index_y >= code_domain_min[kYIndex] && index_y <= code_domain_max[kYIndex]
                     && index_z >= code_domain_min[kZIndex] && index_z <= code_domain_max[kZIndex]
@@ -2156,7 +2156,7 @@ void SFBitsetAux3D::FindPartition6BlocksMax(const DefSFBitset& bitset_min_corner
                 bitset_tmp = FindXPos(bitset_tmp);
                 ++index_x;
             }
-            for (DefAmrIndexLUint iy = 0;  iy < i_max1; ++iy) {
+            for (DefAmrLUint iy = 0;  iy < i_max1; ++iy) {
                 if (index_x >= code_domain_min[kXIndex] && index_x <= code_domain_max[kXIndex]
                     && index_y >= code_domain_min[kYIndex] && index_y <= code_domain_max[kYIndex]
                     && index_z >= code_domain_min[kZIndex] && index_z <= code_domain_max[kZIndex]
@@ -2168,7 +2168,7 @@ void SFBitsetAux3D::FindPartition6BlocksMax(const DefSFBitset& bitset_min_corner
                 bitset_tmp = FindYPos(bitset_tmp);
                 ++index_y;
             }
-            for (DefAmrIndexLUint ix = 0;  ix < i_max2; ++ix) {
+            for (DefAmrLUint ix = 0;  ix < i_max2; ++ix) {
                 if (index_x >= code_domain_min[kXIndex] && index_x <= code_domain_max[kXIndex]
                     && index_y >= code_domain_min[kYIndex] && index_y <= code_domain_max[kYIndex]
                     && index_z >= code_domain_min[kZIndex] && index_z <= code_domain_max[kZIndex]
@@ -2180,7 +2180,7 @@ void SFBitsetAux3D::FindPartition6BlocksMax(const DefSFBitset& bitset_min_corner
                 bitset_tmp = FindXNeg(bitset_tmp);
                 --index_x;
             }
-            for (DefAmrIndexLUint iy = 0;  iy < i_max1; ++iy) {
+            for (DefAmrLUint iy = 0;  iy < i_max1; ++iy) {
                 if (index_x >= code_domain_min[kXIndex] && index_x <= code_domain_max[kXIndex]
                     && index_y >= code_domain_min[kYIndex] && index_y <= code_domain_max[kYIndex]
                     && index_z >= code_domain_min[kZIndex] && index_z <= code_domain_max[kZIndex]
@@ -2198,9 +2198,9 @@ void SFBitsetAux3D::FindPartition6BlocksMax(const DefSFBitset& bitset_min_corner
         // top surface
         index_x = indices2[kXIndex];
         index_y = indices2[kYIndex];
-        for (DefAmrIndexLUint iy = 0;  iy <= i_max1; ++iy) {
+        for (DefAmrLUint iy = 0;  iy <= i_max1; ++iy) {
             bitset_tmp = bitset_tmp2;
-            for (DefAmrIndexLUint ix = 0;  ix <= i_max2; ++ix) {
+            for (DefAmrLUint ix = 0;  ix <= i_max2; ++ix) {
                 if (index_x >= code_domain_min[kXIndex] && index_x <= code_domain_max[kXIndex]
                     && index_y >= code_domain_min[kYIndex] && index_y <= code_domain_max[kYIndex]
                     && index_z >= code_domain_min[kZIndex] && index_z <= code_domain_max[kZIndex]
@@ -2228,16 +2228,16 @@ void SFBitsetAux3D::FindPartition6BlocksMax(const DefSFBitset& bitset_min_corner
  * @param[in] code_domain_max maximum indicies of computational domain.
  * @param[out] ptr_map_partitioned  map of unsigned integers to unsigned integers representing the partitioned results.
  */
-void SFBitsetAux3D::FindPartition7BlocksMax(const DefSFBitset& bitset_min_corner, const DefAmrIndexUint block_level,
+void SFBitsetAux3D::FindPartition7BlocksMax(const DefSFBitset& bitset_min_corner, const DefInt block_level,
     const DefSFCodeToUint& code_partition_min, const DefSFCodeToUint& code_partition_max,
-    const std::array<DefAmrIndexLUint, 3>& code_domain_min, const std::array<DefAmrIndexLUint, 3>& code_domain_max,
-    DefMap<DefAmrIndexUint>* const ptr_map_partitioned) const {
-    std::array<DefAmrIndexLUint, 3> indices;
-    const DefAmrIndexLUint block_length = 1 << block_level;
-    DefAmrIndexLUint i_max1 = block_length - 1, i_max2 = block_length * 2 - 1;
+    const std::array<DefAmrLUint, 3>& code_domain_min, const std::array<DefAmrLUint, 3>& code_domain_max,
+    DefMap<DefInt>* const ptr_map_partitioned) const {
+    std::array<DefAmrLUint, 3> indices;
+    const DefAmrLUint block_length = 1 << block_level;
+    DefAmrLUint i_max1 = block_length - 1, i_max2 = block_length * 2 - 1;
     SFBitsetComputeIndices(bitset_min_corner, &indices);
     DefSFBitset bitset_tmp = bitset_min_corner, bitset_tmp2 = bitset_min_corner;
-    DefAmrIndexLUint index_x = indices[kXIndex], index_y = indices[kYIndex], index_z = indices[kZIndex];
+    DefAmrLUint index_x = indices[kXIndex], index_y = indices[kYIndex], index_z = indices[kZIndex];
     if (block_length == 1) {
         if (index_x >= code_domain_min[kXIndex] && index_x <= code_domain_max[kXIndex]
             && index_y >= code_domain_min[kYIndex] && index_y <= code_domain_max[kYIndex]
@@ -2311,9 +2311,9 @@ void SFBitsetAux3D::FindPartition7BlocksMax(const DefSFBitset& bitset_min_corner
         }
     } else {
         // bottom surface
-        for (DefAmrIndexLUint iy = 0;  iy <= i_max2; ++iy) {
+        for (DefAmrLUint iy = 0;  iy <= i_max2; ++iy) {
             bitset_tmp = bitset_tmp2;
-            for (DefAmrIndexLUint ix = 0;  ix <= i_max2; ++ix) {
+            for (DefAmrLUint ix = 0;  ix <= i_max2; ++ix) {
                 if (index_x >= code_domain_min[kXIndex] && index_x <= code_domain_max[kXIndex]
                     && index_y >= code_domain_min[kYIndex] && index_y <= code_domain_max[kYIndex]
                     && index_z >= code_domain_min[kZIndex] && index_z <= code_domain_max[kZIndex]
@@ -2333,11 +2333,11 @@ void SFBitsetAux3D::FindPartition7BlocksMax(const DefSFBitset& bitset_min_corner
         index_x = indices[kXIndex];
         index_y = indices[kYIndex];
         bitset_tmp2 = bitset_min_corner;
-        for (DefAmrIndexLUint iz = 1; iz < i_max1; ++iz) {
+        for (DefAmrLUint iz = 1; iz < i_max1; ++iz) {
             bitset_tmp2 =  FindZPos(bitset_tmp2);
             bitset_tmp = bitset_tmp2;
             ++index_z;
-            for (DefAmrIndexLUint ix = 0;  ix < i_max2; ++ix) {
+            for (DefAmrLUint ix = 0;  ix < i_max2; ++ix) {
                 if (index_x >= code_domain_min[kXIndex] && index_x <= code_domain_max[kXIndex]
                     && index_y >= code_domain_min[kYIndex] && index_y <= code_domain_max[kYIndex]
                     && index_z >= code_domain_min[kZIndex] && index_z <= code_domain_max[kZIndex]
@@ -2349,7 +2349,7 @@ void SFBitsetAux3D::FindPartition7BlocksMax(const DefSFBitset& bitset_min_corner
                 bitset_tmp = FindXPos(bitset_tmp);
                 ++index_x;
             }
-            for (DefAmrIndexLUint iy = 0;  iy < i_max2; ++iy) {
+            for (DefAmrLUint iy = 0;  iy < i_max2; ++iy) {
                 if (index_x >= code_domain_min[kXIndex] && index_x <= code_domain_max[kXIndex]
                     && index_y >= code_domain_min[kYIndex] && index_y <= code_domain_max[kYIndex]
                     && index_z >= code_domain_min[kZIndex] && index_z <= code_domain_max[kZIndex]
@@ -2361,7 +2361,7 @@ void SFBitsetAux3D::FindPartition7BlocksMax(const DefSFBitset& bitset_min_corner
                 bitset_tmp = FindYPos(bitset_tmp);
                 ++index_y;
             }
-            for (DefAmrIndexLUint ix = 0;  ix < i_max2; ++ix) {
+            for (DefAmrLUint ix = 0;  ix < i_max2; ++ix) {
                 if (index_x >= code_domain_min[kXIndex] && index_x <= code_domain_max[kXIndex]
                     && index_y >= code_domain_min[kYIndex] && index_y <= code_domain_max[kYIndex]
                     && index_z >= code_domain_min[kZIndex] && index_z <= code_domain_max[kZIndex]
@@ -2373,7 +2373,7 @@ void SFBitsetAux3D::FindPartition7BlocksMax(const DefSFBitset& bitset_min_corner
                 bitset_tmp = FindXNeg(bitset_tmp);
                 --index_x;
             }
-            for (DefAmrIndexLUint iy = 0;  iy < i_max2; ++iy) {
+            for (DefAmrLUint iy = 0;  iy < i_max2; ++iy) {
                 if (index_x >= code_domain_min[kXIndex] && index_x <= code_domain_max[kXIndex]
                     && index_y >= code_domain_min[kYIndex] && index_y <= code_domain_max[kYIndex]
                     && index_z >= code_domain_min[kZIndex] && index_z <= code_domain_max[kZIndex]
@@ -2387,7 +2387,7 @@ void SFBitsetAux3D::FindPartition7BlocksMax(const DefSFBitset& bitset_min_corner
             }
         }
         // middle top surface
-        std::array<DefAmrIndexLUint, 3> indices2;
+        std::array<DefAmrLUint, 3> indices2;
         bitset_tmp = SFBitsetToNLowerLevel(block_level, bitset_min_corner);
         bitset_tmp = FindXPos(bitset_tmp);
         bitset_tmp = FindYPos(bitset_tmp);
@@ -2398,9 +2398,9 @@ void SFBitsetAux3D::FindPartition7BlocksMax(const DefSFBitset& bitset_min_corner
         index_x = indices2[kXIndex];
         index_y = indices2[kYIndex];
         index_z = indices2[kZIndex];
-        for (DefAmrIndexLUint iy = 0;  iy <= i_max1; ++iy) {
+        for (DefAmrLUint iy = 0;  iy <= i_max1; ++iy) {
             bitset_tmp = bitset_tmp2;
-            for (DefAmrIndexLUint ix = 0;  ix <= i_max1; ++ix) {
+            for (DefAmrLUint ix = 0;  ix <= i_max1; ++ix) {
                 if (index_x >= code_domain_min[kXIndex] && index_x <= code_domain_max[kXIndex]
                     && index_y >= code_domain_min[kYIndex] && index_y <= code_domain_max[kYIndex]
                     && index_z >= code_domain_min[kZIndex] && index_z <= code_domain_max[kZIndex]
@@ -2425,9 +2425,9 @@ void SFBitsetAux3D::FindPartition7BlocksMax(const DefSFBitset& bitset_min_corner
         index_x = indices2[kXIndex];
         index_y = indices2[kYIndex];
         index_z = indices2[kZIndex];
-        for (DefAmrIndexLUint iz = 0; iz <= i_max1; ++iz) {
+        for (DefAmrLUint iz = 0; iz <= i_max1; ++iz) {
             bitset_tmp = bitset_tmp2;
-            for (DefAmrIndexLUint ix = 0; ix < i_max2; ++ix) {
+            for (DefAmrLUint ix = 0; ix < i_max2; ++ix) {
                 if (index_x >= code_domain_min[kXIndex] && index_x <= code_domain_max[kXIndex]
                     && index_y >= code_domain_min[kYIndex] && index_y <= code_domain_max[kYIndex]
                     && index_z >= code_domain_min[kZIndex] && index_z <= code_domain_max[kZIndex]
@@ -2439,7 +2439,7 @@ void SFBitsetAux3D::FindPartition7BlocksMax(const DefSFBitset& bitset_min_corner
                 bitset_tmp = FindXPos(bitset_tmp);
                 ++index_x;
             }
-            for (DefAmrIndexLUint iy = 0; iy < i_max1; ++iy) {
+            for (DefAmrLUint iy = 0; iy < i_max1; ++iy) {
                 if (index_x >= code_domain_min[kXIndex] && index_x <= code_domain_max[kXIndex]
                     && index_y >= code_domain_min[kYIndex] && index_y <= code_domain_max[kYIndex]
                     && index_z >= code_domain_min[kZIndex] && index_z <= code_domain_max[kZIndex]
@@ -2451,7 +2451,7 @@ void SFBitsetAux3D::FindPartition7BlocksMax(const DefSFBitset& bitset_min_corner
                 bitset_tmp = FindYPos(bitset_tmp);
                 ++index_y;
             }
-            for (DefAmrIndexLUint ix = 0; ix <= i_max1; ++ix) {
+            for (DefAmrLUint ix = 0; ix <= i_max1; ++ix) {
                 if (index_x >= code_domain_min[kXIndex] && index_x <= code_domain_max[kXIndex]
                     && index_y >= code_domain_min[kYIndex] && index_y <= code_domain_max[kYIndex]
                     && index_z >= code_domain_min[kZIndex] && index_z <= code_domain_max[kZIndex]
@@ -2463,7 +2463,7 @@ void SFBitsetAux3D::FindPartition7BlocksMax(const DefSFBitset& bitset_min_corner
                 bitset_tmp = FindXNeg(bitset_tmp);
                 --index_x;
             }
-            for (DefAmrIndexLUint iy = 0; iy <= i_max1; ++iy) {
+            for (DefAmrLUint iy = 0; iy <= i_max1; ++iy) {
                 if (index_x >= code_domain_min[kXIndex] && index_x <= code_domain_max[kXIndex]
                     && index_y >= code_domain_min[kYIndex] && index_y <= code_domain_max[kYIndex]
                     && index_z >= code_domain_min[kZIndex] && index_z <= code_domain_max[kZIndex]
@@ -2475,7 +2475,7 @@ void SFBitsetAux3D::FindPartition7BlocksMax(const DefSFBitset& bitset_min_corner
                 bitset_tmp = FindYPos(bitset_tmp);
                 ++index_y;
             }
-            for (DefAmrIndexLUint ix = 0; ix < i_max1; ++ix) {
+            for (DefAmrLUint ix = 0; ix < i_max1; ++ix) {
                 if (index_x >= code_domain_min[kXIndex] && index_x <= code_domain_max[kXIndex]
                     && index_y >= code_domain_min[kYIndex] && index_y <= code_domain_max[kYIndex]
                     && index_z >= code_domain_min[kZIndex] && index_z <= code_domain_max[kZIndex]
@@ -2487,7 +2487,7 @@ void SFBitsetAux3D::FindPartition7BlocksMax(const DefSFBitset& bitset_min_corner
                 bitset_tmp = FindXNeg(bitset_tmp);
                 --index_x;
             }
-            for (DefAmrIndexLUint iy = 0; iy < i_max2; ++iy) {
+            for (DefAmrLUint iy = 0; iy < i_max2; ++iy) {
                 if (index_x >= code_domain_min[kXIndex] && index_x <= code_domain_max[kXIndex]
                     && index_y >= code_domain_min[kYIndex] && index_y <= code_domain_max[kYIndex]
                     && index_z >= code_domain_min[kZIndex] && index_z <= code_domain_max[kZIndex]
@@ -2505,9 +2505,9 @@ void SFBitsetAux3D::FindPartition7BlocksMax(const DefSFBitset& bitset_min_corner
         // top surface
         index_x = indices2[kXIndex];
         index_y = indices2[kYIndex];
-        for (DefAmrIndexLUint iy = 0;  iy <= i_max1; ++iy) {
+        for (DefAmrLUint iy = 0;  iy <= i_max1; ++iy) {
             bitset_tmp = bitset_tmp2;
-            for (DefAmrIndexLUint ix = 0;  ix <= i_max2; ++ix) {
+            for (DefAmrLUint ix = 0;  ix <= i_max2; ++ix) {
                 if (index_x >= code_domain_min[kXIndex] && index_x <= code_domain_max[kXIndex]
                     && index_y >= code_domain_min[kYIndex] && index_y <= code_domain_max[kYIndex]
                     && index_z >= code_domain_min[kZIndex] && index_z <= code_domain_max[kZIndex]
@@ -2523,9 +2523,9 @@ void SFBitsetAux3D::FindPartition7BlocksMax(const DefSFBitset& bitset_min_corner
             index_x = indices[kXIndex];
             ++index_y;
         }
-        for (DefAmrIndexLUint iy = 0;  iy <= i_max1; ++iy) {
+        for (DefAmrLUint iy = 0;  iy <= i_max1; ++iy) {
             bitset_tmp = bitset_tmp2;
-            for (DefAmrIndexLUint ix = 0;  ix <= i_max1; ++ix) {
+            for (DefAmrLUint ix = 0;  ix <= i_max1; ++ix) {
                 if (index_x >= code_domain_min[kXIndex] && index_x <= code_domain_max[kXIndex]
                     && index_y >= code_domain_min[kYIndex] && index_y <= code_domain_max[kYIndex]
                     && index_z >= code_domain_min[kZIndex] && index_z <= code_domain_max[kZIndex]
@@ -2553,16 +2553,16 @@ void SFBitsetAux3D::FindPartition7BlocksMax(const DefSFBitset& bitset_min_corner
  * @param[in] code_domain_max maximum indicies of computational domain.
  * @param[out] ptr_map_partitioned  map of unsigned integers to unsigned integers representing the partitioned results.
  */
-void SFBitsetAux3D::FindPartition2BlocksMin(const DefSFBitset& bitset_max_corner, const DefAmrIndexUint block_level,
+void SFBitsetAux3D::FindPartition2BlocksMin(const DefSFBitset& bitset_max_corner, const DefInt block_level,
     const DefSFCodeToUint& code_partition_min, const DefSFCodeToUint& code_partition_max,
-    const std::array<DefAmrIndexLUint, 3>& code_domain_min, const std::array<DefAmrIndexLUint, 3>& code_domain_max,
-    DefMap<DefAmrIndexUint>* const ptr_map_partitioned) const {
-    std::array<DefAmrIndexLUint, 3> indices;
-    const DefAmrIndexLUint block_length = 1 << block_level;
-    DefAmrIndexLUint i_max1 = block_length - 1, i_max2 = block_length *2 - 1;
+    const std::array<DefAmrLUint, 3>& code_domain_min, const std::array<DefAmrLUint, 3>& code_domain_max,
+    DefMap<DefInt>* const ptr_map_partitioned) const {
+    std::array<DefAmrLUint, 3> indices;
+    const DefAmrLUint block_length = 1 << block_level;
+    DefAmrLUint i_max1 = block_length - 1, i_max2 = block_length *2 - 1;
     SFBitsetComputeIndices(bitset_max_corner, &indices);
     DefSFBitset bitset_tmp = bitset_max_corner, bitset_tmp2 = bitset_max_corner;
-    DefAmrIndexLUint index_x = indices[kXIndex], index_y = indices[kYIndex], index_z = indices[kZIndex];
+    DefAmrLUint index_x = indices[kXIndex], index_y = indices[kYIndex], index_z = indices[kZIndex];
     if (block_length == 1) {
         if (index_x >= code_domain_min[kXIndex] && index_x <= code_domain_max[kXIndex]
             && index_y >= code_domain_min[kYIndex] && index_y <= code_domain_max[kYIndex]
@@ -2584,9 +2584,9 @@ void SFBitsetAux3D::FindPartition2BlocksMin(const DefSFBitset& bitset_max_corner
         }
     } else {
         // top surface
-        for (DefAmrIndexLUint iy = 0;  iy <= i_max1; ++iy) {
+        for (DefAmrLUint iy = 0;  iy <= i_max1; ++iy) {
             bitset_tmp = bitset_tmp2;
-            for (DefAmrIndexLUint ix = 0;  ix <= i_max2; ++ix) {
+            for (DefAmrLUint ix = 0;  ix <= i_max2; ++ix) {
                 if (index_x >= code_domain_min[kXIndex] && index_x <= code_domain_max[kXIndex]
                     && index_y >= code_domain_min[kYIndex] && index_y <= code_domain_max[kYIndex]
                     && index_z >= code_domain_min[kZIndex] && index_z <= code_domain_max[kZIndex]
@@ -2606,11 +2606,11 @@ void SFBitsetAux3D::FindPartition2BlocksMin(const DefSFBitset& bitset_max_corner
         index_x = indices[kXIndex];
         index_y = indices[kYIndex];
         bitset_tmp2 = bitset_max_corner;
-        for (DefAmrIndexLUint iz = 1; iz < i_max1; ++iz) {
+        for (DefAmrLUint iz = 1; iz < i_max1; ++iz) {
             bitset_tmp2 =  FindZNeg(bitset_tmp2);
             --index_z;
             bitset_tmp = bitset_tmp2;
-            for (DefAmrIndexLUint ix = 0;  ix < i_max2; ++ix) {
+            for (DefAmrLUint ix = 0;  ix < i_max2; ++ix) {
                 if (index_x >= code_domain_min[kXIndex] && index_x <= code_domain_max[kXIndex]
                     && index_y >= code_domain_min[kYIndex] && index_y <= code_domain_max[kYIndex]
                     && index_z >= code_domain_min[kZIndex] && index_z <= code_domain_max[kZIndex]
@@ -2622,7 +2622,7 @@ void SFBitsetAux3D::FindPartition2BlocksMin(const DefSFBitset& bitset_max_corner
                 bitset_tmp = FindXNeg(bitset_tmp);
                 --index_x;
             }
-            for (DefAmrIndexLUint iy = 0;  iy < i_max1; ++iy) {
+            for (DefAmrLUint iy = 0;  iy < i_max1; ++iy) {
                 if (index_x >= code_domain_min[kXIndex] && index_x <= code_domain_max[kXIndex]
                     && index_y >= code_domain_min[kYIndex] && index_y <= code_domain_max[kYIndex]
                     && index_z >= code_domain_min[kZIndex] && index_z <= code_domain_max[kZIndex]
@@ -2634,7 +2634,7 @@ void SFBitsetAux3D::FindPartition2BlocksMin(const DefSFBitset& bitset_max_corner
                 bitset_tmp = FindYNeg(bitset_tmp);
                 --index_y;
             }
-            for (DefAmrIndexLUint ix = 0;  ix < i_max2; ++ix) {
+            for (DefAmrLUint ix = 0;  ix < i_max2; ++ix) {
                 if (index_x >= code_domain_min[kXIndex] && index_x <= code_domain_max[kXIndex]
                     && index_y >= code_domain_min[kYIndex] && index_y <= code_domain_max[kYIndex]
                     && index_z >= code_domain_min[kZIndex] && index_z <= code_domain_max[kZIndex]
@@ -2646,7 +2646,7 @@ void SFBitsetAux3D::FindPartition2BlocksMin(const DefSFBitset& bitset_max_corner
                 bitset_tmp = FindXPos(bitset_tmp);
                 ++index_x;
             }
-            for (DefAmrIndexLUint iy = 0;  iy < i_max1; ++iy) {
+            for (DefAmrLUint iy = 0;  iy < i_max1; ++iy) {
                 if (index_x >= code_domain_min[kXIndex] && index_x <= code_domain_max[kXIndex]
                     && index_y >= code_domain_min[kYIndex] && index_y <= code_domain_max[kYIndex]
                     && index_z >= code_domain_min[kZIndex] && index_z <= code_domain_max[kZIndex]
@@ -2664,9 +2664,9 @@ void SFBitsetAux3D::FindPartition2BlocksMin(const DefSFBitset& bitset_max_corner
         index_y = indices[kYIndex];
         bitset_tmp2 =  FindZNeg(bitset_tmp2);
         --index_z;
-        for (DefAmrIndexLUint iy = 0;  iy <= i_max1; ++iy) {
+        for (DefAmrLUint iy = 0;  iy <= i_max1; ++iy) {
             bitset_tmp = bitset_tmp2;
-            for (DefAmrIndexLUint ix = 0;  ix <= i_max2; ++ix) {
+            for (DefAmrLUint ix = 0;  ix <= i_max2; ++ix) {
                 if (index_x >= code_domain_min[kXIndex] && index_x <= code_domain_max[kXIndex]
                     && index_y >= code_domain_min[kYIndex] && index_y <= code_domain_max[kYIndex]
                     && index_z >= code_domain_min[kZIndex] && index_z <= code_domain_max[kZIndex]
@@ -2694,16 +2694,16 @@ void SFBitsetAux3D::FindPartition2BlocksMin(const DefSFBitset& bitset_max_corner
  * @param[in] code_domain_max maximum indicies of computational domain.
  * @param[out] ptr_map_partitioned  map of unsigned integers to unsigned integers representing the partitioned results.
  */
-void SFBitsetAux3D::FindPartition3BlocksMin(const DefSFBitset& bitset_max_corner, const DefAmrIndexUint block_level,
+void SFBitsetAux3D::FindPartition3BlocksMin(const DefSFBitset& bitset_max_corner, const DefInt block_level,
     const DefSFCodeToUint& code_partition_min, const DefSFCodeToUint& code_partition_max,
-    const std::array<DefAmrIndexLUint, 3>& code_domain_min, const std::array<DefAmrIndexLUint, 3>& code_domain_max,
-    DefMap<DefAmrIndexUint>* const ptr_map_partitioned) const {
-    std::array<DefAmrIndexLUint, 3> indices;
-    const DefAmrIndexLUint block_length = 1 << block_level;
-    DefAmrIndexLUint i_max1 = block_length - 1, i_max2 = block_length *2 - 1;
+    const std::array<DefAmrLUint, 3>& code_domain_min, const std::array<DefAmrLUint, 3>& code_domain_max,
+    DefMap<DefInt>* const ptr_map_partitioned) const {
+    std::array<DefAmrLUint, 3> indices;
+    const DefAmrLUint block_length = 1 << block_level;
+    DefAmrLUint i_max1 = block_length - 1, i_max2 = block_length *2 - 1;
     SFBitsetComputeIndices(bitset_max_corner, &indices);
     DefSFBitset bitset_tmp = bitset_max_corner, bitset_tmp2 = bitset_max_corner;
-    DefAmrIndexLUint index_x = indices[kXIndex], index_y = indices[kYIndex], index_z = indices[kZIndex];
+    DefAmrLUint index_x = indices[kXIndex], index_y = indices[kYIndex], index_z = indices[kZIndex];
     if (block_length == 1) {
         if (index_x >= code_domain_min[kXIndex] && index_x <= code_domain_max[kXIndex]
             && index_y >= code_domain_min[kYIndex] && index_y <= code_domain_max[kYIndex]
@@ -2736,9 +2736,9 @@ void SFBitsetAux3D::FindPartition3BlocksMin(const DefSFBitset& bitset_max_corner
         }
     } else {
         // top surface
-        for (DefAmrIndexLUint iy = 0; iy <= i_max1; ++iy) {
+        for (DefAmrLUint iy = 0; iy <= i_max1; ++iy) {
             bitset_tmp = bitset_tmp2;
-            for (DefAmrIndexLUint ix = 0; ix <= i_max2; ++ix) {
+            for (DefAmrLUint ix = 0; ix <= i_max2; ++ix) {
                 if (index_x >= code_domain_min[kXIndex] && index_x <= code_domain_max[kXIndex]
                     && index_y >= code_domain_min[kYIndex] && index_y <= code_domain_max[kYIndex]
                     && index_z >= code_domain_min[kZIndex] && index_z <= code_domain_max[kZIndex]
@@ -2754,9 +2754,9 @@ void SFBitsetAux3D::FindPartition3BlocksMin(const DefSFBitset& bitset_max_corner
             index_x = indices[kXIndex];
             --index_y;
         }
-        for (DefAmrIndexLUint iy = 0;  iy <= i_max1; ++iy) {
+        for (DefAmrLUint iy = 0;  iy <= i_max1; ++iy) {
             bitset_tmp = bitset_tmp2;
-            for (DefAmrIndexLUint ix = 0;  ix <= i_max1; ++ix) {
+            for (DefAmrLUint ix = 0;  ix <= i_max1; ++ix) {
                 if (index_x >= code_domain_min[kXIndex] && index_x <= code_domain_max[kXIndex]
                     && index_y >= code_domain_min[kYIndex] && index_y <= code_domain_max[kYIndex]
                     && index_z >= code_domain_min[kZIndex] && index_z <= code_domain_max[kZIndex]
@@ -2776,11 +2776,11 @@ void SFBitsetAux3D::FindPartition3BlocksMin(const DefSFBitset& bitset_max_corner
         index_x = indices[kXIndex];
         index_y = indices[kYIndex];
         bitset_tmp2 = bitset_max_corner;
-        for (DefAmrIndexLUint iz = 1; iz < i_max1; ++iz) {
+        for (DefAmrLUint iz = 1; iz < i_max1; ++iz) {
             bitset_tmp2 = FindZNeg(bitset_tmp2);
             bitset_tmp = bitset_tmp2;
             --index_z;
-            for (DefAmrIndexLUint ix = 0; ix < i_max2; ++ix) {
+            for (DefAmrLUint ix = 0; ix < i_max2; ++ix) {
                 if (index_x >= code_domain_min[kXIndex] && index_x <= code_domain_max[kXIndex]
                     && index_y >= code_domain_min[kYIndex] && index_y <= code_domain_max[kYIndex]
                     && index_z >= code_domain_min[kZIndex] && index_z <= code_domain_max[kZIndex]
@@ -2792,7 +2792,7 @@ void SFBitsetAux3D::FindPartition3BlocksMin(const DefSFBitset& bitset_max_corner
                 bitset_tmp = FindXNeg(bitset_tmp);
                 --index_x;
             }
-            for (DefAmrIndexLUint iy = 0; iy < i_max1; ++iy) {
+            for (DefAmrLUint iy = 0; iy < i_max1; ++iy) {
                 if (index_x >= code_domain_min[kXIndex] && index_x <= code_domain_max[kXIndex]
                     && index_y >= code_domain_min[kYIndex] && index_y <= code_domain_max[kYIndex]
                     && index_z >= code_domain_min[kZIndex] && index_z <= code_domain_max[kZIndex]
@@ -2804,7 +2804,7 @@ void SFBitsetAux3D::FindPartition3BlocksMin(const DefSFBitset& bitset_max_corner
                 bitset_tmp = FindYNeg(bitset_tmp);
                 --index_y;
             }
-            for (DefAmrIndexLUint ix = 0; ix <= i_max1; ++ix) {
+            for (DefAmrLUint ix = 0; ix <= i_max1; ++ix) {
                 if (index_x >= code_domain_min[kXIndex] && index_x <= code_domain_max[kXIndex]
                     && index_y >= code_domain_min[kYIndex] && index_y <= code_domain_max[kYIndex]
                     && index_z >= code_domain_min[kZIndex] && index_z <= code_domain_max[kZIndex]
@@ -2816,7 +2816,7 @@ void SFBitsetAux3D::FindPartition3BlocksMin(const DefSFBitset& bitset_max_corner
                 bitset_tmp = FindXPos(bitset_tmp);
                 ++index_x;
             }
-            for (DefAmrIndexLUint iy = 0; iy <= i_max1; ++iy) {
+            for (DefAmrLUint iy = 0; iy <= i_max1; ++iy) {
                 if (index_x >= code_domain_min[kXIndex] && index_x <= code_domain_max[kXIndex]
                     && index_y >= code_domain_min[kYIndex] && index_y <= code_domain_max[kYIndex]
                     && index_z >= code_domain_min[kZIndex] && index_z <= code_domain_max[kZIndex]
@@ -2828,7 +2828,7 @@ void SFBitsetAux3D::FindPartition3BlocksMin(const DefSFBitset& bitset_max_corner
                 bitset_tmp = FindYNeg(bitset_tmp);
                 --index_y;
             }
-            for (DefAmrIndexLUint ix = 0; ix < i_max1; ++ix) {
+            for (DefAmrLUint ix = 0; ix < i_max1; ++ix) {
                 if (index_x >= code_domain_min[kXIndex] && index_x <= code_domain_max[kXIndex]
                     && index_y >= code_domain_min[kYIndex] && index_y <= code_domain_max[kYIndex]
                     && index_z >= code_domain_min[kZIndex] && index_z <= code_domain_max[kZIndex]
@@ -2840,7 +2840,7 @@ void SFBitsetAux3D::FindPartition3BlocksMin(const DefSFBitset& bitset_max_corner
                 bitset_tmp = FindXPos(bitset_tmp);
                 ++index_x;
             }
-            for (DefAmrIndexLUint iy = 0; iy < i_max2; ++iy) {
+            for (DefAmrLUint iy = 0; iy < i_max2; ++iy) {
                 if (index_x >= code_domain_min[kXIndex] && index_x <= code_domain_max[kXIndex]
                     && index_y >= code_domain_min[kYIndex] && index_y <= code_domain_max[kYIndex]
                     && index_z >= code_domain_min[kZIndex] && index_z <= code_domain_max[kZIndex]
@@ -2858,9 +2858,9 @@ void SFBitsetAux3D::FindPartition3BlocksMin(const DefSFBitset& bitset_max_corner
         index_y = indices[kYIndex];
         bitset_tmp2 =  FindZNeg(bitset_tmp2);
         --index_z;
-        for (DefAmrIndexLUint iy = 0;  iy <= i_max1; ++iy) {
+        for (DefAmrLUint iy = 0;  iy <= i_max1; ++iy) {
             bitset_tmp = bitset_tmp2;
-            for (DefAmrIndexLUint ix = 0;  ix <= i_max2; ++ix) {
+            for (DefAmrLUint ix = 0;  ix <= i_max2; ++ix) {
                 if (index_x >= code_domain_min[kXIndex] && index_x <= code_domain_max[kXIndex]
                     && index_y >= code_domain_min[kYIndex] && index_y <= code_domain_max[kYIndex]
                     && index_z >= code_domain_min[kZIndex] && index_z <= code_domain_max[kZIndex]
@@ -2876,9 +2876,9 @@ void SFBitsetAux3D::FindPartition3BlocksMin(const DefSFBitset& bitset_max_corner
             index_x = indices[kXIndex];
             --index_y;
         }
-        for (DefAmrIndexLUint iy = 0;  iy <= i_max1; ++iy) {
+        for (DefAmrLUint iy = 0;  iy <= i_max1; ++iy) {
             bitset_tmp = bitset_tmp2;
-            for (DefAmrIndexLUint ix = 0;  ix <= i_max1; ++ix) {
+            for (DefAmrLUint ix = 0;  ix <= i_max1; ++ix) {
                 if (index_x >= code_domain_min[kXIndex] && index_x <= code_domain_max[kXIndex]
                     && index_y >= code_domain_min[kYIndex] && index_y <= code_domain_max[kYIndex]
                     && index_z >= code_domain_min[kZIndex] && index_z <= code_domain_max[kZIndex]
@@ -2906,16 +2906,16 @@ void SFBitsetAux3D::FindPartition3BlocksMin(const DefSFBitset& bitset_max_corner
  * @param[in] code_domain_max maximum indicies of computational domain.
  * @param[out] ptr_map_partitioned  map of unsigned integers to unsigned integers representing the partitioned results.
  */
-void SFBitsetAux3D::FindPartition4BlocksMin(const DefSFBitset& bitset_max_corner, const DefAmrIndexUint block_level,
+void SFBitsetAux3D::FindPartition4BlocksMin(const DefSFBitset& bitset_max_corner, const DefInt block_level,
     const DefSFCodeToUint& code_partition_min, const DefSFCodeToUint& code_partition_max,
-    const std::array<DefAmrIndexLUint, 3>& code_domain_min, const std::array<DefAmrIndexLUint, 3>& code_domain_max,
-    DefMap<DefAmrIndexUint>* const ptr_map_partitioned) const {
-    std::array<DefAmrIndexLUint, 3> indices;
-    const DefAmrIndexLUint block_length = 1 << block_level;
-    DefAmrIndexLUint i_max1 = block_length - 1, i_max2 = block_length *2 - 1;
+    const std::array<DefAmrLUint, 3>& code_domain_min, const std::array<DefAmrLUint, 3>& code_domain_max,
+    DefMap<DefInt>* const ptr_map_partitioned) const {
+    std::array<DefAmrLUint, 3> indices;
+    const DefAmrLUint block_length = 1 << block_level;
+    DefAmrLUint i_max1 = block_length - 1, i_max2 = block_length *2 - 1;
     SFBitsetComputeIndices(bitset_max_corner, &indices);
     DefSFBitset bitset_tmp = bitset_max_corner, bitset_tmp2 = bitset_max_corner;
-    DefAmrIndexLUint index_x = indices[kXIndex], index_y = indices[kYIndex], index_z = indices[kZIndex];
+    DefAmrLUint index_x = indices[kXIndex], index_y = indices[kYIndex], index_z = indices[kZIndex];
     if (block_length == 1) {
         if (index_x >= code_domain_min[kXIndex] && index_x <= code_domain_max[kXIndex]
             && index_y >= code_domain_min[kYIndex] && index_y <= code_domain_max[kYIndex]
@@ -2957,9 +2957,9 @@ void SFBitsetAux3D::FindPartition4BlocksMin(const DefSFBitset& bitset_max_corner
         }
     } else {
         // top surface
-        for (DefAmrIndexLUint iy = 0;  iy <= i_max2; ++iy) {
+        for (DefAmrLUint iy = 0;  iy <= i_max2; ++iy) {
             bitset_tmp = bitset_tmp2;
-            for (DefAmrIndexLUint ix = 0;  ix <= i_max2; ++ix) {
+            for (DefAmrLUint ix = 0;  ix <= i_max2; ++ix) {
                 if (index_x >= code_domain_min[kXIndex] && index_x <= code_domain_max[kXIndex]
                     && index_y >= code_domain_min[kYIndex] && index_y <= code_domain_max[kYIndex]
                     && index_z >= code_domain_min[kZIndex] && index_z <= code_domain_max[kZIndex]
@@ -2979,11 +2979,11 @@ void SFBitsetAux3D::FindPartition4BlocksMin(const DefSFBitset& bitset_max_corner
         index_x = indices[kXIndex];
         index_y = indices[kYIndex];
         bitset_tmp2 = bitset_max_corner;
-        for (DefAmrIndexLUint iz = 1; iz < i_max1; ++iz) {
+        for (DefAmrLUint iz = 1; iz < i_max1; ++iz) {
             bitset_tmp2 =  FindZNeg(bitset_tmp2);
             --index_z;
             bitset_tmp = bitset_tmp2;
-            for (DefAmrIndexLUint ix = 0;  ix < i_max2; ++ix) {
+            for (DefAmrLUint ix = 0;  ix < i_max2; ++ix) {
                 if (index_x >= code_domain_min[kXIndex] && index_x <= code_domain_max[kXIndex]
                     && index_y >= code_domain_min[kYIndex] && index_y <= code_domain_max[kYIndex]
                     && index_z >= code_domain_min[kZIndex] && index_z <= code_domain_max[kZIndex]
@@ -2995,7 +2995,7 @@ void SFBitsetAux3D::FindPartition4BlocksMin(const DefSFBitset& bitset_max_corner
                 bitset_tmp = FindXNeg(bitset_tmp);
                 --index_x;
             }
-            for (DefAmrIndexLUint iy = 0;  iy < i_max2; ++iy) {
+            for (DefAmrLUint iy = 0;  iy < i_max2; ++iy) {
                 if (index_x >= code_domain_min[kXIndex] && index_x <= code_domain_max[kXIndex]
                     && index_y >= code_domain_min[kYIndex] && index_y <= code_domain_max[kYIndex]
                     && index_z >= code_domain_min[kZIndex] && index_z <= code_domain_max[kZIndex]
@@ -3007,7 +3007,7 @@ void SFBitsetAux3D::FindPartition4BlocksMin(const DefSFBitset& bitset_max_corner
                 bitset_tmp = FindYNeg(bitset_tmp);
                 --index_y;
             }
-            for (DefAmrIndexLUint ix = 0;  ix < i_max2; ++ix) {
+            for (DefAmrLUint ix = 0;  ix < i_max2; ++ix) {
                 if (index_x >= code_domain_min[kXIndex] && index_x <= code_domain_max[kXIndex]
                     && index_y >= code_domain_min[kYIndex] && index_y <= code_domain_max[kYIndex]
                     && index_z >= code_domain_min[kZIndex] && index_z <= code_domain_max[kZIndex]
@@ -3019,7 +3019,7 @@ void SFBitsetAux3D::FindPartition4BlocksMin(const DefSFBitset& bitset_max_corner
                 bitset_tmp = FindXPos(bitset_tmp);
                 ++index_x;
             }
-            for (DefAmrIndexLUint iy = 0;  iy < i_max2; ++iy) {
+            for (DefAmrLUint iy = 0;  iy < i_max2; ++iy) {
                 if (index_x >= code_domain_min[kXIndex] && index_x <= code_domain_max[kXIndex]
                     && index_y >= code_domain_min[kYIndex] && index_y <= code_domain_max[kYIndex]
                     && index_z >= code_domain_min[kZIndex] && index_z <= code_domain_max[kZIndex]
@@ -3037,9 +3037,9 @@ void SFBitsetAux3D::FindPartition4BlocksMin(const DefSFBitset& bitset_max_corner
         index_y = indices[kYIndex];
         bitset_tmp2 =  FindZNeg(bitset_tmp2);
         --index_z;
-        for (DefAmrIndexLUint iy = 0;  iy <= i_max2; ++iy) {
+        for (DefAmrLUint iy = 0;  iy <= i_max2; ++iy) {
             bitset_tmp = bitset_tmp2;
-            for (DefAmrIndexLUint ix = 0;  ix <= i_max2; ++ix) {
+            for (DefAmrLUint ix = 0;  ix <= i_max2; ++ix) {
                 if (index_x >= code_domain_min[kXIndex] && index_x <= code_domain_max[kXIndex]
                     && index_y >= code_domain_min[kYIndex] && index_y <= code_domain_max[kYIndex]
                     && index_z >= code_domain_min[kZIndex] && index_z <= code_domain_max[kZIndex]
@@ -3067,16 +3067,16 @@ void SFBitsetAux3D::FindPartition4BlocksMin(const DefSFBitset& bitset_max_corner
  * @param[in] code_domain_max maximum indicies of computational domain.
  * @param[out] ptr_map_partitioned  map of unsigned integers to unsigned integers representing the partitioned results.
  */
-void SFBitsetAux3D::FindPartition5BlocksMin(const DefSFBitset& bitset_max_corner, const DefAmrIndexUint block_level,
+void SFBitsetAux3D::FindPartition5BlocksMin(const DefSFBitset& bitset_max_corner, const DefInt block_level,
     const DefSFCodeToUint& code_partition_min, const DefSFCodeToUint& code_partition_max,
-    const std::array<DefAmrIndexLUint, 3>& code_domain_min, const std::array<DefAmrIndexLUint, 3>& code_domain_max,
-    DefMap<DefAmrIndexUint>* const ptr_map_partitioned) const {
-    std::array<DefAmrIndexLUint, 3> indices;
-    const DefAmrIndexLUint block_length = 1 << block_level;
-    DefAmrIndexLUint i_max1 = block_length - 1, i_max2 = block_length *2 - 1;
+    const std::array<DefAmrLUint, 3>& code_domain_min, const std::array<DefAmrLUint, 3>& code_domain_max,
+    DefMap<DefInt>* const ptr_map_partitioned) const {
+    std::array<DefAmrLUint, 3> indices;
+    const DefAmrLUint block_length = 1 << block_level;
+    DefAmrLUint i_max1 = block_length - 1, i_max2 = block_length *2 - 1;
     SFBitsetComputeIndices(bitset_max_corner, &indices);
     DefSFBitset bitset_tmp = bitset_max_corner, bitset_tmp2 = bitset_max_corner;
-    DefAmrIndexLUint index_x = indices[kXIndex], index_y = indices[kYIndex], index_z = indices[kZIndex];
+    DefAmrLUint index_x = indices[kXIndex], index_y = indices[kYIndex], index_z = indices[kZIndex];
     if (block_length == 1) {
          if (index_x >= code_domain_min[kXIndex] && index_x <= code_domain_max[kXIndex]
             && index_y >= code_domain_min[kYIndex] && index_y <= code_domain_max[kYIndex]
@@ -3130,9 +3130,9 @@ void SFBitsetAux3D::FindPartition5BlocksMin(const DefSFBitset& bitset_max_corner
         }
     } else {
         // top surface
-        for (DefAmrIndexLUint iy = 0;  iy <= i_max2; ++iy) {
+        for (DefAmrLUint iy = 0;  iy <= i_max2; ++iy) {
             bitset_tmp = bitset_tmp2;
-            for (DefAmrIndexLUint ix = 0;  ix <= i_max2; ++ix) {
+            for (DefAmrLUint ix = 0;  ix <= i_max2; ++ix) {
                 if (index_x >= code_domain_min[kXIndex] && index_x <= code_domain_max[kXIndex]
                     && index_y >= code_domain_min[kYIndex] && index_y <= code_domain_max[kYIndex]
                     && index_z >= code_domain_min[kZIndex] && index_z <= code_domain_max[kZIndex]
@@ -3152,11 +3152,11 @@ void SFBitsetAux3D::FindPartition5BlocksMin(const DefSFBitset& bitset_max_corner
         index_x = indices[kXIndex];
         index_y = indices[kYIndex];
         bitset_tmp2 = bitset_max_corner;
-        for (DefAmrIndexLUint iz = 1; iz < i_max1; ++iz) {
+        for (DefAmrLUint iz = 1; iz < i_max1; ++iz) {
             bitset_tmp2 =  FindZNeg(bitset_tmp2);
             --index_z;
             bitset_tmp = bitset_tmp2;
-            for (DefAmrIndexLUint ix = 0;  ix < i_max2; ++ix) {
+            for (DefAmrLUint ix = 0;  ix < i_max2; ++ix) {
                 if (index_x >= code_domain_min[kXIndex] && index_x <= code_domain_max[kXIndex]
                     && index_y >= code_domain_min[kYIndex] && index_y <= code_domain_max[kYIndex]
                     && index_z >= code_domain_min[kZIndex] && index_z <= code_domain_max[kZIndex]
@@ -3168,7 +3168,7 @@ void SFBitsetAux3D::FindPartition5BlocksMin(const DefSFBitset& bitset_max_corner
                 bitset_tmp = FindXNeg(bitset_tmp);
                 --index_x;
             }
-            for (DefAmrIndexLUint iy = 0;  iy < i_max2; ++iy) {
+            for (DefAmrLUint iy = 0;  iy < i_max2; ++iy) {
                 if (index_x >= code_domain_min[kXIndex] && index_x <= code_domain_max[kXIndex]
                     && index_y >= code_domain_min[kYIndex] && index_y <= code_domain_max[kYIndex]
                     && index_z >= code_domain_min[kZIndex] && index_z <= code_domain_max[kZIndex]
@@ -3180,7 +3180,7 @@ void SFBitsetAux3D::FindPartition5BlocksMin(const DefSFBitset& bitset_max_corner
                 bitset_tmp = FindYNeg(bitset_tmp);
                 --index_y;
             }
-            for (DefAmrIndexLUint ix = 0;  ix < i_max2; ++ix) {
+            for (DefAmrLUint ix = 0;  ix < i_max2; ++ix) {
                 if (index_x >= code_domain_min[kXIndex] && index_x <= code_domain_max[kXIndex]
                     && index_y >= code_domain_min[kYIndex] && index_y <= code_domain_max[kYIndex]
                     && index_z >= code_domain_min[kZIndex] && index_z <= code_domain_max[kZIndex]
@@ -3192,7 +3192,7 @@ void SFBitsetAux3D::FindPartition5BlocksMin(const DefSFBitset& bitset_max_corner
                 bitset_tmp = FindXPos(bitset_tmp);
                 ++index_x;
             }
-            for (DefAmrIndexLUint iy = 0;  iy < i_max2; ++iy) {
+            for (DefAmrLUint iy = 0;  iy < i_max2; ++iy) {
                 if (index_x >= code_domain_min[kXIndex] && index_x <= code_domain_max[kXIndex]
                     && index_y >= code_domain_min[kYIndex] && index_y <= code_domain_max[kYIndex]
                     && index_z >= code_domain_min[kZIndex] && index_z <= code_domain_max[kZIndex]
@@ -3206,7 +3206,7 @@ void SFBitsetAux3D::FindPartition5BlocksMin(const DefSFBitset& bitset_max_corner
             }
         }
         // middle bottom surface
-        std::array<DefAmrIndexLUint, 3> indices2;
+        std::array<DefAmrLUint, 3> indices2;
         bitset_tmp = SFBitsetToNLowerLevel(block_level, bitset_max_corner);
         bitset_tmp = FindXNeg(bitset_tmp);
         bitset_tmp2 = SFBitsetToNHigherLevel(block_level, bitset_tmp);
@@ -3214,9 +3214,9 @@ void SFBitsetAux3D::FindPartition5BlocksMin(const DefSFBitset& bitset_max_corner
         index_x = indices2[kXIndex];
         index_y = indices2[kYIndex];
         index_z = indices2[kZIndex];
-        for (DefAmrIndexLUint iy = 0;  iy <= i_max1; ++iy) {
+        for (DefAmrLUint iy = 0;  iy <= i_max1; ++iy) {
             bitset_tmp = bitset_tmp2;
-            for (DefAmrIndexLUint ix = 0;  ix <= i_max1; ++ix) {
+            for (DefAmrLUint ix = 0;  ix <= i_max1; ++ix) {
                 if (index_x >= code_domain_min[kXIndex] && index_x <= code_domain_max[kXIndex]
                     && index_y >= code_domain_min[kYIndex] && index_y <= code_domain_max[kYIndex]
                     && index_z >= code_domain_min[kZIndex] && index_z <= code_domain_max[kZIndex]
@@ -3240,9 +3240,9 @@ void SFBitsetAux3D::FindPartition5BlocksMin(const DefSFBitset& bitset_max_corner
         index_x = indices2[kXIndex];
         index_y = indices2[kYIndex];
         index_z = indices2[kZIndex];
-        for (DefAmrIndexLUint iy = 0;  iy <= i_max1; ++iy) {
+        for (DefAmrLUint iy = 0;  iy <= i_max1; ++iy) {
             bitset_tmp = bitset_tmp2;
-            for (DefAmrIndexLUint ix = 0;  ix <= i_max2; ++ix) {
+            for (DefAmrLUint ix = 0;  ix <= i_max2; ++ix) {
                 if (index_x >= code_domain_min[kXIndex] && index_x <= code_domain_max[kXIndex]
                     && index_y >= code_domain_min[kYIndex] && index_y <= code_domain_max[kYIndex]
                     && index_z >= code_domain_min[kZIndex] && index_z <= code_domain_max[kZIndex]
@@ -3265,9 +3265,9 @@ void SFBitsetAux3D::FindPartition5BlocksMin(const DefSFBitset& bitset_max_corner
         index_x = indices2[kXIndex];
         index_y = indices2[kYIndex];
         index_z = indices2[kZIndex];
-        for (DefAmrIndexLUint iz = 0; iz <= i_max1; ++iz) {
+        for (DefAmrLUint iz = 0; iz <= i_max1; ++iz) {
             bitset_tmp = bitset_tmp2;
-            for (DefAmrIndexLUint ix = 0;  ix < i_max1; ++ix) {
+            for (DefAmrLUint ix = 0;  ix < i_max1; ++ix) {
                 if (index_x >= code_domain_min[kXIndex] && index_x <= code_domain_max[kXIndex]
                     && index_y >= code_domain_min[kYIndex] && index_y <= code_domain_max[kYIndex]
                     && index_z >= code_domain_min[kZIndex] && index_z <= code_domain_max[kZIndex]
@@ -3279,7 +3279,7 @@ void SFBitsetAux3D::FindPartition5BlocksMin(const DefSFBitset& bitset_max_corner
                 bitset_tmp = FindXPos(bitset_tmp);
                 ++index_x;
             }
-            for (DefAmrIndexLUint iy = 0;  iy < i_max1; ++iy) {
+            for (DefAmrLUint iy = 0;  iy < i_max1; ++iy) {
                 if (index_x >= code_domain_min[kXIndex] && index_x <= code_domain_max[kXIndex]
                     && index_y >= code_domain_min[kYIndex] && index_y <= code_domain_max[kYIndex]
                     && index_z >= code_domain_min[kZIndex] && index_z <= code_domain_max[kZIndex]
@@ -3291,7 +3291,7 @@ void SFBitsetAux3D::FindPartition5BlocksMin(const DefSFBitset& bitset_max_corner
                 bitset_tmp = FindYPos(bitset_tmp);
                 ++index_y;
             }
-            for (DefAmrIndexLUint ix = 0;  ix < i_max1; ++ix) {
+            for (DefAmrLUint ix = 0;  ix < i_max1; ++ix) {
                 if (index_x >= code_domain_min[kXIndex] && index_x <= code_domain_max[kXIndex]
                     && index_y >= code_domain_min[kYIndex] && index_y <= code_domain_max[kYIndex]
                     && index_z >= code_domain_min[kZIndex] && index_z <= code_domain_max[kZIndex]
@@ -3303,7 +3303,7 @@ void SFBitsetAux3D::FindPartition5BlocksMin(const DefSFBitset& bitset_max_corner
                 bitset_tmp = FindXNeg(bitset_tmp);
                 --index_x;
             }
-            for (DefAmrIndexLUint iy = 0;  iy < i_max1; ++iy) {
+            for (DefAmrLUint iy = 0;  iy < i_max1; ++iy) {
                 if (index_x >= code_domain_min[kXIndex] && index_x <= code_domain_max[kXIndex]
                     && index_y >= code_domain_min[kYIndex] && index_y <= code_domain_max[kYIndex]
                     && index_z >= code_domain_min[kZIndex] && index_z <= code_domain_max[kZIndex]
@@ -3321,9 +3321,9 @@ void SFBitsetAux3D::FindPartition5BlocksMin(const DefSFBitset& bitset_max_corner
         // bottom surface
         index_x = indices2[kXIndex];
         index_y = indices2[kYIndex];
-        for (DefAmrIndexLUint iy = 0;  iy <= i_max1; ++iy) {
+        for (DefAmrLUint iy = 0;  iy <= i_max1; ++iy) {
             bitset_tmp = bitset_tmp2;
-            for (DefAmrIndexLUint ix = 0;  ix <= i_max1; ++ix) {
+            for (DefAmrLUint ix = 0;  ix <= i_max1; ++ix) {
                 if (index_x >= code_domain_min[kXIndex] && index_x <= code_domain_max[kXIndex]
                     && index_y >= code_domain_min[kYIndex] && index_y <= code_domain_max[kYIndex]
                     && index_z >= code_domain_min[kZIndex] && index_z <= code_domain_max[kZIndex]
@@ -3351,16 +3351,16 @@ void SFBitsetAux3D::FindPartition5BlocksMin(const DefSFBitset& bitset_max_corner
  * @param[in] code_domain_max maximum indicies of computational domain.
  * @param[out] ptr_map_partitioned  map of unsigned integers to unsigned integers representing the partitioned results.
  */
-void SFBitsetAux3D::FindPartition6BlocksMin(const DefSFBitset& bitset_max_corner, const DefAmrIndexUint block_level,
+void SFBitsetAux3D::FindPartition6BlocksMin(const DefSFBitset& bitset_max_corner, const DefInt block_level,
     const DefSFCodeToUint& code_partition_min, const DefSFCodeToUint& code_partition_max,
-    const std::array<DefAmrIndexLUint, 3>& code_domain_min, const std::array<DefAmrIndexLUint, 3>& code_domain_max,
-    DefMap<DefAmrIndexUint>* const ptr_map_partitioned) const {
-    std::array<DefAmrIndexLUint, 3> indices;
-    const DefAmrIndexLUint block_length = 1 << block_level;
-    DefAmrIndexLUint i_max1 = block_length - 1, i_max2 = block_length *2 - 1;
+    const std::array<DefAmrLUint, 3>& code_domain_min, const std::array<DefAmrLUint, 3>& code_domain_max,
+    DefMap<DefInt>* const ptr_map_partitioned) const {
+    std::array<DefAmrLUint, 3> indices;
+    const DefAmrLUint block_length = 1 << block_level;
+    DefAmrLUint i_max1 = block_length - 1, i_max2 = block_length *2 - 1;
     SFBitsetComputeIndices(bitset_max_corner, &indices);
     DefSFBitset bitset_tmp = bitset_max_corner, bitset_tmp2 = bitset_max_corner;
-    DefAmrIndexLUint index_x = indices[kXIndex], index_y = indices[kYIndex], index_z = indices[kZIndex];
+    DefAmrLUint index_x = indices[kXIndex], index_y = indices[kYIndex], index_z = indices[kZIndex];
     if (block_length == 1) {
         if (index_x >= code_domain_min[kXIndex] && index_x <= code_domain_max[kXIndex]
             && index_y >= code_domain_min[kYIndex] && index_y <= code_domain_max[kYIndex]
@@ -3424,9 +3424,9 @@ void SFBitsetAux3D::FindPartition6BlocksMin(const DefSFBitset& bitset_max_corner
         }
     } else {
         // top surface
-        for (DefAmrIndexLUint iy = 0;  iy <= i_max2; ++iy) {
+        for (DefAmrLUint iy = 0;  iy <= i_max2; ++iy) {
             bitset_tmp = bitset_tmp2;
-            for (DefAmrIndexLUint ix = 0;  ix <= i_max2; ++ix) {
+            for (DefAmrLUint ix = 0;  ix <= i_max2; ++ix) {
                 if (index_x >= code_domain_min[kXIndex] && index_x <= code_domain_max[kXIndex]
                     && index_y >= code_domain_min[kYIndex] && index_y <= code_domain_max[kYIndex]
                     && index_z >= code_domain_min[kZIndex] && index_z <= code_domain_max[kZIndex]
@@ -3446,11 +3446,11 @@ void SFBitsetAux3D::FindPartition6BlocksMin(const DefSFBitset& bitset_max_corner
         index_x = indices[kXIndex];
         index_y = indices[kYIndex];
         bitset_tmp2 = bitset_max_corner;
-        for (DefAmrIndexLUint iz = 1; iz < i_max1; ++iz) {
+        for (DefAmrLUint iz = 1; iz < i_max1; ++iz) {
             bitset_tmp2 =  FindZNeg(bitset_tmp2);
             --index_z;
             bitset_tmp = bitset_tmp2;
-            for (DefAmrIndexLUint ix = 0;  ix < i_max2; ++ix) {
+            for (DefAmrLUint ix = 0;  ix < i_max2; ++ix) {
                 if (index_x >= code_domain_min[kXIndex] && index_x <= code_domain_max[kXIndex]
                     && index_y >= code_domain_min[kYIndex] && index_y <= code_domain_max[kYIndex]
                     && index_z >= code_domain_min[kZIndex] && index_z <= code_domain_max[kZIndex]
@@ -3462,7 +3462,7 @@ void SFBitsetAux3D::FindPartition6BlocksMin(const DefSFBitset& bitset_max_corner
                 bitset_tmp = FindXNeg(bitset_tmp);
                 --index_x;
             }
-            for (DefAmrIndexLUint iy = 0;  iy < i_max2; ++iy) {
+            for (DefAmrLUint iy = 0;  iy < i_max2; ++iy) {
                 if (index_x >= code_domain_min[kXIndex] && index_x <= code_domain_max[kXIndex]
                     && index_y >= code_domain_min[kYIndex] && index_y <= code_domain_max[kYIndex]
                     && index_z >= code_domain_min[kZIndex] && index_z <= code_domain_max[kZIndex]
@@ -3474,7 +3474,7 @@ void SFBitsetAux3D::FindPartition6BlocksMin(const DefSFBitset& bitset_max_corner
                 bitset_tmp = FindYNeg(bitset_tmp);
                 --index_y;
             }
-            for (DefAmrIndexLUint ix = 0;  ix < i_max2; ++ix) {
+            for (DefAmrLUint ix = 0;  ix < i_max2; ++ix) {
                 if (index_x >= code_domain_min[kXIndex] && index_x <= code_domain_max[kXIndex]
                     && index_y >= code_domain_min[kYIndex] && index_y <= code_domain_max[kYIndex]
                     && index_z >= code_domain_min[kZIndex] && index_z <= code_domain_max[kZIndex]
@@ -3486,7 +3486,7 @@ void SFBitsetAux3D::FindPartition6BlocksMin(const DefSFBitset& bitset_max_corner
                 bitset_tmp = FindXPos(bitset_tmp);
                 ++index_x;
             }
-            for (DefAmrIndexLUint iy = 0;  iy < i_max2; ++iy) {
+            for (DefAmrLUint iy = 0;  iy < i_max2; ++iy) {
                 if (index_x >= code_domain_min[kXIndex] && index_x <= code_domain_max[kXIndex]
                     && index_y >= code_domain_min[kYIndex] && index_y <= code_domain_max[kYIndex]
                     && index_z >= code_domain_min[kZIndex] && index_z <= code_domain_max[kZIndex]
@@ -3500,7 +3500,7 @@ void SFBitsetAux3D::FindPartition6BlocksMin(const DefSFBitset& bitset_max_corner
             }
         }
         // middle bottom surface
-        std::array<DefAmrIndexLUint, 3> indices2;
+        std::array<DefAmrLUint, 3> indices2;
         bitset_tmp = SFBitsetToNLowerLevel(block_level, bitset_max_corner);
         bitset_tmp = FindXNeg(bitset_tmp);
         bitset_tmp2 = SFBitsetToNHigherLevel(block_level, bitset_tmp);
@@ -3509,9 +3509,9 @@ void SFBitsetAux3D::FindPartition6BlocksMin(const DefSFBitset& bitset_max_corner
         index_x = indices2[kXIndex];
         index_y = indices2[kYIndex];
         index_z = indices2[kZIndex];
-        for (DefAmrIndexLUint iy = 0;  iy <= i_max1; ++iy) {
+        for (DefAmrLUint iy = 0;  iy <= i_max1; ++iy) {
             bitset_tmp = bitset_tmp2;
-            for (DefAmrIndexLUint ix = 0;  ix <= i_max2; ++ix) {
+            for (DefAmrLUint ix = 0;  ix <= i_max2; ++ix) {
                 if (index_x >= code_domain_min[kXIndex] && index_x <= code_domain_max[kXIndex]
                     && index_y >= code_domain_min[kYIndex] && index_y <= code_domain_max[kYIndex]
                     && index_z >= code_domain_min[kZIndex] && index_z <= code_domain_max[kZIndex]
@@ -3535,9 +3535,9 @@ void SFBitsetAux3D::FindPartition6BlocksMin(const DefSFBitset& bitset_max_corner
         index_x = indices2[kXIndex];
         index_y = indices2[kYIndex];
         index_z = indices2[kZIndex];
-        for (DefAmrIndexLUint iz = 0; iz <= i_max1; ++iz) {
+        for (DefAmrLUint iz = 0; iz <= i_max1; ++iz) {
             bitset_tmp = bitset_tmp2;
-            for (DefAmrIndexLUint ix = 0;  ix < i_max2; ++ix) {
+            for (DefAmrLUint ix = 0;  ix < i_max2; ++ix) {
                 if (index_x >= code_domain_min[kXIndex] && index_x <= code_domain_max[kXIndex]
                     && index_y >= code_domain_min[kYIndex] && index_y <= code_domain_max[kYIndex]
                     && index_z >= code_domain_min[kZIndex] && index_z <= code_domain_max[kZIndex]
@@ -3549,7 +3549,7 @@ void SFBitsetAux3D::FindPartition6BlocksMin(const DefSFBitset& bitset_max_corner
                 bitset_tmp = FindXPos(bitset_tmp);
                 ++index_x;
             }
-            for (DefAmrIndexLUint iy = 0;  iy < i_max1; ++iy) {
+            for (DefAmrLUint iy = 0;  iy < i_max1; ++iy) {
                 if (index_x >= code_domain_min[kXIndex] && index_x <= code_domain_max[kXIndex]
                     && index_y >= code_domain_min[kYIndex] && index_y <= code_domain_max[kYIndex]
                     && index_z >= code_domain_min[kZIndex] && index_z <= code_domain_max[kZIndex]
@@ -3561,7 +3561,7 @@ void SFBitsetAux3D::FindPartition6BlocksMin(const DefSFBitset& bitset_max_corner
                 bitset_tmp = FindYPos(bitset_tmp);
                 ++index_y;
             }
-            for (DefAmrIndexLUint ix = 0;  ix < i_max2; ++ix) {
+            for (DefAmrLUint ix = 0;  ix < i_max2; ++ix) {
                 if (index_x >= code_domain_min[kXIndex] && index_x <= code_domain_max[kXIndex]
                     && index_y >= code_domain_min[kYIndex] && index_y <= code_domain_max[kYIndex]
                     && index_z >= code_domain_min[kZIndex] && index_z <= code_domain_max[kZIndex]
@@ -3573,7 +3573,7 @@ void SFBitsetAux3D::FindPartition6BlocksMin(const DefSFBitset& bitset_max_corner
                 bitset_tmp = FindXNeg(bitset_tmp);
                 --index_x;
             }
-            for (DefAmrIndexLUint iy = 0;  iy < i_max1; ++iy) {
+            for (DefAmrLUint iy = 0;  iy < i_max1; ++iy) {
                 if (index_x >= code_domain_min[kXIndex] && index_x <= code_domain_max[kXIndex]
                     && index_y >= code_domain_min[kYIndex] && index_y <= code_domain_max[kYIndex]
                     && index_z >= code_domain_min[kZIndex] && index_z <= code_domain_max[kZIndex]
@@ -3591,9 +3591,9 @@ void SFBitsetAux3D::FindPartition6BlocksMin(const DefSFBitset& bitset_max_corner
         // bottom surface
         index_x = indices2[kXIndex];
         index_y = indices2[kYIndex];
-        for (DefAmrIndexLUint iy = 0;  iy <= i_max1; ++iy) {
+        for (DefAmrLUint iy = 0;  iy <= i_max1; ++iy) {
             bitset_tmp = bitset_tmp2;
-            for (DefAmrIndexLUint ix = 0;  ix <= i_max2; ++ix) {
+            for (DefAmrLUint ix = 0;  ix <= i_max2; ++ix) {
                 if (index_x >= code_domain_min[kXIndex] && index_x <= code_domain_max[kXIndex]
                     && index_y >= code_domain_min[kYIndex] && index_y <= code_domain_max[kYIndex]
                     && index_z >= code_domain_min[kZIndex] && index_z <= code_domain_max[kZIndex]
@@ -3621,16 +3621,16 @@ void SFBitsetAux3D::FindPartition6BlocksMin(const DefSFBitset& bitset_max_corner
  * @param[in] code_domain_max maximum indicies of computational domain.
  * @param[out] ptr_map_partitioned  map of unsigned integers to unsigned integers representing the partitioned results.
  */
-void SFBitsetAux3D::FindPartition7BlocksMin(const DefSFBitset& bitset_max_corner, const DefAmrIndexUint block_level,
+void SFBitsetAux3D::FindPartition7BlocksMin(const DefSFBitset& bitset_max_corner, const DefInt block_level,
     const DefSFCodeToUint& code_partition_min, const DefSFCodeToUint& code_partition_max,
-    const std::array<DefAmrIndexLUint, 3>& code_domain_min, const std::array<DefAmrIndexLUint, 3>& code_domain_max,
-    DefMap<DefAmrIndexUint>* const ptr_map_partitioned) const {
-    std::array<DefAmrIndexLUint, 3> indices;
-    const DefAmrIndexLUint block_length = 1 << block_level;
-    DefAmrIndexLUint i_max1 = block_length - 1, i_max2 = block_length * 2 - 1;
+    const std::array<DefAmrLUint, 3>& code_domain_min, const std::array<DefAmrLUint, 3>& code_domain_max,
+    DefMap<DefInt>* const ptr_map_partitioned) const {
+    std::array<DefAmrLUint, 3> indices;
+    const DefAmrLUint block_length = 1 << block_level;
+    DefAmrLUint i_max1 = block_length - 1, i_max2 = block_length * 2 - 1;
     SFBitsetComputeIndices(bitset_max_corner, &indices);
     DefSFBitset bitset_tmp = bitset_max_corner, bitset_tmp2 = bitset_max_corner;
-    DefAmrIndexLUint index_x = indices[kXIndex], index_y = indices[kYIndex], index_z = indices[kZIndex];
+    DefAmrLUint index_x = indices[kXIndex], index_y = indices[kYIndex], index_z = indices[kZIndex];
     if (block_length == 1) {
         if (index_x >= code_domain_min[kXIndex] && index_x <= code_domain_max[kXIndex]
             && index_y >= code_domain_min[kYIndex] && index_y <= code_domain_max[kYIndex]
@@ -3704,9 +3704,9 @@ void SFBitsetAux3D::FindPartition7BlocksMin(const DefSFBitset& bitset_max_corner
         }
     } else {
         // top surface
-        for (DefAmrIndexLUint iy = 0;  iy <= i_max2; ++iy) {
+        for (DefAmrLUint iy = 0;  iy <= i_max2; ++iy) {
             bitset_tmp = bitset_tmp2;
-            for (DefAmrIndexLUint ix = 0;  ix <= i_max2; ++ix) {
+            for (DefAmrLUint ix = 0;  ix <= i_max2; ++ix) {
                 if (index_x >= code_domain_min[kXIndex] && index_x <= code_domain_max[kXIndex]
                     && index_y >= code_domain_min[kYIndex] && index_y <= code_domain_max[kYIndex]
                     && index_z >= code_domain_min[kZIndex] && index_z <= code_domain_max[kZIndex]
@@ -3726,11 +3726,11 @@ void SFBitsetAux3D::FindPartition7BlocksMin(const DefSFBitset& bitset_max_corner
         index_x = indices[kXIndex];
         index_y = indices[kYIndex];
         bitset_tmp2 = bitset_max_corner;
-        for (DefAmrIndexLUint iz = 1; iz < i_max1; ++iz) {
+        for (DefAmrLUint iz = 1; iz < i_max1; ++iz) {
             bitset_tmp2 =  FindZNeg(bitset_tmp2);
             --index_z;
             bitset_tmp = bitset_tmp2;
-            for (DefAmrIndexLUint ix = 0;  ix < i_max2; ++ix) {
+            for (DefAmrLUint ix = 0;  ix < i_max2; ++ix) {
                 if (index_x >= code_domain_min[kXIndex] && index_x <= code_domain_max[kXIndex]
                     && index_y >= code_domain_min[kYIndex] && index_y <= code_domain_max[kYIndex]
                     && index_z >= code_domain_min[kZIndex] && index_z <= code_domain_max[kZIndex]
@@ -3742,7 +3742,7 @@ void SFBitsetAux3D::FindPartition7BlocksMin(const DefSFBitset& bitset_max_corner
                 bitset_tmp = FindXNeg(bitset_tmp);
                 --index_x;
             }
-            for (DefAmrIndexLUint iy = 0;  iy < i_max2; ++iy) {
+            for (DefAmrLUint iy = 0;  iy < i_max2; ++iy) {
                 if (index_x >= code_domain_min[kXIndex] && index_x <= code_domain_max[kXIndex]
                     && index_y >= code_domain_min[kYIndex] && index_y <= code_domain_max[kYIndex]
                     && index_z >= code_domain_min[kZIndex] && index_z <= code_domain_max[kZIndex]
@@ -3754,7 +3754,7 @@ void SFBitsetAux3D::FindPartition7BlocksMin(const DefSFBitset& bitset_max_corner
                 bitset_tmp = FindYNeg(bitset_tmp);
                 --index_y;
             }
-            for (DefAmrIndexLUint ix = 0;  ix < i_max2; ++ix) {
+            for (DefAmrLUint ix = 0;  ix < i_max2; ++ix) {
                 if (index_x >= code_domain_min[kXIndex] && index_x <= code_domain_max[kXIndex]
                     && index_y >= code_domain_min[kYIndex] && index_y <= code_domain_max[kYIndex]
                     && index_z >= code_domain_min[kZIndex] && index_z <= code_domain_max[kZIndex]
@@ -3766,7 +3766,7 @@ void SFBitsetAux3D::FindPartition7BlocksMin(const DefSFBitset& bitset_max_corner
                 bitset_tmp = FindXPos(bitset_tmp);
                 ++index_x;
             }
-            for (DefAmrIndexLUint iy = 0;  iy < i_max2; ++iy) {
+            for (DefAmrLUint iy = 0;  iy < i_max2; ++iy) {
                 if (index_x >= code_domain_min[kXIndex] && index_x <= code_domain_max[kXIndex]
                     && index_y >= code_domain_min[kYIndex] && index_y <= code_domain_max[kYIndex]
                     && index_z >= code_domain_min[kZIndex] && index_z <= code_domain_max[kZIndex]
@@ -3780,7 +3780,7 @@ void SFBitsetAux3D::FindPartition7BlocksMin(const DefSFBitset& bitset_max_corner
             }
         }
         // middle bottom surface
-        std::array<DefAmrIndexLUint, 3> indices2;
+        std::array<DefAmrLUint, 3> indices2;
         bitset_tmp = SFBitsetToNLowerLevel(block_level, bitset_max_corner);
         bitset_tmp = FindXNeg(bitset_tmp);
         bitset_tmp2 = SFBitsetToNHigherLevel(block_level, bitset_tmp);
@@ -3789,9 +3789,9 @@ void SFBitsetAux3D::FindPartition7BlocksMin(const DefSFBitset& bitset_max_corner
         index_x = indices2[kXIndex];
         index_y = indices2[kYIndex];
         index_z = indices2[kZIndex];
-        for (DefAmrIndexLUint iy = 0;  iy <= i_max1; ++iy) {
+        for (DefAmrLUint iy = 0;  iy <= i_max1; ++iy) {
             bitset_tmp = bitset_tmp2;
-            for (DefAmrIndexLUint ix = 0;  ix <= i_max1; ++ix) {
+            for (DefAmrLUint ix = 0;  ix <= i_max1; ++ix) {
                 if (index_x >= code_domain_min[kXIndex] && index_x <= code_domain_max[kXIndex]
                     && index_y >= code_domain_min[kYIndex] && index_y <= code_domain_max[kYIndex]
                     && index_z >= code_domain_min[kZIndex] && index_z <= code_domain_max[kZIndex]
@@ -3815,9 +3815,9 @@ void SFBitsetAux3D::FindPartition7BlocksMin(const DefSFBitset& bitset_max_corner
         index_x = indices2[kXIndex];
         index_y = indices2[kYIndex];
         index_z = indices2[kZIndex];
-        for (DefAmrIndexLUint iz = 0; iz <= i_max1; ++iz) {
+        for (DefAmrLUint iz = 0; iz <= i_max1; ++iz) {
             bitset_tmp = bitset_tmp2;
-            for (DefAmrIndexLUint iy = 0; iy < i_max1; ++iy) {
+            for (DefAmrLUint iy = 0; iy < i_max1; ++iy) {
                 if (index_x >= code_domain_min[kXIndex] && index_x <= code_domain_max[kXIndex]
                     && index_y >= code_domain_min[kYIndex] && index_y <= code_domain_max[kYIndex]
                     && index_z >= code_domain_min[kZIndex] && index_z <= code_domain_max[kZIndex]
@@ -3829,7 +3829,7 @@ void SFBitsetAux3D::FindPartition7BlocksMin(const DefSFBitset& bitset_max_corner
                 bitset_tmp = FindYPos(bitset_tmp);
                 ++index_y;
             }
-            for (DefAmrIndexLUint ix = 0; ix < i_max2; ++ix) {
+            for (DefAmrLUint ix = 0; ix < i_max2; ++ix) {
                 if (index_x >= code_domain_min[kXIndex] && index_x <= code_domain_max[kXIndex]
                     && index_y >= code_domain_min[kYIndex] && index_y <= code_domain_max[kYIndex]
                     && index_z >= code_domain_min[kZIndex] && index_z <= code_domain_max[kZIndex]
@@ -3841,7 +3841,7 @@ void SFBitsetAux3D::FindPartition7BlocksMin(const DefSFBitset& bitset_max_corner
                 bitset_tmp = FindXPos(bitset_tmp);
                 ++index_x;
             }
-            for (DefAmrIndexLUint iy = 0; iy < i_max2; ++iy) {
+            for (DefAmrLUint iy = 0; iy < i_max2; ++iy) {
                 if (index_x >= code_domain_min[kXIndex] && index_x <= code_domain_max[kXIndex]
                     && index_y >= code_domain_min[kYIndex] && index_y <= code_domain_max[kYIndex]
                     && index_z >= code_domain_min[kZIndex] && index_z <= code_domain_max[kZIndex]
@@ -3853,7 +3853,7 @@ void SFBitsetAux3D::FindPartition7BlocksMin(const DefSFBitset& bitset_max_corner
                 bitset_tmp = FindYNeg(bitset_tmp);
                 --index_y;
             }
-            for (DefAmrIndexLUint ix = 0; ix < i_max1; ++ix) {
+            for (DefAmrLUint ix = 0; ix < i_max1; ++ix) {
                 if (index_x >= code_domain_min[kXIndex] && index_x <= code_domain_max[kXIndex]
                     && index_y >= code_domain_min[kYIndex] && index_y <= code_domain_max[kYIndex]
                     && index_z >= code_domain_min[kZIndex] && index_z <= code_domain_max[kZIndex]
@@ -3865,7 +3865,7 @@ void SFBitsetAux3D::FindPartition7BlocksMin(const DefSFBitset& bitset_max_corner
                 bitset_tmp = FindXNeg(bitset_tmp);
                 --index_x;
             }
-            for (DefAmrIndexLUint iy = 0; iy <= i_max1; ++iy) {
+            for (DefAmrLUint iy = 0; iy <= i_max1; ++iy) {
                 if (index_x >= code_domain_min[kXIndex] && index_x <= code_domain_max[kXIndex]
                     && index_y >= code_domain_min[kYIndex] && index_y <= code_domain_max[kYIndex]
                     && index_z >= code_domain_min[kZIndex] && index_z <= code_domain_max[kZIndex]
@@ -3877,7 +3877,7 @@ void SFBitsetAux3D::FindPartition7BlocksMin(const DefSFBitset& bitset_max_corner
                 bitset_tmp = FindYPos(bitset_tmp);
                 ++index_y;
             }
-            for (DefAmrIndexLUint ix = 0; ix <= i_max1; ++ix) {
+            for (DefAmrLUint ix = 0; ix <= i_max1; ++ix) {
                 if (index_x >= code_domain_min[kXIndex] && index_x <= code_domain_max[kXIndex]
                     && index_y >= code_domain_min[kYIndex] && index_y <= code_domain_max[kYIndex]
                     && index_z >= code_domain_min[kZIndex] && index_z <= code_domain_max[kZIndex]
@@ -3895,9 +3895,9 @@ void SFBitsetAux3D::FindPartition7BlocksMin(const DefSFBitset& bitset_max_corner
         // bottom surface
         index_x = indices2[kXIndex];
         index_y = indices2[kYIndex];
-        for (DefAmrIndexLUint iy = 0;  iy <= i_max1; ++iy) {
+        for (DefAmrLUint iy = 0;  iy <= i_max1; ++iy) {
             bitset_tmp = bitset_tmp2;
-            for (DefAmrIndexLUint ix = 0;  ix <= i_max2; ++ix) {
+            for (DefAmrLUint ix = 0;  ix <= i_max2; ++ix) {
                 if (index_x >= code_domain_min[kXIndex] && index_x <= code_domain_max[kXIndex]
                     && index_y >= code_domain_min[kYIndex] && index_y <= code_domain_max[kYIndex]
                     && index_z >= code_domain_min[kZIndex] && index_z <= code_domain_max[kZIndex]
@@ -3920,9 +3920,9 @@ void SFBitsetAux3D::FindPartition7BlocksMin(const DefSFBitset& bitset_max_corner
         SFBitsetComputeIndices(bitset_tmp2, &indices2);
         index_x = indices2[kXIndex];
         index_y = indices2[kYIndex];
-        for (DefAmrIndexLUint iy = 0;  iy <= i_max1; ++iy) {
+        for (DefAmrLUint iy = 0;  iy <= i_max1; ++iy) {
             bitset_tmp = bitset_tmp2;
-            for (DefAmrIndexLUint ix = 0;  ix <= i_max1; ++ix) {
+            for (DefAmrLUint ix = 0;  ix <= i_max1; ++ix) {
                 if (index_x >= code_domain_min[kXIndex] && index_x <= code_domain_max[kXIndex]
                     && index_y >= code_domain_min[kYIndex] && index_y <= code_domain_max[kYIndex]
                     && index_z >= code_domain_min[kZIndex] && index_z <= code_domain_max[kZIndex]
@@ -3951,13 +3951,13 @@ void SFBitsetAux3D::FindPartition7BlocksMin(const DefSFBitset& bitset_max_corner
  */
 bool SFBitsetAux3D::CheckPartitionLimits(const DefSFBitset& sfbitset_in,
     const DefSFCodeToUint& code_partition_min, const DefSFCodeToUint& code_partition_max,
-    const std::array<DefAmrIndexLUint, 3>& code_domain_min, const std::array<DefAmrIndexLUint, 3>& code_domain_max) const {
+    const std::array<DefAmrLUint, 3>& code_domain_min, const std::array<DefAmrLUint, 3>& code_domain_max) const {
     std::array<DefSFBitset, 27> neighbors;
     DefSFCodeToUint code_neighbour;
-    std::array<DefAmrIndexLUint, 3> indices;
+    std::array<DefAmrLUint, 3> indices;
     SFBitsetFindAllNeighbors(sfbitset_in, &neighbors);
 
-    for (DefAmrIndexUint i = 1; i < 27; ++i) {
+    for (DefInt i = 1; i < 27; ++i) {
         code_neighbour = neighbors[i].to_ullong();
         if (code_neighbour < code_partition_min || code_neighbour > code_partition_max) {
             SFBitsetComputeIndices(neighbors[i], &indices);

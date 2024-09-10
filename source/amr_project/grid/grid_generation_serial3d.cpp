@@ -21,11 +21,11 @@ namespace amrproject {
 *                  generating one layer of grid.
 * @param[out] ptr_map_node_tmp  nodes near the tracking grid.
 */
-void GridManager3D::GenerateGridNodeNearTrackingNode(const DefAmrIndexUint i_level,
-    const std::pair<ECriterionType, DefAmrIndexUint>& tracking_grid_key,
-    DefMap<DefAmrUint>* const ptr_map_node_tmp) const {
+void GridManager3D::GenerateGridNodeNearTrackingNode(const DefInt i_level,
+    const std::pair<ECriterionType, DefInt>& tracking_grid_key,
+    DefMap<DefInt>* const ptr_map_node_tmp) const {
     std::vector<DefSFCodeToUint> sfbitset_min(k0GridDims_), sfbitset_max(k0GridDims_);
-    for (DefAmrIndexUint i_dms = 0; i_dms < k0GridDims_; ++i_dms) {
+    for (DefInt i_dms = 0; i_dms < k0GridDims_; ++i_dms) {
         sfbitset_min.at(i_dms) = this->vec_ptr_grid_info_.at(i_level)->k0VecBitsetDomainMin_.at(i_dms).to_ullong();
         sfbitset_max.at(i_dms) = this->vec_ptr_grid_info_.at(i_level)->k0VecBitsetDomainMax_.at(i_dms).to_ullong();
     }
@@ -54,11 +54,11 @@ void GridManager3D::GenerateGridNodeNearTrackingNode(const DefAmrIndexUint i_lev
 * @param[out] ptr_map_nodes_inside   nodes have been colored.
 */
 void GridManager3D::IdentifyTypeOfLayerByFloodFill(
-    const DefAmrIndexUint i_level, const DefAmrIndexUint i_geo,
+    const DefInt i_level, const DefInt i_geo,
     const std::vector<DefReal> flood_fill_start_point,
-    const DefMap<DefAmrUint>& map_nodes_exist,
-    DefMap<DefAmrUint>* const ptr_map_nodes_outside,
-    DefMap<DefAmrUint>* const ptr_map_nodes_inside) const {
+    const DefMap<DefInt>& map_nodes_exist,
+    DefMap<DefInt>* const ptr_map_nodes_outside,
+    DefMap<DefInt>* const ptr_map_nodes_inside) const {
     // step 1: find start point for flood fill
     if (flood_fill_start_point.size() != k0GridDims_) {
         LogManager::LogWarning("Dimension of flood_fill_start_point is different from k0GridDims_.");
@@ -68,12 +68,12 @@ void GridManager3D::IdentifyTypeOfLayerByFloodFill(
         flood_fill_start_point[kZIndex] };
 
     // calculate bounds of searching step based on domain boundary
-    DefAmrIndexLUint scale_i_level = static_cast<DefAmrIndexLUint>(TwoPowerN(i_level));
-    DefAmrIndexLUint x_index = static_cast<DefAmrIndexLUint>(flood_fill_origin.at(kXIndex)
+    DefAmrLUint scale_i_level = static_cast<DefAmrLUint>(TwoPowerN(i_level));
+    DefAmrLUint x_index = static_cast<DefAmrLUint>(flood_fill_origin.at(kXIndex)
         / (k0DomainDx_[kXIndex] / scale_i_level) + kEps);
-    DefAmrIndexLUint y_index = static_cast<DefAmrIndexLUint>(flood_fill_origin.at(kYIndex)
+    DefAmrLUint y_index = static_cast<DefAmrLUint>(flood_fill_origin.at(kYIndex)
         / (k0DomainDx_[kYIndex] / scale_i_level) + kEps);
-    DefAmrIndexLUint z_index = static_cast<DefAmrIndexLUint>(flood_fill_origin.at(kZIndex)
+    DefAmrLUint z_index = static_cast<DefAmrLUint>(flood_fill_origin.at(kZIndex)
         / (k0DomainDx_[kZIndex] / scale_i_level) + kEps);
     DefSizet x_index_max =
         k0MaxIndexOfBackgroundNode_[kXIndex] * scale_i_level - x_index;
@@ -85,7 +85,7 @@ void GridManager3D::IdentifyTypeOfLayerByFloodFill(
     bool bool_find_node_for_flood_fill = false;
     DefSizet i_count = 0, count_sum = 0;;
     DefSFBitset sfbitset_origin_vertex = SFBitsetEncoding(
-        std::array<DefAmrIndexLUint, 3>({ x_index , y_index, z_index }));
+        std::array<DefAmrLUint, 3>({ x_index , y_index, z_index }));
     // search in -x direction from the vec_origin until meet the first vertex
     // in map_nodes_exist
     DefSFBitset sfsfbitset_tmp = sfbitset_origin_vertex, sfbitset_start_vertex;
@@ -227,24 +227,24 @@ void GridManager3D::PushBackSFBitsetInFloodFill(const DefSFBitset& sfbitset_in,
 * @param[out] ptr_vector_boundary_pos nodes on the maximum boundary.
 */
 void GridManager3D::ExtendOneLayerGrid(
-    const DefMap<DefAmrUint>& map_start_layer,
+    const DefMap<DefInt>& map_start_layer,
     const std::vector<DefSFBitset>& vec_bitset_min,
     const std::vector<DefSFBitset>& vec_bitset_max,
     const std::vector<bool>& bool_extend_neg,
     const std::vector<bool>& bool_extend_pos,
-    DefMap<DefAmrUint>* const ptr_map_output_layer,
-    DefMap<DefAmrIndexUint>* const ptr_map_exist,
-    DefMap<DefAmrUint>* const ptr_outmost_layer,
-    std::vector<DefMap<DefAmrUint>>* const ptr_vector_boundary_min,
-    std::vector<DefMap<DefAmrUint>>* const ptr_vector_boundary_max) const {
+    DefMap<DefInt>* const ptr_map_output_layer,
+    DefMap<DefInt>* const ptr_map_exist,
+    DefMap<DefInt>* const ptr_outmost_layer,
+    std::vector<DefMap<DefInt>>* const ptr_vector_boundary_min,
+    std::vector<DefMap<DefInt>>* const ptr_vector_boundary_max) const {
     std::array<bool, 3> bool_neg, bool_pos,
         bool_neg_boundary, bool_pos_boundary;
-    const DefMap<DefAmrIndexUint> map_exist_tmp(*ptr_map_exist);
+    const DefMap<DefInt> map_exist_tmp(*ptr_map_exist);
     ptr_vector_boundary_min->resize(k0GridDims_);
     ptr_vector_boundary_max->resize(k0GridDims_);
-    DefAmrUint flag_node_boundary;
+    DefInt flag_node_boundary;
     std::vector<DefSFBitset> vec_neighbors;
-    DefMap<DefAmrUint> outmost_tmp;
+    DefMap<DefInt> outmost_tmp;
     for (const auto& iter : map_start_layer) {
         bool_neg_boundary[kXIndex]
             = (iter.first & k0SFBitsetTakeXRef_[kRefCurrent_])
@@ -376,7 +376,7 @@ void GridManager3D::ExtendOneLayerGrid(
 * @param[out] ptr_vec_bitset_max pointer to spacing filling code of the minimum maximum boundary.
 */
 void GridManager3D::ComputeSFBitsetOnBoundaryAtGivenLevel(
-    const DefAmrIndexUint i_level,
+    const DefInt i_level,
     std::vector<DefSFBitset>* const ptr_vec_bitset_min,
     std::vector<DefSFBitset>* const ptr_vec_bitset_max)  const {
     ptr_vec_bitset_min->at(kXIndex) = SFBitsetToNHigherLevel(
@@ -400,12 +400,12 @@ void GridManager3D::ComputeSFBitsetOnBoundaryAtGivenLevel(
 * @param[out] ptr_vec_neigbours space filling codes of neighbors.
 * @return indicators of current node on boundaries.
 */
-DefAmrUint GridManager3D::FindAllNeighborsWithSpecifiedDirection(
+DefInt GridManager3D::FindAllNeighborsWithSpecifiedDirection(
     const DefSFBitset bitset_in,
     const std::array<bool, 3>& bool_neg, const std::array<bool, 3>& bool_pos,
     std::vector <DefSFBitset>* const ptr_vec_neigbours) const {
     ptr_vec_neigbours->clear();
-    DefAmrUint flag_current_node = 0;
+    DefInt flag_current_node = 0;
     DefSFBitset sfbitset_tmp, sfbitset_tmp1, sfbitset_tmp2;
     if (bool_neg[kXIndex]) {  // (-x, 0, 0)
         sfbitset_tmp = FindXNeg(bitset_in);
@@ -537,11 +537,11 @@ DefAmrUint GridManager3D::FindAllNeighborsWithSpecifiedDirection(
 *             refinement level.
 */
 void  GridManager3D::FindOutmostLayerForFineGrid(
-    const DefAmrIndexUint i_level, const DefMap<DefAmrUint>& map_outmost_layer,
-    DefMap<DefAmrIndexUint>* const map_exist,
-    DefMap<DefAmrUint>* const ptr_interface_outmost,
-    DefMap<DefAmrIndexUint>* const ptr_layer_lower_level,
-    DefMap<DefAmrUint>* const ptr_layer_lower_level_outer) {
+    const DefInt i_level, const DefMap<DefInt>& map_outmost_layer,
+    DefMap<DefInt>* const map_exist,
+    DefMap<DefInt>* const ptr_interface_outmost,
+    DefMap<DefInt>* const ptr_layer_lower_level,
+    DefMap<DefInt>* const ptr_layer_lower_level_outer) {
 #ifdef DEBUG_CHECK_GRID
     if (&map_outmost_layer == ptr_interface_outmost) {
         LogManager::LogError("input (map_outmost_layer)"
@@ -560,12 +560,12 @@ void  GridManager3D::FindOutmostLayerForFineGrid(
         i_level - 1, &vec_bitset_min, &vec_bitset_max);
     std::vector<DefSFBitset> vec_bitset_min_lower(k0GridDims_, 0),
         vec_bitset_max_lower(k0GridDims_, 0);
-    for (DefAmrIndexUint id = 0; id < k0GridDims_; ++id) {
+    for (DefInt id = 0; id < k0GridDims_; ++id) {
         vec_bitset_min_lower[id] = SFBitsetToOneLowerLevel(vec_bitset_min[id]);
         vec_bitset_max_lower[id] = SFBitsetToOneLowerLevel(vec_bitset_max[id]);
     }
     std::array<bool, 3> bool_neg_not_boundary, bool_pos_not_boundary;
-    DefAmrUint flag_node_boundary;
+    DefInt flag_node_boundary;
     std::vector<DefSFBitset> vec_neighbors, vec_lower_neighbors;
     DefSFBitset bitset_lower_level, sfbitset_tmp, bitset_neighbor;
     for (const auto& iter : map_outmost_layer) {

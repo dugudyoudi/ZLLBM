@@ -7,11 +7,11 @@
 * @brief define class used for LBM D3Q19 model.
 * @date  2023-11-26
 */
-#ifndef ROOTPROJECT_SOURCE_LBM_LBM_D3Q19_H_
-#define ROOTPROJECT_SOURCE_LBM_LBM_D3Q19_H_
+#ifndef SOURCE_LBM_PROJECT_D3Q19_MODEL_LBM_D3Q19_H_
+#define SOURCE_LBM_PROJECT_D3Q19_MODEL_LBM_D3Q19_H_
 #include <array>
 #include <memory>
-#include "lbm_interface.h"
+#include "./lbm_interface.h"
 namespace rootproject {
 namespace lbmproject {
 // lattice 0:  (0  0  0)
@@ -39,7 +39,7 @@ namespace lbmproject {
 class SolverLbmD3Q19 :public SolverLbmInterface {
  public:
     // f
-    static constexpr DefAmrIndexUint kFX0Y0Z0 = 0,
+    static constexpr DefInt kFX0Y0Z0 = 0,
         kFXnY0Z0 = 2, kFXpY0Z0 = 1,  kFX0YnZ0 = 4, kFX0YpZ0 = 3, kFX0Y0Zn = 6, kFX0Y0Zp = 5,
         kFXnYnZ0 = 10, kFXnYpZ0 = 8, kFXpYnZ0 = 9, kFXpYpZ0 = 7, kFXnY0Zn = 14, kFXnY0Zp = 12,
         kFXpY0Zn = 13, kFXpY0Zp = 11, kFX0YnZn = 18, kFX0YnZp = 16, kFX0YpZn = 17, kFX0YpZp = 15;
@@ -106,7 +106,7 @@ class SolverLbmD3Q19 :public SolverLbmInterface {
          - 1. / 36,   0.     ,   0.     ,   0.  ,   0.25,   0.  ,   0.   , - 0.125,   0.125}
         }};
     void InitialModelDependencies() final;
-    void Stream(const DefAmrUint flag_not_compute, const amrproject::SFBitsetAuxInterface& sfbitset_aux,
+    void Stream(const DefInt flag_not_compute, const amrproject::SFBitsetAuxInterface& sfbitset_aux,
          DefMap<std::unique_ptr<GridNodeLbm>>* const ptr_map_grid_nodes) const final;
     void StreamOutForAGivenNode(const DefSFBitset sfbitset_in, const amrproject::SFBitsetAuxInterface& sfbitset_aux,
         DefMap<std::unique_ptr<GridNodeLbm>>* const ptr_map_grid_nodes) const final;
@@ -119,4 +119,4 @@ class SolverCreatorLbmD3Q19 final :public amrproject::SolverCreatorInterface {
 };
 }  // end namespace lbmproject
 }  // end namespace rootproject
-#endif  // ROOTPROJECT_SOURCE_LBM_LBM_D3Q19_H_
+#endif  // SOURCE_LBM_PROJECT_D3Q19_MODEL_LBM_D3Q19_H_

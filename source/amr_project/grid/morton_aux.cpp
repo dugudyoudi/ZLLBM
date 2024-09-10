@@ -38,9 +38,9 @@ void SFBitsetAux2D::SFBitsetInitial() {
 *        higher level 0(the background level).
 * @param[in] i_level level of refinement
 */
-DefSFBitset SFBitsetAux2D::SFBitsetBitsForRefinement(const DefAmrIndexUint i_level) const {
+DefSFBitset SFBitsetAux2D::SFBitsetBitsForRefinement(const DefInt i_level) const {
     DefSFBitset bitset = 0;
-    for (DefAmrIndexUint i = 0; i < 2 * i_level; ++i) {
+    for (DefInt i = 0; i < 2 * i_level; ++i) {
         bitset.set(i, true);
     }
     return bitset;
@@ -51,13 +51,13 @@ DefSFBitset SFBitsetAux2D::SFBitsetBitsForRefinement(const DefAmrIndexUint i_lev
 * @return  morton code.
 */
 DefSFBitset SFBitsetAux2D::SFBitsetEncoding(
-    const std::array<DefAmrIndexLUint, 2>& coordi_index) const {
+    const std::array<DefAmrLUint, 2>& coordi_index) const {
     DefSFBitset sfbitset_code = 0;
     for (auto i = 0; i < (kSFBitsetBit / 2); ++i) {
         sfbitset_code |= ((coordi_index.at(kXIndex) &
-            ((static_cast<DefAmrIndexLUint>(1)) << i)) << i)
+            ((static_cast<DefAmrLUint>(1)) << i)) << i)
             | ((coordi_index.at(kYIndex) &
-                ((static_cast<DefAmrIndexLUint>(1)) << i)) << (i + 1));
+                ((static_cast<DefAmrLUint>(1)) << i)) << (i + 1));
     }
     return sfbitset_code;
 }
@@ -71,9 +71,9 @@ DefSFBitset SFBitsetAux2D::SFBitsetEncoding(
 DefSFBitset SFBitsetAux2D::SFBitsetEncodingCoordi(
     const std::vector<DefReal>& grid_space,
     const std::vector<DefReal>& coordi) const {
-    std::array<DefAmrIndexLUint, 2> coordi_index =
-    { static_cast<DefAmrIndexLUint>(coordi.at(kXIndex) / grid_space[kXIndex] + kEps),
-      static_cast<DefAmrIndexLUint>(coordi.at(kYIndex) / grid_space[kYIndex] + kEps)};
+    std::array<DefAmrLUint, 2> coordi_index =
+    { static_cast<DefAmrLUint>(coordi.at(kXIndex) / grid_space[kXIndex] + kEps),
+      static_cast<DefAmrLUint>(coordi.at(kYIndex) / grid_space[kYIndex] + kEps)};
     return this->SFBitsetEncoding(coordi_index);
 }
 /**
@@ -105,14 +105,14 @@ void SFBitsetAux2D::SFBitsetComputeCoordinate(const DefSFBitset& bitset_in,
 */
 void SFBitsetAux2D::SFBitsetComputeIndices(
     const DefSFBitset& bitset_in,
-    std::array<DefAmrIndexLUint, 2>* const ptr_indices) const {
+    std::array<DefAmrLUint, 2>* const ptr_indices) const {
     *ptr_indices = { 0, 0 };
     for (DefSizet i = 0; i < kSFBitsetBit / 2; ++i) {
         if (bitset_in.test(i * 2)) {
-            ptr_indices->at(kXIndex) += static_cast<DefAmrIndexLUint>(TwoPowerN(i));
+            ptr_indices->at(kXIndex) += static_cast<DefAmrLUint>(TwoPowerN(i));
         }
         if (bitset_in.test(i * 2 + 1)) {
-            ptr_indices->at(kYIndex) += static_cast<DefAmrIndexLUint>(TwoPowerN(i));
+            ptr_indices->at(kYIndex) += static_cast<DefAmrLUint>(TwoPowerN(i));
         }
     }
 }
@@ -124,15 +124,15 @@ void SFBitsetAux2D::SFBitsetComputeIndices(
  * @param[out] ptr_bitset_tmp pointer to space filling code
  * @return an integer indicating the success of the operation
  */
-int SFBitsetAux2D::ResetIndicesExceedingDomain(const std::array<DefAmrIndexLUint, 2>& domain_min_indices,
-    const std::array<DefAmrIndexLUint, 2>& domain_max_indices,
+int SFBitsetAux2D::ResetIndicesExceedingDomain(const std::array<DefAmrLUint, 2>& domain_min_indices,
+    const std::array<DefAmrLUint, 2>& domain_max_indices,
     DefSFCodeToUint* const ptr_i_code, DefSFBitset* ptr_bitset_tmp) const {
-    std::array<DefAmrIndexLUint, 2> indices;
+    std::array<DefAmrLUint, 2> indices;
     DefSFCodeToUint& i_code = *ptr_i_code;
     DefSFBitset& sfbitset_tmp = *ptr_bitset_tmp;
     sfbitset_tmp = static_cast<DefSFBitset>(i_code);
-    DefAmrUint iter_count;
-    DefAmrUint sfcode_block;  // block size of space filling code
+    DefInt iter_count;
+    DefInt sfcode_block;  // block size of space filling code
     bool bool_exceed_x, bool_exceed_y;
     SFBitsetComputeIndices(sfbitset_tmp, &indices);
     bool_exceed_x =
@@ -243,9 +243,9 @@ void SFBitsetAux3D::SFBitsetInitial() {
 *        higher level 0(the background level).
 * @param[in] i_level level of refinement
 */
-DefSFBitset SFBitsetAux3D::SFBitsetBitsForRefinement(const DefAmrIndexUint max_level) const {
+DefSFBitset SFBitsetAux3D::SFBitsetBitsForRefinement(const DefInt max_level) const {
     DefSFBitset bitset = 0;
-    for (DefAmrIndexUint i = 0; i < 3 * max_level; ++i) {
+    for (DefInt i = 0; i < 3 * max_level; ++i) {
         bitset.set(i, true);
     }
     return bitset;
@@ -256,15 +256,15 @@ DefSFBitset SFBitsetAux3D::SFBitsetBitsForRefinement(const DefAmrIndexUint max_l
 * @return  morton code.
 */
 DefSFBitset SFBitsetAux3D::SFBitsetEncoding(
-    const std::array<DefAmrIndexLUint, 3>& coordi_index)  const {
+    const std::array<DefAmrLUint, 3>& coordi_index)  const {
     DefSFBitset sfbitset_code = 0;
     for (DefSizet i = 0; i < (kSFBitsetBit / 3); ++i) {
         sfbitset_code |= ((coordi_index.at(kXIndex) &
-            ((static_cast<DefAmrIndexLUint>(1)) << i)) << (2 * i)) |
+            ((static_cast<DefAmrLUint>(1)) << i)) << (2 * i)) |
             ((coordi_index.at(kYIndex) &
-                ((static_cast<DefAmrIndexLUint>(1)) << i)) << (2 * i + 1)) |
+                ((static_cast<DefAmrLUint>(1)) << i)) << (2 * i + 1)) |
             ((coordi_index.at(kZIndex) &
-                ((static_cast<DefAmrIndexLUint>(1)) << i)) << (2 * i + 2));
+                ((static_cast<DefAmrLUint>(1)) << i)) << (2 * i + 2));
     }
     return sfbitset_code;
 }
@@ -278,10 +278,10 @@ DefSFBitset SFBitsetAux3D::SFBitsetEncoding(
 DefSFBitset SFBitsetAux3D::SFBitsetEncodingCoordi(
     const std::vector<DefReal>& grid_space,
     const std::vector<DefReal>& coordi) const {
-    std::array<DefAmrIndexLUint, 3> coordi_index =
-    { static_cast<DefAmrIndexLUint>(coordi.at(kXIndex) / grid_space[kXIndex] + kEps),
-      static_cast<DefAmrIndexLUint>(coordi.at(kYIndex) / grid_space[kYIndex] + kEps),
-      static_cast<DefAmrIndexLUint>(coordi.at(kZIndex) / grid_space[kZIndex] + kEps) };
+    std::array<DefAmrLUint, 3> coordi_index =
+    { static_cast<DefAmrLUint>(coordi.at(kXIndex) / grid_space[kXIndex] + kEps),
+      static_cast<DefAmrLUint>(coordi.at(kYIndex) / grid_space[kYIndex] + kEps),
+      static_cast<DefAmrLUint>(coordi.at(kZIndex) / grid_space[kZIndex] + kEps) };
     return this->SFBitsetEncoding(coordi_index);
 }
 /**
@@ -317,17 +317,17 @@ void SFBitsetAux3D::SFBitsetComputeCoordinate(const DefSFBitset& bitset_in,
 */
 void SFBitsetAux3D::SFBitsetComputeIndices(
     const DefSFBitset& bitset_in,
-    std::array<DefAmrIndexLUint, 3>* const ptr_indices) const {
+    std::array<DefAmrLUint, 3>* const ptr_indices) const {
     *ptr_indices = { 0, 0, 0 };
     for (DefSizet i = 0; i < kSFBitsetBit / 3; ++i) {
         if (bitset_in.test(i * 3)) {
-            ptr_indices->at(kXIndex) += static_cast<DefAmrIndexLUint>(TwoPowerN(i));
+            ptr_indices->at(kXIndex) += static_cast<DefAmrLUint>(TwoPowerN(i));
         }
         if (bitset_in.test(i * 3 + 1)) {
-            ptr_indices->at(kYIndex) += static_cast<DefAmrIndexLUint>(TwoPowerN(i));
+            ptr_indices->at(kYIndex) += static_cast<DefAmrLUint>(TwoPowerN(i));
         }
         if (bitset_in.test(i * 3 + 2)) {
-            ptr_indices->at(kZIndex) += static_cast<DefAmrIndexLUint>(TwoPowerN(i));
+            ptr_indices->at(kZIndex) += static_cast<DefAmrLUint>(TwoPowerN(i));
         }
     }
 }
@@ -339,15 +339,15 @@ void SFBitsetAux3D::SFBitsetComputeIndices(
  * @param ptr_bitset_tmp pointer to space filling code
  * @return an integer indicating the success of the operation
  */
-int SFBitsetAux3D::ResetIndicesExceedingDomain(const std::array<DefAmrIndexLUint, 3>& domain_min_indices,
-    const std::array<DefAmrIndexLUint, 3>& domain_max_indices,
+int SFBitsetAux3D::ResetIndicesExceedingDomain(const std::array<DefAmrLUint, 3>& domain_min_indices,
+    const std::array<DefAmrLUint, 3>& domain_max_indices,
     DefSFCodeToUint* const ptr_i_code, DefSFBitset* ptr_bitset_tmp) const {
-    std::array<DefAmrIndexLUint, 3> indices;
+    std::array<DefAmrLUint, 3> indices;
     DefSFCodeToUint& i_code = *ptr_i_code;
     DefSFBitset& sfbitset_tmp = *ptr_bitset_tmp;
     sfbitset_tmp = static_cast<DefSFBitset>(i_code);
-    DefAmrUint iter_count;
-    DefAmrUint sfcode_block;  // block size of space filling code
+    DefInt iter_count;
+    DefInt sfcode_block;  // block size of space filling code
     bool bool_exceed_x, bool_exceed_y, bool_exceed_z;
     SFBitsetComputeIndices(sfbitset_tmp, &indices);
     bool_exceed_x =

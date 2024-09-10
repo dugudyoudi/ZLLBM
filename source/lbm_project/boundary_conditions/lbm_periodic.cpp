@@ -20,7 +20,7 @@ namespace lbmproject {
  * @param[out] ptr_grid_info pointer to class storing grid information.
  */
 void BoundaryPeriodic2D::CalBoundaryCondition(const ELbmBoundaryType boundary_type,
-    const DefMap<DefAmrIndexUint>& boundary_nodes,
+    const DefMap<DefInt>& boundary_nodes,
     GridInfoLbmInteface* const ptr_grid_info) const {
     const SolverLbmInterface& lbm_solver = *(std::dynamic_pointer_cast<SolverLbmInterface>(ptr_grid_info->ptr_solver_));
     DefSFBitset boundary_counterpart, set_coordinate;
@@ -47,10 +47,10 @@ void BoundaryPeriodic2D::CalBoundaryCondition(const ELbmBoundaryType boundary_ty
         break;
     }
     DefMap<std::unique_ptr<GridNodeLbm>>& grid_node = *ptr_grid_info->ptr_lbm_grid_nodes_;
-    std::vector<DefAmrIndexUint> indices, inverse_indices;
+    std::vector<DefInt> indices, inverse_indices;
     GetBoundaryNInverseIndices(boundary_type, lbm_solver, &indices, &inverse_indices);
     DefSFBitset sfbitset_counterpart;
-    DefAmrIndexUint i, num_q_one_direction = static_cast<DefAmrIndexUint>(indices.size());
+    DefInt i, num_q_one_direction = static_cast<DefInt>(indices.size());
     for (const auto& iter_node : boundary_nodes) {
         sfbitset_counterpart = (iter_node.first & set_coordinate) | boundary_counterpart;
         if (grid_node.find(sfbitset_counterpart) != grid_node.end()) {
@@ -78,7 +78,7 @@ void BoundaryPeriodic2D::CalBoundaryCondition(const ELbmBoundaryType boundary_ty
  * @param[out] ptr_grid_info pointer to class storing grid information.
  */
 void BoundaryPeriodic3D::CalBoundaryCondition(const ELbmBoundaryType boundary_type,
-    const DefMap<DefAmrIndexUint>& boundary_nodes,
+    const DefMap<DefInt>& boundary_nodes,
     GridInfoLbmInteface* const ptr_grid_info) const {
     const SolverLbmInterface& lbm_solver = *(std::dynamic_pointer_cast<SolverLbmInterface>(ptr_grid_info->ptr_solver_));
     DefSFBitset boundary_counterpart, set_coordinate;
@@ -113,10 +113,10 @@ void BoundaryPeriodic3D::CalBoundaryCondition(const ELbmBoundaryType boundary_ty
         break;
     }
     DefMap<std::unique_ptr<GridNodeLbm>>& grid_node = *ptr_grid_info->ptr_lbm_grid_nodes_;
-    std::vector<DefAmrIndexUint> indices, inverse_indices;
+    std::vector<DefInt> indices, inverse_indices;
     GetBoundaryNInverseIndices(boundary_type, lbm_solver, &indices, &inverse_indices);
     DefSFBitset sfbitset_counterpart;
-    DefAmrIndexUint i, num_q_one_direction = static_cast<DefAmrIndexUint>(indices.size());
+    DefInt i, num_q_one_direction = static_cast<DefInt>(indices.size());
     for (const auto& iter_node : boundary_nodes) {
         sfbitset_counterpart = (iter_node.first & set_coordinate) | boundary_counterpart;
         if (grid_node.find(sfbitset_counterpart) != grid_node.end()) {

@@ -29,9 +29,9 @@ std::array<DefSFBitset, 2> SFBitsetAuxInterface::k0SFBitsetTakeZRef_;
 * @return  morton code.
 */
 void SFBitsetAux2D::SFBitsetSetMinAndMaxBounds(
-    const std::array<DefAmrIndexLUint, 2>& indices_min,
-    const std::array<DefAmrIndexLUint, 2>& indices_max) {
-    std::array<DefAmrIndexLUint, 2> indices_tmp = { indices_min[kXIndex], 0 };
+    const std::array<DefAmrLUint, 2>& indices_min,
+    const std::array<DefAmrLUint, 2>& indices_max) {
+    std::array<DefAmrLUint, 2> indices_tmp = { indices_min[kXIndex], 0 };
     SFBitsetMin_.at(kXIndex) = SFBitsetEncoding(indices_tmp);
     indices_tmp = { indices_max.at(kXIndex), 0 };
     SFBitsetMax_.at(kXIndex) = SFBitsetEncoding(indices_tmp);
@@ -48,8 +48,8 @@ void SFBitsetAux2D::SFBitsetSetMinAndMaxBounds(
 * @param[in]  indices_max      maximum indices.
 */
 void SFBitsetAux3D::SFBitsetSetMinAndMaxBounds(
-    const std::array<DefAmrIndexLUint, 3>& indices_min,
-    const std::array<DefAmrIndexLUint, 3>& indices_max) {
+    const std::array<DefAmrLUint, 3>& indices_min,
+    const std::array<DefAmrLUint, 3>& indices_max) {
     SFBitsetMin_.at(kXIndex) =
         SFBitsetEncoding({ indices_min[kXIndex], 0, 0 });
     SFBitsetMax_.at(kXIndex) =
@@ -136,7 +136,7 @@ void SFBitsetAux2D::SFBitsetFindCellNeighbors(
 *              sfbitsets at the higher refinement level in a cell at the lower level.
 */
 void SFBitsetAux2D::SFBitsetHigherLevelInACell(
-    const DefAmrIndexUint level_diff,
+    const DefInt level_diff,
     const DefSFBitset& sfbitset_corner,
     std::vector<DefSFBitset>* const ptr_vec_sfbitsets_higher_level) const {
     SFBitsetToNHigherLevel(level_diff, sfbitset_corner);
@@ -289,16 +289,16 @@ void SFBitsetAux2D::SFBitsetFindAllBondedNeighborsVir(const DefSFBitset& bitset_
 // * * *  x  x
 // * * *  x  x
 void SFBitsetAux2D::FindNodesInReginOfGivenLength(const DefSFBitset& sfbitset_in,
-    const DefAmrIndexLUint region_length, const std::vector<DefSFBitset>& domain_min_m1_n_level,
+    const DefAmrLUint region_length, const std::vector<DefSFBitset>& domain_min_m1_n_level,
     const std::vector<DefSFBitset>& domain_max_p1_n_level, std::vector<DefSFBitset>* const ptr_sfbitset_nodes) const {
     DefSFBitset sfbitset_tmp_y = sfbitset_in, sfbitset_tmp_x;
     ptr_sfbitset_nodes->clear();
     // negative y direction
-    for (DefAmrIndexLUint iy = 0; iy <= region_length; ++iy) {
+    for (DefAmrLUint iy = 0; iy <= region_length; ++iy) {
         if ((sfbitset_tmp_y&k0SFBitsetTakeYRef_.at(kRefCurrent_))
          != domain_min_m1_n_level.at(kYIndex)) {
             sfbitset_tmp_x = sfbitset_tmp_y;
-            for (DefAmrIndexUint ix = 0; ix <= region_length; ++ix) {
+            for (DefAmrLUint ix = 0; ix <= region_length; ++ix) {
                 if ((sfbitset_tmp_x&k0SFBitsetTakeXRef_.at(kRefCurrent_))
                  != domain_min_m1_n_level.at(kXIndex)) {
                     ptr_sfbitset_nodes->push_back(sfbitset_tmp_x);
@@ -308,7 +308,7 @@ void SFBitsetAux2D::FindNodesInReginOfGivenLength(const DefSFBitset& sfbitset_in
                 sfbitset_tmp_x = FindXNeg(sfbitset_tmp_x);
             }
             sfbitset_tmp_x = sfbitset_tmp_y;
-            for (DefAmrIndexLUint ix = 0; ix < region_length; ++ix) {
+            for (DefAmrLUint ix = 0; ix < region_length; ++ix) {
                 sfbitset_tmp_x = FindXPos(sfbitset_tmp_x);
                 if ((sfbitset_tmp_x&k0SFBitsetTakeXRef_.at(kRefCurrent_))
                  != domain_max_p1_n_level.at(kXIndex)) {
@@ -324,12 +324,12 @@ void SFBitsetAux2D::FindNodesInReginOfGivenLength(const DefSFBitset& sfbitset_in
     }
     // positive y direction
     sfbitset_tmp_y = sfbitset_in;
-    for (DefAmrIndexLUint iy = 0; iy < region_length; ++iy) {
+    for (DefAmrLUint iy = 0; iy < region_length; ++iy) {
         sfbitset_tmp_y = FindYPos(sfbitset_tmp_y);
         if ((sfbitset_tmp_y&k0SFBitsetTakeYRef_.at(kRefCurrent_))
          != domain_max_p1_n_level.at(kYIndex)) {
             sfbitset_tmp_x = sfbitset_tmp_y;
-            for (DefAmrIndexLUint ix = 0; ix <= region_length; ++ix) {
+            for (DefAmrLUint ix = 0; ix <= region_length; ++ix) {
                 if ((sfbitset_tmp_x&k0SFBitsetTakeXRef_.at(kRefCurrent_))
                  != domain_min_m1_n_level.at(kXIndex)) {
                     ptr_sfbitset_nodes->push_back(sfbitset_tmp_x);
@@ -339,7 +339,7 @@ void SFBitsetAux2D::FindNodesInReginOfGivenLength(const DefSFBitset& sfbitset_in
                 sfbitset_tmp_x = FindXNeg(sfbitset_tmp_x);
             }
             sfbitset_tmp_x = sfbitset_tmp_y;
-            for (DefAmrIndexUint ix = 0; ix < region_length; ++ix) {
+            for (DefAmrLUint ix = 0; ix < region_length; ++ix) {
                 sfbitset_tmp_x = FindXPos(sfbitset_tmp_x);
                 if ((sfbitset_tmp_x&k0SFBitsetTakeXRef_.at(kRefCurrent_))
                  != domain_max_p1_n_level.at(kXIndex)) {
@@ -370,23 +370,23 @@ void SFBitsetAux2D::FindNodesInReginOfGivenLength(const DefSFBitset& sfbitset_in
 // * *  x  x
 // * o  x  x
 // * *  x  x
-DefAmrIndexLUint SFBitsetAux2D::FindNodesInPeriodicRegionCorner(const DefSFBitset& sfbitset_in,
-    const DefAmrIndexLUint region_length,
+DefAmrLUint SFBitsetAux2D::FindNodesInPeriodicRegionCorner(const DefSFBitset& sfbitset_in,
+    const DefAmrLUint region_length,
     const std::vector<bool>& periodic_min, const std::vector<bool>& periodic_max,
     const std::vector<DefSFBitset>& domain_min_n_level,
     const std::vector<DefSFBitset>& domain_max_n_level,
     std::vector<DefSFBitset>* const ptr_sfbitset_nodes) const {
-    DefAmrIndexLUint total_length = 2 * region_length;
+    DefAmrLUint total_length = 2 * region_length;
     ptr_sfbitset_nodes->resize(total_length * total_length);
     ptr_sfbitset_nodes->assign(total_length * total_length, kInvalidSFbitset);
     DefSFBitset sfbitset_tmp_y = sfbitset_in, sfbitset_tmp_x;
-    DefAmrIndexLUint vec_index_x, vec_index_y, index_min = region_length;
+    DefAmrLUint vec_index_x, vec_index_y, index_min = region_length;
     bool bool_not_x_max, bool_not_y_max;
     // negative y direction
-    for (DefAmrIndexLUint iy = 0; iy < region_length; ++iy) {
+    for (DefAmrLUint iy = 0; iy < region_length; ++iy) {
         sfbitset_tmp_x = sfbitset_tmp_y;
         vec_index_y = (region_length - iy - 1) * total_length + region_length;
-        for (DefAmrIndexUint ix = 0; ix < region_length; ++ix) {
+        for (DefAmrLUint ix = 0; ix < region_length; ++ix) {
             vec_index_x = vec_index_y - ix - 1;
             ptr_sfbitset_nodes->at(vec_index_x) = sfbitset_tmp_x;
             if ((sfbitset_tmp_x&k0SFBitsetTakeXRef_.at(kRefCurrent_))
@@ -396,7 +396,7 @@ DefAmrIndexLUint SFBitsetAux2D::FindNodesInPeriodicRegionCorner(const DefSFBitse
                         |domain_max_n_level.at(kXIndex);
                     sfbitset_tmp_x = FindXPos(sfbitset_tmp_x);
                 } else {
-                    if (index_min > DefAmrIndexUint(ix + 1)) {
+                    if (index_min > (ix + 1)) {
                         index_min = ix + 1;
                     }
                     break;
@@ -419,7 +419,7 @@ DefAmrIndexLUint SFBitsetAux2D::FindNodesInPeriodicRegionCorner(const DefSFBitse
             }
         }
         if (bool_not_x_max) {
-            for (DefAmrIndexLUint ix = 0; ix < region_length; ++ix) {
+            for (DefAmrLUint ix = 0; ix < region_length; ++ix) {
                 sfbitset_tmp_x = FindXPos(sfbitset_tmp_x);
                 vec_index_x = vec_index_y + ix;
                 ptr_sfbitset_nodes->at(vec_index_x) = sfbitset_tmp_x;
@@ -430,7 +430,7 @@ DefAmrIndexLUint SFBitsetAux2D::FindNodesInPeriodicRegionCorner(const DefSFBitse
                             |domain_min_n_level.at(kXIndex);
                         sfbitset_tmp_x = FindXNeg(sfbitset_tmp_x);
                     } else {
-                        if (index_min > DefAmrIndexUint(ix + 1)) {
+                        if (index_min > (ix + 1)) {
                             index_min = ix + 1;
                         }
                         break;
@@ -445,7 +445,7 @@ DefAmrIndexLUint SFBitsetAux2D::FindNodesInPeriodicRegionCorner(const DefSFBitse
                     |domain_max_n_level.at(kYIndex);
                 sfbitset_tmp_y = FindYPos(sfbitset_tmp_y);
             } else {
-                if (index_min > DefAmrIndexLUint(iy + 1)) {
+                if (index_min > (iy + 1)) {
                     index_min = iy + 1;
                 }
                 break;
@@ -468,11 +468,11 @@ DefAmrIndexLUint SFBitsetAux2D::FindNodesInPeriodicRegionCorner(const DefSFBitse
         }
     }
     if (bool_not_y_max) {
-        for (DefAmrIndexLUint iy = 0; iy < region_length; ++iy) {
+        for (DefAmrLUint iy = 0; iy < region_length; ++iy) {
             sfbitset_tmp_y = FindYPos(sfbitset_tmp_y);
             sfbitset_tmp_x = sfbitset_tmp_y;
             vec_index_y = (region_length + iy) * total_length + region_length;
-            for (DefAmrIndexLUint ix = 0; ix < region_length; ++ix) {
+            for (DefAmrLUint ix = 0; ix < region_length; ++ix) {
                 vec_index_x = vec_index_y - ix - 1;
                 ptr_sfbitset_nodes->at(vec_index_x) = sfbitset_tmp_x;
                 if ((sfbitset_tmp_x&k0SFBitsetTakeXRef_.at(kRefCurrent_))
@@ -482,7 +482,7 @@ DefAmrIndexLUint SFBitsetAux2D::FindNodesInPeriodicRegionCorner(const DefSFBitse
                         |domain_max_n_level.at(kXIndex);
                     sfbitset_tmp_x = FindXPos(sfbitset_tmp_x);
                 } else {
-                    if (index_min > DefAmrIndexLUint(ix + 1)) {
+                    if (index_min > (ix + 1)) {
                         index_min = ix + 1;
                     }
                     break;
@@ -505,7 +505,7 @@ DefAmrIndexLUint SFBitsetAux2D::FindNodesInPeriodicRegionCorner(const DefSFBitse
                 }
             }
             if (bool_not_x_max) {
-                for (DefAmrIndexLUint ix = 0; ix < region_length; ++ix) {
+                for (DefAmrLUint ix = 0; ix < region_length; ++ix) {
                     sfbitset_tmp_x = FindXPos(sfbitset_tmp_x);
                     vec_index_x = vec_index_y + ix;
                     ptr_sfbitset_nodes->at(vec_index_x) = sfbitset_tmp_x;
@@ -516,7 +516,7 @@ DefAmrIndexLUint SFBitsetAux2D::FindNodesInPeriodicRegionCorner(const DefSFBitse
                                 |domain_min_n_level.at(kXIndex);
                             sfbitset_tmp_x = FindXNeg(sfbitset_tmp_x);
                         } else {
-                            if (index_min > DefAmrIndexUint(ix + 1)) {
+                            if (index_min > (ix + 1)) {
                                 index_min = ix + 1;
                             }
                             break;
@@ -531,7 +531,7 @@ DefAmrIndexLUint SFBitsetAux2D::FindNodesInPeriodicRegionCorner(const DefSFBitse
                         |domain_min_n_level.at(kYIndex);
                     sfbitset_tmp_y = FindYNeg(sfbitset_tmp_y);
                 } else {
-                    if (index_min > DefAmrIndexUint(iy + 1)) {
+                    if (index_min > (iy + 1)) {
                         index_min = iy + 1;
                     }
                     break;
@@ -559,23 +559,23 @@ DefAmrIndexLUint SFBitsetAux2D::FindNodesInPeriodicRegionCorner(const DefSFBitse
 // * * o * *
 // * * * * *
 // * * * * *
-DefAmrIndexLUint SFBitsetAux2D::FindNodesInPeriodicRegionCenter(const DefSFBitset& sfbitset_in,
-    const DefAmrIndexLUint region_length,
+DefAmrLUint SFBitsetAux2D::FindNodesInPeriodicRegionCenter(const DefSFBitset& sfbitset_in,
+    const DefAmrLUint region_length,
     const std::vector<bool>& periodic_min, const std::vector<bool>& periodic_max,
     const std::vector<DefSFBitset>& domain_min_n_level,
     const std::vector<DefSFBitset>& domain_max_n_level,
     std::vector<DefSFBitset>* const ptr_sfbitset_nodes) const {
-    DefAmrIndexLUint total_length = 2 * region_length + 1;
+    DefAmrLUint total_length = 2 * region_length + 1;
     ptr_sfbitset_nodes->resize(total_length * total_length);
     ptr_sfbitset_nodes->assign(total_length * total_length, kInvalidSFbitset);
     DefSFBitset sfbitset_tmp_y = sfbitset_in, sfbitset_tmp_x;
-    DefAmrIndexLUint vec_index_x, vec_index_y, index_min = region_length;
+    DefAmrLUint vec_index_x, vec_index_y, index_min = region_length;
     bool bool_not_x_max, bool_not_y_max;
     // negative y direction
-    for (DefAmrIndexLUint iy = 0; iy <= region_length; ++iy) {
+    for (DefAmrLUint iy = 0; iy <= region_length; ++iy) {
         sfbitset_tmp_x = sfbitset_tmp_y;
         vec_index_y = (region_length - iy) * total_length + region_length;
-        for (DefAmrIndexUint ix = 0; ix <= region_length; ++ix) {
+        for (DefAmrLUint ix = 0; ix <= region_length; ++ix) {
             vec_index_x = vec_index_y - ix;
             ptr_sfbitset_nodes->at(vec_index_x) = sfbitset_tmp_x;
             if ((sfbitset_tmp_x&k0SFBitsetTakeXRef_.at(kRefCurrent_))
@@ -585,7 +585,7 @@ DefAmrIndexLUint SFBitsetAux2D::FindNodesInPeriodicRegionCenter(const DefSFBitse
                         |domain_max_n_level.at(kXIndex);
                     sfbitset_tmp_x = FindXPos(sfbitset_tmp_x);
                 } else {
-                    if (index_min > DefAmrIndexUint(ix)) {
+                    if (index_min > (ix)) {
                         index_min = ix;
                     }
                     break;
@@ -608,7 +608,7 @@ DefAmrIndexLUint SFBitsetAux2D::FindNodesInPeriodicRegionCenter(const DefSFBitse
             }
         }
         if (bool_not_x_max) {
-            for (DefAmrIndexLUint ix = 0; ix < region_length; ++ix) {
+            for (DefAmrLUint ix = 0; ix < region_length; ++ix) {
                 sfbitset_tmp_x = FindXPos(sfbitset_tmp_x);
                 vec_index_x = vec_index_y + ix + 1;
                 ptr_sfbitset_nodes->at(vec_index_x) = sfbitset_tmp_x;
@@ -619,7 +619,7 @@ DefAmrIndexLUint SFBitsetAux2D::FindNodesInPeriodicRegionCenter(const DefSFBitse
                             |domain_min_n_level.at(kXIndex);
                         sfbitset_tmp_x = FindXNeg(sfbitset_tmp_x);
                     } else {
-                        if (index_min > DefAmrIndexUint(ix + 1)) {
+                        if (index_min > (ix + 1)) {
                             index_min = ix + 1;
                         }
                         break;
@@ -634,7 +634,7 @@ DefAmrIndexLUint SFBitsetAux2D::FindNodesInPeriodicRegionCenter(const DefSFBitse
                     |domain_max_n_level.at(kYIndex);
                 sfbitset_tmp_y = FindYPos(sfbitset_tmp_y);
             } else {
-                if (index_min > DefAmrIndexLUint(iy)) {
+                if (index_min > (iy)) {
                     index_min = iy;
                 }
                 break;
@@ -657,11 +657,11 @@ DefAmrIndexLUint SFBitsetAux2D::FindNodesInPeriodicRegionCenter(const DefSFBitse
         }
     }
     if (bool_not_y_max) {
-        for (DefAmrIndexLUint iy = 0; iy < region_length; ++iy) {
+        for (DefAmrLUint iy = 0; iy < region_length; ++iy) {
             sfbitset_tmp_y = FindYPos(sfbitset_tmp_y);
             sfbitset_tmp_x = sfbitset_tmp_y;
             vec_index_y = (region_length + iy + 1) * total_length + region_length;
-            for (DefAmrIndexLUint ix = 0; ix <= region_length; ++ix) {
+            for (DefAmrLUint ix = 0; ix <= region_length; ++ix) {
                 vec_index_x = vec_index_y - ix;
                 ptr_sfbitset_nodes->at(vec_index_x) = sfbitset_tmp_x;
                 if ((sfbitset_tmp_x&k0SFBitsetTakeXRef_.at(kRefCurrent_))
@@ -671,7 +671,7 @@ DefAmrIndexLUint SFBitsetAux2D::FindNodesInPeriodicRegionCenter(const DefSFBitse
                         |domain_max_n_level.at(kXIndex);
                     sfbitset_tmp_x = FindXPos(sfbitset_tmp_x);
                 } else {
-                    if (index_min > DefAmrIndexLUint(ix)) {
+                    if (index_min > (ix)) {
                         index_min = ix;
                     }
                     break;
@@ -694,7 +694,7 @@ DefAmrIndexLUint SFBitsetAux2D::FindNodesInPeriodicRegionCenter(const DefSFBitse
                 }
             }
             if (bool_not_x_max) {
-                for (DefAmrIndexLUint ix = 0; ix < region_length; ++ix) {
+                for (DefAmrLUint ix = 0; ix < region_length; ++ix) {
                     sfbitset_tmp_x = FindXPos(sfbitset_tmp_x);
                     vec_index_x = vec_index_y + ix + 1;
                     ptr_sfbitset_nodes->at(vec_index_x) = sfbitset_tmp_x;
@@ -705,7 +705,7 @@ DefAmrIndexLUint SFBitsetAux2D::FindNodesInPeriodicRegionCenter(const DefSFBitse
                                 |domain_min_n_level.at(kXIndex);
                             sfbitset_tmp_x = FindXNeg(sfbitset_tmp_x);
                         } else {
-                            if (index_min > DefAmrIndexUint(ix + 1)) {
+                            if (index_min > (ix + 1)) {
                                 index_min = ix + 1;
                             }
                             break;
@@ -720,7 +720,7 @@ DefAmrIndexLUint SFBitsetAux2D::FindNodesInPeriodicRegionCenter(const DefSFBitse
                         |domain_min_n_level.at(kYIndex);
                     sfbitset_tmp_y = FindYNeg(sfbitset_tmp_y);
                 } else {
-                    if (index_min > DefAmrIndexUint(iy + 1)) {
+                    if (index_min > (iy + 1)) {
                         index_min = iy + 1;
                     }
                     break;
@@ -737,8 +737,8 @@ DefAmrIndexLUint SFBitsetAux2D::FindNodesInPeriodicRegionCenter(const DefSFBitse
  * @param[out] ptr_min_m1_bitsets a pointer to minimum indices minus 1
  * @throws ErrorType if the size of min_m1_bitsets is not 2
  */
-void SFBitsetAux2D::GetMinM1AtGivenLevel(const DefAmrIndexUint i_level,
-    std::vector<DefAmrIndexLUint> indices_min,
+void SFBitsetAux2D::GetMinM1AtGivenLevel(const DefInt i_level,
+    std::vector<DefAmrLUint> indices_min,
     std::vector<DefSFBitset>* const ptr_min_m1_bitsets) const {
     if (ptr_min_m1_bitsets->size() != 2) {
         LogManager::LogError("size of ptr_min_m1_bitsets should be 2 in MpiManager::GetMinM1AtGivenLevel in "
@@ -756,8 +756,8 @@ void SFBitsetAux2D::GetMinM1AtGivenLevel(const DefAmrIndexUint i_level,
  * @param[out] ptr_max_p1_bitsets a pointer to maximum indices plus 1
  * @throws ErrorType if the size of max_p1_bitsets is not 2
  */
-void SFBitsetAux2D::GetMaxP1AtGivenLevel(const DefAmrIndexUint i_level,
-    std::vector<DefAmrIndexLUint> indices_max,
+void SFBitsetAux2D::GetMaxP1AtGivenLevel(const DefInt i_level,
+    std::vector<DefAmrLUint> indices_max,
     std::vector<DefSFBitset>* const ptr_max_p1_bitsets) const {
     if (ptr_max_p1_bitsets->size() != 2) {
         LogManager::LogError("size of ptr_max_p1_bitsets should be 2 in MpiManager::GetMaxP1AtGivenLevel in "
@@ -774,8 +774,8 @@ void SFBitsetAux2D::GetMaxP1AtGivenLevel(const DefAmrIndexUint i_level,
  * @param[in] indices_min minimum indicies of the computational domain 
  * @param[out] ptr_min_bitsets a pointer to minimum indices
  */
-void SFBitsetAux2D::GetMinAtGivenLevel(const DefAmrIndexUint i_level,
-    std::vector<DefAmrIndexLUint> indices_min,
+void SFBitsetAux2D::GetMinAtGivenLevel(const DefInt i_level,
+    std::vector<DefAmrLUint> indices_min,
     std::vector<DefSFBitset>* const ptr_min_bitsets) const {
     if (ptr_min_bitsets->size() != 2) {
         LogManager::LogError("size of ptr_min_m1_bitsets should be 2 in MpiManager::GetMinAtGivenLevel in "
@@ -790,8 +790,8 @@ void SFBitsetAux2D::GetMinAtGivenLevel(const DefAmrIndexUint i_level,
  * @param[in] indices_max maximum indicies of the computational domain 
  * @param[out] ptr_max_bitsets a pointer to maximum indices
  */
-void SFBitsetAux2D::GetMaxAtGivenLevel(const DefAmrIndexUint i_level,
-    std::vector<DefAmrIndexLUint> indices_max,
+void SFBitsetAux2D::GetMaxAtGivenLevel(const DefInt i_level,
+    std::vector<DefAmrLUint> indices_max,
     std::vector<DefSFBitset>* const ptr_max_bitsets) const {
     if (ptr_max_bitsets->size() != 2) {
         LogManager::LogError("size of ptr_max_p1_bitsets should be 2 in MpiManager::GetMaAtGivenLevel in "
@@ -867,7 +867,7 @@ void SFBitsetAux3D::SFBitsetNotOnDomainBoundary(
 *              at the lower level.
 */
 void SFBitsetAux3D::SFBitsetHigherLevelInACell(
-    const DefAmrIndexUint level_diff,
+    const DefInt level_diff,
     const DefSFBitset& sfbitset_corner,
     std::vector<DefSFBitset>* const ptr_vec_sfbitsets_higher_level) const {
     SFBitsetToNHigherLevel(level_diff, sfbitset_corner);
@@ -1240,21 +1240,21 @@ void SFBitsetAux3D::SFBitsetFindAllBondedNeighborsVir(const DefSFBitset& bitset_
  * @param[out] ptr_sfbitset_nodes pointer to nodes in the given region.
  */
 void SFBitsetAux3D::FindNodesInReginOfGivenLength(const DefSFBitset& sfbitset_in,
-    const DefAmrIndexLUint region_length, const std::vector<DefSFBitset>& domain_min_m1_n_level,
+    const DefAmrLUint region_length, const std::vector<DefSFBitset>& domain_min_m1_n_level,
     const std::vector<DefSFBitset>& domain_max_p1_n_level, std::vector<DefSFBitset>* const ptr_sfbitset_nodes) const {
     DefSFBitset sfbitset_tmp_y, sfbitset_tmp_x, sfbitset_tmp_z = sfbitset_in;
     ptr_sfbitset_nodes->clear();
     // negative z direction
-    for (DefAmrIndexUint iz = 0; iz <= region_length; ++iz) {
+    for (DefAmrLUint iz = 0; iz <= region_length; ++iz) {
         if ((sfbitset_tmp_z&k0SFBitsetTakeZRef_.at(kRefCurrent_))
          != domain_min_m1_n_level.at(kZIndex)) {
             sfbitset_tmp_y = sfbitset_tmp_z;
             // negative y direction
-            for (DefAmrIndexUint iy = 0; iy <= region_length; ++iy) {
+            for (DefAmrLUint iy = 0; iy <= region_length; ++iy) {
                 if ((sfbitset_tmp_y&k0SFBitsetTakeYRef_.at(kRefCurrent_))
                  != domain_min_m1_n_level.at(kYIndex)) {
                     sfbitset_tmp_x = sfbitset_tmp_y;
-                    for (DefAmrIndexUint ix = 0; ix <= region_length; ++ix) {
+                    for (DefAmrLUint ix = 0; ix <= region_length; ++ix) {
                         if ((sfbitset_tmp_x&k0SFBitsetTakeXRef_.at(kRefCurrent_))
                          != domain_min_m1_n_level.at(kXIndex)) {
                             ptr_sfbitset_nodes->push_back(sfbitset_tmp_x);
@@ -1264,7 +1264,7 @@ void SFBitsetAux3D::FindNodesInReginOfGivenLength(const DefSFBitset& sfbitset_in
                         sfbitset_tmp_x = FindXNeg(sfbitset_tmp_x);
                     }
                     sfbitset_tmp_x = sfbitset_tmp_y;
-                    for (DefAmrIndexUint ix = 0; ix < region_length; ++ix) {
+                    for (DefAmrLUint ix = 0; ix < region_length; ++ix) {
                         sfbitset_tmp_x = FindXPos(sfbitset_tmp_x);
                         if ((sfbitset_tmp_x&k0SFBitsetTakeXRef_.at(kRefCurrent_))
                          != domain_max_p1_n_level.at(kXIndex)) {
@@ -1280,12 +1280,12 @@ void SFBitsetAux3D::FindNodesInReginOfGivenLength(const DefSFBitset& sfbitset_in
             }
             // positive y direction
             sfbitset_tmp_y = sfbitset_tmp_z;
-            for (DefAmrIndexUint iy = 0; iy < region_length; ++iy) {
+            for (DefAmrLUint iy = 0; iy < region_length; ++iy) {
                 sfbitset_tmp_y = FindYPos(sfbitset_tmp_y);
                 if ((sfbitset_tmp_y&k0SFBitsetTakeYRef_.at(kRefCurrent_))
                  != domain_max_p1_n_level.at(kYIndex)) {
                     sfbitset_tmp_x = sfbitset_tmp_y;
-                    for (DefAmrIndexUint ix = 0; ix <= region_length; ++ix) {
+                    for (DefAmrLUint ix = 0; ix <= region_length; ++ix) {
                         if ((sfbitset_tmp_x&k0SFBitsetTakeXRef_.at(kRefCurrent_))
                          != domain_min_m1_n_level.at(kXIndex)) {
                             ptr_sfbitset_nodes->push_back(sfbitset_tmp_x);
@@ -1295,7 +1295,7 @@ void SFBitsetAux3D::FindNodesInReginOfGivenLength(const DefSFBitset& sfbitset_in
                         sfbitset_tmp_x = FindXNeg(sfbitset_tmp_x);
                     }
                     sfbitset_tmp_x = sfbitset_tmp_y;
-                    for (DefAmrIndexUint ix = 0; ix < region_length; ++ix) {
+                    for (DefAmrLUint ix = 0; ix < region_length; ++ix) {
                         sfbitset_tmp_x = FindXPos(sfbitset_tmp_x);
                         if ((sfbitset_tmp_x&k0SFBitsetTakeXRef_.at(kRefCurrent_))
                          != domain_max_p1_n_level.at(kXIndex)) {
@@ -1315,17 +1315,17 @@ void SFBitsetAux3D::FindNodesInReginOfGivenLength(const DefSFBitset& sfbitset_in
     }
     // positive z direction
     sfbitset_tmp_z = sfbitset_in;
-    for (DefAmrIndexUint iz = 0; iz < region_length; ++iz) {
+    for (DefAmrLUint iz = 0; iz < region_length; ++iz) {
         sfbitset_tmp_z = FindZPos(sfbitset_tmp_z);
         if ((sfbitset_tmp_z&k0SFBitsetTakeZRef_.at(kRefCurrent_))
          != domain_max_p1_n_level.at(kZIndex)) {
             sfbitset_tmp_y = sfbitset_tmp_z;
             // negative y direction
-            for (DefAmrIndexUint iy = 0; iy <= region_length; ++iy) {
+            for (DefAmrLUint iy = 0; iy <= region_length; ++iy) {
                 if ((sfbitset_tmp_y&k0SFBitsetTakeYRef_.at(kRefCurrent_))
                  != domain_min_m1_n_level.at(kYIndex)) {
                     sfbitset_tmp_x = sfbitset_tmp_y;
-                    for (DefAmrIndexUint ix = 0; ix <= region_length; ++ix) {
+                    for (DefAmrLUint ix = 0; ix <= region_length; ++ix) {
                         if ((sfbitset_tmp_x&k0SFBitsetTakeXRef_.at(kRefCurrent_))
                          != domain_min_m1_n_level.at(kXIndex)) {
                             ptr_sfbitset_nodes->push_back(sfbitset_tmp_x);
@@ -1335,7 +1335,7 @@ void SFBitsetAux3D::FindNodesInReginOfGivenLength(const DefSFBitset& sfbitset_in
                         sfbitset_tmp_x = FindXNeg(sfbitset_tmp_x);
                     }
                     sfbitset_tmp_x = sfbitset_tmp_y;
-                    for (DefAmrIndexUint ix = 0; ix < region_length; ++ix) {
+                    for (DefAmrLUint ix = 0; ix < region_length; ++ix) {
                         sfbitset_tmp_x = FindXPos(sfbitset_tmp_x);
                         if ((sfbitset_tmp_x&k0SFBitsetTakeXRef_.at(kRefCurrent_))
                          != domain_max_p1_n_level.at(kXIndex)) {
@@ -1351,12 +1351,12 @@ void SFBitsetAux3D::FindNodesInReginOfGivenLength(const DefSFBitset& sfbitset_in
             }
             // positive y direction
             sfbitset_tmp_y = sfbitset_tmp_z;
-            for (DefAmrIndexUint iy = 0; iy < region_length; ++iy) {
+            for (DefAmrLUint iy = 0; iy < region_length; ++iy) {
                 sfbitset_tmp_y = FindYPos(sfbitset_tmp_y);
                 if ((sfbitset_tmp_y&k0SFBitsetTakeYRef_.at(kRefCurrent_))
                  != domain_max_p1_n_level.at(kYIndex)) {
                     sfbitset_tmp_x = sfbitset_tmp_y;
-                    for (DefAmrIndexUint ix = 0; ix <= region_length; ++ix) {
+                    for (DefAmrLUint ix = 0; ix <= region_length; ++ix) {
                         if ((sfbitset_tmp_x&k0SFBitsetTakeXRef_.at(kRefCurrent_))
                          != domain_min_m1_n_level.at(kXIndex)) {
                             ptr_sfbitset_nodes->push_back(sfbitset_tmp_x);
@@ -1366,7 +1366,7 @@ void SFBitsetAux3D::FindNodesInReginOfGivenLength(const DefSFBitset& sfbitset_in
                         sfbitset_tmp_x = FindXNeg(sfbitset_tmp_x);
                     }
                     sfbitset_tmp_x = sfbitset_tmp_y;
-                    for (DefAmrIndexUint ix = 0; ix < region_length; ++ix) {
+                    for (DefAmrLUint ix = 0; ix < region_length; ++ix) {
                         sfbitset_tmp_x = FindXPos(sfbitset_tmp_x);
                         if ((sfbitset_tmp_x&k0SFBitsetTakeXRef_.at(kRefCurrent_))
                          != domain_max_p1_n_level.at(kXIndex)) {
@@ -1394,26 +1394,26 @@ void SFBitsetAux3D::FindNodesInReginOfGivenLength(const DefSFBitset& sfbitset_in
  * @param[in] domain_max_n_level maximum indicies of current refinement level.
  * @param[out] ptr_sfbitset_nodes pointer to nodes in the given region.
  */
-DefAmrIndexLUint SFBitsetAux3D::FindNodesInPeriodicRegionCorner(const DefSFBitset& sfbitset_in,
-    const DefAmrIndexLUint region_length,
+DefAmrLUint SFBitsetAux3D::FindNodesInPeriodicRegionCorner(const DefSFBitset& sfbitset_in,
+    const DefAmrLUint region_length,
     const std::vector<bool>& periodic_min, const std::vector<bool>& periodic_max,
     const std::vector<DefSFBitset>& domain_min_n_level,
     const std::vector<DefSFBitset>& domain_max_n_level,
     std::vector<DefSFBitset>* const ptr_sfbitset_nodes) const {
-    DefAmrIndexLUint total_length = 2 * region_length;
+    DefAmrLUint total_length = 2 * region_length;
     ptr_sfbitset_nodes->resize(total_length * total_length * total_length);
     ptr_sfbitset_nodes->assign(total_length * total_length * total_length, kInvalidSFbitset);
     DefSFBitset sfbitset_tmp_z = sfbitset_in, sfbitset_tmp_y, sfbitset_tmp_x;
-    DefAmrIndexLUint vec_index_x, vec_index_y, vec_index_z, index_min = region_length;
+    DefAmrLUint vec_index_x, vec_index_y, vec_index_z, index_min = region_length;
     bool bool_not_x_max, bool_not_y_max, bool_not_z_max;
     // negative z direction
-    for (DefAmrIndexLUint iz = 0; iz < region_length; ++iz) {
+    for (DefAmrLUint iz = 0; iz < region_length; ++iz) {
         sfbitset_tmp_y = sfbitset_tmp_z;
         vec_index_z = (region_length - iz - 1) * total_length  + region_length;
-        for (DefAmrIndexLUint iy = 0; iy < region_length; ++iy) {
+        for (DefAmrLUint iy = 0; iy < region_length; ++iy) {
             sfbitset_tmp_x = sfbitset_tmp_y;
             vec_index_y = (vec_index_z - iy - 1) * total_length + region_length;
-            for (DefAmrIndexUint ix = 0; ix < region_length; ++ix) {
+            for (DefAmrLUint ix = 0; ix < region_length; ++ix) {
                 vec_index_x = vec_index_y - ix - 1;
                 ptr_sfbitset_nodes->at(vec_index_x) = sfbitset_tmp_x;
                 if ((sfbitset_tmp_x&k0SFBitsetTakeXRef_.at(kRefCurrent_))
@@ -1423,7 +1423,7 @@ DefAmrIndexLUint SFBitsetAux3D::FindNodesInPeriodicRegionCorner(const DefSFBitse
                             |domain_max_n_level.at(kXIndex);
                         sfbitset_tmp_x = FindXPos(sfbitset_tmp_x);
                     } else {
-                        if (index_min > DefAmrIndexUint(ix + 1)) {
+                        if (index_min > (ix + 1)) {
                             index_min = ix + 1;
                         }
                         break;
@@ -1446,7 +1446,7 @@ DefAmrIndexLUint SFBitsetAux3D::FindNodesInPeriodicRegionCorner(const DefSFBitse
                 }
             }
             if (bool_not_x_max) {
-                for (DefAmrIndexLUint ix = 0; ix < region_length; ++ix) {
+                for (DefAmrLUint ix = 0; ix < region_length; ++ix) {
                     sfbitset_tmp_x = FindXPos(sfbitset_tmp_x);
                     vec_index_x = vec_index_y + ix;
                     ptr_sfbitset_nodes->at(vec_index_x) = sfbitset_tmp_x;
@@ -1457,7 +1457,7 @@ DefAmrIndexLUint SFBitsetAux3D::FindNodesInPeriodicRegionCorner(const DefSFBitse
                                 |domain_min_n_level.at(kXIndex);
                             sfbitset_tmp_x = FindXNeg(sfbitset_tmp_x);
                         } else {
-                            if (index_min > DefAmrIndexUint(ix + 1)) {
+                            if (index_min > (ix + 1)) {
                                 index_min = ix + 1;
                             }
                             break;
@@ -1472,7 +1472,7 @@ DefAmrIndexLUint SFBitsetAux3D::FindNodesInPeriodicRegionCorner(const DefSFBitse
                         |domain_max_n_level.at(kYIndex);
                     sfbitset_tmp_y = FindYPos(sfbitset_tmp_y);
                 } else {
-                    if (index_min > DefAmrIndexLUint(iy + 1)) {
+                    if (index_min > (iy + 1)) {
                         index_min = iy + 1;
                     }
                     break;
@@ -1495,11 +1495,11 @@ DefAmrIndexLUint SFBitsetAux3D::FindNodesInPeriodicRegionCorner(const DefSFBitse
             }
         }
         if (bool_not_y_max) {
-            for (DefAmrIndexLUint iy = 0; iy < region_length; ++iy) {
+            for (DefAmrLUint iy = 0; iy < region_length; ++iy) {
                 sfbitset_tmp_y = FindYPos(sfbitset_tmp_y);
                 sfbitset_tmp_x = sfbitset_tmp_y;
                 vec_index_y = (vec_index_z + iy) * total_length + region_length;
-                for (DefAmrIndexLUint ix = 0; ix < region_length; ++ix) {
+                for (DefAmrLUint ix = 0; ix < region_length; ++ix) {
                     vec_index_x = vec_index_y - ix - 1;
                     ptr_sfbitset_nodes->at(vec_index_x) = sfbitset_tmp_x;
                     if ((sfbitset_tmp_x&k0SFBitsetTakeXRef_.at(kRefCurrent_))
@@ -1509,7 +1509,7 @@ DefAmrIndexLUint SFBitsetAux3D::FindNodesInPeriodicRegionCorner(const DefSFBitse
                             |domain_max_n_level.at(kXIndex);
                         sfbitset_tmp_x = FindXPos(sfbitset_tmp_x);
                     } else {
-                        if (index_min > DefAmrIndexLUint(ix + 1)) {
+                        if (index_min > DefAmrLUint(ix + 1)) {
                             index_min = ix + 1;
                         }
                         break;
@@ -1532,7 +1532,7 @@ DefAmrIndexLUint SFBitsetAux3D::FindNodesInPeriodicRegionCorner(const DefSFBitse
                     }
                 }
                 if (bool_not_x_max) {
-                    for (DefAmrIndexLUint ix = 0; ix < region_length; ++ix) {
+                    for (DefAmrLUint ix = 0; ix < region_length; ++ix) {
                         sfbitset_tmp_x = FindXPos(sfbitset_tmp_x);
                         vec_index_x = vec_index_y + ix;
                         ptr_sfbitset_nodes->at(vec_index_x) = sfbitset_tmp_x;
@@ -1543,7 +1543,7 @@ DefAmrIndexLUint SFBitsetAux3D::FindNodesInPeriodicRegionCorner(const DefSFBitse
                                     |domain_min_n_level.at(kXIndex);
                                 sfbitset_tmp_x = FindXNeg(sfbitset_tmp_x);
                             } else {
-                                if (index_min > DefAmrIndexUint(ix + 1)) {
+                                if (index_min > (ix + 1)) {
                                     index_min = ix + 1;
                                 }
                                 break;
@@ -1558,7 +1558,7 @@ DefAmrIndexLUint SFBitsetAux3D::FindNodesInPeriodicRegionCorner(const DefSFBitse
                             |domain_min_n_level.at(kYIndex);
                         sfbitset_tmp_y = FindYNeg(sfbitset_tmp_y);
                     } else {
-                        if (index_min > DefAmrIndexUint(iy + 1)) {
+                        if (index_min > (iy + 1)) {
                             index_min = iy + 1;
                         }
                         break;
@@ -1573,7 +1573,7 @@ DefAmrIndexLUint SFBitsetAux3D::FindNodesInPeriodicRegionCorner(const DefSFBitse
                     |domain_max_n_level.at(kZIndex);
                 sfbitset_tmp_z = FindZPos(sfbitset_tmp_z);
             } else {
-                if (index_min > DefAmrIndexLUint(iz + 1)) {
+                if (index_min > DefAmrLUint(iz + 1)) {
                     index_min = iz + 1;
                 }
                 break;
@@ -1596,14 +1596,14 @@ DefAmrIndexLUint SFBitsetAux3D::FindNodesInPeriodicRegionCorner(const DefSFBitse
         }
     }
     if (bool_not_z_max) {
-        for (DefAmrIndexLUint iz = 0; iz < region_length; ++iz) {
+        for (DefAmrLUint iz = 0; iz < region_length; ++iz) {
             sfbitset_tmp_z = FindZPos(sfbitset_tmp_z);
             sfbitset_tmp_y = sfbitset_tmp_z;
             vec_index_z = (region_length + iz) * total_length + region_length;
-            for (DefAmrIndexLUint iy = 0; iy < region_length; ++iy) {
+            for (DefAmrLUint iy = 0; iy < region_length; ++iy) {
                 sfbitset_tmp_x = sfbitset_tmp_y;
                 vec_index_y = (vec_index_z - iy - 1) * total_length + region_length;
-                for (DefAmrIndexUint ix = 0; ix < region_length; ++ix) {
+                for (DefAmrLUint ix = 0; ix < region_length; ++ix) {
                     vec_index_x = vec_index_y - ix - 1;
                     ptr_sfbitset_nodes->at(vec_index_x) = sfbitset_tmp_x;
                     if ((sfbitset_tmp_x&k0SFBitsetTakeXRef_.at(kRefCurrent_))
@@ -1613,7 +1613,7 @@ DefAmrIndexLUint SFBitsetAux3D::FindNodesInPeriodicRegionCorner(const DefSFBitse
                                 |domain_max_n_level.at(kXIndex);
                             sfbitset_tmp_x = FindXPos(sfbitset_tmp_x);
                         } else {
-                            if (index_min > DefAmrIndexUint(ix + 1)) {
+                            if (index_min > (ix + 1)) {
                                 index_min = ix + 1;
                             }
                             break;
@@ -1636,7 +1636,7 @@ DefAmrIndexLUint SFBitsetAux3D::FindNodesInPeriodicRegionCorner(const DefSFBitse
                     }
                 }
                 if (bool_not_x_max) {
-                    for (DefAmrIndexLUint ix = 0; ix < region_length; ++ix) {
+                    for (DefAmrLUint ix = 0; ix < region_length; ++ix) {
                         sfbitset_tmp_x = FindXPos(sfbitset_tmp_x);
                         vec_index_x = vec_index_y + ix;
                         ptr_sfbitset_nodes->at(vec_index_x) = sfbitset_tmp_x;
@@ -1647,7 +1647,7 @@ DefAmrIndexLUint SFBitsetAux3D::FindNodesInPeriodicRegionCorner(const DefSFBitse
                                     |domain_min_n_level.at(kXIndex);
                                 sfbitset_tmp_x = FindXNeg(sfbitset_tmp_x);
                             } else {
-                                if (index_min > DefAmrIndexUint(ix + 1)) {
+                                if (index_min > (ix + 1)) {
                                     index_min = ix + 1;
                                 }
                                 break;
@@ -1662,7 +1662,7 @@ DefAmrIndexLUint SFBitsetAux3D::FindNodesInPeriodicRegionCorner(const DefSFBitse
                             |domain_max_n_level.at(kYIndex);
                         sfbitset_tmp_y = FindYPos(sfbitset_tmp_y);
                     } else {
-                        if (index_min > DefAmrIndexLUint(iy + 1)) {
+                        if (index_min > DefAmrLUint(iy + 1)) {
                             index_min = iy + 1;
                         }
                         break;
@@ -1685,11 +1685,11 @@ DefAmrIndexLUint SFBitsetAux3D::FindNodesInPeriodicRegionCorner(const DefSFBitse
                 }
             }
             if (bool_not_y_max) {
-                for (DefAmrIndexLUint iy = 0; iy < region_length; ++iy) {
+                for (DefAmrLUint iy = 0; iy < region_length; ++iy) {
                     sfbitset_tmp_y = FindYPos(sfbitset_tmp_y);
                     sfbitset_tmp_x = sfbitset_tmp_y;
                     vec_index_y = (vec_index_z + iy) * total_length + region_length;
-                    for (DefAmrIndexLUint ix = 0; ix < region_length; ++ix) {
+                    for (DefAmrLUint ix = 0; ix < region_length; ++ix) {
                         vec_index_x = vec_index_y - ix - 1;
                         ptr_sfbitset_nodes->at(vec_index_x) = sfbitset_tmp_x;
                         if ((sfbitset_tmp_x&k0SFBitsetTakeXRef_.at(kRefCurrent_))
@@ -1699,7 +1699,7 @@ DefAmrIndexLUint SFBitsetAux3D::FindNodesInPeriodicRegionCorner(const DefSFBitse
                                 |domain_max_n_level.at(kXIndex);
                             sfbitset_tmp_x = FindXPos(sfbitset_tmp_x);
                         } else {
-                            if (index_min > DefAmrIndexLUint(ix + 1)) {
+                            if (index_min > DefAmrLUint(ix + 1)) {
                                 index_min = ix + 1;
                             }
                             break;
@@ -1722,7 +1722,7 @@ DefAmrIndexLUint SFBitsetAux3D::FindNodesInPeriodicRegionCorner(const DefSFBitse
                         }
                     }
                     if (bool_not_x_max) {
-                        for (DefAmrIndexLUint ix = 0; ix < region_length; ++ix) {
+                        for (DefAmrLUint ix = 0; ix < region_length; ++ix) {
                             sfbitset_tmp_x = FindXPos(sfbitset_tmp_x);
                             vec_index_x = vec_index_y + ix;
                             ptr_sfbitset_nodes->at(vec_index_x) = sfbitset_tmp_x;
@@ -1733,7 +1733,7 @@ DefAmrIndexLUint SFBitsetAux3D::FindNodesInPeriodicRegionCorner(const DefSFBitse
                                         |domain_min_n_level.at(kXIndex);
                                     sfbitset_tmp_x = FindXNeg(sfbitset_tmp_x);
                                 } else {
-                                    if (index_min > DefAmrIndexUint(ix + 1)) {
+                                    if (index_min > (ix + 1)) {
                                         index_min = ix + 1;
                                     }
                                     break;
@@ -1748,7 +1748,7 @@ DefAmrIndexLUint SFBitsetAux3D::FindNodesInPeriodicRegionCorner(const DefSFBitse
                                 |domain_min_n_level.at(kYIndex);
                             sfbitset_tmp_y = FindYNeg(sfbitset_tmp_y);
                         } else {
-                            if (index_min > DefAmrIndexUint(iy + 1)) {
+                            if (index_min > (iy + 1)) {
                                 index_min = iy + 1;
                             }
                             break;
@@ -1763,7 +1763,7 @@ DefAmrIndexLUint SFBitsetAux3D::FindNodesInPeriodicRegionCorner(const DefSFBitse
                         |domain_min_n_level.at(kZIndex);
                     sfbitset_tmp_z = FindZNeg(sfbitset_tmp_z);
                 } else {
-                    if (index_min > DefAmrIndexUint(iz + 1)) {
+                    if (index_min > (iz + 1)) {
                         index_min = iz + 1;
                     }
                     break;
@@ -1785,26 +1785,26 @@ DefAmrIndexLUint SFBitsetAux3D::FindNodesInPeriodicRegionCorner(const DefSFBitse
  * @return number of node in each direction within the region and domain range.
  * @note only indics within the return values are valid, otherwise may be undefined.
  */
-DefAmrIndexLUint SFBitsetAux3D::FindNodesInPeriodicRegionCenter(const DefSFBitset& sfbitset_in,
-    const DefAmrIndexLUint region_length,
+DefAmrLUint SFBitsetAux3D::FindNodesInPeriodicRegionCenter(const DefSFBitset& sfbitset_in,
+    const DefAmrLUint region_length,
     const std::vector<bool>& periodic_min, const std::vector<bool>& periodic_max,
     const std::vector<DefSFBitset>& domain_min_n_level,
     const std::vector<DefSFBitset>& domain_max_n_level,
     std::vector<DefSFBitset>* const ptr_sfbitset_nodes) const {
-    DefAmrIndexLUint total_length = 2 * region_length + 1;
+    DefAmrLUint total_length = 2 * region_length + 1;
     ptr_sfbitset_nodes->resize(total_length * total_length * total_length);
     ptr_sfbitset_nodes->assign(total_length * total_length * total_length, kInvalidSFbitset);
     DefSFBitset sfbitset_tmp_z = sfbitset_in, sfbitset_tmp_y, sfbitset_tmp_x;
-    DefAmrIndexLUint vec_index_x, vec_index_y, vec_index_z, index_min = region_length;
+    DefAmrLUint vec_index_x, vec_index_y, vec_index_z, index_min = region_length;
     bool bool_not_x_max, bool_not_y_max, bool_not_z_max;
     // negative z direction
-    for (DefAmrIndexLUint iz = 0; iz <= region_length; ++iz) {
+    for (DefAmrLUint iz = 0; iz <= region_length; ++iz) {
         sfbitset_tmp_y = sfbitset_tmp_z;
         vec_index_z = (region_length - iz) * total_length  + region_length;
-        for (DefAmrIndexLUint iy = 0; iy <= region_length; ++iy) {
+        for (DefAmrLUint iy = 0; iy <= region_length; ++iy) {
             sfbitset_tmp_x = sfbitset_tmp_y;
             vec_index_y = (vec_index_z - iy) * total_length + region_length;
-            for (DefAmrIndexUint ix = 0; ix <= region_length; ++ix) {
+            for (DefAmrLUint ix = 0; ix <= region_length; ++ix) {
                 vec_index_x = vec_index_y - ix;
                 ptr_sfbitset_nodes->at(vec_index_x) = sfbitset_tmp_x;
                 if ((sfbitset_tmp_x&k0SFBitsetTakeXRef_.at(kRefCurrent_))
@@ -1814,7 +1814,7 @@ DefAmrIndexLUint SFBitsetAux3D::FindNodesInPeriodicRegionCenter(const DefSFBitse
                             |domain_max_n_level.at(kXIndex);
                         sfbitset_tmp_x = FindXPos(sfbitset_tmp_x);
                     } else {
-                        if (index_min > DefAmrIndexUint(ix)) {
+                        if (index_min > DefInt(ix)) {
                             index_min = ix;
                         }
                         break;
@@ -1837,7 +1837,7 @@ DefAmrIndexLUint SFBitsetAux3D::FindNodesInPeriodicRegionCenter(const DefSFBitse
                 }
             }
             if (bool_not_x_max) {
-                for (DefAmrIndexLUint ix = 0; ix < region_length; ++ix) {
+                for (DefAmrLUint ix = 0; ix < region_length; ++ix) {
                     sfbitset_tmp_x = FindXPos(sfbitset_tmp_x);
                     vec_index_x = vec_index_y + ix + 1;
                     ptr_sfbitset_nodes->at(vec_index_x) = sfbitset_tmp_x;
@@ -1848,7 +1848,7 @@ DefAmrIndexLUint SFBitsetAux3D::FindNodesInPeriodicRegionCenter(const DefSFBitse
                                 |domain_min_n_level.at(kXIndex);
                             sfbitset_tmp_x = FindXNeg(sfbitset_tmp_x);
                         } else {
-                            if (index_min > DefAmrIndexUint(ix + 1)) {
+                            if (index_min > (ix + 1)) {
                                 index_min = ix + 1;
                             }
                             break;
@@ -1863,7 +1863,7 @@ DefAmrIndexLUint SFBitsetAux3D::FindNodesInPeriodicRegionCenter(const DefSFBitse
                         |domain_max_n_level.at(kYIndex);
                     sfbitset_tmp_y = FindYPos(sfbitset_tmp_y);
                 } else {
-                    if (index_min > DefAmrIndexLUint(iy)) {
+                    if (index_min > DefAmrLUint(iy)) {
                         index_min = iy;
                     }
                     break;
@@ -1886,11 +1886,11 @@ DefAmrIndexLUint SFBitsetAux3D::FindNodesInPeriodicRegionCenter(const DefSFBitse
             }
         }
         if (bool_not_y_max) {
-            for (DefAmrIndexLUint iy = 0; iy < region_length; ++iy) {
+            for (DefAmrLUint iy = 0; iy < region_length; ++iy) {
                 sfbitset_tmp_y = FindYPos(sfbitset_tmp_y);
                 sfbitset_tmp_x = sfbitset_tmp_y;
                 vec_index_y = (vec_index_z + iy + 1) * total_length + region_length;
-                for (DefAmrIndexLUint ix = 0; ix <= region_length; ++ix) {
+                for (DefAmrLUint ix = 0; ix <= region_length; ++ix) {
                     vec_index_x = vec_index_y - ix;
                     ptr_sfbitset_nodes->at(vec_index_x) = sfbitset_tmp_x;
                     if ((sfbitset_tmp_x&k0SFBitsetTakeXRef_.at(kRefCurrent_))
@@ -1900,7 +1900,7 @@ DefAmrIndexLUint SFBitsetAux3D::FindNodesInPeriodicRegionCenter(const DefSFBitse
                                 |domain_max_n_level.at(kXIndex);
                             sfbitset_tmp_x = FindXPos(sfbitset_tmp_x);
                         } else {
-                            if (index_min > DefAmrIndexLUint(ix)) {
+                            if (index_min > (ix)) {
                                 index_min = ix;
                             }
                             break;
@@ -1923,7 +1923,7 @@ DefAmrIndexLUint SFBitsetAux3D::FindNodesInPeriodicRegionCenter(const DefSFBitse
                     }
                 }
                 if (bool_not_x_max) {
-                    for (DefAmrIndexLUint ix = 0; ix < region_length; ++ix) {
+                    for (DefAmrLUint ix = 0; ix < region_length; ++ix) {
                         sfbitset_tmp_x = FindXPos(sfbitset_tmp_x);
                         vec_index_x = vec_index_y + ix + 1;
                         ptr_sfbitset_nodes->at(vec_index_x) = sfbitset_tmp_x;
@@ -1934,7 +1934,7 @@ DefAmrIndexLUint SFBitsetAux3D::FindNodesInPeriodicRegionCenter(const DefSFBitse
                                     |domain_min_n_level.at(kXIndex);
                                 sfbitset_tmp_x = FindXNeg(sfbitset_tmp_x);
                             } else {
-                                if (index_min > DefAmrIndexUint(ix + 1)) {
+                                if (index_min > (ix + 1)) {
                                     index_min = ix + 1;
                                 }
                                 break;
@@ -1949,7 +1949,7 @@ DefAmrIndexLUint SFBitsetAux3D::FindNodesInPeriodicRegionCenter(const DefSFBitse
                             |domain_min_n_level.at(kYIndex);
                         sfbitset_tmp_y = FindYNeg(sfbitset_tmp_y);
                     } else {
-                        if (index_min > DefAmrIndexUint(iy + 1)) {
+                        if (index_min > (iy + 1)) {
                             index_min = iy + 1;
                         }
                         break;
@@ -1964,7 +1964,7 @@ DefAmrIndexLUint SFBitsetAux3D::FindNodesInPeriodicRegionCenter(const DefSFBitse
                     |domain_max_n_level.at(kZIndex);
                 sfbitset_tmp_z = FindZPos(sfbitset_tmp_z);
             } else {
-                if (index_min > DefAmrIndexLUint(iz)) {
+                if (index_min > (iz)) {
                     index_min = iz;
                 }
                 break;
@@ -1987,14 +1987,14 @@ DefAmrIndexLUint SFBitsetAux3D::FindNodesInPeriodicRegionCenter(const DefSFBitse
         }
     }
     if (bool_not_z_max) {
-        for (DefAmrIndexLUint iz = 0; iz < region_length; ++iz) {
+        for (DefAmrLUint iz = 0; iz < region_length; ++iz) {
             sfbitset_tmp_z = FindZPos(sfbitset_tmp_z);
             sfbitset_tmp_y = sfbitset_tmp_z;
             vec_index_z = (region_length + iz + 1) * total_length + region_length;
-            for (DefAmrIndexLUint iy = 0; iy <= region_length; ++iy) {
+            for (DefAmrLUint iy = 0; iy <= region_length; ++iy) {
                 sfbitset_tmp_x = sfbitset_tmp_y;
                 vec_index_y = (vec_index_z - iy) * total_length + region_length;
-                for (DefAmrIndexUint ix = 0; ix <= region_length; ++ix) {
+                for (DefAmrLUint ix = 0; ix <= region_length; ++ix) {
                     vec_index_x = vec_index_y - ix;
                     ptr_sfbitset_nodes->at(vec_index_x) = sfbitset_tmp_x;
                     if ((sfbitset_tmp_x&k0SFBitsetTakeXRef_.at(kRefCurrent_))
@@ -2004,7 +2004,7 @@ DefAmrIndexLUint SFBitsetAux3D::FindNodesInPeriodicRegionCenter(const DefSFBitse
                                 |domain_max_n_level.at(kXIndex);
                             sfbitset_tmp_x = FindXPos(sfbitset_tmp_x);
                         } else {
-                            if (index_min > DefAmrIndexUint(ix)) {
+                            if (index_min > (ix)) {
                                 index_min = ix;
                             }
                             break;
@@ -2027,7 +2027,7 @@ DefAmrIndexLUint SFBitsetAux3D::FindNodesInPeriodicRegionCenter(const DefSFBitse
                     }
                 }
                 if (bool_not_x_max) {
-                    for (DefAmrIndexLUint ix = 0; ix < region_length; ++ix) {
+                    for (DefAmrLUint ix = 0; ix < region_length; ++ix) {
                         sfbitset_tmp_x = FindXPos(sfbitset_tmp_x);
                         vec_index_x = vec_index_y + ix + 1;
                         ptr_sfbitset_nodes->at(vec_index_x) = sfbitset_tmp_x;
@@ -2038,7 +2038,7 @@ DefAmrIndexLUint SFBitsetAux3D::FindNodesInPeriodicRegionCenter(const DefSFBitse
                                     |domain_min_n_level.at(kXIndex);
                                 sfbitset_tmp_x = FindXNeg(sfbitset_tmp_x);
                             } else {
-                                if (index_min > DefAmrIndexUint(ix + 1)) {
+                                if (index_min > (ix + 1)) {
                                     index_min = ix + 1;
                                 }
                                 break;
@@ -2053,7 +2053,7 @@ DefAmrIndexLUint SFBitsetAux3D::FindNodesInPeriodicRegionCenter(const DefSFBitse
                             |domain_max_n_level.at(kYIndex);
                         sfbitset_tmp_y = FindYPos(sfbitset_tmp_y);
                     } else {
-                        if (index_min > DefAmrIndexLUint(iy)) {
+                        if (index_min > (iy)) {
                             index_min = iy;
                         }
                         break;
@@ -2076,11 +2076,11 @@ DefAmrIndexLUint SFBitsetAux3D::FindNodesInPeriodicRegionCenter(const DefSFBitse
                 }
             }
             if (bool_not_y_max) {
-                for (DefAmrIndexLUint iy = 0; iy < region_length; ++iy) {
+                for (DefAmrLUint iy = 0; iy < region_length; ++iy) {
                     sfbitset_tmp_y = FindYPos(sfbitset_tmp_y);
                     sfbitset_tmp_x = sfbitset_tmp_y;
                     vec_index_y = (vec_index_z + iy + 1) * total_length + region_length;
-                    for (DefAmrIndexLUint ix = 0; ix <= region_length; ++ix) {
+                    for (DefAmrLUint ix = 0; ix <= region_length; ++ix) {
                         vec_index_x = vec_index_y - ix;
                         ptr_sfbitset_nodes->at(vec_index_x) = sfbitset_tmp_x;
                         if ((sfbitset_tmp_x&k0SFBitsetTakeXRef_.at(kRefCurrent_))
@@ -2090,7 +2090,7 @@ DefAmrIndexLUint SFBitsetAux3D::FindNodesInPeriodicRegionCenter(const DefSFBitse
                                 |domain_max_n_level.at(kXIndex);
                             sfbitset_tmp_x = FindXPos(sfbitset_tmp_x);
                         } else {
-                            if (index_min > DefAmrIndexLUint(ix)) {
+                            if (index_min > (ix)) {
                                 index_min = ix;
                             }
                             break;
@@ -2113,7 +2113,7 @@ DefAmrIndexLUint SFBitsetAux3D::FindNodesInPeriodicRegionCenter(const DefSFBitse
                         }
                     }
                     if (bool_not_x_max) {
-                        for (DefAmrIndexLUint ix = 0; ix < region_length; ++ix) {
+                        for (DefAmrLUint ix = 0; ix < region_length; ++ix) {
                             sfbitset_tmp_x = FindXPos(sfbitset_tmp_x);
                             vec_index_x = vec_index_y + ix + 1;
                             ptr_sfbitset_nodes->at(vec_index_x) = sfbitset_tmp_x;
@@ -2124,7 +2124,7 @@ DefAmrIndexLUint SFBitsetAux3D::FindNodesInPeriodicRegionCenter(const DefSFBitse
                                         |domain_min_n_level.at(kXIndex);
                                     sfbitset_tmp_x = FindXNeg(sfbitset_tmp_x);
                                 } else {
-                                    if (index_min > DefAmrIndexUint(ix + 1)) {
+                                    if (index_min > (ix + 1)) {
                                         index_min = ix + 1;
                                     }
                                     break;
@@ -2139,7 +2139,7 @@ DefAmrIndexLUint SFBitsetAux3D::FindNodesInPeriodicRegionCenter(const DefSFBitse
                                 |domain_min_n_level.at(kYIndex);
                             sfbitset_tmp_y = FindYNeg(sfbitset_tmp_y);
                         } else {
-                            if (index_min > DefAmrIndexUint(iy + 1)) {
+                            if (index_min > (iy + 1)) {
                                 index_min = iy + 1;
                             }
                             break;
@@ -2154,7 +2154,7 @@ DefAmrIndexLUint SFBitsetAux3D::FindNodesInPeriodicRegionCenter(const DefSFBitse
                         |domain_min_n_level.at(kZIndex);
                     sfbitset_tmp_z = FindZNeg(sfbitset_tmp_z);
                 } else {
-                    if (index_min > DefAmrIndexUint(iz + 1)) {
+                    if (index_min > (iz + 1)) {
                         index_min = iz + 1;
                     }
                     break;
@@ -2171,8 +2171,8 @@ DefAmrIndexLUint SFBitsetAux3D::FindNodesInPeriodicRegionCenter(const DefSFBitse
  * @param[out] ptr_min_m1_bitsets a pointer to minimum indices minus 1
  * @throws ErrorType if the size of min_m1_bitsets is not 3
  */
-void SFBitsetAux3D::GetMinM1AtGivenLevel(const DefAmrIndexUint i_level,
-    std::vector<DefAmrIndexLUint> indices_min,
+void SFBitsetAux3D::GetMinM1AtGivenLevel(const DefInt i_level,
+    std::vector<DefAmrLUint> indices_min,
     std::vector<DefSFBitset>* const ptr_min_m1_bitsets) const {
     if (ptr_min_m1_bitsets->size() != 3) {
         LogManager::LogError("size of ptr_min_m1_bitsets should be 3 in MpiManager::GetMinM1AtGivenLevel3D in "
@@ -2192,8 +2192,8 @@ void SFBitsetAux3D::GetMinM1AtGivenLevel(const DefAmrIndexUint i_level,
  * @param[out] ptr_max_p1_bitsets a pointer to maximum indices plus 1
  * @throws ErrorType if the size of max_p1_bitsets is not 3
  */
-void SFBitsetAux3D::GetMaxP1AtGivenLevel(const DefAmrIndexUint i_level,
-    std::vector<DefAmrIndexLUint> indices_max,
+void SFBitsetAux3D::GetMaxP1AtGivenLevel(const DefInt i_level,
+    std::vector<DefAmrLUint> indices_max,
     std::vector<DefSFBitset>* const ptr_max_p1_bitsets) const {
     if (ptr_max_p1_bitsets->size() != 3) {
         LogManager::LogError("size of ptr_max_p1_bitsets should be 3 in MpiManager::GetMaxP1AtGivenLevel3D in "
@@ -2212,8 +2212,8 @@ void SFBitsetAux3D::GetMaxP1AtGivenLevel(const DefAmrIndexUint i_level,
  * @param[in] indices_min minimum indicies of the computational domain 
  * @param[out] ptr_min_bitsets a pointer to minimum indices
  */
-void SFBitsetAux3D::GetMinAtGivenLevel(const DefAmrIndexUint i_level,
-    std::vector<DefAmrIndexLUint> indices_min,
+void SFBitsetAux3D::GetMinAtGivenLevel(const DefInt i_level,
+    std::vector<DefAmrLUint> indices_min,
     std::vector<DefSFBitset>* const ptr_min_bitsets) const {
     if (ptr_min_bitsets->size() != 3) {
         LogManager::LogError("size of ptr_min_m1_bitsets should be 3 in MpiManager::GetMinAtGivenLevel3D in "
@@ -2229,8 +2229,8 @@ void SFBitsetAux3D::GetMinAtGivenLevel(const DefAmrIndexUint i_level,
  * @param[in] indices_max maximum indicies of the computational domain 
  * @param[out] ptr_max_bitsets a pointer to maximum indices
  */
-void SFBitsetAux3D::GetMaxAtGivenLevel(const DefAmrIndexUint i_level,
-    std::vector<DefAmrIndexLUint> indices_max,
+void SFBitsetAux3D::GetMaxAtGivenLevel(const DefInt i_level,
+    std::vector<DefAmrLUint> indices_max,
     std::vector<DefSFBitset>* const ptr_max_bitsets) const {
     if (ptr_max_bitsets->size() != 3) {
         LogManager::LogError("size of ptr_max_p1_bitsets should be 3 in MpiManager::GetMaxAtGivenLevel3D in "

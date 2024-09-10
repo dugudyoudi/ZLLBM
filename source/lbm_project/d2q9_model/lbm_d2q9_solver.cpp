@@ -18,7 +18,7 @@ namespace lbmproject {
  * @param[in]  sfbitset_aux class to manage functions of spacing filling code related manipulations.
  * @param[out] ptr_map_grid_nodes pointer to grid nodes for LBM simulation.
  */
-void SolverLbmD2Q9::Stream(const DefAmrUint flag_not_compute, const amrproject::SFBitsetAuxInterface& sfbitset_aux,
+void SolverLbmD2Q9::Stream(const DefInt flag_not_compute, const amrproject::SFBitsetAuxInterface& sfbitset_aux,
     DefMap<std::unique_ptr<GridNodeLbm>>* const ptr_map_grid_nodes) const {
     if (ptr_map_grid_nodes != nullptr) {
         DefSFBitset sfbitset_tmp, sfbitset_tmp1;

@@ -16,6 +16,8 @@ FILE(GLOB SOURCE_LBM_GENERAL_SRC "./*.cpp")
 FILE(GLOB SOURCE_LBM_GENERAL_HEAD "./*.h")
 FILE(GLOB SOURCE_LBM_BOUNDARY_SRC "./boundary_conditions/*.cpp")
 FILE(GLOB SOURCE_LBM_BOUNDARY_HEAD "./boundary_conditions/*.h")
+FILE(GLOB SOURCE_LBM_IMMERSED_BOUNDARY_SRC "./immersed_boundary/*.cpp")
+FILE(GLOB SOURCE_LBM_IMMERSED_BOUNDARY_HEAD "./immersed_boundary/*.h")
 FILE(GLOB SOURCE_LBM_D2Q9_SRC "./d2q9_model/*.cpp")
 FILE(GLOB SOURCE_LBM_D2Q9_HEAD "./d2q9_model/*.h")
 FILE(GLOB SOURCE_LBM_D3Q19_SRC "./d3q19_model/*.cpp")
@@ -24,6 +26,7 @@ FILE(GLOB SOURCE_LBM_D3Q19_HEAD "./d3q19_model/*.h")
 add_library(${LBM_PROJECT_NAME} STATIC 
             ${SOURCE_LBM_GENERAL_SRC} ${SOURCE_LBM_GENERAL_HEAD}
             ${SOURCE_LBM_BOUNDARY_SRC} ${SOURCE_LBM_BOUNDARY_HEAD}
+            ${SOURCE_LBM_IMMERSED_BOUNDARY_SRC} ${SOURCE_LBM_IMMERSED_BOUNDARY_HEAD}
             ${SOURCE_LBM_D2Q9_SRC} ${SOURCE_LBM_D2Q9_HEAD}
             ${SOURCE_LBM_D3Q19_SRC} ${SOURCE_LBM_D3Q19_HEAD})
 
@@ -40,6 +43,8 @@ source_group("HeadFiles" FILES ${SOURCE_LBM_HEAD})
 source_group("SourceFiles" FILES ${SOURCE_LBM_SRC})
 source_group("HeadFiles\\boundary_conditions" FILES ${SOURCE_LBM_BOUNDARY_HEAD})
 source_group("SourceFiles\\boundary_conditions"  FILES ${SOURCE_LBM_BOUNDARY_SRC})
+source_group("HeadFiles\\immersed_boundary" FILES ${SOURCE_LBM_IMMERSED_BOUNDARY_HEAD})
+source_group("SourceFiles\\immersed_boundary"  FILES ${SOURCE_LBM_IMMERSED_BOUNDARY_SRC})
 source_group("HeadFiles\\d2q9_model"  FILES ${SOURCE_LBM_D2Q9_HEAD})
 source_group("SourceFiles\\d2q9_model" FILES ${SOURCE_LBM_D2Q9_SRC})
 source_group("HeadFiles\\d3q19_model"  FILES ${SOURCE_LBM_D3Q19_HEAD})

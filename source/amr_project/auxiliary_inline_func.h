@@ -8,8 +8,8 @@
 * @date  2022-9-3
 * @note .
 */
-#ifndef ROOTPROJECT_AMR_PROJECT_AUXILIARY_INLINE_FUNC_H_
-#define ROOTPROJECT_AMR_PROJECT_AUXILIARY_INLINE_FUNC_H_
+#ifndef SOURCE_AMR_PROJECT_AUXILIARY_INLINE_FUNC_H_
+#define SOURCE_AMR_PROJECT_AUXILIARY_INLINE_FUNC_H_
 #include <array>
 #include <limits>
 #include "../defs_libs.h"
@@ -35,4 +35,4 @@ constexpr DefReal SqrtConstexpr(DefReal x) {
         : std::numeric_limits<DefReal>::quiet_NaN();
 }  // end namespace amrproject
 }  // end namespace rootproject
-#endif  // ROOTPROJECT_AMR_PROJECT_AUXILIARY_INLINE_FUNC_H_
+#endif  // SOURCE_AMR_PROJECT_AUXILIARY_INLINE_FUNC_H_

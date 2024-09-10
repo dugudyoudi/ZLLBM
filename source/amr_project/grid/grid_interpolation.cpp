@@ -18,8 +18,8 @@ void GridInfoInterface::ChooseInterpolationMethod() {
     case amrproject::EInterpolationMethod::kLinear:
         max_interp_length_ = 1;
         if (ptr_solver_->k0SolverDims_ == 2) {
-            func_node_interp_ = [this](const DefAmrIndexLUint interp_length, const DefAmrIndexLUint region_length,
-                const DefAmrUint flag_not_for_interp_coarse,
+            func_node_interp_ = [this](const DefAmrLUint interp_length, const DefAmrLUint region_length,
+                const DefInt flag_not_for_interp_coarse,
                 const DefSFBitset& sfbitset_in, const amrproject::SFBitsetAuxInterface& sfbitset_aux,
                 const std::vector<DefSFBitset>& sfbitset_region, const DefMap<std::unique_ptr<GridNode>>& nodes_fine,
                 const amrproject::GridInfoInterface& coarse_grid_info,
@@ -29,8 +29,8 @@ void GridInfoInterface::ChooseInterpolationMethod() {
                         sfbitset_region, nodes_fine, coarse_grid_info, nodes_coarse, ptr_node);
             };
         } else {
-            func_node_interp_ = [this](const DefAmrIndexLUint interp_length, const DefAmrIndexLUint region_length,
-                const DefAmrUint flag_not_for_interp_coarse,
+            func_node_interp_ = [this](const DefAmrLUint interp_length, const DefAmrLUint region_length,
+                const DefInt flag_not_for_interp_coarse,
                 const DefSFBitset& sfbitset_in, const  amrproject::SFBitsetAuxInterface& sfbitset_aux,
                 const std::vector<DefSFBitset>& sfbitset_region,
                 const DefMap<std::unique_ptr<GridNode>>& nodes_fine,
@@ -44,8 +44,8 @@ void GridInfoInterface::ChooseInterpolationMethod() {
         break;
     case amrproject::EInterpolationMethod::kLagrangian:
         if (ptr_solver_->k0SolverDims_ == 2) {
-            func_node_interp_ = [this](const DefAmrIndexLUint interp_length, const DefAmrIndexLUint region_length,
-                const DefAmrUint flag_not_for_interp_coarse,
+            func_node_interp_ = [this](const DefAmrLUint interp_length, const DefAmrLUint region_length,
+                const DefInt flag_not_for_interp_coarse,
                 const DefSFBitset& sfbitset_in, const  amrproject::SFBitsetAuxInterface& sfbitset_aux,
                 const std::vector<DefSFBitset>& sfbitset_region,
                 const DefMap<std::unique_ptr<GridNode>>& nodes_fine,
@@ -56,8 +56,8 @@ void GridInfoInterface::ChooseInterpolationMethod() {
                         sfbitset_region, nodes_fine, coarse_grid_info, nodes_coarse, ptr_node);
             };
         } else {
-            func_node_interp_ = [this](const DefAmrIndexLUint interp_length, const DefAmrIndexLUint region_length,
-                const DefAmrUint flag_not_for_interp_coarse,
+            func_node_interp_ = [this](const DefAmrLUint interp_length, const DefAmrLUint region_length,
+                const DefInt flag_not_for_interp_coarse,
                 const DefSFBitset& sfbitset_in, const  amrproject::SFBitsetAuxInterface& sfbitset_aux,
                 const std::vector<DefSFBitset>& sfbitset_region,
                 const DefMap<std::unique_ptr<GridNode>>& nodes_fine,
@@ -73,20 +73,20 @@ void GridInfoInterface::ChooseInterpolationMethod() {
     }
 }
 const GridInfoInterface::LagrangianCoeff& GridInfoInterface::CalculateLagrangianInterpCoeff(
-    const DefAmrIndexLUint interp_half_length) {
+    const DefAmrLUint interp_half_length) {
     if (lagrangian_coefficients_.find(interp_half_length) == lagrangian_coefficients_.end()) {
-        DefAmrIndexLUint offset = interp_half_length - 1;
+        DefAmrLUint offset = interp_half_length - 1;
         lagrangian_coefficients_.insert({interp_half_length, LagrangianCoeff()});
-        DefAmrIndexLUint num_coff = 2 * interp_half_length;
+        DefAmrLUint num_coff = 2 * interp_half_length;
         lagrangian_coefficients_.at(interp_half_length).coeff0.assign(num_coff, 0.);
         lagrangian_coefficients_.at(interp_half_length).coeff0.shrink_to_fit();
         lagrangian_coefficients_.at(interp_half_length).coeff1.assign(num_coff, 0.);
         lagrangian_coefficients_.at(interp_half_length).coeff1.shrink_to_fit();
         DefReal x_tmp, y_tmp;
-        for (DefAmrIndexLUint iy = 0; iy < num_coff; ++iy) {
+        for (DefAmrLUint iy = 0; iy < num_coff; ++iy) {
             lagrangian_coefficients_.at(interp_half_length).coeff1.at(iy) = 1.;
             y_tmp = static_cast<DefReal>(iy);
-            for (DefAmrIndexLUint ix = 0; ix < num_coff; ++ix) {
+            for (DefAmrLUint ix = 0; ix < num_coff; ++ix) {
                 if (iy != ix) {
                     x_tmp = static_cast<DefReal>(ix);
                     lagrangian_coefficients_.at(interp_half_length).coeff1.at(iy) *=
@@ -112,8 +112,8 @@ const GridInfoInterface::LagrangianCoeff& GridInfoInterface::CalculateLagrangian
  * -2 node is not at the center of the region, -3 size of input region does not match the region length.
  * @note need to overload operator += Node, Node * DefReal
  */
-int GridInfoInterface::InterpolationLinear2D(const DefAmrIndexLUint region_length,
-    const DefAmrUint flag_not_for_interp_coarse,
+int GridInfoInterface::InterpolationLinear2D(const DefAmrLUint region_length,
+    const DefInt flag_not_for_interp_coarse,
     const DefSFBitset& sfbitset_in, const SFBitsetAuxInterface& sfbitset_aux,
     const std::vector<DefSFBitset>& sfbitset_coarse_region,
     const DefMap<std::unique_ptr<GridNode>>& nodes_fine,
@@ -151,7 +151,7 @@ int GridInfoInterface::InterpolationLinear2D(const DefAmrIndexLUint region_lengt
             coeffi_y[0] = 1.;
             coeffi_y[1] = 0.;
         }
-        DefAmrIndexLUint index_x, index_y, num_elements = 2 * region_length;
+        DefAmrLUint index_x, index_y, num_elements = 2 * region_length;
         DefSFBitset sfbitset_fine;
         std::unique_ptr<GridNode> ptr_node_coarse2fine = GridNodeCreator();
         for (auto iy = 0; iy <= 1; ++iy) {
@@ -207,8 +207,8 @@ int GridInfoInterface::InterpolationLinear2D(const DefAmrIndexLUint region_lengt
  * -2 node is not at the center of the region, -3 size of input region does not match the region length.
  * @note need to overload operator += Node, Node * DefReal
  */
-int GridInfoInterface::InterpolationLagrangian2D(const DefAmrIndexLUint interpolation_length,
-    const DefAmrIndexLUint region_length, const DefAmrUint flag_not_for_interp_coarse, const DefSFBitset& sfbitset_in,
+int GridInfoInterface::InterpolationLagrangian2D(const DefAmrLUint interpolation_length,
+    const DefAmrLUint region_length, const DefInt flag_not_for_interp_coarse, const DefSFBitset& sfbitset_in,
     const SFBitsetAuxInterface& sfbitset_aux, const std::vector<DefSFBitset>& sfbitset_coarse_region,
     const DefMap<std::unique_ptr<GridNode>>& nodes_fine,
     const GridInfoInterface& coarse_grid_info, const DefMap<std::unique_ptr<GridNode>>& nodes_coarse,
@@ -228,7 +228,7 @@ int GridInfoInterface::InterpolationLagrangian2D(const DefAmrIndexLUint interpol
 #endif
         SetNodeVariablesAsZeros(ptr_node);
         // check if x bit exist at current level
-        DefAmrIndexLUint num_coeff = 2 * interpolation_length;
+        DefAmrLUint num_coeff = 2 * interpolation_length;
         std::vector<DefReal> coeffi_x(num_coeff), coeffi_y(num_coeff);
         DefSFBitset sfbitset_bit = sfbitset_in&sfbitset_aux.k0SFBitsetTakeXRef_.at(sfbitset_aux.kRefCurrent_);
         const LagrangianCoeff& coeff = CalculateLagrangianInterpCoeff(interpolation_length);
@@ -244,13 +244,13 @@ int GridInfoInterface::InterpolationLagrangian2D(const DefAmrIndexLUint interpol
         } else {
             std::copy(coeff.coeff0.begin(), coeff.coeff0.end(), coeffi_y.begin());
         }
-        DefAmrIndexLUint index_x, index_y, num_elements = 2 * region_length;
+        DefAmrLUint index_x, index_y, num_elements = 2 * region_length;
         DefSFBitset sfbitset_fine;
         std::unique_ptr<GridNode> ptr_node_coarse2fine = GridNodeCreator();
-        for (DefAmrIndexLUint iy = 0; iy < num_coeff; ++iy) {
+        for (DefAmrLUint iy = 0; iy < num_coeff; ++iy) {
             index_y = (iy + region_length - interpolation_length)* (2 * region_length)
                 + region_length - interpolation_length;
-            for (DefAmrIndexLUint ix = 0; ix < num_coeff; ++ix) {
+            for (DefAmrLUint ix = 0; ix < num_coeff; ++ix) {
                 index_x = index_y + ix;
                 if (std::fabs(coeffi_x[ix] * coeffi_y[iy]) > kEps) {
                     if (nodes_coarse.find(sfbitset_coarse_region.at(index_x)) != nodes_coarse.end()
@@ -300,8 +300,8 @@ int GridInfoInterface::InterpolationLagrangian2D(const DefAmrIndexLUint interpol
  * -2 node is not at the center of the region, -3 size of input region does not match the region length.
  * @note need to overload operator += Node, Node * DefReal
  */
-int GridInfoInterface::InterpolationLinear3D(const DefAmrIndexLUint region_length,
-    const DefAmrUint flag_not_for_interp_coarse,
+int GridInfoInterface::InterpolationLinear3D(const DefAmrLUint region_length,
+    const DefInt flag_not_for_interp_coarse,
     const DefSFBitset& sfbitset_in, const SFBitsetAuxInterface& sfbitset_aux,
     const std::vector<DefSFBitset>& sfbitset_coarse_region,
     const DefMap<std::unique_ptr<GridNode>>& nodes_fine,
@@ -347,7 +347,7 @@ int GridInfoInterface::InterpolationLinear3D(const DefAmrIndexLUint region_lengt
             coeffi_z[0] = 1.;
             coeffi_z[1] = 0.;
         }
-        DefAmrIndexLUint index_x, index_y, index_z, num_elements = 2 * region_length;
+        DefAmrLUint index_x, index_y, index_z, num_elements = 2 * region_length;
         DefSFBitset sfbitset_fine;
         std::unique_ptr<GridNode> ptr_node_coarse2fine = GridNodeCreator();
         for (auto iz = 0; iz <= 1; ++iz) {
@@ -412,9 +412,9 @@ int GridInfoInterface::InterpolationLinear3D(const DefAmrIndexLUint region_lengt
  * -2 node is not at the center of the region, -3 size of input region does not match the region length.
  * @note need to overload operator += Node, Node * DefReal
  */
-int GridInfoInterface::InterpolationLagrangian3D(const DefAmrIndexLUint interpolation_length,
-    const DefAmrIndexLUint region_length,
-    const DefAmrUint flag_not_for_interp_coarse, const DefSFBitset& sfbitset_in,
+int GridInfoInterface::InterpolationLagrangian3D(const DefAmrLUint interpolation_length,
+    const DefAmrLUint region_length,
+    const DefInt flag_not_for_interp_coarse, const DefSFBitset& sfbitset_in,
     const SFBitsetAuxInterface& sfbitset_aux, const std::vector<DefSFBitset>& sfbitset_coarse_region,
     const DefMap<std::unique_ptr<GridNode>>& nodes_fine,
     const GridInfoInterface& coarse_grid_info, const DefMap<std::unique_ptr<GridNode>>& nodes_coarse,
@@ -434,7 +434,7 @@ int GridInfoInterface::InterpolationLagrangian3D(const DefAmrIndexLUint interpol
 #endif
         SetNodeVariablesAsZeros(ptr_node);
         // check if x bit exist at current level
-        DefAmrIndexLUint num_coeff = 2 * interpolation_length;
+        DefAmrLUint num_coeff = 2 * interpolation_length;
         std::vector<DefReal> coeffi_x(num_coeff), coeffi_y(num_coeff), coeffi_z(num_coeff);
         DefSFBitset sfbitset_bit = sfbitset_in&sfbitset_aux.k0SFBitsetTakeXRef_.at(sfbitset_aux.kRefCurrent_);
         const LagrangianCoeff& coeff = CalculateLagrangianInterpCoeff(interpolation_length);
@@ -455,15 +455,15 @@ int GridInfoInterface::InterpolationLagrangian3D(const DefAmrIndexLUint interpol
         } else {
             std::copy(coeff.coeff0.begin(), coeff.coeff0.end(), coeffi_z.begin());
         }
-        DefAmrIndexLUint index_x, index_y, index_z, num_elements = 2 * region_length;
+        DefAmrLUint index_x, index_y, index_z, num_elements = 2 * region_length;
         DefSFBitset sfbitset_fine;
         std::unique_ptr<GridNode> ptr_node_coarse2fine = GridNodeCreator();
-        for (DefAmrIndexLUint iz = 0; iz < num_coeff; ++iz) {
+        for (DefAmrLUint iz = 0; iz < num_coeff; ++iz) {
             index_z =(iz + region_length - interpolation_length)* (2 * region_length)
                 + region_length - interpolation_length;
-            for (DefAmrIndexLUint iy = 0; iy < num_coeff; ++iy) {
+            for (DefAmrLUint iy = 0; iy < num_coeff; ++iy) {
                 index_y = (index_z + iy)*(2 * region_length) + region_length - interpolation_length;
-                for (DefAmrIndexLUint ix = 0; ix < num_coeff; ++ix) {
+                for (DefAmrLUint ix = 0; ix < num_coeff; ++ix) {
                     index_x = index_y + ix;
                     if (std::fabs(coeffi_x[ix] * coeffi_y[iy]* coeffi_z[iz]) > kEps) {
                         if (nodes_coarse.find(sfbitset_coarse_region.at(index_x)) != nodes_coarse.end()

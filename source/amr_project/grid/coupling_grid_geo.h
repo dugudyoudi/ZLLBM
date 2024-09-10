@@ -7,8 +7,8 @@
 * @date  2022-8-24
 * @brief preset class for tracking and ghost nodes
 */
-#ifndef ROOTPROJECT_SOURCE_AMR_PROJECT_GRID_COUPLING_GRID_GEO_H_
-#define ROOTPROJECT_SOURCE_AMR_PROJECT_GRID_COUPLING_GRID_GEO_H_
+#ifndef SOURCE_AMR_PROJECT_GRID_COUPLING_GRID_GEO_H_
+#define SOURCE_AMR_PROJECT_GRID_COUPLING_GRID_GEO_H_
 #include <memory>
 #include "grid/grid_info_interface.h"
 namespace rootproject {
@@ -29,4 +29,4 @@ class GhostGridInfoGeoCreator : public GhostGridInfoCreatorInterface {
 };
 }  // end namespace amrproject
 }  // end namespace rootproject
-#endif  // ROOTPROJECT_SOURCE_AMR_PROJECT_GRID_COUPLING_GRID_GEO_H_
+#endif  // SOURCE_AMR_PROJECT_GRID_COUPLING_GRID_GEO_H_

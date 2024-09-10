@@ -8,8 +8,8 @@
 * @brief  define the class to manager criteria.
 */
 
-#ifndef ROOTPROJECT_AMR_PROJECT_CRITERION_CRITERION_MANAGER_H_
-#define ROOTPROJECT_AMR_PROJECT_CRITERION_CRITERION_MANAGER_H_
+#ifndef SOURCE_AMR_PROJECT_CRITERION_CRITERION_MANAGER_H_
+#define SOURCE_AMR_PROJECT_CRITERION_CRITERION_MANAGER_H_
 #include <vector>
 #include <memory>
 #include "criterion/geometry_info_connection.h"
@@ -24,12 +24,12 @@ namespace amrproject {
 class CriterionManager {
  public:
     // geometry related
-    DefAmrIndexUint numb_of_geometry_ = 0;
+    DefInt numb_of_geometry_ = 0;
     std::vector<std::shared_ptr<GeometryInfoInterface>> vec_ptr_geometries_;
 
-    void InitialAllGeometrySerial(const DefAmrIndexUint dims,
+    void InitialAllGeometrySerial(const DefInt dims,
         const DefReal reference_dx, std::vector<DefReal> vec_real_offset);
 };
 }  // end namespace amrproject
 }  // end namespace rootproject
-#endif  // ROOTPROJECT_AMR_PROJECT_CRITERION_CRITERION_MANAGER_H_
+#endif  // SOURCE_AMR_PROJECT_CRITERION_CRITERION_MANAGER_H_

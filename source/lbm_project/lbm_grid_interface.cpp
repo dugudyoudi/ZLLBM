@@ -251,7 +251,7 @@ void GridInfoLbmInteface:: ComputeDomainBoundaryConditionForANode(
  * @param[in] time_step count of time steps.
  * @param[out] ptr_grid_manager point to class manages mesh containing grids at different refinement levels.
  */
-void GridInfoLbmInteface::SetUpGridAtBeginningOfTimeStep(const DefAmrIndexUint time_step,
+void GridInfoLbmInteface::SetUpGridAtBeginningOfTimeStep(const DefInt time_step,
     amrproject::GridManagerInterface* const ptr_grid_manager) {
     // reinterpret pointer to grid information at one level lower and one level higher
     if (i_level_ > 0) {
@@ -282,8 +282,8 @@ void GridInfoLbmInteface::InitialNotComputeNodeFlag() {
  * @note information on the layers from 1 to k0NumFine2CoarseLayer_ is transferred from the coarse grid.
  */
 int GridInfoLbmInteface::TransferInfoFromCoarseGrid(const amrproject::SFBitsetAuxInterface& sfbitset_aux,
-    const DefAmrUint node_flag_not_interp, const amrproject::GridInfoInterface& grid_info_coarse) {
-    DefAmrIndexUint dims = ptr_solver_->k0SolverDims_;
+    const DefInt node_flag_not_interp, const amrproject::GridInfoInterface& grid_info_coarse) {
+    DefInt dims = ptr_solver_->k0SolverDims_;
     if (GetPointerToLbmGrid() == nullptr ||
         (dynamic_cast<const GridInfoLbmInteface&>(grid_info_coarse).ptr_lbm_grid_nodes_ == nullptr)) {
         amrproject::LogManager::LogError("pointer to LBM grid nodes is null");
@@ -338,7 +338,7 @@ int GridInfoLbmInteface::TransferInfoFromCoarseGrid(const amrproject::SFBitsetAu
 
     // calculate domain min and max at one level lower
     std::vector<DefSFBitset> domain_min(dims), domain_max(dims);
-    for (DefAmrIndexUint i_dims = 0; i_dims < dims; ++i_dims) {
+    for (DefInt i_dims = 0; i_dims < dims; ++i_dims) {
         domain_min.at(i_dims) = sfbitset_aux.SFBitsetToNLowerLevelVir(
             1, k0VecBitsetDomainMin_.at(i_dims));
         domain_max.at(i_dims) = sfbitset_aux.SFBitsetToNLowerLevelVir(
@@ -347,12 +347,12 @@ int GridInfoLbmInteface::TransferInfoFromCoarseGrid(const amrproject::SFBitsetAu
 
     DefSFBitset sfbitset_coarse;
     std::vector<DefSFBitset> nodes_in_region;
-    DefAmrIndexLUint valid_length = max_interp_length_;
+    DefAmrLUint valid_length = max_interp_length_;
     const GridInfoLbmInteface& lbm_grid_coarse = dynamic_cast<const GridInfoLbmInteface&>(grid_info_coarse);
-    DefAmrIndexUint start_layer = k0NumFine2CoarseLayer_ - k0NumFine2CoarseGhostLayer_;
+    DefInt start_layer = k0NumFine2CoarseLayer_ - k0NumFine2CoarseGhostLayer_;
 
     for (auto& iter_interface : map_ptr_interface_layer_info_) {
-        for (DefAmrIndexUint i_layer = start_layer; i_layer < k0NumFine2CoarseLayer_; ++i_layer) {
+        for (DefInt i_layer = start_layer; i_layer < k0NumFine2CoarseLayer_; ++i_layer) {
             // layers on inner interfaces
             for (auto& iter_node : iter_interface.second->vec_inner_fine2coarse_.at(i_layer)) {
                 sfbitset_coarse = sfbitset_aux.SFBitsetToNLowerLevelVir(1, iter_node.first);
@@ -390,7 +390,7 @@ void GridInfoLbmInteface::DebugWrite() {
                 MPI_Comm_rank(MPI_COMM_WORLD, &rank_id);
                                 if (i_level_ == 1 && rank_id==0) {
                     amrproject::SFBitsetAux3D aux3d;
-                    //std::array<DefAmrIndexLUint, 2> indices;
+                    //std::array<DefAmrLUint, 2> indices;
                     
                     //aux2d.SFBitsetComputeIndices(iter_node.first, &indices);
                     //std::cout << indices[0] << " " << indices[1] << std::endl;
@@ -411,7 +411,7 @@ void GridInfoLbmInteface::DebugWriteNode(const amrproject::GridNode& node) {
  * @note information on the layers from k0NumCoarse2FineGhostLayer_ to k0NumCoarse2FineLayer_ is transferred from the fine grid.
  */
 int GridInfoLbmInteface::TransferInfoToCoarseGrid(const amrproject::SFBitsetAuxInterface& sfbitset_aux,
-    const DefAmrUint node_flag, amrproject::GridInfoInterface* const ptr_grid_info_coarse) {
+    const DefInt node_flag, amrproject::GridInfoInterface* const ptr_grid_info_coarse) {
     DefSFBitset sfbitset_fine;
     if (GetPointerToLbmGrid() == nullptr ||
         (dynamic_cast<GridInfoLbmInteface*>(ptr_grid_info_coarse)->ptr_lbm_grid_nodes_ == nullptr)) {
@@ -420,7 +420,7 @@ int GridInfoLbmInteface::TransferInfoToCoarseGrid(const amrproject::SFBitsetAuxI
     DefMap<std::unique_ptr<GridNodeLbm>>* ptr_lbm_grid_coarse =
         dynamic_cast<const GridInfoLbmInteface*>(ptr_grid_info_coarse)->ptr_lbm_grid_nodes_;
     for (auto& iter_interface : ptr_grid_info_coarse->map_ptr_interface_layer_info_) {
-        for (DefAmrIndexUint i_layer = ptr_grid_info_coarse->k0NumCoarse2FineGhostLayer_;
+        for (DefInt i_layer = ptr_grid_info_coarse->k0NumCoarse2FineGhostLayer_;
             i_layer < ptr_grid_info_coarse->k0NumCoarse2FineLayer_; ++i_layer) {
             // layers on inner interfaces
             for (auto& iter_node : iter_interface.second->vec_inner_coarse2fine_.at(i_layer)) {
@@ -500,13 +500,13 @@ void GridInfoLbmInteface::NodeInfoFine2Coarse(const amrproject::GridNode& fine_b
 void GridInfoLbmInteface::SetupOutputVariables() {
     SolverLbmInterface* ptr_lbm_solver = std::dynamic_pointer_cast<SolverLbmInterface>(ptr_solver_).get();
     DefReal dt = ptr_collision_operator_->dt_lbm_;
-    std::function<void(const DefReal dt_lbm, const GridNodeLbm& node, DefReal* const ptr_rho,
-        std::vector<DefReal>* const ptr_velocity)> func_macro;
+    std::function<void(const DefReal dt_lbm, const GridNodeLbm& node, const std::vector<DefReal>& force,
+        DefReal* const ptr_rho, std::vector<DefReal>* const ptr_velocity)> func_macro;
     if (bool_forces_) {
         func_macro = ptr_lbm_solver->func_macro_with_force_;
     } else {
         func_macro = [ptr_lbm_solver](const DefReal dt_lbm, const GridNodeLbm& node,
-            DefReal* const ptr_rho, std::vector<DefReal>* const ptr_velocity) {
+            const std::vector<DefReal>& /*force*/, DefReal* const ptr_rho, std::vector<DefReal>* const ptr_velocity) {
             ptr_lbm_solver->func_macro_without_force_(node, ptr_rho, ptr_velocity);
         };
     }
@@ -525,8 +525,11 @@ void GridInfoLbmInteface::SetupOutputVariables() {
             OutputLBMNodeVariableInfo& output_info_tmp =
                 *dynamic_cast<OutputLBMNodeVariableInfo*>(output_variables_.back().get());
             output_info_tmp.variable_dims_ = ptr_solver_->k0SolverDims_;
-            output_info_tmp.func_get_var_ = [dt, func_macro] (GridNodeLbm* const ptr_node)->std::vector<DefReal> {
-                func_macro(dt, *ptr_node, &ptr_node->rho_, &ptr_node->velocity_);
+            output_info_tmp.func_get_var_ = [ptr_lbm_solver, dt, func_macro]
+                (GridNodeLbm* const ptr_node)->std::vector<DefReal> {
+                std::vector<DefReal> force{
+                    ptr_lbm_solver->GetAllForcesForANode(ptr_lbm_solver->k0SolverDims_, *ptr_node)};
+                func_macro(dt, *ptr_node, force, &ptr_node->rho_, &ptr_node->velocity_);
                 return ptr_node->velocity_;
             };
             output_info_tmp.output_name_ = "velocity";
@@ -569,7 +572,7 @@ int GridInfoLbmInteface::OutputOneVariable(
     const DefMap<DefSizet>& map_node_index) const {
     const DefMap<std::unique_ptr<GridNodeLbm>>& map_grid_node = *ptr_lbm_grid_nodes_;
     std::string str_format, str_tmp;
-    DefAmrIndexUint dims = output_info.variable_dims_;
+    DefInt dims = output_info.variable_dims_;
     if (bool_binary) {
         str_format =  "binary";
     } else {
@@ -585,7 +588,7 @@ int GridInfoLbmInteface::OutputOneVariable(
         for (auto iter = map_node_index.begin();
             iter != map_node_index.end(); ++iter) {
             const std::vector<DefReal>& vec_var = output_info.func_get_var_(map_grid_node.at(iter->first).get());
-            for (DefAmrIndexUint i_dims = 0;  i_dims < dims; ++i_dims) {
+            for (DefInt i_dims = 0;  i_dims < dims; ++i_dims) {
                 base64_instance.AddToVecChar(output_data_format.output_real_.CastType(vec_var.at(i_dims)), &vec_uint8);
             }
         }
@@ -599,7 +602,7 @@ int GridInfoLbmInteface::OutputOneVariable(
             + output_data_format.output_real_.printf_format_;
         for (auto iter = map_node_index.begin(); iter != map_node_index.end(); ++iter) {
             const std::vector<DefReal>& vec_var =  output_info.func_get_var_(map_grid_node.at(iter->first).get());
-            for (DefAmrIndexUint i_dims = 0; i_dims < dims; ++i_dims) {
+            for (DefInt i_dims = 0; i_dims < dims; ++i_dims) {
                 fprintf_s(fp, "  ");
                 fprintf_s(fp, str_format.c_str(), vec_var.at(i_dims));
             }

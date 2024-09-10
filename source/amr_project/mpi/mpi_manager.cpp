@@ -33,34 +33,24 @@ void MpiManager::SetUpMpi() {
         LogManager::LogError("size of DefInt is not equal to size of MPI_INT_DATA_TYPE) in "
         + std::string(__FILE__) + " at line " + std::to_string(__LINE__));
     }
-    MPI_Type_size(MPI_AMR_INDEX_UINT_TYPE, &data_size);
-    if (sizeof(DefAmrIndexUint) != data_size) {
-        LogManager::LogError("size of DefAmrIndexUint is not equal to size of MPI_AMR_INDEX_UINT_TYPE) in "
-        + std::string(__FILE__) + " at line " + std::to_string(__LINE__));
-    }
-    MPI_Type_size(MPI_AMR_UINT_TYPE, &data_size);
-    if (sizeof(DefAmrUint) != data_size) {
-        LogManager::LogError("size of DefAmrUint is not equal to size of MPI_AMR_UINT_TYPE) in "
-        + std::string(__FILE__) + " at line " + std::to_string(__LINE__));
-    }
-    MPI_Type_size(MPI_AMR_INDEX_LUINT_TYPE, &data_size);
-    if (sizeof(DefAmrIndexLUint) != data_size) {
-        LogManager::LogError("size of DefAmrIndexLUint is not equal to size of MPI_AMR_INDEX_LUINT_TYPE) in "
-        + std::string(__FILE__) + " at line " + std::to_string(__LINE__));
-    }
-    MPI_Type_size(MPI_AMR_TYPE_UINT_TYPE, &data_size);
-    if (sizeof(DefAmrTypeUint) != data_size) {
-        LogManager::LogError("size of DefAmrTypeUint is not equal to size of MPI_AMR_TYPE_UINT_TYPE) in "
-        + std::string(__FILE__) + " at line " + std::to_string(__LINE__));
-    }
-    MPI_Type_size(MPI_CODE_UINT_TYPE, &data_size);
-    if (sizeof(DefSFCodeToUint) != data_size) {
-        LogManager::LogError("size of DefSFCodeToUint is not equal to size of MPI_CODE_UINT_TYPE) in "
+    MPI_Type_size(MPI_UINT_DATA_TYPE, &data_size);
+    if (sizeof(DefInt) != data_size) {
+        LogManager::LogError("size of DefInt is not equal to size of MPI_UINT_DATA_TYPE) in "
         + std::string(__FILE__) + " at line " + std::to_string(__LINE__));
     }
     MPI_Type_size(MPI_SIZET_DATA_TYPE, &data_size);
     if (sizeof(DefSizet) != data_size) {
         LogManager::LogError("size of DefSizet is not equal to size of MPI_SIZET_DATA_TYPE) in "
+        + std::string(__FILE__) + " at line " + std::to_string(__LINE__));
+    }
+    MPI_Type_size(MPI_AMR_LUINT_TYPE, &data_size);
+    if (sizeof(DefAmrLUint) != data_size) {
+        LogManager::LogError("size of DefAmrLUint is not equal to size of MPI_AMR_LUINT_TYPE) in "
+        + std::string(__FILE__) + " at line " + std::to_string(__LINE__));
+    }
+    MPI_Type_size(MPI_CODE_UINT_TYPE, &data_size);
+    if (sizeof(DefSFCodeToUint) != data_size) {
+        LogManager::LogError("size of DefSFCodeToUint is not equal to size of MPI_CODE_UINT_TYPE) in "
         + std::string(__FILE__) + " at line " + std::to_string(__LINE__));
     }
 }

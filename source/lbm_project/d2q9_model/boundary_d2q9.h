@@ -7,8 +7,8 @@
 * @brief define class used for LBM D2Q9 model.
 * @date  2023-9-30
 */
-#ifndef ROOTPROJECT_SOURCE_LBM_BOUNDARY_D2Q9_H_
-#define ROOTPROJECT_SOURCE_LBM_BOUNDARY_D2Q9_H_
+#ifndef SOURCE_LBM_PROJECT_D2Q9_MODEL_BOUNDARY_D2Q9_H_
+#define SOURCE_LBM_PROJECT_D2Q9_MODEL_BOUNDARY_D2Q9_H_
 #include <array>
 #include <memory>
 #include "boundary_conditions/lbm_boundary_conditions.h"
@@ -18,9 +18,9 @@ class GridInfoLbmInteface;
 class BoundaryBounceBackD2Q9 : public BoundaryBounceBack2D {
  public:
     void CalBoundaryCondition(const ELbmBoundaryType boundary_type,
-        const DefMap<DefAmrIndexUint>& boundary_nodes,
+        const DefMap<DefInt>& boundary_nodes,
         GridInfoLbmInteface* const pr_grid_info) const override;
 };
 }  // end namespace lbmproject
 }  // end namespace rootproject
-#endif  // ROOTPROJECT_SOURCE_LBM_BOUNDARY_D2Q9_H_
+#endif  // SOURCE_LBM_PROJECT_D2Q9_MODEL_BOUNDARY_D2Q9_H_

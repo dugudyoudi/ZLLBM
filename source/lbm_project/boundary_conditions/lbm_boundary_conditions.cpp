@@ -82,8 +82,8 @@ std::unique_ptr<BoundaryConditionLbmInterface> SolverLbmInterface::BoundaryPerio
 void BoundaryConditionLbmInterface::GetBoundaryNInverseIndices(
     const ELbmBoundaryType boundary_type,
     const SolverLbmInterface& lbm_solver,
-    std::vector<DefAmrIndexUint>* const ptr_indices,
-    std::vector<DefAmrIndexUint>* const ptr_inverse_indices) const {
+    std::vector<DefInt>* const ptr_indices,
+    std::vector<DefInt>* const ptr_inverse_indices) const {
     switch (boundary_type) {
         case ELbmBoundaryType::kBoundaryXMin:
             // nodes at negative x boundary need to compute distribution functions at positive x

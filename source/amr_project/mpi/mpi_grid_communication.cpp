@@ -17,7 +17,7 @@ namespace amrproject {
  * @brief function to identify information of grid node from which ranks will be received.
  * @param[in] i_level refinement level corresponding to key of the container storing inner communication layers.
  */
-std::vector<bool> MpiManager::IdentifyRanksReceivingGridNode(const DefAmrIndexUint i_level) const {
+std::vector<bool> MpiManager::IdentifyRanksReceivingGridNode(const DefInt i_level) const {
     std::vector<char> send_ranks(num_of_ranks_, 0), receive_ranks(num_of_ranks_, 0);
     for (int i_rank = 0; i_rank < num_of_ranks_; ++i_rank) {
         if (mpi_communication_inner_layers_.at(i_level).find(i_rank)
@@ -41,7 +41,7 @@ std::vector<bool> MpiManager::IdentifyRanksReceivingGridNode(const DefAmrIndexUi
  */
 // Information sends in an periodic iteration pattern for all ranks.
 
-void MpiManager::SendNReceiveGridNodeBufferSize(const DefAmrIndexUint i_level,
+void MpiManager::SendNReceiveGridNodeBufferSize(const DefInt i_level,
     const int node_info_size, const std::vector<bool>& rank_id_receive,
     std::vector<BufferSizeInfo>* const ptr_send_buffer_info,
     std::vector<BufferSizeInfo>* const ptr_receive_buffer_info) const {
@@ -137,8 +137,8 @@ DefSizet MpiManager::CalculateBufferSizeForGridNode(
  */
 // Information sends in a periodic iteration pattern for all ranks.
 int MpiManager::SendGridNodeInformation(const int rank_send, const BufferSizeInfo& send_buffer_info,
-    const std::map<int, DefMap<DefAmrIndexUint>>& nodes_to_send,
-    const std::function<int(const DefMap<DefAmrIndexUint>& , char* const)> func_copy_node_to_buffer,
+    const std::map<int, DefMap<DefInt>>& nodes_to_send,
+    const std::function<int(const DefMap<DefInt>& , char* const)> func_copy_node_to_buffer,
     GridInfoInterface* const ptr_grid_info, char* const ptr_buffer_send,
     std::vector<MPI_Request>* const ptr_reqs_send) const {
     if (nodes_to_send.find(rank_send) !=nodes_to_send.end()) {
@@ -221,7 +221,7 @@ int MpiManager::SendNReceiveGridNodes(
     ptr_vec_ptr_buffer_send->clear();
     ptr_vec_vec_reqs_receive->clear();
     ptr_vec_ptr_buffer_receive->clear();
-    DefAmrIndexUint i_level = ptr_grid_info->i_level_;
+    DefInt i_level = ptr_grid_info->i_level_;
     ptr_grid_info->ComputeInfoInMpiLayers(mpi_communication_inner_layers_.at(i_level),
         mpi_communication_outer_layers_.at(i_level));
     std::vector<bool> vec_receive_ranks(IdentifyRanksReceivingGridNode(i_level));
@@ -235,8 +235,8 @@ int MpiManager::SendNReceiveGridNodes(
                 ptr_receive_buffer_info->at(i_rank), &ptr_vec_vec_reqs_receive->back()));
         }
     }
-    std::function<int(const DefMap<DefAmrIndexUint>& , char* const)> func_copy_node_to_buffer =
-        [&ptr_grid_info](const DefMap<DefAmrIndexUint>& map_send, char* const ptr_buffer) {
+    std::function<int(const DefMap<DefInt>& , char* const)> func_copy_node_to_buffer =
+        [&ptr_grid_info](const DefMap<DefInt>& map_send, char* const ptr_buffer) {
         return ptr_grid_info->CopyNodeInfoToBuffer(map_send, ptr_buffer);
     };
     for (int i_rank = 0; i_rank < num_of_ranks_; ++i_rank) {
@@ -304,8 +304,8 @@ void MpiManager::WaitAndReadGridNodesFromBuffer(const std::vector<BufferSizeInfo
  * @return 0 run successfully, otherwise some error occurred in this function.
  */
 int MpiManager::SendNReceiveRequestNodesSFbitset(const std::vector<int>& num_node_request_current,
-    const std::vector<int>& num_node_request_others, const std::vector<DefMap<DefAmrIndexUint>> &requested_nodes,
-    std::map<int, DefMap<DefAmrIndexUint>>* const ptr_map_nodes_need_send) const {
+    const std::vector<int>& num_node_request_others, const std::vector<DefMap<DefInt>> &requested_nodes,
+    std::map<int, DefMap<DefInt>>* const ptr_map_nodes_need_send) const {
     std::vector<MPI_Request> reqs_send(num_of_ranks_);
     for (int i = 0; i < num_of_ranks_; ++i) {
         int i_rank_send = (rank_id_ + i) % num_of_ranks_;
@@ -324,7 +324,7 @@ int MpiManager::SendNReceiveRequestNodesSFbitset(const std::vector<int>& num_nod
             std::unique_ptr<char[]> ptr_buffer = std::make_unique<char[]>(buffer_size_receive);
             MPI_Recv(ptr_buffer.get(), buffer_size_receive, MPI_BYTE, i_rank_receive,
                 1, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
-            ptr_map_nodes_need_send->insert(std::make_pair(i_rank_receive, DefMap<DefAmrIndexUint>()));
+            ptr_map_nodes_need_send->insert(std::make_pair(i_rank_receive, DefMap<DefInt>()));
             DeserializeNodeSFBitset(0, ptr_buffer, &ptr_map_nodes_need_send->at(i_rank_receive));
         }
     }
@@ -353,10 +353,10 @@ int MpiManager::SendGhostNodeForInterpolation(const SFBitsetAuxInterface& sfbits
     std::vector<std::unique_ptr<char[]>>* const ptr_vec_ptr_buffer_receive) const {
     ptr_send_buffer_info->resize(num_of_ranks_);
     ptr_receive_buffer_info->resize(num_of_ranks_);
-    DefAmrIndexUint i_level = ptr_grid_info->i_level_;
+    DefInt i_level = ptr_grid_info->i_level_;
     if (i_level > 0) {
         DefSFCodeToUint code_background;
-        std::vector<DefMap<DefAmrIndexUint>> requested_nodes(num_of_ranks_);
+        std::vector<DefMap<DefInt>> requested_nodes(num_of_ranks_);
         int which_rank;
         for (const auto& iter_node : ptr_grid_info->interp_nodes_outer_layer_) {
             code_background = sfbitset_aux.SFBitsetToNLowerLevelVir(i_level, iter_node.first).to_ullong();
@@ -374,7 +374,7 @@ int MpiManager::SendGhostNodeForInterpolation(const SFBitsetAuxInterface& sfbits
         MPI_Alltoall(num_node_request_current.data(), 1, MPI_INT,
             num_node_request_others.data(), 1, MPI_INT, MPI_COMM_WORLD);
 
-        std::map<int, DefMap<DefAmrIndexUint>> map_nodes_need_send;
+        std::map<int, DefMap<DefInt>> map_nodes_need_send;
         // send and receive which need nodes are needed for interpolation
         if (SendNReceiveRequestNodesSFbitset(num_node_request_current, num_node_request_others,
             requested_nodes, &map_nodes_need_send) != 0) {
@@ -439,9 +439,9 @@ int MpiManager::SendGhostNodeForInterpolation(const SFBitsetAuxInterface& sfbits
         }
 
         // send and receive node information
-        std::function<int(const DefMap<DefAmrIndexUint>& , char* const)> func_copy_node_to_buffer =
+        std::function<int(const DefMap<DefInt>& , char* const)> func_copy_node_to_buffer =
             [&ptr_grid_info, &grid_info_lower](
-            const DefMap<DefAmrIndexUint>& map_send, char* const ptr_buffer) {
+            const DefMap<DefInt>& map_send, char* const ptr_buffer) {
             return ptr_grid_info->CopyInterpolationNodeInfoToBuffer(grid_info_lower, map_send, ptr_buffer);
         };
         for (int i = 0; i < num_of_ranks_; ++i) {

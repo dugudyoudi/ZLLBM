@@ -19,7 +19,7 @@ namespace amrproject {
 */
 void GridManagerInterface::GenerateGridFromHighToLowLevelSerial(
     const std::vector<std::shared_ptr<GeometryInfoInterface>>&vec_geo_info,
-    std::vector<DefMap<DefAmrIndexUint>>* const ptr_sfbitset_one_lower_level) {
+    std::vector<DefMap<DefInt>>* const ptr_sfbitset_one_lower_level) {
     SFBitsetAuxInterface* sfbitset_aux_ptr = this->GetSFBitsetAuxPtr();
     if (vec_ptr_grid_info_.size() != k0MaxLevel_ + 1) {
         LogManager::LogError("Number of grid refinement level " + std::to_string(
@@ -29,7 +29,7 @@ void GridManagerInterface::GenerateGridFromHighToLowLevelSerial(
             + " in "+ std::string(__FILE__) + " at line " + std::to_string(__LINE__));
     }
     // generate tracking and ghost nodes based on geometries
-    DefAmrIndexUint i_geo = 0;
+    DefInt i_geo = 0;
     for (auto& iter : vec_geo_info) {
         iter->i_geo_ = i_geo;
         iter->FindTrackingNodeBasedOnGeo(*sfbitset_aux_ptr, vec_ptr_grid_info_.at(iter->i_level_).get());
@@ -37,15 +37,15 @@ void GridManagerInterface::GenerateGridFromHighToLowLevelSerial(
     }
 
     std::vector<DefReal> flood_fill_origin(k0GridDims_);
-    std::map<std::pair<ECriterionType, DefAmrIndexUint>, DefMap<DefAmrUint>>
+    std::map<std::pair<ECriterionType, DefInt>, DefMap<DefInt>>
         innermost_layer, outermost_layer;
     GeometryInfoInterface* ptr_geo_info = nullptr;
     struct NumExtendLayer {
-        std::vector<DefAmrIndexLUint> neg;
-        std::vector<DefAmrIndexLUint> pos;
+        std::vector<DefAmrLUint> neg;
+        std::vector<DefAmrLUint> pos;
     } num_extend_layer;
-    num_extend_layer.neg = std::vector<DefAmrIndexLUint>(k0GridDims_, 0);
-    num_extend_layer.pos = std::vector<DefAmrIndexLUint>(k0GridDims_, 0);
+    num_extend_layer.neg = std::vector<DefAmrLUint>(k0GridDims_, 0);
+    num_extend_layer.pos = std::vector<DefAmrLUint>(k0GridDims_, 0);
     /** @todo extended outer layers based on each outmost layer could be 
     stored in individual map, which will avoid interfering between different
     layers but is more time consuming since additional nodes for every 
@@ -53,15 +53,15 @@ void GridManagerInterface::GenerateGridFromHighToLowLevelSerial(
     nodes are inserted in one map (ptr_sfbitset_one_lower_level) rather
     than several ones, thus processes of extending inner and outer
     are the same*/
-    for (DefAmrIndexUint i_level = k0MaxLevel_; i_level > 0; --i_level) {
-        std::map<std::pair<ECriterionType, DefAmrIndexUint>, NumExtendLayer>
+    for (DefInt i_level = k0MaxLevel_; i_level > 0; --i_level) {
+        std::map<std::pair<ECriterionType, DefInt>, NumExtendLayer>
             map_num_extend_inner_layer, map_num_extend_outer_layer;
-        std::map<std::pair<ECriterionType, DefAmrIndexUint>, DefMap<DefAmrUint>>
+        std::map<std::pair<ECriterionType, DefInt>, DefMap<DefInt>>
             innermost_layer_current, outermost_layer_current;
         // add nodes based on tracking nodes
         for (auto& iter_tracking_grid_info : vec_ptr_grid_info_.at(i_level)
             ->map_ptr_tracking_grid_info_) {
-            DefMap<DefAmrUint> node_near_tracking;
+            DefMap<DefInt> node_near_tracking;
             // set number of extended layers
             SetNumberOfExtendLayerForGrid(i_level,
                 *(vec_geo_info.at(iter_tracking_grid_info.first.second)),
@@ -70,7 +70,7 @@ void GridManagerInterface::GenerateGridFromHighToLowLevelSerial(
                 &iter_tracking_grid_info.second->k0ExtendOuterNeg_,
                 &iter_tracking_grid_info.second->k0ExtendOuterPos_);
 
-            for (DefAmrIndexUint idims = 0; idims < k0GridDims_; ++idims) {
+            for (DefInt idims = 0; idims < k0GridDims_; ++idims) {
                 num_extend_layer.neg[idims] = iter_tracking_grid_info.second->
                     k0ExtendOuterNeg_[idims] - 1;
                 num_extend_layer.pos[idims] = iter_tracking_grid_info.second->
@@ -84,7 +84,7 @@ void GridManagerInterface::GenerateGridFromHighToLowLevelSerial(
                 i_level, iter_tracking_grid_info.first, &node_near_tracking);
             if (iter_tracking_grid_info.second->grid_extend_type_
                 == EGridExtendType::kInAndOut) {
-                for (DefAmrIndexUint idims = 0; idims < k0GridDims_; ++idims) {
+                for (DefInt idims = 0; idims < k0GridDims_; ++idims) {
                     num_extend_layer.neg[idims] = iter_tracking_grid_info.second->
                         k0ExtendInnerNeg_[idims] - 1;
                     num_extend_layer.pos[idims] = iter_tracking_grid_info.second->
@@ -92,7 +92,7 @@ void GridManagerInterface::GenerateGridFromHighToLowLevelSerial(
                 }
                 map_num_extend_inner_layer.insert(
                     { iter_tracking_grid_info.first, num_extend_layer });
-                DefMap<DefAmrUint> node_inside, node_outside;
+                DefMap<DefInt> node_inside, node_outside;
                 IdentifyTypeOfLayerByFloodFill(i_level - 1,
                     iter_tracking_grid_info.first.second,
                     vec_geo_info[iter_tracking_grid_info.first.second]
@@ -261,11 +261,11 @@ void GridManagerInterface::GenerateGridFromHighToLowLevelSerial(
 *        outside the geometry.
 */
 void GridManagerInterface::ExtendGivenNumbOfLayer(
-    const DefAmrIndexUint i_level, const std::vector<DefAmrIndexLUint> num_extend_neg,
-    const std::vector<DefAmrIndexLUint> num_extend_pos,
-    const DefMap<DefAmrUint>& map_start_layer,
-    DefMap<DefAmrIndexUint>* const ptr_map_exist,
-    DefMap<DefAmrUint>* const ptr_map_outmost) const {
+    const DefInt i_level, const std::vector<DefAmrLUint> num_extend_neg,
+    const std::vector<DefAmrLUint> num_extend_pos,
+    const DefMap<DefInt>& map_start_layer,
+    DefMap<DefInt>* const ptr_map_exist,
+    DefMap<DefInt>* const ptr_map_outmost) const {
     std::vector<DefSFBitset> vec_bitset_min(k0GridDims_, 0),
         vec_bitset_max(k0GridDims_, 0);
     // space filling code is at one level lower (ilevel -1)
@@ -287,8 +287,8 @@ void GridManagerInterface::ExtendGivenNumbOfLayer(
             + std::string(__FILE__) + " at line " + std::to_string(__LINE__));
     }
     // find the maximum layers need to be extended
-    DefAmrIndexLUint extend_layer_max = 0;
-    for (DefAmrIndexUint i = 0; i < k0GridDims_; ++i) {
+    DefAmrLUint extend_layer_max = 0;
+    for (DefInt i = 0; i < k0GridDims_; ++i) {
         if (num_extend_neg[i] > extend_layer_max) {
             extend_layer_max = num_extend_neg[i];
         }
@@ -298,18 +298,18 @@ void GridManagerInterface::ExtendGivenNumbOfLayer(
     }
     std::vector<bool> bool_extend_neg(k0GridDims_, true),
         bool_extend_pos(k0GridDims_, true);
-    DefMap<DefAmrUint> map_input_layer(map_start_layer);
-    std::vector<DefMap<DefAmrUint>> vec_boundary_min, vec_boundary_max;
-    std::vector<DefAmrIndexLUint> num_extend_neg_tmp(num_extend_neg),
+    DefMap<DefInt> map_input_layer(map_start_layer);
+    std::vector<DefMap<DefInt>> vec_boundary_min, vec_boundary_max;
+    std::vector<DefAmrLUint> num_extend_neg_tmp(num_extend_neg),
         num_extend_pos_tmp(num_extend_pos);
     // extend grid layer by layer
-    for (DefAmrIndexLUint i_layer = 0; i_layer < extend_layer_max; ++i_layer) {
-        DefMap<DefAmrUint> map_output_layer;
+    for (DefAmrLUint i_layer = 0; i_layer < extend_layer_max; ++i_layer) {
+        DefMap<DefInt> map_output_layer;
         ExtendOneLayerGrid(map_input_layer, vec_bitset_min, vec_bitset_max,
             bool_extend_neg, bool_extend_pos, &map_output_layer, ptr_map_exist,
             ptr_map_outmost, &vec_boundary_min, &vec_boundary_max);
         map_input_layer = std::move(map_output_layer);
-        for (DefAmrIndexUint i = 0; i < k0GridDims_; ++i) {
+        for (DefInt i = 0; i < k0GridDims_; ++i) {
             if (bool_extend_neg[i]) {
                 num_extend_neg_tmp[i] -= 1;
                 if (num_extend_neg_tmp[i] == 0) {
@@ -341,9 +341,9 @@ void GridManagerInterface::ExtendGivenNumbOfLayer(
 */
 int GridManagerInterface::FloodFillForInAndOut(
     const DefSFBitset& sfbitset_inside,
-    const DefMap<DefAmrUint>&  map_nodes_exist,
-    DefMap<DefAmrUint>* const ptr_map_nodes_outside,
-    DefMap<DefAmrUint>* const ptr_map_nodes_inside) const {
+    const DefMap<DefInt>&  map_nodes_exist,
+    DefMap<DefInt>* const ptr_map_nodes_outside,
+    DefMap<DefInt>* const ptr_map_nodes_inside) const {
 
     std::vector<DefSFBitset> bitset_neigh;
     if (map_nodes_exist.find(sfbitset_inside) != map_nodes_exist.end()) {
@@ -364,9 +364,9 @@ int GridManagerInterface::FloodFillForInAndOut(
         return -1;
     } else {
         // create a copy of map_nodes_exist and add one layer for flood fill
-        DefAmrIndexUint flag_bit_colored = DefAmrIndexUint(1 << (sizeof(DefAmrIndexUint) * 8 - 1));
-        DefAmrIndexUint flag_bit_exist = flag_bit_colored | (sizeof(DefAmrIndexUint) * 8 - 2);
-        DefMap<DefAmrUint> map_nodes_tmp(map_nodes_exist);
+        DefInt flag_bit_colored = DefInt(1 << (sizeof(DefInt) * 8 - 1));
+        DefInt flag_bit_exist = flag_bit_colored | (sizeof(DefInt) * 8 - 2);
+        DefMap<DefInt> map_nodes_tmp(map_nodes_exist);
         // generate one more layer around the input grid
         for (auto iter = map_nodes_exist.begin();
             iter != map_nodes_exist.end(); ++iter) {
@@ -381,7 +381,7 @@ int GridManagerInterface::FloodFillForInAndOut(
         }
         // flood fill
         std::vector<DefSFBitset> vec_sfbitset_stk, vec_bitset(k0NumNeighbors_);
-        DefAmrUint i = 0;
+        DefInt i = 0;
         DefSFBitset sfbitset_seed;
         vec_sfbitset_stk.push_back(sfbitset_inside);
         while (!vec_sfbitset_stk.empty() && i < K0IMaxFloodFill_) {

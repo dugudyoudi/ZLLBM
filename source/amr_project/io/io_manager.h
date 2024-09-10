@@ -6,8 +6,8 @@
 * @author Zhengliang Liu
 * @date  2022-5-18
 */
-#ifndef ROOTPROJECT_SOURCE_AMR_PROJECT_IO_IO_MANAGER_H_
-#define ROOTPROJECT_SOURCE_AMR_PROJECT_IO_IO_MANAGER_H_
+#ifndef SOURCE_AMR_PROJECT_IO_IO_MANAGER_H_
+#define SOURCE_AMR_PROJECT_IO_IO_MANAGER_H_
 #include <string>
 #include "../defs_libs.h"
 #include "io/vtk_writer.h"
@@ -35,4 +35,4 @@ class IoManager {
 };
 }  // end namespace amrproject
 }  // end namespace rootproject
-#endif  // ROOTPROJECT_SOURCE_AMR_PROJECT_IO_IO_MANAGER_H_
+#endif  // SOURCE_AMR_PROJECT_IO_IO_MANAGER_H_

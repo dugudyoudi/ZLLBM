@@ -7,8 +7,8 @@
 * @brief define classes to manage LBM models.
 * @date  2023-9-30
 */
-#ifndef ROOTPROJECT_SOURCE_LBM_BOUNDARY_CONDITIONS_H_
-#define ROOTPROJECT_SOURCE_LBM_BOUNDARY_CONDITIONS_H_
+#ifndef SOURCE_LBM_PROJECT_BOUNDARY_CONDITIONS_LBM_BOUNDARY_CONDITIONS_H_
+#define SOURCE_LBM_PROJECT_BOUNDARY_CONDITIONS_LBM_BOUNDARY_CONDITIONS_H_
 #include <vector>
 #include <array>
 #include <map>
@@ -45,10 +45,10 @@ class BoundaryConditionLbmInterface {
     ELbmBoundaryConditionScheme boundary_scheme_ = ELbmBoundaryConditionScheme::kUndefined;
     void GetBoundaryNInverseIndices(const ELbmBoundaryType boundary_type,
         const SolverLbmInterface& lbm_solver,
-        std::vector<DefAmrIndexUint>* const ptr_indices,
-        std::vector<DefAmrIndexUint>* const ptr_inverse_indices) const;
+        std::vector<DefInt>* const ptr_indices,
+        std::vector<DefInt>* const ptr_inverse_indices) const;
     virtual void CalBoundaryCondition(const ELbmBoundaryType boundary_type,
-        const DefMap<DefAmrIndexUint>& boundary_nodes,
+        const DefMap<DefInt>& boundary_nodes,
         GridInfoLbmInteface* const pr_grid_info) const = 0;
     virtual void SetValues(const std::vector<DefReal> values) = 0;
     virtual ~BoundaryConditionLbmInterface() {}
@@ -59,7 +59,7 @@ class BoundaryConditionLbmInterface {
 class BoundaryBounceBack2D : public BoundaryConditionLbmInterface {
  public:
     void CalBoundaryCondition(const ELbmBoundaryType boundary_type,
-        const DefMap<DefAmrIndexUint>& boundary_nodes,
+        const DefMap<DefInt>& boundary_nodes,
         GridInfoLbmInteface* const ptr_grid_info) const override;
     void SetValues(const std::vector<DefReal> values) override;
 
@@ -72,7 +72,7 @@ class BoundaryBounceBack2D : public BoundaryConditionLbmInterface {
 class BoundaryBounceBack3D : public BoundaryConditionLbmInterface {
  public:
     void CalBoundaryCondition(const ELbmBoundaryType boundary_type,
-        const DefMap<DefAmrIndexUint>& boundary_nodes,
+        const DefMap<DefInt>& boundary_nodes,
         GridInfoLbmInteface* const ptr_grid_info) const override;
     void SetValues(const std::vector<DefReal> values) override;
 
@@ -85,7 +85,7 @@ class BoundaryBounceBack3D : public BoundaryConditionLbmInterface {
 class BoundaryPeriodic2D : public BoundaryConditionLbmInterface {
  public:
     void CalBoundaryCondition(const ELbmBoundaryType boundary_type,
-        const DefMap<DefAmrIndexUint>& boundary_nodes,
+        const DefMap<DefInt>& boundary_nodes,
         GridInfoLbmInteface* const ptr_grid_info) const override;
     void SetValues(const std::vector<DefReal> values) override {}
 };
@@ -95,10 +95,10 @@ class BoundaryPeriodic2D : public BoundaryConditionLbmInterface {
 class BoundaryPeriodic3D : public BoundaryConditionLbmInterface {
  public:
     void CalBoundaryCondition(const ELbmBoundaryType boundary_type,
-        const DefMap<DefAmrIndexUint>& boundary_nodes,
+        const DefMap<DefInt>& boundary_nodes,
         GridInfoLbmInteface* const ptr_grid_info) const override;
     void SetValues(const std::vector<DefReal> values) override {}
 };
 }  // end namespace lbmproject
 }  // end namespace rootproject
-#endif  // ROOTPROJECT_SOURCE_LBM_BOUNDARY_CONDITIONS_H_
+#endif  // SOURCE_LBM_PROJECT_BOUNDARY_CONDITIONS_LBM_BOUNDARY_CONDITIONS_H_

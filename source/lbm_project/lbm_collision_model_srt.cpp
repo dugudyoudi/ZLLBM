@@ -17,23 +17,23 @@ void LbmStrCollisionOpt::CalRelaxationTime() {
 void LbmStrCollisionOpt::CalRelaxationTimeNode(const GridNodeLbm& node) {
     tau_srt_ = viscosity_lbm_ * SolverLbmInterface::kCs_Sq_Reciprocal_ / dt_lbm_ + 0.5;
 }
-void LbmStrCollisionOpt::CollisionOperator(
-    const SolverLbmInterface& lbm_solver, GridNodeLbm* const ptr_node) const {
-    DefAmrIndexUint num_q = lbm_solver.k0NumQ_;
+void LbmStrCollisionOpt::CollisionOperator(const SolverLbmInterface& lbm_solver,
+    const std::vector<DefReal>& force, GridNodeLbm* const ptr_node) const {
+    DefInt num_q = lbm_solver.k0NumQ_;
     std::vector<DefReal> feq(num_q, 0.);
     lbm_solver.func_cal_feq_(ptr_node->rho_, ptr_node->velocity_, &feq);
-    for (DefAmrIndexUint iq = 0; iq < num_q; ++iq) {
+    for (DefInt iq = 0; iq < num_q; ++iq) {
         ptr_node->f_collide_[iq] = ptr_node->f_[iq] - (ptr_node->f_[iq] - feq[iq]) / tau_srt_;
     }
 }
-void LbmStrForceCollisionOpt::CollisionOperator(
-    const SolverLbmInterface& lbm_solver, GridNodeLbm* const ptr_node) const {
-    DefAmrIndexUint num_q = lbm_solver.k0NumQ_;
+void LbmStrForceCollisionOpt::CollisionOperator(const SolverLbmInterface& lbm_solver,
+    const std::vector<DefReal>& force, GridNodeLbm* const ptr_node) const {
+    DefInt num_q = lbm_solver.k0NumQ_;
     std::vector<DefReal> feq(num_q, 0.);
     lbm_solver.func_cal_feq_(ptr_node->rho_, ptr_node->velocity_, &feq);
     DefReal forcing_term;
-    for (DefAmrIndexUint iq = 0; iq < num_q; ++iq) {
-        forcing_term = (lbm_solver.*(lbm_solver.ptr_func_cal_force_iq_))(iq, *ptr_node);
+    for (DefInt iq = 0; iq < num_q; ++iq) {
+        forcing_term = (lbm_solver.*(lbm_solver.ptr_func_cal_force_iq_))(iq, *ptr_node, force);
         ptr_node->f_collide_[iq] = ptr_node->f_[iq] - (ptr_node->f_[iq] - feq[iq]) / tau_srt_
              + (1. - 0.5 / tau_srt_) * forcing_term * dt_lbm_;
     }

@@ -8,8 +8,8 @@
 * @brief  define the class to manager other objects.
 */
 
-#ifndef ROOTPROJECT_SOURCE_OBJ_MANAGER_H_
-#define ROOTPROJECT_SOURCE_OBJ_MANAGER_H_
+#ifndef SOURCE_AMR_PROJECT_AMR_MANAGER_H_
+#define SOURCE_AMR_PROJECT_AMR_MANAGER_H_
 #include <memory>
 #include <string>
 #include <vector>
@@ -44,9 +44,9 @@ class AmrManager {
     std::unique_ptr<IoManager> ptr_io_manager_;
     std::unique_ptr<CriterionManager> ptr_criterion_manager_;
 
-    void LoadModules(DefAmrIndexUint dims);
+    void LoadModules(DefInt dims);
 
-    void DefaultInitialization(DefAmrIndexUint dim, DefAmrIndexUint level);
+    void DefaultInitialization(DefInt dim, DefInt level);
     void SetupParameters();
     void InitializeMesh();
     void SetupSolverForGrids();
@@ -56,14 +56,14 @@ class AmrManager {
     ETimeSteppingScheme k0TimeSteppingType_ = ETimeSteppingScheme::kMultiSteppingC2F;
     std::unique_ptr<TimeSteppingSchemeInterface> ptr_time_stepping_scheme_;
     void InstantiateTimeSteppingScheme();
-    void TimeMarching(const DefAmrIndexLUint time_step);
+    void TimeMarching(const DefAmrLUint time_step);
 
     void AddSolverToGridManager(const SolverCreatorInterface& solver_creator);
     void SetDependentInfoForAllLevelsTheSame(const std::shared_ptr<SolverInterface>& ptr_solver);
 
-    int MpiCommunicationForInterpolation(DefAmrIndexUint i_level,
+    int MpiCommunicationForInterpolation(DefInt i_level,
         const ETimingInOneStep timing, const ETimeSteppingScheme time_scheme,
-        const DefAmrIndexUint time_step_current, const amrproject::SFBitsetAuxInterface& sfbitset_aux);
+        const DefInt time_step_current, const amrproject::SFBitsetAuxInterface& sfbitset_aux);
 
  private:
     // mpi
@@ -81,4 +81,4 @@ class AmrManager {
 };
 }  // end namespace amrproject
 }  // end namespace rootproject
-#endif  // ROOTPROJECT_SOURCE_OBJ_MANAGER_H_
+#endif  // SOURCE_AMR_PROJECT_AMR_MANAGER_H_

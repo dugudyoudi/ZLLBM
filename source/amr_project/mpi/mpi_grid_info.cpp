@@ -19,12 +19,12 @@ namespace rootproject {
 namespace amrproject {
 struct CriterionIndexForMpi {
     ECriterionType enum_criterion;
-    DefAmrIndexUint index_criterion;
-    DefAmrIndexUint index_creator;
+    DefInt index_criterion;
+    DefInt index_creator;
 };
 /**
- * @brief function to create and commit MPI <ECriterionType, DefAmrIndexUint, DefAmrIndexUint> types.
- * @param[out] ptr_mpi_tracking_index_type pointer to the <ECriterionType, DefAmrIndexUint, DefAmrIndexUint> types.
+ * @brief function to create and commit MPI <ECriterionType, DefInt, DefInt> types.
+ * @param[out] ptr_mpi_tracking_index_type pointer to the <ECriterionType, DefInt, DefInt> types.
  * @return if the MPI types were created and committed successfully.
  */
 int MpiManager::CreateAndCommitCriterionIndexType(MPI_Datatype* ptr_mpi_tracking_index_type) const {
@@ -32,7 +32,7 @@ int MpiManager::CreateAndCommitCriterionIndexType(MPI_Datatype* ptr_mpi_tracking
     MPI_Type_contiguous(sizeof(ECriterionType), MPI_BYTE, &mpi_tracking_enum_type);
     MPI_Type_commit(&mpi_tracking_enum_type);
     // the last MPI_UNSIGNED store the index (k0IndexCreator) of the creator for tracking grid nodes
-    MPI_Datatype mpi_create_type[3] = {mpi_tracking_enum_type, MPI_AMR_INDEX_UINT_TYPE, MPI_AMR_INDEX_UINT_TYPE};
+    MPI_Datatype mpi_create_type[3] = {mpi_tracking_enum_type, MPI_INT_DATA_TYPE, MPI_INT_DATA_TYPE};
     int mpi_block_length[3] = {1, 1, 1};
     MPI_Aint mpi_disp[3];
     mpi_disp[0] = offsetof(CriterionIndexForMpi, enum_criterion);
@@ -110,10 +110,10 @@ void MpiManager::IniDeserializeTrackingNode(const std::unique_ptr<char[]>& buffe
  * @param[in] vec_tracking_info_creator vector of unique pointers to objects for creating instance of tracking grid.
  * @param[out] ptr_map_tracking_info map of unique pointers to tracking grid information.
  */
-void MpiManager::IniSendNReceiveTracking(const DefAmrIndexUint dims, const DefAmrIndexUint i_level,
+void MpiManager::IniSendNReceiveTracking(const DefInt dims, const DefInt i_level,
     const std::vector<DefSFBitset>& bitset_max, const SFBitsetAuxInterface& bitset_aux,
     const std::vector<std::unique_ptr<TrackingGridInfoCreatorInterface>>& vec_tracking_info_creator,
-    std::map<std::pair<ECriterionType, DefAmrIndexUint>, std::shared_ptr<TrackingGridInfoInterface>>*
+    std::map<std::pair<ECriterionType, DefInt>, std::shared_ptr<TrackingGridInfoInterface>>*
     const ptr_map_tracking_info) const {
     MPI_Datatype mpi_tracking_index_type;
     CreateAndCommitCriterionIndexType(&mpi_tracking_index_type);
@@ -126,10 +126,10 @@ void MpiManager::IniSendNReceiveTracking(const DefAmrIndexUint dims, const DefAm
     }
 
     DefSizet num_max = ull_max.size();
-    DefAmrIndexUint num_tracking = DefAmrIndexUint(ptr_map_tracking_info->size());
-    MPI_Bcast(&num_tracking, 1, MPI_AMR_INDEX_UINT_TYPE, 0, MPI_COMM_WORLD);
+    DefInt num_tracking = DefInt(ptr_map_tracking_info->size());
+    MPI_Bcast(&num_tracking, 1, MPI_INT_DATA_TYPE, 0, MPI_COMM_WORLD);
     CriterionIndexForMpi tracking_index_tmp;
-    std::vector<std::pair<ECriterionType, DefAmrIndexUint>> vec_tracking_indices;
+    std::vector<std::pair<ECriterionType, DefInt>> vec_tracking_indices;
     if (rank_id == 0) {
         // save tracking indices stored in unordered_map to vector
         for (const auto& iter_tracking : *ptr_map_tracking_info) {
@@ -137,7 +137,7 @@ void MpiManager::IniSendNReceiveTracking(const DefAmrIndexUint dims, const DefAm
         }
     }
 
-    for (DefAmrIndexUint i_tracking = 0; i_tracking < num_tracking; ++i_tracking) {
+    for (DefInt i_tracking = 0; i_tracking < num_tracking; ++i_tracking) {
         // broadcast the current index of the tracking grid
         if (rank_id == 0) {
             tracking_index_tmp.enum_criterion = vec_tracking_indices.at(i_tracking).first;
@@ -172,10 +172,10 @@ void MpiManager::IniSendNReceiveTracking(const DefAmrIndexUint dims, const DefAm
 #endif  // DEBUG_CHECK_GRID
         }
         MPI_Bcast(&tracking_index_tmp, 1, mpi_tracking_index_type, 0, MPI_COMM_WORLD);
-        std::pair<ECriterionType, DefAmrIndexUint> pair_tracking = {
+        std::pair<ECriterionType, DefInt> pair_tracking = {
             tracking_index_tmp.enum_criterion, tracking_index_tmp.index_criterion};
         if (rank_id > 0) {
-            DefAmrIndexUint index_creator = tracking_index_tmp.index_creator;
+            DefInt index_creator = tracking_index_tmp.index_creator;
             if (ptr_map_tracking_info->find(pair_tracking) == ptr_map_tracking_info->end()) {
                 ptr_map_tracking_info->insert({pair_tracking,
                     vec_tracking_info_creator.at(index_creator).get()->CreateTrackingGridInfo()});
@@ -190,21 +190,21 @@ void MpiManager::IniSendNReceiveTracking(const DefAmrIndexUint dims, const DefAm
 
          // broadcast number of extending layers
         MPI_Bcast(ptr_tracking_info->k0ExtendInnerNeg_.data(),
-           static_cast<int>(dims), MPI_AMR_UINT_TYPE, 0, MPI_COMM_WORLD);
+           static_cast<int>(dims), MPI_INT_DATA_TYPE, 0, MPI_COMM_WORLD);
         MPI_Bcast(ptr_tracking_info->k0ExtendInnerPos_.data(),
-           static_cast<int>(dims), MPI_AMR_UINT_TYPE, 0, MPI_COMM_WORLD);
+           static_cast<int>(dims), MPI_INT_DATA_TYPE, 0, MPI_COMM_WORLD);
         MPI_Bcast(ptr_tracking_info->k0ExtendOuterNeg_.data(),
-           static_cast<int>(dims), MPI_AMR_UINT_TYPE, 0, MPI_COMM_WORLD);
+           static_cast<int>(dims), MPI_INT_DATA_TYPE, 0, MPI_COMM_WORLD);
         MPI_Bcast(ptr_tracking_info->k0ExtendOuterPos_.data(),
-           static_cast<int>(dims), MPI_AMR_UINT_TYPE, 0, MPI_COMM_WORLD);
+           static_cast<int>(dims), MPI_INT_DATA_TYPE, 0, MPI_COMM_WORLD);
 
         // broadcast type information
-        DefAmrTypeUint uint_type[2] = {0, 0};
+        DefInt uint_type[2] = {0, 0};
         if (rank_id == 0) {
             uint_type[0] = ptr_tracking_info->computational_cost_;
-            uint_type[1] = static_cast<DefAmrTypeUint>(ptr_tracking_info->grid_extend_type_);
+            uint_type[1] = static_cast<DefInt>(ptr_tracking_info->grid_extend_type_);
         }
-        MPI_Bcast(uint_type, 2, MPI_AMR_TYPE_UINT_TYPE, 0, MPI_COMM_WORLD);
+        MPI_Bcast(uint_type, 2, MPI_INT_DATA_TYPE, 0, MPI_COMM_WORLD);
         if (rank_id > 0) {
             ptr_tracking_info->computational_cost_ = uint_type[0];
             ptr_tracking_info->grid_extend_type_ = static_cast<EGridExtendType>(uint_type[1]);
@@ -292,7 +292,7 @@ void MpiManager::IniSendNReceiveTracking(const DefAmrIndexUint dims, const DefAm
  * @return unique pointer to a char array to store the serialized data.
  */
 std::unique_ptr<char[]> MpiManager::IniSerializeRefinementInterfaceNode(
-    const DefMap<DefAmrUint>& interface_nodes, int* const ptr_buffer_size) const {
+    const DefMap<DefInt>& interface_nodes, int* const ptr_buffer_size) const {
     int key_size = sizeof(DefSFBitset);
     int num_nodes = 0;
     if  (sizeof(int) + interface_nodes.size() *key_size > (std::numeric_limits<int>::max)()) {
@@ -324,8 +324,8 @@ std::unique_ptr<char[]> MpiManager::IniSerializeRefinementInterfaceNode(
  * @param[in]  index_criterion index of the criterion.
  * @param[in]  buffer buffer containing the tracking node data.
  */
-void MpiManager::IniDeserializeRefinementInterfaceNode(const DefAmrUint flag0,
-     const std::unique_ptr<char[]>& buffer, DefMap<DefAmrUint>* ptr_map_interface_layer) const {
+void MpiManager::IniDeserializeRefinementInterfaceNode(const DefInt flag0,
+     const std::unique_ptr<char[]>& buffer, DefMap<DefInt>* ptr_map_interface_layer) const {
     char* ptr_buffer = buffer.get();
     int key_size = sizeof(DefSFBitset);
     // number of nodes
@@ -349,17 +349,17 @@ void MpiManager::IniDeserializeRefinementInterfaceNode(const DefAmrUint flag0,
  * @param[in, out] ptr_map_interface_layer pointer to nodes on the refinement interface layer.
  */
 void MpiManager::IniSendNReiveOneLayerRefinementInterface(
-    const DefAmrUint flag0, const DefMap<std::set<int>>& outmost_for_all_ranks,
-    DefMap<DefAmrUint>* const ptr_map_interface_layer) const {
+    const DefInt flag0, const DefMap<std::set<int>>& outmost_for_all_ranks,
+    DefMap<DefInt>* const ptr_map_interface_layer) const {
     int rank_id = rank_id_, num_ranks = num_of_ranks_;
-    std::vector<std::vector<DefMap<DefAmrUint>>> vec_nodes_ranks(num_ranks),
+    std::vector<std::vector<DefMap<DefInt>>> vec_nodes_ranks(num_ranks),
         vec_partition_nodes_ranks(num_ranks);
     std::vector<int> i_chunk_each_rank(num_ranks, -1), i_counts(num_ranks, 0),
      i_chunk_partition_each_rank(num_ranks, -1), i_partition_counts(num_ranks, 0);
     int max_buffer = (std::numeric_limits<int>::max)() / sizeof(DefSFBitset) - 1;
     vec_nodes_ranks.at(0).push_back({});
     if (rank_id == 0) {
-        std::vector<DefMap<DefAmrIndexUint>> partition_interface_current(num_ranks);
+        std::vector<DefMap<DefInt>> partition_interface_current(num_ranks);
         std::vector<DefSFBitset> nodes_in_region;
         for (const auto& iter_node : *ptr_map_interface_layer) {
             if (outmost_for_all_ranks.find(iter_node.first) != outmost_for_all_ranks.end()) {
@@ -426,17 +426,17 @@ void MpiManager::IniSendNReiveOneLayerRefinementInterface(
  * @param[in] outmost_for_all_ranks nodes on the outmost fine to coarse interface for all ranks stored on rank 0. 
  * @param[out] ptr_map_interface_info  pointer to refinement interface information.
  */
-void MpiManager::IniSendNReceiveCoarse2Fine0Interface(const DefAmrIndexUint dims,
-    const DefAmrIndexUint i_level, const DefAmrIndexUint num_of_layers_coarse2fine, const DefAmrUint flag0,
+void MpiManager::IniSendNReceiveCoarse2Fine0Interface(const DefInt dims,
+    const DefInt i_level, const DefInt num_of_layers_coarse2fine, const DefInt flag0,
     const DefMap<std::set<int>>& outmost_for_all_ranks,
-    std::map<std::pair<ECriterionType, DefAmrIndexUint>,
+    std::map<std::pair<ECriterionType, DefInt>,
     std::shared_ptr<InterfaceLayerInfo>>* const ptr_map_interface_info) const {
     MPI_Datatype mpi_interface_index_type;
     CreateAndCommitCriterionIndexType(&mpi_interface_index_type);
     int rank_id = rank_id_, num_ranks = num_of_ranks_;
-    DefAmrIndexUint num_interface = DefAmrIndexUint(ptr_map_interface_info->size());
-    MPI_Bcast(&num_interface, 1, MPI_AMR_INDEX_UINT_TYPE, 0, MPI_COMM_WORLD);
-    std::vector<std::pair<ECriterionType, DefAmrIndexUint>> vec_interface_indices;
+    DefInt num_interface = DefInt(ptr_map_interface_info->size());
+    MPI_Bcast(&num_interface, 1, MPI_INT_DATA_TYPE, 0, MPI_COMM_WORLD);
+    std::vector<std::pair<ECriterionType, DefInt>> vec_interface_indices;
     if (rank_id == 0) {
         // save interface indices stored in unordered_map to vector
         for (const auto& iter_interface : *ptr_map_interface_info) {
@@ -444,7 +444,7 @@ void MpiManager::IniSendNReceiveCoarse2Fine0Interface(const DefAmrIndexUint dims
         }
     }
     CriterionIndexForMpi interface_index_tmp;
-    for (DefAmrIndexUint i_interface = 0; i_interface < num_interface; ++i_interface) {
+    for (DefInt i_interface = 0; i_interface < num_interface; ++i_interface) {
         // broadcast the current index of the interfaces
         if (rank_id == 0) {
             interface_index_tmp.enum_criterion = vec_interface_indices[i_interface].first;
@@ -453,7 +453,7 @@ void MpiManager::IniSendNReceiveCoarse2Fine0Interface(const DefAmrIndexUint dims
             interface_index_tmp.index_creator = 0;
         }
         MPI_Bcast(&interface_index_tmp, 1, mpi_interface_index_type, 0, MPI_COMM_WORLD);
-        std::pair<ECriterionType, DefAmrIndexUint> pair_interface = {
+        std::pair<ECriterionType, DefInt> pair_interface = {
                 interface_index_tmp.enum_criterion, interface_index_tmp.index_criterion};
         if (rank_id > 0) {  // create interface instance
             if (ptr_map_interface_info->find(pair_interface) == ptr_map_interface_info->end()) {
@@ -521,13 +521,13 @@ void MpiManager::IniSendNReceiveCoarse2Fine0Interface(const DefAmrIndexUint dims
         // broadcast number of extending layers
         if (i_level > 0) {
             MPI_Bcast(ptr_interface->k0ExtendInnerNeg_.data(),
-             static_cast<int>(dims), MPI_AMR_UINT_TYPE, 0, MPI_COMM_WORLD);
+             static_cast<int>(dims), MPI_INT_DATA_TYPE, 0, MPI_COMM_WORLD);
             MPI_Bcast(ptr_interface->k0ExtendInnerPos_.data(),
-             static_cast<int>(dims), MPI_AMR_UINT_TYPE, 0, MPI_COMM_WORLD);
+             static_cast<int>(dims), MPI_INT_DATA_TYPE, 0, MPI_COMM_WORLD);
             MPI_Bcast(ptr_interface->k0ExtendOuterNeg_.data(),
-             static_cast<int>(dims), MPI_AMR_UINT_TYPE, 0, MPI_COMM_WORLD);
+             static_cast<int>(dims), MPI_INT_DATA_TYPE, 0, MPI_COMM_WORLD);
             MPI_Bcast(ptr_interface->k0ExtendOuterPos_.data(),
-             static_cast<int>(dims), MPI_AMR_UINT_TYPE, 0, MPI_COMM_WORLD);
+             static_cast<int>(dims), MPI_INT_DATA_TYPE, 0, MPI_COMM_WORLD);
         }
 
         //  send and receive outer layers

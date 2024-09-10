@@ -7,8 +7,8 @@
 * @brief define classes to manage fluid structure coupling.
 * @date  2024-2-03
 */
-#ifndef ROOTPROJECT_SOURCE_LBM_FSI_COUPLING_H_
-#define ROOTPROJECT_SOURCE_LBM_FSI_COUPLING_H_
+#ifndef SOURCE_LBM_PROJECT_FSI_COUPLING_H_
+#define SOURCE_LBM_PROJECT_LBM_FSI_COUPLING_H_
 #include <vector>
 #include <array>
 #include <map>
@@ -18,10 +18,10 @@ namespace rootproject {
 namespace lbmproject {
 class GridInfoLbmInteface;
 class FsiCoupling {
-    int WeakBoundaryCoupling(const DefAmrIndexUint i_level,
+    int WeakBoundaryCoupling(const DefInt i_level,
         GridInfoLbmInteface* const ptr_grid_info,
         amrproject::GeometryInfoInterface* const ptr_geo_info);
 };
 }  // end namespace lbmproject
 }  // end namespace rootproject
-#endif  // ROOTPROJECT_SOURCE_LBM_FSI_COUPLING_H_
+#endif  // SOURCE_LBM_PROJECT_FSI_COUPLING_H_

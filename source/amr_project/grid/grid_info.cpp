@@ -40,9 +40,9 @@ void GridInfoInterface::SetMemberVariable(const std::string& str_var, int value)
  * @return flag indicate node on which domain boundaries, 1: x min, 8: x max, 2: y min, 16: y max, 4: z min, 32: z max,
  *         0 inside domain, -1 outside domain
  */
-int GridInfoInterface::CheckIfNodeOutsideCubicDomain(const DefAmrIndexUint dims,
+int GridInfoInterface::CheckIfNodeOutsideCubicDomain(const DefInt dims,
     const DefSFBitset& bitset_in, const SFBitsetAuxInterface& sfbitset_aux) const {
-    DefAmrIndexUint current_bit = sfbitset_aux.kRefCurrent_;
+    DefInt current_bit = sfbitset_aux.kRefCurrent_;
     DefSFCodeToUint code_one_dim, code_boundary;
     int flag_node = kFlagInsideDomain_;
     // x min
@@ -106,12 +106,12 @@ int GridInfoInterface::CheckIfNodeOutsideCubicDomain(const DefAmrIndexUint dims,
  * @param[in] sfbitset_aux class to manage functions for space filling code computation.
  * @param[out] ptr_nodes_periodic pointer to counterpart nodes on the periodic boundaries.
  */
-void GridInfoInterface::CheckNodesOnCubicPeriodicBoundary(const DefAmrIndexUint dims, const DefSFBitset& bitset_in,
+void GridInfoInterface::CheckNodesOnCubicPeriodicBoundary(const DefInt dims, const DefSFBitset& bitset_in,
     const std::vector<bool>& periodic_min, const std::vector<bool>& periodic_max,
     const SFBitsetAuxInterface& sfbitset_aux, std::vector<DefSFBitset>* const ptr_nodes_periodic) const {
     ptr_nodes_periodic->clear();
-    DefAmrIndexUint current_bit = sfbitset_aux.kRefCurrent_;
-    DefAmrIndexUint other_bit = sfbitset_aux.kRefOthers_;
+    DefInt current_bit = sfbitset_aux.kRefCurrent_;
+    DefInt other_bit = sfbitset_aux.kRefOthers_;
     // x min
     if (periodic_min.at(kXIndex)
         && ((bitset_in&sfbitset_aux.k0SFBitsetTakeXRef_[current_bit]) == k0VecBitsetDomainMin_[kXIndex])) {

@@ -134,14 +134,14 @@ void VtkWriterManager::WriteVtuAll(const std::string& folder_name,
     }
 #endif  // DEBUG_DISABLE_3D_FUNCTIONS
     bool bool_overlap;
-    DefAmrUint overlap_flag = 0;
+    DefInt overlap_flag = 0;
     switch (vtk_ghost_cell_option_) {
     case EVtkWriterGhostCellOption::kOutputEntirety : {
             bool_overlap = false;
             overlap_flag = NodeBitStatus::kNodeStatusFine2Coarse0_
                 | NodeBitStatus::kNodeStatusFine2Coarse0_ | NodeBitStatus::kNodeStatusMpiPartitionOuter_;
-            std::vector<DefAmrIndexUint> output_levels;
-            for (DefAmrIndexUint i = 0; i < grid_manager.k0MaxLevel_ + 1; ++i) {
+            std::vector<DefInt> output_levels;
+            for (DefInt i = 0; i < grid_manager.k0MaxLevel_ + 1; ++i) {
                 output_levels.push_back(i);
             }
             std::string grid_file_name = proj_and_rank + "gridmerged_" + std::to_string(1);
@@ -150,13 +150,13 @@ void VtkWriterManager::WriteVtuAll(const std::string& folder_name,
         }
         break;
     case EVtkWriterGhostCellOption::kPartitionMultiBlock: {
-            std::vector<DefAmrIndexUint> output_levels;
+            std::vector<DefInt> output_levels;
             bool_overlap = true;
             overlap_flag = NodeBitStatus::kNodeStatusCoarse2Fine0_
                 | NodeBitStatus::kNodeStatusCoarse2FineGhost_ | NodeBitStatus::kNodeStatusMpiPartitionOuter_
                 | NodeBitStatus::kNodeStatusFine2Coarse0_ | NodeBitStatus::kNodeStatusFine2CoarseGhost_;
             std::vector<std::string> vec_pvtu_file_name;
-            for (DefAmrIndexUint i = 0; i < grid_manager.k0MaxLevel_ + 1; ++i) {
+            for (DefInt i = 0; i < grid_manager.k0MaxLevel_ + 1; ++i) {
                 std::string grid_file_name = proj_and_rank + "grid_level_" + std::to_string(i);
                 WriteVtuGrid(grid_file_name, bool_binary, bool_overlap, overlap_flag,
                     {i}, output_data_format, grid_manager);
@@ -181,8 +181,8 @@ void VtkWriterManager::WriteVtuAll(const std::string& folder_name,
     }
 
     bool_overlap = false;
-    std::vector<DefAmrIndexUint> output_geos;
-    for (DefAmrIndexUint i = 0; i < criterion_manager.vec_ptr_geometries_.size(); ++i) {
+    std::vector<DefInt> output_geos;
+    for (DefInt i = 0; i < criterion_manager.vec_ptr_geometries_.size(); ++i) {
         output_geos.push_back(i);
     }
     std::string geo_file_name = proj_and_rank + "geo_" + std::to_string(1);
@@ -204,8 +204,8 @@ void VtkWriterManager::WriteVtuAll(const std::string& folder_name,
 */
 void VtkWriterManager::WriteVtuGeo(const std::string& datafile_name,
     const bool bool_binary, const bool bool_overlap,
-    const DefAmrUint overlap_flag, const DefAmrIndexUint dims,
-    const std::vector<DefAmrIndexUint>& vec_geo_in_one_vtu,
+    const DefInt overlap_flag, const DefInt dims,
+    const std::vector<DefInt>& vec_geo_in_one_vtu,
     const std::array<DefReal, 3>& grid_offset,
     const OutputDataFormat& output_data_format,
     const CriterionManager& criterion_manager) {
@@ -249,8 +249,8 @@ void VtkWriterManager::WriteVtuGeo(const std::string& datafile_name,
 */
 void VtkWriterManager::WriteVtuGrid(const std::string& datafile_name,
     const bool bool_binary, const bool bool_overlap,
-    const DefAmrUint overlap_flag,
-    const std::vector<DefAmrIndexUint>& vec_level_in_one_vtu,
+    const DefInt overlap_flag,
+    const std::vector<DefInt>& vec_level_in_one_vtu,
     const OutputDataFormat& output_data_format,
     const GridManagerInterface& grid_manager) {
     FILE* fp = nullptr;
@@ -377,13 +377,13 @@ void VtkWriterManager::WritePvtu(FILE* const fp, const std::vector<std::string> 
 * @param[in]  grid_manager class to manage grid information
 */
 void VtkWriterManager::WriteGridPieces(FILE* const fp, const bool bool_binary,
-    const bool bool_overlap, const DefAmrUint overlap_flag,
+    const bool bool_overlap, const DefInt overlap_flag,
     const GridInfoInterface& grid_info,
     const OutputDataFormat& output_data_format,
     const GridManagerInterface& grid_manager) {
 
     std::string str_tmp;
-    DefAmrIndexUint dims = grid_manager.k0GridDims_;
+    DefInt dims = grid_manager.k0GridDims_;
     std::array<DefSizet, 2> node_and_cell_number;
     DefMap<DefSizet> map_node_index;
     if (dims == 2) {
@@ -497,10 +497,10 @@ void VtkWriterManager::WriteGridPieces(FILE* const fp, const bool bool_binary,
 * @param[in]  output_data_format output data (real or integer) format.
 */
 void VtkWriterManager::WriteGridCellOffsets(FILE* const fp,
-    const bool bool_binary, const DefAmrIndexUint dims,
+    const bool bool_binary, const DefInt dims,
     const DefSizet num_cell, const OutputDataFormat& output_data_format) {
 
-    DefAmrUint num_offsets = 4;
+    DefInt num_offsets = 4;
     if (dims == 2) {
         num_offsets = 4;  // VTK_PIXEL
     } else if (dims == 3) {
@@ -534,7 +534,7 @@ void VtkWriterManager::WriteGridCellOffsets(FILE* const fp,
 * @param[in]  num_cell   number of cells.
 */
 void VtkWriterManager::WriteGridCellTypes(FILE* const fp,
-    bool bool_binary, const DefAmrIndexUint dims, const DefSizet num_cell) {
+    bool bool_binary, const DefInt dims, const DefSizet num_cell) {
 
     std::uint8_t cell_type = 8;
     if (dims == 2) {
@@ -553,7 +553,7 @@ void VtkWriterManager::WriteGridCellTypes(FILE* const fp,
         }
         fprintf_s(fp, "\n");
     } else {
-        for (DefAmrIndexLUint i = 0; i < num_cell; ++i) {
+        for (DefAmrLUint i = 0; i < num_cell; ++i) {
             fprintf_s(fp, "   %u\n", cell_type);
         }
     }
@@ -614,7 +614,7 @@ void VtkWriterManager::WriteGridNodeFlagStatus(FILE* const fp,
 */
 void VtkWriterManager::WriteGridNodeVtkVisualization(
     FILE* const fp, const bool bool_binary,
-    const DefAmrUint flag_overlap_visual,
+    const DefInt flag_overlap_visual,
     const OutputDataFormat& output_data_format,
     const DefMap<DefSizet>& map_node_index,
     const DefMap<std::unique_ptr<GridNode>>& map_grid_node) {
@@ -663,7 +663,7 @@ void VtkWriterManager::WriteGridNodeVtkVisualization(
 */
 void VtkWriterManager::WriteGeometryPieces(
     FILE* const fp, const bool bool_binary,
-    const DefAmrIndexUint dims, const std::array<DefReal, 3>& grid_offset,
+    const DefInt dims, const std::array<DefReal, 3>& grid_offset,
     const OutputDataFormat& output_data_format,
     const GeometryInfoInterface& geo_info) {
     std::string str_tmp;
@@ -894,7 +894,7 @@ void VtkWriterManager::WriteGeometryCellType(
 * @return  number of nodes and number of cells.
 */
 std::array<DefSizet, 2> VtkWriterManager::CalculateNumOfGridCells(
-    const bool bool_overlap, const DefAmrUint overlap_flag,
+    const bool bool_overlap, const DefInt overlap_flag,
     const SFBitsetAux2D& sfbitset_aux2d,
     const DefMap<std::unique_ptr<GridNode>>& map_grid_node,
     DefMap<DefSizet>* ptr_map_node_index) const {
@@ -1064,7 +1064,7 @@ void VtkWriterManager::WriteGridCellConnectivity(FILE* const fp,
 * @param[in]  geo_info class to manage geometry information
 */
 DefSizet VtkWriterManager::WriteGeometryCoordinates(FILE* const fp,
-    const bool bool_binary, const DefAmrIndexUint dims,
+    const bool bool_binary, const DefInt dims,
     const std::array<DefReal, 3>& grid_offset,
     const OutputDataFormat& output_data_format,
     const GeometryInfo2DInterface& geo_info) {
@@ -1115,12 +1115,12 @@ DefSizet VtkWriterManager::WriteGeometryCoordinates(FILE* const fp,
 * @return  number of nodes and number of cells.
 */
 std::array<DefSizet, 2> VtkWriterManager::CalculateNumOfGridCells(
-    const bool bool_overlap, const DefAmrUint overlap_flag,
+    const bool bool_overlap, const DefInt overlap_flag,
     const SFBitsetAux3D& sfbitset_aux3d,
     const DefMap<std::unique_ptr<GridNode>>& map_grid_node,
     DefMap<DefSizet>* ptr_map_node_index) const {
 
-    DefAmrIndexLUint num_cell = 0;
+    DefAmrLUint num_cell = 0;
     std::array<DefSFBitset, 8> bitset_cell;
 
     bool no_overlap;
@@ -1289,7 +1289,7 @@ void VtkWriterManager::WriteGridCellConnectivity(FILE* const fp,
 * @param[in]  geo_info   instance of geometry information.
 */
 DefSizet VtkWriterManager::WriteGeometryCoordinates(FILE* const fp,
-    const bool bool_binary, const DefAmrIndexUint dims,
+    const bool bool_binary, const DefInt dims,
     const std::array<DefReal, 3>& grid_offset,
     const OutputDataFormat& output_data_format,
     const GeometryInfo3DInterface& geo_info) {

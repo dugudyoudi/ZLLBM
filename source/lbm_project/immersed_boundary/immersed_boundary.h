@@ -7,18 +7,22 @@
 * @brief define classes to manage immersed boundary method.
 * @date  2024-2-03
 */
-#ifndef ROOTPROJECT_SOURCE_LBM_IMMERSED_BOUNDARY_H_
-#define ROOTPROJECT_SOURCE_LBM_IMMERSED_BOUNDARY_H_
+#ifndef SOURCE_LBM_PROJECT_IMMERSED_BOUNDARY_IMMERSED_BOUNDARY_H_
+#define SOURCE_LBM_PROJECT_IMMERSED_BOUNDARY_IMMERSED_BOUNDARY_H_
 #include <vector>
 #include <array>
 #include <map>
-#include "fsi_coupling.h"
+#include "./fsi_coupling.h"
 namespace rootproject {
 namespace lbmproject {
 class FsiImmersedBoundary : public FsiCoupling {
+ public:
+    void DirectForcingScheme();
+
+ private:
     DefReal StencilDisOne(DefReal dis);
     DefReal StencilDisTwo(DefReal dis);
 };
 }  // end namespace lbmproject
 }  // end namespace rootproject
-#endif  // ROOTPROJECT_SOURCE_LBM_IMMERSED_BOUNDARY_H_
+#endif  // SOURCE_LBM_PROJECT_IMMERSED_BOUNDARY_IMMERSED_BOUNDARY_H_

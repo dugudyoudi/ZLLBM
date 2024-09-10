@@ -15,18 +15,18 @@
 namespace rootproject {
 namespace amrproject {
 /**
- * @brief function to serialize data (a DefSFBitset and a DefAmrUint) and save it to buffer
+ * @brief function to serialize data (a DefSFBitset and a DefInt) and save it to buffer
  * @param[in] map_nodes node information
  * @param[out] ptr_buffer_size pointer to size of the buffer in bytes.
  * @return sunique pointer to a char array to store the serialized data.
  */
-std::unique_ptr<char[]> MpiManager::SerializeNodeStoreUint(const DefMap<DefAmrUint>& map_nodes,
+std::unique_ptr<char[]> MpiManager::SerializeNodeStoreUint(const DefMap<DefInt>& map_nodes,
     int* const ptr_buffer_size) const {
-    int key_size = sizeof(DefSFBitset), node_size = sizeof(DefAmrUint);
+    int key_size = sizeof(DefSFBitset), node_size = sizeof(DefInt);
     int num_nodes = 1;
     if  (sizeof(int) + map_nodes.size()*(key_size + node_size) > (std::numeric_limits<int>::max)()) {
         LogManager::LogError("size of the buffer is greater"
-         " than the maximum of int in MpiManager::SerializeData(DefMap<DefAmrUint>)");
+         " than the maximum of int in MpiManager::SerializeData(DefMap<DefInt>)");
     } else {
         num_nodes = static_cast<int>(map_nodes.size());
     }
@@ -52,19 +52,19 @@ std::unique_ptr<char[]> MpiManager::SerializeNodeStoreUint(const DefMap<DefAmrUi
     return buffer;
 }
 /**
- * @brief function to deserialize data (a DefSFBitset and a DefAmrUint) from a buffer.
+ * @brief function to deserialize data (a DefSFBitset and a DefInt) from a buffer.
  * @param[in] buffer buffer has received data.
  * @param[out] map_nodes node information.
  */
 void MpiManager::DeserializeNodeStoreUint(
-    const std::unique_ptr<char[]>& buffer, DefMap<DefAmrUint>* const map_nodes) const {
+    const std::unique_ptr<char[]>& buffer, DefMap<DefInt>* const map_nodes) const {
     char* ptr_buffer = buffer.get();
-    int key_size = sizeof(DefSFBitset), node_size = sizeof(DefAmrUint);
+    int key_size = sizeof(DefSFBitset), node_size = sizeof(DefInt);
     // number of nodes
     int num_nodes;
     int position = 0;
     std::memcpy(&num_nodes, ptr_buffer, sizeof(int));
-    DefAmrUint node_data;
+    DefInt node_data;
     // deserialize data stored in buffer
     position += sizeof(int);
     DefSFCodeToUint key_code;
@@ -85,7 +85,7 @@ void MpiManager::DeserializeNodeStoreUint(
  * @return unique pointer to a char array to store the serialized data.
  */
 std::unique_ptr<char[]> MpiManager::SerializeNodeSFBitset(
-    const DefMap<DefAmrIndexUint>& map_nodes, int* const ptr_buffer_size) const {
+    const DefMap<DefInt>& map_nodes, int* const ptr_buffer_size) const {
     int key_size = sizeof(DefSFBitset);
     int num_nodes = 1;
     if  (sizeof(int) + map_nodes.size() *(key_size) > (std::numeric_limits<int>::max)()) {
@@ -117,8 +117,8 @@ std::unique_ptr<char[]> MpiManager::SerializeNodeSFBitset(
  * @param[in] buffer buffer stores received data.
  * @param[out] map_nodes node information.
  */
-void MpiManager::DeserializeNodeSFBitset(const DefAmrIndexUint flag_node,
-    const std::unique_ptr<char[]>& buffer, DefMap<DefAmrIndexUint>* const map_nodes) const {
+void MpiManager::DeserializeNodeSFBitset(const DefInt flag_node,
+    const std::unique_ptr<char[]>& buffer, DefMap<DefInt>* const map_nodes) const {
     char* ptr_buffer = buffer.get();
     int key_size = sizeof(DefSFBitset);
     // number of nodes
@@ -153,14 +153,14 @@ void MpiManager::DeserializeNodeSFBitset(const DefAmrIndexUint flag_node,
  *       as well as those in outer mpi communication layers.
  *       Nodes coincide with those in ptr_sfbitset_each are not included in ptr_sfbitset_ghost_each
  */
-void MpiManager::IniSendNReceivePartitionedGrid(const DefAmrIndexUint dims,
-    const DefAmrIndexUint flag_size0, const DefAmrUint flag_fine2coarse_outmost,
+void MpiManager::IniSendNReceivePartitionedGrid(const DefInt dims,
+    const DefInt flag_size0, const DefInt flag_fine2coarse_outmost,
     const std::vector<DefSFBitset>& bitset_min, const std::vector<DefSFBitset>& bitset_max,
-    const std::vector<DefAmrIndexLUint>& indices_min, const std::vector<DefAmrIndexLUint>& indices_max,
+    const std::vector<DefAmrLUint>& indices_min, const std::vector<DefAmrLUint>& indices_max,
     const SFBitsetAuxInterface& sfbitset_aux,
-    const std::vector<DefMap<DefAmrIndexUint>>& vec_sfbitset_rank0,
-    std::vector<DefMap<DefAmrIndexUint>>* const ptr_sfbitset_each,
-    std::vector<DefMap<DefAmrIndexUint>>* const ptr_sfbitset_ghost_each,
+    const std::vector<DefMap<DefInt>>& vec_sfbitset_rank0,
+    std::vector<DefMap<DefInt>>* const ptr_sfbitset_each,
+    std::vector<DefMap<DefInt>>* const ptr_sfbitset_ghost_each,
     std::vector<std::shared_ptr<GridInfoInterface>>* const ptr_vec_grid_info) const {
     if (vec_sfbitset_rank0.size() - 1 > INT_MAX) {
         LogManager::LogError("size of vector vec_sfbitset_rank0 is larger than INT_MAX in "
@@ -169,7 +169,7 @@ void MpiManager::IniSendNReceivePartitionedGrid(const DefAmrIndexUint dims,
     int max_level = static_cast<int>(vec_sfbitset_rank0.size() - 1);
     int rank_id = rank_id_, num_ranks = num_of_ranks_;
     std::vector<DefSFCodeToUint> ull_min(bitset_min.size()), ull_max(bitset_max.size());
-    std::array<DefAmrIndexLUint, 2> indices_min_2d, indices_max_2d;
+    std::array<DefAmrLUint, 2> indices_min_2d, indices_max_2d;
     if (dims == 2) {
         if (indices_min.size() != 2) {
             LogManager::LogError("size of vector indices_min shoule be 2 in "
@@ -182,7 +182,7 @@ void MpiManager::IniSendNReceivePartitionedGrid(const DefAmrIndexUint dims,
         indices_min_2d = { indices_min.at(kXIndex), indices_min.at(kYIndex) };
         indices_max_2d = { indices_max.at(kXIndex), indices_max.at(kYIndex) };
     }
-    std::array<DefAmrIndexLUint, 3> indices_min_3d, indices_max_3d;
+    std::array<DefAmrLUint, 3> indices_min_3d, indices_max_3d;
     if (dims == 3) {
         if (indices_min.size() != 3) {
             LogManager::LogError("size of vector indices_min shoule be 3 in "
@@ -210,11 +210,11 @@ void MpiManager::IniSendNReceivePartitionedGrid(const DefAmrIndexUint dims,
     int max_buffer = (std::numeric_limits<int>::max)() / sizeof(DefSFBitset) - 1;
     DefSFCodeToUint background_code;
     int int_interface_status;
-    DefAmrIndexUint num_ghost_lower = k0NumPartitionOuterLayers_/2,
+    DefInt num_ghost_lower = k0NumPartitionOuterLayers_/2,
         num_ghost_upper = (k0NumPartitionOuterLayers_ + 1)/2;
-     DefAmrIndexLUint num_layer_near_interface = k0NumPartitionOuterLayers_;
+     DefAmrLUint num_layer_near_interface = k0NumPartitionOuterLayers_;
     DefSizet num_max = ull_max.size();
-    std::vector<DefMap<DefAmrIndexUint>> partition_interface_background(num_ranks);
+    std::vector<DefMap<DefInt>> partition_interface_background(num_ranks);
     if (rank_id == 0) {  // partition nodes on rank 0
         for (auto i_rank = 0; i_rank < num_ranks; ++i_rank) {
             if (dims == 2) {
@@ -236,14 +236,14 @@ void MpiManager::IniSendNReceivePartitionedGrid(const DefAmrIndexUint dims,
         DefMap<std::set<int>> outmost_for_all_ranks;
         int i_level_lower = i_level - 1;
         if (rank_id == 0) {  // partition nodes on rank 0
-            std::vector<std::vector<DefMap<DefAmrIndexUint>>> vec_nodes_ranks(num_ranks);
+            std::vector<std::vector<DefMap<DefInt>>> vec_nodes_ranks(num_ranks);
             int i_rank = 0;
             // min and max code at i_level_lower refinement level
             std::vector<DefSFCodeToUint> code_min_current(num_ranks), code_max_current(num_ranks);
             std::vector<DefSFBitset> bitset_cell_lower_ghost, bitset_all_ghost;
             std::vector<DefSFBitset> corresponding_ones(dims), domain_min_n_level(dims), domain_max_n_level(dims),
                 domain_min_m1_n_level(dims), domain_max_p1_n_level(dims), vec_periodic;
-            std::vector<DefMap<DefAmrIndexUint>> map_ghost_lower_tmp_ranks(num_ranks),
+            std::vector<DefMap<DefInt>> map_ghost_lower_tmp_ranks(num_ranks),
                 map_ghost_upper_tmp_ranks(num_ranks);
             std::vector<bool> periodic_min, periodic_max;
             bool bool_has_periodic_boundary =
@@ -282,9 +282,9 @@ void MpiManager::IniSendNReceivePartitionedGrid(const DefAmrIndexUint dims,
             std::vector<int> i_chunk_each_rank(num_ranks, -1), i_counts(num_ranks, 0);
             std::vector<DefSFCodeToUint>::iterator iter_index;
             std::vector<DefSFBitset> nodes_in_region;
-            DefAmrIndexUint num_extend_coarse2fine = ptr_vec_grid_info->at(i_level_lower)->k0NumCoarse2FineLayer_ - 1;
-            DefMap<DefAmrIndexUint> map_extend_coarse2fine;
-            std::vector<DefMap<DefAmrIndexUint>> map_partition_near_f2c_outmost(num_ranks);
+            DefInt num_extend_coarse2fine = ptr_vec_grid_info->at(i_level_lower)->k0NumCoarse2FineLayer_ - 1;
+            DefMap<DefInt> map_extend_coarse2fine;
+            std::vector<DefMap<DefInt>> map_partition_near_f2c_outmost(num_ranks);
             bool bool_near_coarse2fine;
 
             for (auto& iter_node : vec_sfbitset_rank0.at(i_level)) {
@@ -468,13 +468,13 @@ void MpiManager::IniSendNReceivePartitionedGrid(const DefAmrIndexUint dims,
                 }
             }
             // ghost nodes on other ranks
-            std::vector<std::vector<DefMap<DefAmrIndexUint>>> vec_ghost_nodes_ranks(num_ranks);
+            std::vector<std::vector<DefMap<DefInt>>> vec_ghost_nodes_ranks(num_ranks);
             std::vector<int> i_ghost_chunk_each_rank(num_ranks, -1), i_ghost_counts(num_ranks, 0);
             for (auto i_rank = 1; i_rank < num_ranks; ++i_rank) {
                 std::vector<std::unique_ptr<char[]>> vec_ptr_buffer;
                 std::vector<MPI_Request> reqs_send;
                 // find nodes on extened ghost layers for mpi communication
-                DefMap<DefAmrIndexUint> partition_interface_rank0_lower_level;
+                DefMap<DefInt> partition_interface_rank0_lower_level;
                 for (const auto& iter_ghost : map_ghost_upper_tmp_ranks.at(i_rank)) {
                     if (partition_interface_rank0_lower_level.find(iter_ghost.first)
                         == partition_interface_rank0_lower_level.end()
@@ -543,7 +543,7 @@ void MpiManager::IniSendNReceivePartitionedGrid(const DefAmrIndexUint dims,
                 }
                 MPI_Waitall(num_chunks, reqs_send.data(), MPI_STATUS_IGNORE);
                 // nodes on both refinement layers and outer mpi communication layers
-                DefMap<DefAmrIndexUint> map_ghost_n_refinement;
+                DefMap<DefInt> map_ghost_n_refinement;
                 for (const auto& iter_ghost : map_partition_near_f2c_outmost.at(i_rank)) {
                     sfbitset_aux.FindNodesInPeriodicRegionCenter(iter_ghost.first,
                         k0NumPartitionOuterLayers_, periodic_min, periodic_max,
@@ -629,7 +629,7 @@ void MpiManager::IniSendNReceivePartitionedGrid(const DefAmrIndexUint dims,
             }
         }
         // send and receive nodes on outmost coarse to fine refinement interfaces
-        DefAmrUint flag0 = static_cast<DefAmrUint>(flag_size0);
+        DefInt flag0 = static_cast<DefInt>(flag_size0);
         IniSendNReceiveCoarse2Fine0Interface(dims, i_level_lower,
             ptr_vec_grid_info->at(i_level_lower)->k0NumCoarse2FineLayer_, flag0,
             outmost_for_all_ranks, &ptr_vec_grid_info->at(i_level_lower)->map_ptr_interface_layer_info_);
@@ -655,16 +655,16 @@ void MpiManager::IniSendNReceivePartitionedGrid(const DefAmrIndexUint dims,
  *             near coarse to fine refinement interface at one level lower on the current rank.
  * @param[out] ptr_vec_grid_info pointer to vector of grid information.
  */
-void MpiManager::IniSendNReceiveGridInfoAtAllLevels(const DefAmrIndexUint flag_size0,
-    const DefAmrUint flag_fine2coarse_outmost, const DefAmrIndexUint dims, const DefAmrIndexUint max_level,
+void MpiManager::IniSendNReceiveGridInfoAtAllLevels(const DefInt flag_size0,
+    const DefInt flag_fine2coarse_outmost, const DefInt dims, const DefInt max_level,
     const DefSFBitset bitset_domain_min, const DefSFBitset bitset_domain_max,
-    const std::vector<DefAmrIndexLUint>& indices_min, const std::vector<DefAmrIndexLUint>& indices_max,
-    const std::vector<DefAmrIndexLUint>& vec_cost, const SFBitsetAuxInterface& sfbitset_aux,
+    const std::vector<DefAmrLUint>& indices_min, const std::vector<DefAmrLUint>& indices_max,
+    const std::vector<DefInt>& vec_cost, const SFBitsetAuxInterface& sfbitset_aux,
     const std::vector<std::unique_ptr<TrackingGridInfoCreatorInterface>>& vec_tracking_creator,
-    const std::vector<DefMap<DefAmrIndexUint>> ini_sfbitset_one_lower_level_rank0,
+    const std::vector<DefMap<DefInt>> ini_sfbitset_one_lower_level_rank0,
     std::array<DefSFBitset, 2>* const ptr_sfbitset_bound_current,
-    std::vector<DefMap<DefAmrIndexUint>>* const  ptr_sfbitset_one_lower_level_current_rank,
-    std::vector<DefMap<DefAmrIndexUint>>* const  ptr_sfbitset_ghost_one_lower_level_current_rank,
+    std::vector<DefMap<DefInt>>* const  ptr_sfbitset_one_lower_level_current_rank,
+    std::vector<DefMap<DefInt>>* const  ptr_sfbitset_ghost_one_lower_level_current_rank,
     std::vector<std::shared_ptr<GridInfoInterface>>* const ptr_vec_grid_info) {
     std::vector<DefSFBitset> bitset_min(num_of_ranks_), bitset_max(num_of_ranks_);
     if (rank_id_ == 0) {
@@ -713,7 +713,7 @@ void MpiManager::IniSendNReceiveGridInfoAtAllLevels(const DefAmrIndexUint flag_s
         ptr_sfbitset_ghost_one_lower_level_current_rank, ptr_vec_grid_info);
 
     // send and receive tracking nodes
-    for (DefAmrIndexUint i_level = max_level; i_level > 0; --i_level) {
+    for (DefInt i_level = max_level; i_level > 0; --i_level) {
         GridInfoInterface& grid_info = *(ptr_vec_grid_info->at(i_level));
         IniSendNReceiveTracking(dims, i_level, bitset_max, sfbitset_aux,
            vec_tracking_creator, &grid_info.map_ptr_tracking_grid_info_);

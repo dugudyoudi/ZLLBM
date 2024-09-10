@@ -37,7 +37,7 @@ int AmrManager::SetUpProgramFeature(int argc, char* argv[]) {
 /**
 * @brief     function to load modules of amr manager.
 */
-void AmrManager::LoadModules(DefAmrIndexUint dims) {
+void AmrManager::LoadModules(DefInt dims) {
 #ifdef ENABLE_MPI
     ptr_mpi_manager_ = std::make_unique<MpiManager>();
 #endif
@@ -54,7 +54,7 @@ void AmrManager::LoadModules(DefAmrIndexUint dims) {
 * @param[in]  dims    dimension of the mesh.
 * @param[in]  max_level    maxim refinement level.
 */
-void AmrManager::DefaultInitialization(DefAmrIndexUint dims, DefAmrIndexUint max_level) {
+void AmrManager::DefaultInitialization(DefInt dims, DefInt max_level) {
     LoadModules(dims);
 
     // mpi settings
@@ -86,13 +86,13 @@ void AmrManager::InitializeMesh() {
     rank_id = ptr_mpi_manager_->rank_id_;
 #endif  // ENABLE_MPI
     std::array<DefSFBitset, 2> sfbitset_bound_current;
-    std::vector<DefMap<DefAmrIndexUint>> sfbitset_one_lower_level(ptr_grid_manager_->k0MaxLevel_ + 1);
-    DefAmrIndexUint i_geo = 0;
+    std::vector<DefMap<DefInt>> sfbitset_one_lower_level(ptr_grid_manager_->k0MaxLevel_ + 1);
+    DefInt i_geo = 0;
     if (rank_id == 0) {
         std::vector<DefReal> real_offset(ptr_grid_manager_->k0GridDims_);
         std::vector<DefReal> domain_dx = ptr_grid_manager_->GetDomainDxArrAsVec();
-        std::vector<DefAmrIndexLUint> domain_min_index = ptr_grid_manager_->GetMinIndexOfBackgroundNodeArrAsVec();
-        for (DefAmrIndexUint i_dims = 0; i_dims < ptr_grid_manager_->k0GridDims_; ++i_dims) {
+        std::vector<DefAmrLUint> domain_min_index = ptr_grid_manager_->GetMinIndexOfBackgroundNodeArrAsVec();
+        for (DefInt i_dims = 0; i_dims < ptr_grid_manager_->k0GridDims_; ++i_dims) {
             real_offset.at(i_dims) = domain_min_index[i_dims] * domain_dx[i_dims];
         }
 
@@ -111,15 +111,15 @@ void AmrManager::InitializeMesh() {
 
 #ifdef ENABLE_MPI
     // mpi partition sending and receiving nodes
-    std::vector<DefAmrIndexLUint> vec_cost;
+    std::vector<DefInt> vec_cost;
     for (auto iter_grid : ptr_grid_manager_->vec_ptr_grid_info_) {
         vec_cost.push_back(iter_grid->computational_cost_);
     }
-    std::vector<DefMap<DefAmrIndexUint>> sfbitset_one_lower_level_current_rank(ptr_grid_manager_->k0MaxLevel_ + 1),
+    std::vector<DefMap<DefInt>> sfbitset_one_lower_level_current_rank(ptr_grid_manager_->k0MaxLevel_ + 1),
        sfbitset_ghost_one_lower_level_current_rank(ptr_grid_manager_->k0MaxLevel_ + 1);
     ptr_mpi_manager_->sfbitset_min_current_rank_ = sfbitset_bound_current.at(0);
     ptr_mpi_manager_->sfbitset_max_current_rank_ = sfbitset_bound_current.at(1);
-    DefMap<DefAmrIndexUint> partition_interface_background;
+    DefMap<DefInt> partition_interface_background;
     if (ptr_grid_manager_->k0GridDims_ == 2) {
 #ifndef  DEBUG_DISABLE_2D_FUNCTIONS
         GridManager2D* ptr_grid_manager_2d = dynamic_cast<GridManager2D*>(ptr_grid_manager_.get());
@@ -188,8 +188,8 @@ void AmrManager::InitializeMesh() {
     }
     // add nodes on both the refinement and partition interfaces
     // which are only stored in coarse to fine refinement interfaces
-    const DefAmrIndexUint flag0 = ptr_grid_manager_->kFlagSize0_;
-    for (DefAmrIndexUint i_level = 0; i_level < ptr_grid_manager_->k0MaxLevel_; ++i_level) {
+    const DefInt flag0 = ptr_grid_manager_->kFlagSize0_;
+    for (DefInt i_level = 0; i_level < ptr_grid_manager_->k0MaxLevel_; ++i_level) {
         for (const auto & iter_interfaces :
             ptr_grid_manager_->vec_ptr_grid_info_.at(i_level)->map_ptr_interface_layer_info_) {
             for (const auto & iter_coarse2fine : iter_interfaces.second->vec_outer_coarse2fine_) {
@@ -231,10 +231,10 @@ void AmrManager::InstantiateTimeSteppingScheme() {
 * @param[in]  time_step_background   current background time step.
 * @param[in]  sfbitset_aux   class manages space filling curves.
 */
-void AmrManager::TimeMarching(const DefAmrIndexLUint time_step_background) {
+void AmrManager::TimeMarching(const DefAmrLUint time_step_background) {
     // record number of time step at i_level
-    std::vector<DefAmrIndexUint> time_step_level(ptr_grid_manager_->k0MaxLevel_ + 1, 0);
-    DefAmrIndexUint i_level;
+    std::vector<DefInt> time_step_level(ptr_grid_manager_->k0MaxLevel_ + 1, 0);
+    DefInt i_level;
     DefReal time_step_current;
     for (auto iter_level = ptr_time_stepping_scheme_->k0TimeSteppingOrder_.begin();
         iter_level != ptr_time_stepping_scheme_->k0TimeSteppingOrder_.end(); ++iter_level) {
@@ -266,7 +266,7 @@ void AmrManager::TimeMarching(const DefAmrIndexLUint time_step_background) {
             }
         }
 
-        grid_ref.ptr_solver_->RunSolverOnGrid(k0TimeSteppingType_,
+        grid_ref.ptr_solver_->RunSolverForNodesOnNormalGrid(k0TimeSteppingType_,
             time_step_level[i_level], *ptr_grid_manager_->GetSFBitsetAuxPtr(), &grid_ref);
 
 #ifdef ENABLE_MPI
@@ -277,14 +277,14 @@ void AmrManager::TimeMarching(const DefAmrIndexLUint time_step_background) {
         MpiCommunicationForInterpolation(i_level, ETimingInOneStep::kStepEnd,
             k0TimeSteppingType_, time_step_level[i_level], *ptr_grid_manager_->GetSFBitsetAuxPtr());
 #endif  //  ENABLE_MPI
+
         grid_ref.ptr_solver_->CallDomainBoundaryCondition(k0TimeSteppingType_,
             time_step_level[i_level], *ptr_grid_manager_->GetSFBitsetAuxPtr(), &grid_ref);
+
         // use information in current time step
         grid_ref.ptr_solver_->InformationFromGridOfDifferentLevel(
             ETimingInOneStep::kStepEnd, k0TimeSteppingType_,
             time_step_level[i_level], *ptr_grid_manager_->GetSFBitsetAuxPtr(), &grid_ref);
-
-
     }
 }
 /**
@@ -319,8 +319,8 @@ void AmrManager::FinalizeSimulation() {
     ptr_mpi_manager_->FinalizeMpi();
 #endif  // ENABLE_MPI
 }
-int AmrManager::MpiCommunicationForInterpolation(DefAmrIndexUint i_level, const ETimingInOneStep timing,
-    const ETimeSteppingScheme time_scheme, const DefAmrIndexUint time_step_current,
+int AmrManager::MpiCommunicationForInterpolation(DefInt i_level, const ETimingInOneStep timing,
+    const ETimeSteppingScheme time_scheme, const DefInt time_step_current,
     const amrproject::SFBitsetAuxInterface& sfbitset_aux) {
     GridInfoInterface& grid_info = *(ptr_grid_manager_->vec_ptr_grid_info_.at(i_level));
     if (i_level > 0) {

@@ -29,7 +29,6 @@ void GridInfoLbmInteface::SetCollisionOperator() {
     }
 }
 LbmCollisionOptInterface::LbmCollisionOptInterface(const SolverLbmInterface& lbm_solver) {
-    ptr_lbm_solver_ = const_cast<SolverLbmInterface*>(&lbm_solver);
     viscosity_lbm_ = lbm_solver.k0LbmViscosity_;
 }
 /**

@@ -19,9 +19,9 @@ namespace amrproject {
 * @param[in]  reference_dx reference spatial step.
 * @param[in]  vec_real_offset offsets of the mesh.
 */
-void CriterionManager::InitialAllGeometrySerial(const DefAmrIndexUint dims,
+void CriterionManager::InitialAllGeometrySerial(const DefInt dims,
     const DefReal reference_dx, std::vector<DefReal> vec_real_offset) {
-    numb_of_geometry_ = static_cast<DefAmrIndexUint>(vec_ptr_geometries_.size());
+    numb_of_geometry_ = static_cast<DefInt>(vec_ptr_geometries_.size());
     for (auto i_geo = 0; i_geo < numb_of_geometry_; ++i_geo) {
        // assign offset distance
        bool bool_dims = vec_ptr_geometries_.at(i_geo)->SetOffset(vec_real_offset);

@@ -26,10 +26,10 @@ namespace amrproject {
 * @param[in]  sfbitset_aux   class manage space filling curves.
 * @param[out]  ptr_grid_info grid with updated tracking node information.
 */
-void GeometryConnectionInterface::FindTrackingNodeBasedOnGeo(DefAmrIndexUint i_geo, DefAmrIndexUint i_level,
+void GeometryConnectionInterface::FindTrackingNodeBasedOnGeo(DefInt i_geo, DefInt i_level,
     const EGridExtendType grid_extend_type, const SFBitsetAuxInterface& sfbitset_aux,
     GridInfoInterface* const ptr_grid_info) {
-    DefAmrIndexUint dims = DefAmrIndexUint(ptr_grid_info->grid_space_.size());
+    DefInt dims = DefInt(ptr_grid_info->grid_space_.size());
     if (ptr_grid_info->grid_space_.size() != vertex_given_level_.at(0)
         .vec_vertex_coordinate.at(0).coordinates.size()) {
         LogManager::LogError("Size of grid_space ("
@@ -39,9 +39,9 @@ void GeometryConnectionInterface::FindTrackingNodeBasedOnGeo(DefAmrIndexUint i_g
             .at(0).coordinates.size()) + ") in vertex_given_level_ "
             + " in "+ std::string(__FILE__) + " at line " + std::to_string(__LINE__));
     }
-    DefAmrIndexUint level_diff = ptr_grid_info->i_level_ - i_level;
+    DefInt level_diff = ptr_grid_info->i_level_ - i_level;
 
-    std::pair<ECriterionType, DefAmrIndexUint> key_tracking_grid = { ECriterionType::kGeometry, i_geo };
+    std::pair<ECriterionType, DefInt> key_tracking_grid = { ECriterionType::kGeometry, i_geo };
     ptr_grid_info->map_ptr_tracking_grid_info_
         .at(key_tracking_grid).get()->grid_extend_type_ = grid_extend_type;
     DefMap<TrackingNode>* ptr_tracking_node = &(ptr_grid_info

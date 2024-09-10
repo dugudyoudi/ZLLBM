@@ -33,7 +33,7 @@ class Base64Utility;
 */
 struct TrackingNode {
  public:
-    std::set<std::pair<DefAmrIndexUint, DefSizet>> set_point_index;
+    std::set<std::pair<DefInt, DefSizet>> set_point_index;
     ///< count of this tracking node relies on how many criterion points
     std::vector<DefInt> vec_int{};
     std::vector<DefReal> vec_real{};
@@ -54,7 +54,7 @@ struct GhostNode{
 */
 struct GridNode {
  public:
-    DefAmrUint flag_status_ = 0;
+    DefInt flag_status_ = 0;
     virtual ~GridNode() {}
 
     // functions need to be override for interpolation
@@ -67,7 +67,7 @@ struct GridNode {
 * @brief class to store variables need to output for each node
 */
 struct OutputNodeVariableInfoInterface {
-    DefAmrIndexUint variable_dims_;
+    DefInt variable_dims_;
     std::string output_name_;
     virtual void WriteNodeVariable(const GridNode grid_node){}
 };
@@ -78,13 +78,13 @@ struct OutputNodeVariableInfoInterface {
 class InterfaceLayerInfo {
  public:
     // number of extended based on the interface grid
-    std::vector<DefAmrIndexLUint> k0ExtendOuterNeg_, k0ExtendOuterPos_;
+    std::vector<DefAmrLUint> k0ExtendOuterNeg_, k0ExtendOuterPos_;
     ///< number of extened layers outside the geometry
-    std::vector<DefAmrIndexLUint> k0ExtendInnerNeg_, k0ExtendInnerPos_;
+    std::vector<DefAmrLUint> k0ExtendInnerNeg_, k0ExtendInnerPos_;
     ///< number of extened layers inside the geometry
 
-    std::vector<DefMap<DefAmrUint>> vec_outer_coarse2fine_, vec_outer_fine2coarse_;
-    std::vector<DefMap<DefAmrUint>> vec_inner_coarse2fine_, vec_inner_fine2coarse_;
+    std::vector<DefMap<DefInt>> vec_outer_coarse2fine_, vec_outer_fine2coarse_;
+    std::vector<DefMap<DefInt>> vec_inner_coarse2fine_, vec_inner_fine2coarse_;
 };
 /**
 * @class TrackingGridInfoInterface
@@ -92,23 +92,23 @@ class InterfaceLayerInfo {
 */
 class TrackingGridInfoInterface {
  public:
-    DefAmrUint computational_cost_ = 1;
+    DefInt computational_cost_ = 1;
     std::string node_type_;
     EGridExtendType grid_extend_type_ = EGridExtendType::kSameInAllDirections;
 
     // number of extended based on the tracking grid
-    std::vector<DefAmrIndexLUint> k0ExtendOuterNeg_, k0ExtendOuterPos_;
+    std::vector<DefAmrLUint> k0ExtendOuterNeg_, k0ExtendOuterPos_;
     ///< number of extened layers outside the geometry
-    std::vector<DefAmrIndexLUint> k0ExtendInnerNeg_, k0ExtendInnerPos_;
+    std::vector<DefAmrLUint> k0ExtendInnerNeg_, k0ExtendInnerPos_;
     ///< number of extened layers inside the geometry
 
     // index of creators in corresponding vector
-    DefAmrIndexUint k0IndexCreator = 0;
+    DefInt k0IndexCreator = 0;
 
     // information of TrackingNode
     DefMap<TrackingNode> map_tracking_node_{};
-    DefAmrIndexUint k0NumIntForEachNode_ = 1;
-    DefAmrIndexUint k0NumRealForEachNode_ = 0;
+    DefInt k0NumIntForEachNode_ = 1;
+    DefInt k0NumRealForEachNode_ = 0;
     TrackingNode k0TrackNodeInstance_;
 };
 /**
@@ -129,15 +129,15 @@ class TrackingGridInfoCreatorInterface {
 class GhostGridInfoInterface {
  public:
     // information of grid at each level of refinement
-    DefAmrIndexUint i_level_ = 0;
-    const DefAmrUint kCountIndex_ = 1;
-    DefAmrUint computational_cost_ = 1;
+    DefInt i_level_ = 0;
+    const DefInt kCountIndex_ = 1;
+    DefInt computational_cost_ = 1;
     std::string node_type_;
 
     // information of GhostNode
     DefMap<GhostNode> map_ghost_node_{};
-    DefAmrIndexUint k0NumIntForEachNode_ = 1;
-    DefAmrIndexUint k0NumRealForEachNode_ = 0;
+    DefInt k0NumIntForEachNode_ = 1;
+    DefInt k0NumRealForEachNode_ = 0;
     virtual ~GhostGridInfoInterface() {}
  protected:
     virtual void InitialGhostNode(const DefSFBitset& bitset_in) = 0;
@@ -159,34 +159,34 @@ class GhostGridInfoCreatorInterface {
 class GridInfoInterface {
  public:
     // level of refinement
-    DefAmrIndexUint i_level_ = 0;
+    DefInt i_level_ = 0;
 
     std::map<std::string, void*> kMemberNames_;
     void SetMemberVariable(const std::string& member_name, int value);
 
-    DefAmrUint computational_cost_ = 1;
+    DefInt computational_cost_ = 1;
     std::string node_type_;
     std::vector<DefReal> grid_space_;
     std::shared_ptr<SolverInterface> ptr_solver_ = nullptr;
     SFBitsetAuxInterface* ptr_sfbitset_aux_ = nullptr;
 
-    std::map<std::pair<ECriterionType, DefAmrIndexUint>,
+    std::map<std::pair<ECriterionType, DefInt>,
         std::shared_ptr<TrackingGridInfoInterface>> map_ptr_tracking_grid_info_;
     std::shared_ptr<GhostGridInfoInterface> ptr_ghost_grid_info_;
 
     // interface between grid of different refinement levels
-    DefAmrIndexUint k0NumFine2CoarseLayer_ = 3;  // (k0NumCoarse2FineLayer_)*2 - 1
-    DefAmrIndexUint k0NumCoarse2FineLayer_ = 2;
-    DefAmrIndexUint k0NumFine2CoarseGhostLayer_ = k0NumFine2CoarseLayer_/2 + 1;
-    DefAmrIndexUint k0NumCoarse2FineGhostLayer_ = k0NumCoarse2FineLayer_/2;
-    std::map<std::pair<ECriterionType, DefAmrIndexUint>,
+    DefInt k0NumFine2CoarseLayer_ = 3;  // (k0NumCoarse2FineLayer_)*2 - 1
+    DefInt k0NumCoarse2FineLayer_ = 2;
+    DefInt k0NumFine2CoarseGhostLayer_ = k0NumFine2CoarseLayer_/2 + 1;
+    DefInt k0NumCoarse2FineGhostLayer_ = k0NumCoarse2FineLayer_/2;
+    std::map<std::pair<ECriterionType, DefInt>,
         std::shared_ptr<InterfaceLayerInfo>> map_ptr_interface_layer_info_;
 
     // information of GridNode
     DefMap<std::unique_ptr<GridNode>> map_grid_node_{};
-    DefMap<DefAmrUint> map_grid_count_exist_{};
-    DefAmrIndexUint k0NumIntForEachNode_ = 0;
-    DefAmrIndexUint k0NumRealForEachNode_ = 0;
+    DefMap<DefInt> map_grid_count_exist_{};
+    DefInt k0NumIntForEachNode_ = 0;
+    DefInt k0NumRealForEachNode_ = 0;
     virtual void SetNodeVariablesAsZeros(GridNode* const ptr_node) {}  // will be called in interpolation
 
     // domain boundary related
@@ -196,11 +196,11 @@ class GridInfoInterface {
         kFlagYMaxBoundary_ = 8, kFlagZMinBoundary_ = 16, kFlagZMaxBoundary_ = 32;
     std::vector<DefSFBitset> k0VecBitsetDomainMin_, k0VecBitsetDomainMax_;
     ///< space filling codes of bounds for computational domain
-    std::vector<DefMap<DefAmrIndexUint>> domain_boundary_min_, domain_boundary_max_;
+    std::vector<DefMap<DefInt>> domain_boundary_min_, domain_boundary_max_;
     ///< map storing spacing filling codes of bounds (min and max in each coordinate) for computational domain
-    int CheckIfNodeOutsideCubicDomain(const DefAmrIndexUint dims,
+    int CheckIfNodeOutsideCubicDomain(const DefInt dims,
         const DefSFBitset& bitset_in, const SFBitsetAuxInterface& sfbitset_aux) const;
-    void CheckNodesOnCubicPeriodicBoundary(const DefAmrIndexUint dims, const DefSFBitset& bitset_in,
+    void CheckNodesOnCubicPeriodicBoundary(const DefInt dims, const DefSFBitset& bitset_in,
         const std::vector<bool>& periodic_min, const std::vector<bool>& periodic_max,
         const SFBitsetAuxInterface& sfbitset_aux, std::vector<DefSFBitset>* const ptr_nodes_periodic) const;
 
@@ -221,13 +221,13 @@ class GridInfoInterface {
 
     // time marching related
     virtual void SetUpGridAtBeginningOfTimeStep(
-        const DefAmrIndexUint time_step, GridManagerInterface* const ptr_grid_manager) {}
+        const DefInt time_step, GridManagerInterface* const ptr_grid_manager) {}
 
     // communication between grid of different refinement levels
     virtual int TransferInfoFromCoarseGrid(const SFBitsetAuxInterface& sfbitset_aux,
-        const DefAmrUint node_flag, const GridInfoInterface& grid_info_coarse) {return -1;}
+        const DefInt node_flag, const GridInfoInterface& grid_info_coarse) {return -1;}
     virtual int TransferInfoToCoarseGrid(const SFBitsetAuxInterface& sfbitset_aux,
-        const DefAmrUint node_flag, GridInfoInterface* const ptr_grid_info_coarse) {return -1;}
+        const DefInt node_flag, GridInfoInterface* const ptr_grid_info_coarse) {return -1;}
 
     // debug
     virtual void DebugWrite() {}
@@ -236,9 +236,9 @@ class GridInfoInterface {
     // interpolation
  public:
     EInterpolationMethod interp_method_ = EInterpolationMethod::kLinear;
-    DefAmrIndexLUint max_interp_length_ = 2;
+    DefAmrLUint max_interp_length_ = 2;
     ///< the maximum half length of a cubic region used for interpolation
-    std::function<int(const DefAmrIndexLUint, const DefAmrIndexLUint, const DefAmrUint, const DefSFBitset&,
+    std::function<int(const DefAmrLUint, const DefAmrLUint, const DefInt, const DefSFBitset&,
         const amrproject::SFBitsetAuxInterface&, const std::vector<DefSFBitset>&,
         const DefMap<std::unique_ptr<GridNode>>& nodes_fine, const amrproject::GridInfoInterface& coarse_grid_info,
         const DefMap<std::unique_ptr<GridNode>>& nodes_coarse, GridNode* const ptr_node)> func_node_interp_;
@@ -246,14 +246,14 @@ class GridInfoInterface {
     virtual void NodeInfoCoarse2fine(const GridNode& coarse_node, GridNode* const ptr_fine_node) const {}
     virtual void NodeInfoFine2Coarse(const GridNode& fine_node, GridNode* const ptr_coarse_node) const {}
     // linear interpolation
-    int InterpolationLinear2D(const DefAmrIndexLUint region_length,
-        const DefAmrUint flag_not_for_interp_coarse, const DefSFBitset& sfbitset_in,
+    int InterpolationLinear2D(const DefAmrLUint region_length,
+        const DefInt flag_not_for_interp_coarse, const DefSFBitset& sfbitset_in,
         const SFBitsetAuxInterface& sfbitset_aux, const std::vector<DefSFBitset>& sfbitset_region,
         const DefMap<std::unique_ptr<GridNode>>& nodes_fine,
         const GridInfoInterface& coarse_grid_info, const DefMap<std::unique_ptr<GridNode>>& nodes_coarse,
         GridNode* const ptr_node);
-    int InterpolationLinear3D(const DefAmrIndexLUint region_length,
-        const DefAmrUint flag_not_for_interp_coarse, const DefSFBitset& sfbitset_in,
+    int InterpolationLinear3D(const DefAmrLUint region_length,
+        const DefInt flag_not_for_interp_coarse, const DefSFBitset& sfbitset_in,
         const SFBitsetAuxInterface& sfbitset_aux, const std::vector<DefSFBitset>& sfbitset_region,
         const DefMap<std::unique_ptr<GridNode>>& nodes_fine,
         const GridInfoInterface& coarse_grid_info, const DefMap<std::unique_ptr<GridNode>>& nodes_coarse,
@@ -263,18 +263,18 @@ class GridInfoInterface {
     struct LagrangianCoeff {
         std::vector<DefReal> coeff0, coeff1;
     };
-    std::map<DefAmrIndexLUint, LagrangianCoeff> lagrangian_coefficients_;
+    std::map<DefAmrLUint, LagrangianCoeff> lagrangian_coefficients_;
 
  public:
-    const LagrangianCoeff& CalculateLagrangianInterpCoeff(const DefAmrIndexLUint interp_half_length);
-    int InterpolationLagrangian2D(const DefAmrIndexLUint interpolation_length,
-        const DefAmrIndexLUint region_length, const DefAmrUint flag_not_for_interp_coarse,
+    const LagrangianCoeff& CalculateLagrangianInterpCoeff(const DefAmrLUint interp_half_length);
+    int InterpolationLagrangian2D(const DefAmrLUint interpolation_length,
+        const DefAmrLUint region_length, const DefInt flag_not_for_interp_coarse,
         const DefSFBitset& sfbitset_in, const SFBitsetAuxInterface& sfbitset_aux,
         const std::vector<DefSFBitset>& sfbitset_region, const DefMap<std::unique_ptr<GridNode>>& nodes_fine,
         const GridInfoInterface& coarse_grid_info,
         const DefMap<std::unique_ptr<GridNode>>& nodes_coarse, GridNode* const ptr_node);
-    int InterpolationLagrangian3D(const DefAmrIndexLUint interpolation_length,
-        const DefAmrIndexLUint region_length, const DefAmrUint flag_not_for_interp_coarse,
+    int InterpolationLagrangian3D(const DefAmrLUint interpolation_length,
+        const DefAmrLUint region_length, const DefInt flag_not_for_interp_coarse,
         const DefSFBitset& sfbitset_in, const SFBitsetAuxInterface& sfbitset_aux,
         const std::vector<DefSFBitset>& sfbitset_region, const DefMap<std::unique_ptr<GridNode>>& nodes_fine,
         const GridInfoInterface& coarse_grid_info,
@@ -284,27 +284,27 @@ class GridInfoInterface {
  public:
     DefMap<std::unique_ptr<GridNode>> interp_nodes_outer_layer_;
     int AddGhostNodesForInterpolation(const std::vector<bool>& periodic_min, const std::vector<bool>& periodic_max,
-        const SFBitsetAuxInterface& sfbitset_aux, const DefMap<DefAmrUint>& refinement_interface,
+        const SFBitsetAuxInterface& sfbitset_aux, const DefMap<DefInt>& refinement_interface,
         const DefMap<std::unique_ptr<GridNode>>& map_nodes_lower);
-    virtual bool CheckIfPeriodicDomainRequired(const DefAmrIndexUint dims,
+    virtual bool CheckIfPeriodicDomainRequired(const DefInt dims,
         std::vector<bool>* const ptr_periodic_min, std::vector<bool>* const ptr_periodic_max) const {
         ptr_periodic_min->assign(dims, false);
         ptr_periodic_max->assign(dims, false);
         return false;
     }
     virtual int SizeOfGridNodeInfoForMpiCommunication() const {return 0;}
-    virtual int CopyNodeInfoToBuffer(const DefMap<DefAmrIndexUint>& map_nodes, char* const ptr_buffer) {return 0;}
+    virtual int CopyNodeInfoToBuffer(const DefMap<DefInt>& map_nodes, char* const ptr_buffer) {return 0;}
     virtual int CopyInterpolationNodeInfoToBuffer(const GridInfoInterface& grid_info_lower,
-        const DefMap<DefAmrIndexUint>& map_nodes, char* const ptr_buffer) {return 0;}
+        const DefMap<DefInt>& map_nodes, char* const ptr_buffer) {return 0;}
     virtual int ReadInterpolationNodeInfoFromBuffer(
         const DefSizet buffer_size, const std::unique_ptr<char[]>& buffer) {return 0;}
     virtual void ComputeInfoInMpiLayers(
-        const std::map<int, DefMap<DefAmrIndexUint>>& map_inner_nodes,
-        const DefMap<DefAmrIndexUint>& map_outer_nodes) {}
+        const std::map<int, DefMap<DefInt>>& map_inner_nodes,
+        const DefMap<DefInt>& map_outer_nodes) {}
     virtual void ReadNodeInfoFromBuffer(const DefSizet buffer_size, const std::unique_ptr<char[]>& buffer) {}
-    void SetPeriodicBoundaryAsPartitionInterface(DefAmrIndexUint dims, const SFBitsetAuxInterface& sfbitset_aux,
+    void SetPeriodicBoundaryAsPartitionInterface(DefInt dims, const SFBitsetAuxInterface& sfbitset_aux,
         const std::vector<bool>& bool_periodic_min, const std::vector<bool>& bool_periodic_max,
-        DefMap<DefAmrIndexUint>* const ptr_partition_interface);
+        DefMap<DefInt>* const ptr_partition_interface);
 
     // general purpose functions
     virtual void InitialGridInfo() = 0;

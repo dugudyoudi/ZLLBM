@@ -7,8 +7,8 @@
 * @date  2023-4-25
 * @brief  define classes to store geometry information with isolated points
 */
-#ifndef ROOTPROJECT_AMR_PROJECT_GEOMETRY_GEOMETRY_INFO_ORIGIN_H_
-#define ROOTPROJECT_AMR_PROJECT_GEOMETRY_GEOMETRY_INFO_ORIGIN_H_
+#ifndef SOURCE_AMR_PROJECT_CRITERION_GEOMETRY_INFO_ORIGIN_H_
+#define SOURCE_AMR_PROJECT_CRITERION_GEOMETRY_INFO_ORIGIN_H_
 #include <memory>
 #include <set>
 #include <map>
@@ -83,4 +83,4 @@ class GeometryInfoOrigin3DCreator :public GeometryInfoCreatorInterface {
 #endif  // DEBUG_DISABLE_3D_FUNCTIONS
 }  // end namespace amrproject
 }  // end namespace rootproject
-#endif  // ROOTPROJECT_AMR_PROJECT_GEOMETRY_GEOMETRY_INFO_ORIGIN_H_
+#endif  // SOURCE_AMR_PROJECT_CRITERION_GEOMETRY_INFO_ORIGIN_H_

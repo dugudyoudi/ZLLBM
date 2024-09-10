@@ -26,15 +26,15 @@ void BoundaryBounceBack2D::SetValues(const std::vector<DefReal> values) {
  * @param[out] ptr_grid_info pointer to class storing grid information.
  */
 void BoundaryBounceBack2D::CalBoundaryCondition(const ELbmBoundaryType boundary_type,
-    const DefMap<DefAmrIndexUint>& boundary_nodes,
+    const DefMap<DefInt>& boundary_nodes,
     GridInfoLbmInteface* const ptr_grid_info) const {
     const SolverLbmInterface& lbm_solver = *(std::dynamic_pointer_cast<SolverLbmInterface>(ptr_grid_info->ptr_solver_));
     const DefReal rho0 = lbm_solver.k0Rho_;
     const std::array<DefReal, 2>& velocity = boundary_velocity_;
     DefMap<std::unique_ptr<GridNodeLbm>>& grid_node = *ptr_grid_info->ptr_lbm_grid_nodes_;
-    std::vector<DefAmrIndexUint> indices, inverse_indices;
+    std::vector<DefInt> indices, inverse_indices;
     GetBoundaryNInverseIndices(boundary_type, lbm_solver, &indices, &inverse_indices);
-    DefAmrIndexUint i, num_q_one_direction = static_cast<DefAmrIndexUint>(indices.size());
+    DefInt i, num_q_one_direction = static_cast<DefInt>(indices.size());
     for (const auto& iter_node : boundary_nodes) {
         GridNodeLbm& node = *grid_node.at(iter_node.first);
         for (i = 0; i < num_q_one_direction; ++i) {
@@ -59,15 +59,15 @@ void BoundaryBounceBack3D::SetValues(const std::vector<DefReal> values) {
  * @param[out] ptr_grid_info pointer to class storing grid information.
  */
 void BoundaryBounceBack3D::CalBoundaryCondition(const ELbmBoundaryType boundary_type,
-    const DefMap<DefAmrIndexUint>& boundary_nodes,
+    const DefMap<DefInt>& boundary_nodes,
     GridInfoLbmInteface* const ptr_grid_info) const {
     const SolverLbmInterface& lbm_solver = *(std::dynamic_pointer_cast<SolverLbmInterface>(ptr_grid_info->ptr_solver_));
     const DefReal rho0 = lbm_solver.k0Rho_;
     const std::array<DefReal, 3>& velocity = boundary_velocity_;
     DefMap<std::unique_ptr<GridNodeLbm>>& grid_node = *ptr_grid_info->ptr_lbm_grid_nodes_;
-    std::vector<DefAmrIndexUint> indices, inverse_indices;
+    std::vector<DefInt> indices, inverse_indices;
     GetBoundaryNInverseIndices(boundary_type, lbm_solver, &indices, &inverse_indices);
-    DefAmrIndexUint i, num_q_one_direction = static_cast<DefAmrIndexUint>(indices.size());
+    DefInt i, num_q_one_direction = static_cast<DefInt>(indices.size());
     for (const auto& iter_node : boundary_nodes) {
         GridNodeLbm& node = *grid_node.at(iter_node.first);
         for (i = 0; i < num_q_one_direction; ++i) {
