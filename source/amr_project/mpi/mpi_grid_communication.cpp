@@ -18,15 +18,15 @@ namespace amrproject {
  * @param[in] i_level refinement level corresponding to key of the container storing inner communication layers.
  */
 std::vector<bool> MpiManager::IdentifyRanksReceivingGridNode(const DefInt i_level) const {
-    std::vector<char> send_ranks(num_of_ranks_, 0), receive_ranks(num_of_ranks_, 0);
+    std::vector<int> send_ranks(num_of_ranks_, 0), receive_ranks(num_of_ranks_, 0);
     for (int i_rank = 0; i_rank < num_of_ranks_; ++i_rank) {
         if (mpi_communication_inner_layers_.at(i_level).find(i_rank)
             != mpi_communication_inner_layers_.at(i_level).end()) {
             send_ranks.at(i_rank) = 1;
         }
     }
-    MPI_Alltoall(send_ranks.data(), 1, MPI_CHAR,
-        receive_ranks.data(), 1, MPI_CHAR, MPI_COMM_WORLD);
+    MPI_Alltoall(send_ranks.data(), 1, MPI_INT,
+        receive_ranks.data(), 1, MPI_INT, MPI_COMM_WORLD);
     std::vector<bool> recv_data(receive_ranks.size());
     std::copy(receive_ranks.begin(), receive_ranks.end(), recv_data.begin());
     return recv_data;

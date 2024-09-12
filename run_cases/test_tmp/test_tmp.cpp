@@ -99,11 +99,11 @@ int main(int argc, char** argv) {
     // geometry related parameters //
     ptr_amr_instance_->ptr_grid_manager_->vec_ptr_tracking_info_creator_.push_back(
         std::make_unique<amrproject::TrackingGridInfoCreatorInterface>());
-    amrproject::GeometryInfoOrigin2DCreator geo_creator;
+    amrproject::GeometryInfoOriginCreator geo_creator;
     ptr_amr_instance_->ptr_criterion_manager_->vec_ptr_geometries_.push_back(
-        geo_creator.CreateGeometryInfo());
-    amrproject::GeometryInfoOrigin2D* ptr_geo_tmp =
-        dynamic_cast<amrproject::GeometryInfoOrigin2D*>(ptr_amr_instance_->
+        geo_creator.CreateGeometryInfo(dims));
+    amrproject::GeometryInfoOrigin* ptr_geo_tmp =
+        dynamic_cast<amrproject::GeometryInfoOrigin*>(ptr_amr_instance_->
         ptr_criterion_manager_->vec_ptr_geometries_.at(0).get());
     ptr_geo_tmp->ptr_geo_shape_ = std::make_unique<amrproject::GeoShapeDefaultLine2D>();
     amrproject::GeoShapeDefaultLine2D* ptr_line =
@@ -125,7 +125,7 @@ int main(int argc, char** argv) {
     /* used for generating predefined geometries, number of input parameters
     is based on the type of geometry_shape_*/
     DefReal dx = dx_ / DefReal(std::pow(2, max_refinement_level));
-    ptr_geo_tmp->SetOffset({2*dx, 2*dx});
+    ptr_geo_tmp->SetOffset({2*dx, 2*dx, 2*dx});
 
     lbmproject::SolverCreatorLbmD2Q9 solver_creator = lbmproject::SolverCreatorLbmD2Q9();
     SetTestDependentParameters(solver_creator);

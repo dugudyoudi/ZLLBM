@@ -8,7 +8,7 @@
 * @date  2022-8-5
 */
 #include <limits>
-#include "auxiliary_inline_func.h"
+#include "./auxiliary_inline_func.h"
 #include "io/log_write.h"
 #include "criterion/geometry_default_shape.h"
 #include "criterion/geometry_info_interface.h"
@@ -21,23 +21,22 @@ namespace amrproject {
 */
 void GeoShapeDefaultCircle2D::InitialShape(const DefReal dx_background) {
     if (ptr_geo_info_ == nullptr) {
-        LogManager::LogError("pointer to geometry infomation instance is nullptr in "
-            + std::string(__FILE__) + " at line " + std::to_string(__LINE__));
+        LogManager::LogError("pointer to geometry infomation instance is nullptr");
     }
-    GeometryInfo2DInterface* ptr_geo = dynamic_cast<GeometryInfo2DInterface*>(ptr_geo_info_);
-    const DefReal dx = dx_background/TwoPowerN(ptr_geo->i_level_);
-    ptr_geo->flood_fill_origin_ = ptr_geo->geometry_center_;
-    DefSizet num_points_ = DefSizet(2*kPi*radius_ / dx + kEps) + 1;
-    ptr_geo->coordinate_origin_ = std::vector<GeometryCoordinate2D>(num_points_);
+    const DefReal dx = dx_background/TwoPowerN(ptr_geo_info_->i_level_);
+    ptr_geo_info_->flood_fill_origin_ = ptr_geo_info_->geometry_center_;
+    DefSizet num_points = DefSizet(2*kPi*radius_ / dx + kEps) + 1;
+    ptr_geo_info_->vec_vertices_.resize(num_points);
     DefReal i_real;
-    for (DefSizet i = 0; i < num_points_; ++i) {
-        i_real = (static_cast<DefReal>(i) / static_cast<DefReal>(num_points_));
-        ptr_geo->coordinate_origin_.at(i).coordinate[kXIndex] =
+    for (DefSizet i = 0; i < num_points; ++i) {
+        ptr_geo_info_->vec_vertices_.at(i) = ptr_geo_info_->GeoVertexCreator();
+        i_real = (static_cast<DefReal>(i) / static_cast<DefReal>(num_points));
+        ptr_geo_info_->vec_vertices_.at(i)->coordinate[kXIndex] =
             radius_ * cos(2.f * kPi * i_real)
-            + ptr_geo->geometry_center_[kXIndex] + ptr_geo->k0RealMin_[kXIndex];
-        ptr_geo->coordinate_origin_.at(i).coordinate[kYIndex] =
+            + ptr_geo_info_->geometry_center_[kXIndex] + ptr_geo_info_->k0RealMin_[kXIndex];
+        ptr_geo_info_->vec_vertices_.at(i)->coordinate[kYIndex] =
             radius_ * sin(2.f * kPi * i_real)
-            + ptr_geo->geometry_center_[kYIndex] + ptr_geo->k0RealMin_[kYIndex];
+            + ptr_geo_info_->geometry_center_[kYIndex] + ptr_geo_info_->k0RealMin_[kYIndex];
     }
 }
 void GeoShapeDefaultCircle2D::UpdateShape(const DefReal sum_t) {
@@ -51,20 +50,20 @@ void GeoShapeDefaultLine2D::InitialShape(const DefReal dx) {
         LogManager::LogError("pointer to geometry infomation instance is nullptr in "
             + std::string(__FILE__) + " at line " + std::to_string(__LINE__));
     }
-    GeometryInfo2DInterface* ptr_geo = dynamic_cast<GeometryInfo2DInterface*>(ptr_geo_info_);
-    ptr_geo->flood_fill_origin_ = ptr_geo->geometry_center_;
+    ptr_geo_info_->flood_fill_origin_ = ptr_geo_info_->geometry_center_;
     DefReal length = std::sqrt(Square(end_point_.at(kXIndex) - start_point_.at(kXIndex))
         + Square(end_point_.at(kYIndex) - start_point_.at(kYIndex)));
-    num_points_ = DefSizet(length / dx + kEps) + 1;
-    ptr_geo->coordinate_origin_ = std::vector<GeometryCoordinate2D>(num_points_);
-    DefReal arc = length / num_points_,
+    DefSizet num_points = DefSizet(length / dx + kEps) + 1;
+    ptr_geo_info_->vec_vertices_.resize(num_points);
+    DefReal arc = length / num_points,
         sin_theta = (end_point_.at(kYIndex) - start_point_.at(kYIndex)) / length,
         cos_theta = (end_point_.at(kXIndex) - start_point_.at(kXIndex)) / length;
-    for (DefSizet i = 0; i < num_points_; ++i) {
-        ptr_geo->coordinate_origin_.at(i).coordinate[kXIndex] =
-            start_point_.at(kXIndex) + (i + 0.5) * cos_theta * arc + ptr_geo->k0RealMin_[kXIndex];
-        ptr_geo->coordinate_origin_.at(i).coordinate[kYIndex] =
-            start_point_.at(kYIndex) + (i + 0.5) * sin_theta * arc + ptr_geo->k0RealMin_[kYIndex];
+    for (DefSizet i = 0; i < num_points; ++i) {
+        ptr_geo_info_->vec_vertices_.at(i) = ptr_geo_info_->GeoVertexCreator();
+        ptr_geo_info_->vec_vertices_.at(i)->coordinate[kXIndex] =
+            start_point_.at(kXIndex) + (i + 0.5) * cos_theta * arc + ptr_geo_info_->k0RealMin_[kXIndex];
+        ptr_geo_info_->vec_vertices_.at(i)->coordinate[kYIndex] =
+            start_point_.at(kYIndex) + (i + 0.5) * sin_theta * arc + ptr_geo_info_->k0RealMin_[kYIndex];
     }
 }
 void GeoShapeDefaultLine2D::UpdateShape(const DefReal sum_t) {

@@ -63,7 +63,8 @@ class VtkWriterManager {
  public:
     bool CheckIfLittleEndian() {
         int16_t test_ = 0x0001;
-        return *((char*)&test_) ? true : false;
+        char* test_ptr = reinterpret_cast<char*>(&test_);
+        return *test_ptr ? true : false;
     }
     std::string str_vtk_byte_order_;
     std::string k0StrVtkAsciiOrBinary_;
@@ -140,59 +141,40 @@ class VtkWriterManager {
         const DefMap<std::unique_ptr<GridNode>>& map_grid_node,
         DefMap<DefSizet>* ptr_map_node_index) const;
     void WriteGridCoordinates(FILE* const fp, const bool bool_binary,
-        const OutputDataFormat& output_data_format,
-        const GridManager2D& grid_manager2d,
-        const GridInfoInterface& grid_info,
-        DefMap<DefSizet>* const ptr_map_node_index);
+        const OutputDataFormat& output_data_format, const GridManager2D& grid_manager2d,
+        const GridInfoInterface& grid_info, DefMap<DefSizet>* const ptr_map_node_index);
     void WriteGridCellConnectivity(FILE* const fp, const bool bool_binary,
         const OutputDataFormat& output_data_format,
-        const SFBitsetAux2D& bitset_aux2d,
-        const DefMap<DefSizet>& map_node_index);
+        const SFBitsetAux2D& bitset_aux2d, const DefMap<DefSizet>& map_node_index);
 #endif  // DEBUG_DISABLE_2D_FUNCTIONS
 #ifndef  DEBUG_DISABLE_3D_FUNCTIONS
     void WriteGridCoordinates(FILE* const fp, const bool bool_binary,
-        const OutputDataFormat& output_data_format,
-        const GridManager3D& grid_manager3d,
-        const GridInfoInterface& grid_info,
-        DefMap<DefSizet>* const ptr_map_node_index);
-    std::array<DefSizet, 2> CalculateNumOfGridCells(
-        const bool bool_overlap, const DefInt overlap_flag,
-        const SFBitsetAux3D& sfbitset_aux,
-        const DefMap<std::unique_ptr<GridNode>>& map_grid_node,
+        const OutputDataFormat& output_data_format, const GridManager3D& grid_manager3d,
+        const GridInfoInterface& grid_info, DefMap<DefSizet>* const ptr_map_node_index);
+    std::array<DefSizet, 2> CalculateNumOfGridCells(const bool bool_overlap, const DefInt overlap_flag,
+        const SFBitsetAux3D& sfbitset_aux, const DefMap<std::unique_ptr<GridNode>>& map_grid_node,
         DefMap<DefSizet>* ptr_map_node_index) const;
     void WriteGridCellConnectivity(FILE* const fp, const bool bool_binary,
         const OutputDataFormat& output_data_format,
-        const SFBitsetAux3D& bitset_aux3d,
-        const DefMap<DefSizet>& map_node_index);
+        const SFBitsetAux3D& bitset_aux3d, const DefMap<DefSizet>& map_node_index);
 #endif  // DEBUG_DISABLE_3D_FUNCTIONS
 
     void WriteGeometryPieces(FILE* const fp, const bool bool_binary,
         const DefInt dims, const std::array<DefReal, 3>& grid_offset,
-        const OutputDataFormat& output_data_format,
-        const GeometryInfoInterface& geo_info);
+        const OutputDataFormat& output_data_format, const GeometryInfoInterface& geo_info);
     DefSizet CalculateNumOfGeometryCells(
         const GeometryInfoInterface& geo_info) const;
-    void WriteGeometryCellConnectivitykPolyLine(FILE* const fp,
-        const bool bool_binary, const DefSizet num_points,
-        const OutputDataFormat& output_data_format);
+    void WriteGeometryCellConnectivityPolyLine(FILE* const fp, const bool bool_binary,
+        const DefSizet num_points, const OutputDataFormat& output_data_format);
     void WriteGeometryCellOffset(FILE* const fp, const bool bool_binary,
         const DefSizet num_cell, const EGeometryCellType geometry_cell_type,
         const OutputDataFormat& output_data_format);
     void WriteGeometryCellType(FILE* const fp, const bool bool_binary,
         const DefSizet num_points, const EGeometryCellType geometry_cell_type);
+    DefSizet WriteGeometryCoordinates(FILE* const fp, const bool bool_binary,
+        const DefInt dims, const std::array<DefReal, 3>& grid_offset,
+        const OutputDataFormat& output_data_format, const GeometryInfoInterface& geo_info);
 
-#ifndef  DEBUG_DISABLE_2D_FUNCTIONS
-    DefSizet WriteGeometryCoordinates(FILE* const fp, const bool bool_binary,
-        const DefInt dims, const std::array<DefReal, 3>& grid_offset,
-        const OutputDataFormat& output_data_format,
-        const GeometryInfo2DInterface& geo_info);
-#endif  // DEBUG_DISABLE_2D_FUNCTIONS
-#ifndef  DEBUG_DISABLE_3D_FUNCTIONS
-    DefSizet WriteGeometryCoordinates(FILE* const fp, const bool bool_binary,
-        const DefInt dims, const std::array<DefReal, 3>& grid_offset,
-        const OutputDataFormat& output_data_format,
-        const GeometryInfo3DInterface& geo_info);
-#endif  // DEBUG_DISABLE_3D_FUNCTIONS
 };
 }  // end namespace amrproject
 }  // end namespace rootproject

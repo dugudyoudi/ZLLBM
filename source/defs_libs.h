@@ -73,4 +73,4 @@ const DefReal kPi = DefReal(4.) * atan(DefReal(1.));  /**< Constant: pi*/
 static constexpr DefInt kXIndex = 0, kYIndex = 1, kZIndex = 2;
 /**< indices of vectors for x, y, z directions*/
 }  // end namespace rootproject
-#endif  // ROOTPROJECT_SOURCE_DEF_LIB_H_
+#endif  // SOURCE_DEFS_LIBS_H_

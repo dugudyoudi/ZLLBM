@@ -28,7 +28,7 @@ class CriterionManager {
     std::vector<std::shared_ptr<GeometryInfoInterface>> vec_ptr_geometries_;
 
     void InitialAllGeometrySerial(const DefInt dims,
-        const DefReal reference_dx, std::vector<DefReal> vec_real_offset);
+        const DefReal reference_dx, const std::array<DefReal, 3>& real_offset);
 };
 }  // end namespace amrproject
 }  // end namespace rootproject

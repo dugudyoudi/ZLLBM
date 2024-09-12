@@ -11,12 +11,23 @@
 #include <queue>
 #include <vector>
 #include <string>
-#include "auxiliary_inline_func.h"
+#include "./auxiliary_inline_func.h"
 #include "io/log_write.h"
 #include "criterion/geometry_info_connection.h"
 #include "grid/sfbitset_aux.h"
 namespace rootproject {
 namespace amrproject {
+/**
+* @brief   function to initialize status of geometries
+* @param[in] dx reference spatial step
+* @return  0 successful
+*/
+int GeometryInfoConnection::InitialGeometry(const DefReal dx) {
+    int return_status = 0;
+    this->SetupConnectionParameters(this->geometry_cell_type_);
+    return_status = this->InitialGeometry(dx);
+    return return_status;
+}
 /**
 * @brief function to setup geometry type related parameters.
 * @param[in]  cell_type    type of geometry cell.
@@ -37,15 +48,100 @@ void GeometryConnectionInterface::SetupConnectionParameters(
     }
 }
 /**
-* @brief function to initialize geometry connections.
+* @brief   function to copy coordinates from vector of original coordinates
+*           to that used for identifying connection relations.
+* @param[in]   vec_vertices     original vertices of the geometry.
 * @param[out]  ptr_coordi_min   minimum coordinates of the geometry.
 * @param[out]  ptr_coordi_max   maximum coordinates of the geometry.
 */
-void GeometryConnectionInterface::InitialConnection(
-    std::vector<DefReal>* const ptr_coordi_min,
-    std::vector<DefReal>* const ptr_coordi_max) {
+void GeometryConnectionInterface::InitialCoordinateGivenLevel(
+    const std::vector<std::unique_ptr<GeometryVertex>>& vec_vertices,
+    std::array<DefReal, 3>* const ptr_coordi_min, std::array<DefReal, 3>* const ptr_coordi_max) {
+    vertex_given_level_.push_back({});
+    connection_vertex_given_level_.push_back({});
+    ptr_coordi_min->at(kXIndex) = vec_vertices.at(0)->coordinate.at(kXIndex);
+    ptr_coordi_min->at(kYIndex) = vec_vertices.at(0)->coordinate.at(kYIndex);
+    ptr_coordi_min->at(kZIndex) = vec_vertices.at(0)->coordinate.at(kZIndex);
+    ptr_coordi_max->at(kXIndex) = vec_vertices.at(0)->coordinate.at(kXIndex);
+    ptr_coordi_max->at(kYIndex) = vec_vertices.at(0)->coordinate.at(kYIndex);
+    ptr_coordi_max->at(kZIndex) = vec_vertices.at(0)->coordinate.at(kZIndex);
+    (vertex_given_level_.at(0).vec_vertex_coordinate).resize(vec_vertices.size());
+    DefSizet i_vertex = 0;
+    for (const auto& iter_vertex : vec_vertices) {
+        if (ptr_coordi_min->at(kXIndex) > iter_vertex->coordinate.at(kXIndex)) {
+            ptr_coordi_min->at(kXIndex) = iter_vertex->coordinate.at(kXIndex);
+        } else if (ptr_coordi_max->at(kXIndex) < iter_vertex->coordinate.at(kXIndex)) {
+            ptr_coordi_max->at(kXIndex) = iter_vertex->coordinate.at(kXIndex);
+        }
+        if (ptr_coordi_min->at(kYIndex) > iter_vertex->coordinate.at(kYIndex)) {
+            ptr_coordi_min->at(kYIndex) = iter_vertex->coordinate.at(kYIndex);
+        } else if (ptr_coordi_max->at(kYIndex) < iter_vertex->coordinate.at(kYIndex)) {
+            ptr_coordi_max->at(kYIndex) = iter_vertex->coordinate.at(kYIndex);
+        }
+        if (ptr_coordi_min->at(kZIndex) > iter_vertex->coordinate.at(kZIndex)) {
+            ptr_coordi_min->at(kZIndex) = iter_vertex->coordinate.at(kZIndex);
+        } else if (ptr_coordi_max->at(kZIndex) < iter_vertex->coordinate.at(kZIndex)) {
+            ptr_coordi_max->at(kZIndex) = iter_vertex->coordinate.at(kZIndex);
+        }
+        vertex_given_level_.at(0).vec_vertex_coordinate.at(i_vertex) = GeoConnectionVertexCreator();
+        vertex_given_level_.at(0).vec_vertex_coordinate.at(i_vertex)->coordinate = iter_vertex->coordinate;
+        connection_vertex_given_level_.at(0).insert({ 0, i_vertex });
+        ++i_vertex;
+    }
+}
+/**
+* @brief function to compute distance between two vertices (3D).
+* @param[in]  vertex0     indices of the first vertex.
+* @param[in]  vertex1     indices of the second vertex.
+* @return  distance.
+*/
+DefReal GeometryConnectionInterface::ComputeDistanceFromCoordinates(
+    const std::pair<DefInt, DefSizet>& vertex0, const std::pair<DefInt, DefSizet>& vertex1) {
+    DefReal x_dis = std::fabs(vertex_given_level_.at(vertex0.first)
+        .vec_vertex_coordinate.at(vertex0.second)->coordinate.at(kXIndex)
+        - vertex_given_level_.at(vertex1.first)
+        .vec_vertex_coordinate.at(vertex1.second)->coordinate.at(kXIndex));
+    DefReal y_dis = std::fabs(vertex_given_level_.at(vertex0.first)
+        .vec_vertex_coordinate.at(vertex0.second)->coordinate.at(kYIndex)
+        - vertex_given_level_.at(vertex1.first)
+        .vec_vertex_coordinate.at(vertex1.second)->coordinate.at(kYIndex));
+    DefReal z_dis = std::fabs(vertex_given_level_.at(vertex0.first)
+        .vec_vertex_coordinate.at(vertex0.second)->coordinate.at(kZIndex)
+        - vertex_given_level_.at(vertex1.first)
+        .vec_vertex_coordinate.at(vertex1.second)->coordinate.at(kZIndex));
+    return sqrt(x_dis * x_dis + y_dis * y_dis + z_dis * z_dis);
+}
+/**
+* @brief function to compute coordinates of the mid point of two vertices (3D).
+* @param[in]  vertex0     indices of the first vertex.
+* @param[in]  vertex1     indices of the second vertex.
+* @param[out]  ptr_coordinates mid point coordinates.
+*/
+void GeometryConnectionInterface::ComputeMidCoordinates(const std::pair<DefInt, DefSizet>& vertex0,
+    const std::pair<DefInt, DefSizet>& vertex1, std::array<DefReal, 3>* const ptr_coordinates) {
+    ptr_coordinates->at(kXIndex) = (vertex_given_level_.at(vertex0.first)
+        .vec_vertex_coordinate.at(vertex0.second)->coordinate.at(kXIndex)
+        + vertex_given_level_.at(vertex1.first).vec_vertex_coordinate
+        .at(vertex1.second)->coordinate.at(kXIndex)) / 2.;
+    ptr_coordinates->at(kYIndex) = (vertex_given_level_.at(vertex0.first)
+        .vec_vertex_coordinate.at(vertex0.second)->coordinate.at(kYIndex)
+        + vertex_given_level_.at(vertex1.first).vec_vertex_coordinate
+        .at(vertex1.second)->coordinate.at(kYIndex)) / 2.;
+    ptr_coordinates->at(kZIndex) = (vertex_given_level_.at(vertex0.first)
+        .vec_vertex_coordinate.at(vertex0.second)->coordinate.at(kZIndex)
+        + vertex_given_level_.at(vertex1.first).vec_vertex_coordinate
+        .at(vertex1.second)->coordinate.at(kZIndex)) / 2.;
+}
+/**
+* @brief function to initialize geometry connections.
+* @param[in]   vec_vertices     original vertices of the geometry.
+* @param[out]  ptr_coordi_min   minimum coordinates of the geometry.
+* @param[out]  ptr_coordi_max   maximum coordinates of the geometry.
+*/
+void GeometryConnectionInterface::InitialConnection(const std::vector<std::unique_ptr<GeometryVertex>>& vec_vertices,
+    std::array<DefReal, 3>* const ptr_coordi_min, std::array<DefReal, 3>* const ptr_coordi_max) {
     // step 1: add all geometry points to vertex_given_level_
-    InitialCoordinateGivenLevel(ptr_coordi_min, ptr_coordi_max);
+    InitialCoordinateGivenLevel(vec_vertices, ptr_coordi_min, ptr_coordi_max);
     // add connection relations for edges and surfaces
     GeometryConnectionEdge edge_tmp;
     GeometryConnectionSurface surface_tmp;
@@ -78,45 +174,36 @@ void GeometryConnectionInterface::InitialConnection(
                 i_vertex = i + 1;
             }
             if (vertex_given_level_.at(0).vec_vertex_coordinate
-                .at(iter_connection.at(i))
-                .map_linked_vertices_level.empty()) {
+                .at(iter_connection.at(i))->map_linked_vertices_level.empty()) {
                 vertex_given_level_.at(0).vec_vertex_coordinate
-                    .at(iter_connection.at(i))
-                    .map_linked_vertices_level.insert({ DefInt(0), {} });
+                    .at(iter_connection.at(i))->map_linked_vertices_level.insert(
+                    std::make_pair(0, std::set<std::pair<DefInt, DefSizet>>{}));
             }
             vertex_given_level_.at(0).vec_vertex_coordinate
-                .at(iter_connection.at(i)).map_linked_vertices_level
-               .at(0).insert({ 0, iter_connection.at(i_vertex) });
+                .at(iter_connection.at(i))->map_linked_vertices_level
+                .at(0).insert({ 0, iter_connection.at(i_vertex) });
             if (vertex_given_level_.at(0).vec_vertex_coordinate
-                .at(iter_connection.at(i_vertex))
-                .map_linked_vertices_level.empty()) {
+                .at(iter_connection.at(i_vertex))->map_linked_vertices_level.empty()) {
                 vertex_given_level_.at(0).vec_vertex_coordinate
-                    .at(iter_connection.at(i_vertex))
-                    .map_linked_vertices_level.insert({ DefInt(0), {} });
+                    .at(iter_connection.at(i_vertex))->map_linked_vertices_level.insert(
+                    std::make_pair(0, std::set<std::pair<DefInt, DefSizet>>{}));
             }
             vertex_given_level_.at(0).vec_vertex_coordinate
-                .at(iter_connection.at(i_vertex))
-                .map_linked_vertices_level.at(0).insert(
-                    { 0, iter_connection.at(i) });
+                .at(iter_connection.at(i_vertex))->map_linked_vertices_level.at(0).insert(
+                { 0, iter_connection.at(i)});
             // edges
             if (iter_connection.at(i) > iter_connection.at(i_vertex)) {
-                vertex_index0 = std::make_pair(
-                    0, iter_connection.at(i));
-                vertex_index1 = std::make_pair(
-                    0, iter_connection.at(i_vertex));
+                vertex_index0 = std::make_pair(0, iter_connection.at(i));
+                vertex_index1 = std::make_pair(0, iter_connection.at(i_vertex));
             } else {
-                vertex_index0 = std::make_pair(
-                    0, iter_connection.at(i_vertex));
-                vertex_index1 = std::make_pair(
-                    0, iter_connection.at(i));
+                vertex_index0 = std::make_pair(0, iter_connection.at(i_vertex));
+                vertex_index1 = std::make_pair(0, iter_connection.at(i));
             }
             if (connection_edge_given_level_.at(0).map_edge_connection
                 .find(std::make_pair(vertex_index0, vertex_index1))
-                == connection_edge_given_level_.at(0)
-                .map_edge_connection.end()) {
+                == connection_edge_given_level_.at(0).map_edge_connection.end()) {
                 connection_edge_given_level_.at(0).map_edge_connection
-                    .insert({ std::make_pair(vertex_index0, vertex_index1),
-                        edge_tmp });
+                    .insert({ std::make_pair(vertex_index0, vertex_index1), edge_tmp });
             } else {
                 connection_edge_given_level_.at(0).map_edge_connection
                     .at(std::make_pair(vertex_index0, vertex_index1))
@@ -158,7 +245,9 @@ void GeometryConnectionInterface::BisectEdgeOnce(
     for (const auto iter : sfbitset_aux.k0SpaceBackground_) {
         grid_space.push_back(iter / grid_scale);
     }
-    vertex_instance_.highest_grid_level = i_grid_level;
+    std::array<DefReal, 3> coordinate;
+    std::array<std::pair<DefInt, DefSizet>, 2> parent_vertices_tmp;
+    DefInt highest_grid_level = i_grid_level;
     for (const auto& iter_edge : edge_for_bisect) {
         if (connection_edge_given_level_.at(i_input_level).map_edge_connection.find(iter_edge)
          == connection_edge_given_level_.at(i_input_level).map_edge_connection.end()) {
@@ -173,31 +262,29 @@ void GeometryConnectionInterface::BisectEdgeOnce(
         }
         dis = ComputeDistanceFromCoordinates(iter_edge.first, iter_edge.second);
         if (dis > ds_max) {  // edge needs to bisect
-            ComputeMidCoordinates(iter_edge.first, iter_edge.second, &vertex_instance_.coordinates);
-            vertex_instance_.parent_vertices.at(0) = iter_edge.first;
-            vertex_instance_.parent_vertices.at(1) = iter_edge.second;
+            ComputeMidCoordinates(iter_edge.first, iter_edge.second, &coordinate);
+            parent_vertices_tmp.at(0) = iter_edge.first;
+            parent_vertices_tmp.at(1) = iter_edge.second;
             // indices of the added vertex
             if (iter_edge.first.first > iter_edge.second.first) {
                 vertex_index_tmp.first = iter_edge.first.first + 1;
             } else {
                 vertex_index_tmp.first = iter_edge.second.first + 1;
             }
-            if (vertex_given_level_.size() > vertex_index_tmp.first) {
-                vertex_given_level_.at(vertex_index_tmp.first)
-                    .vec_vertex_coordinate.push_back(vertex_instance_);
-            } else {
+            if (vertex_given_level_.size() <= vertex_index_tmp.first) {
                 vertex_given_level_.push_back({});
-                vertex_given_level_.at(vertex_index_tmp.first)
-                    .vec_vertex_coordinate = { vertex_instance_ };
             }
+            vertex_given_level_.at(vertex_index_tmp.first)
+                .vec_vertex_coordinate.push_back(GeoConnectionVertexCreator());
+            vertex_given_level_.at(vertex_index_tmp.first).vec_vertex_coordinate
+                .back()->SetValues(highest_grid_level, parent_vertices_tmp, coordinate);
             // sfbitset of at vertex at i_grid_level
             sfbitset_tmp = sfbitset_aux.SFBitsetEncodingCoordi(
-                grid_space, vertex_instance_.coordinates);
+                grid_space, {coordinate.at(0), coordinate.at(1), coordinate.at(2)});
             vertex_given_level_.at(vertex_index_tmp.first)
-                .vec_vertex_coordinate.back().map_bitset_ref
+                .vec_vertex_coordinate.back()->map_bitset_ref
                 .insert({ i_grid_level, sfbitset_tmp });
-            if (ptr_sfbitset_ref_added->find(sfbitset_tmp)
-                == ptr_sfbitset_ref_added->end()) {
+            if (ptr_sfbitset_ref_added->find(sfbitset_tmp) == ptr_sfbitset_ref_added->end()) {
                 ptr_sfbitset_ref_added->insert({ sfbitset_tmp, 1 });
             } else {
                 ++ptr_sfbitset_ref_added->at(sfbitset_tmp);
@@ -207,10 +294,10 @@ void GeometryConnectionInterface::BisectEdgeOnce(
                 .at(vertex_index_tmp.first).vec_vertex_coordinate.size() - 1;
             vertex_given_level_.at(iter_edge.first.first)
                 .vec_vertex_coordinate.at(iter_edge.first.second)
-                .child_vertices.insert(vertex_index_tmp);
+                ->child_vertices.insert(vertex_index_tmp);
             vertex_given_level_.at(iter_edge.second.first)
                 .vec_vertex_coordinate.at(iter_edge.second.second)
-                .child_vertices.insert(vertex_index_tmp);
+                ->child_vertices.insert(vertex_index_tmp);
             if (connection_vertex_given_level_.size() <= i_input_level) {
                 connection_vertex_given_level_.push_back({});
             }
@@ -219,20 +306,16 @@ void GeometryConnectionInterface::BisectEdgeOnce(
             // update connection of linked vertices
             vertex_given_level_.at(iter_edge.first.first)
                 .vec_vertex_coordinate.at(iter_edge.first.second)
-                .map_linked_vertices_level.at(i_input_level)
-                .erase(iter_edge.second);
+                ->map_linked_vertices_level.at(i_input_level).erase(iter_edge.second);
             vertex_given_level_.at(iter_edge.first.first)
                 .vec_vertex_coordinate.at(iter_edge.first.second)
-                .map_linked_vertices_level.at(i_input_level)
-                .insert(vertex_index_tmp);
+                ->map_linked_vertices_level.at(i_input_level).insert(vertex_index_tmp);
             vertex_given_level_.at(iter_edge.second.first)
                 .vec_vertex_coordinate.at(iter_edge.second.second)
-                .map_linked_vertices_level.at(i_input_level)
-                .erase(iter_edge.first);
+                ->map_linked_vertices_level.at(i_input_level).erase(iter_edge.first);
             vertex_given_level_.at(iter_edge.second.first)
                 .vec_vertex_coordinate.at(iter_edge.second.second)
-                .map_linked_vertices_level.at(i_input_level)
-                .insert(vertex_index_tmp);
+                ->map_linked_vertices_level.at(i_input_level).insert(vertex_index_tmp);
             // create new surfaces and update connection information
             num_surface = connection_surface_given_level_.
                 at(i_input_level).vec_surface_connection.size();
@@ -428,11 +511,19 @@ void GeometryConnectionInterface::BisectEdgeOnce(
         }
     }
 }
-void GeometryConnectionInterface::MergeEdgeOnce(
-    const DefInt i_level, const DefInt i_input_level, const DefReal ds_min,
-    const SFBitsetAuxInterface& sfbitset_aux,
-    const std::set<std::pair<std::pair<DefInt, DefSizet>,
-     std::pair<DefInt, DefSizet>>>& edge_for_merge,
+/**
+* @brief function to merge edge.
+* @param[in]  i_level    level of geometry.
+* @param[in]  i_input_level    level of current connection relations.
+* @param[in]  ds_min    lower threshold of the edge length.
+* @param[in]  sfbitset_aux class manage space filling curves.
+* @param[in]  edge_for_merge    edges need to be merged.
+* @param[out]  ptr_surface_remain_for_bisect    edge remain to be bisected.
+* @param[out]  ptr_sfbitset_ref_added space filling code corresponding to added vertices.            
+*/
+void GeometryConnectionInterface::MergeEdgeOnce(const DefInt i_level,
+    const DefInt i_input_level, const DefReal ds_min, const SFBitsetAuxInterface& sfbitset_aux,
+    const std::set<std::pair<std::pair<DefInt, DefSizet>, std::pair<DefInt, DefSizet>>>& edge_for_merge,
     std::set<std::pair<std::pair<DefInt, DefSizet>, std::pair<DefInt, DefSizet>>>*
      const ptr_edge_remain_for_merge, DefMap<DefInt>* const ptr_sfbitset_ref_removed) {
     DefSizet i_vertex, i_vertex0, i_vertex1;
@@ -491,14 +582,14 @@ void GeometryConnectionInterface::MergeEdgeOnce(
                 for (const auto& iter_surface : connection_edge_given_level_
                  .at(i_input_level).map_edge_connection.at(std::make_pair(
                  vertex_tmp0, vertex_given_level_.at(level_remove).vec_vertex_coordinate
-                 .at(vertex_remove).parent_vertices.at(0))).set_index_surfaces) {
+                 .at(vertex_remove)->parent_vertices.at(0))).set_index_surfaces) {
                     surface_process.insert(connection_surface_given_level_
                      .at(i_input_level).vec_surface_connection.at(iter_surface).parent_surface);
                 }
                 vertex_tmp1 = vertex_given_level_.at(level_remove)
-                 .vec_vertex_coordinate.at(vertex_remove).parent_vertices.at(0);
+                 .vec_vertex_coordinate.at(vertex_remove)->parent_vertices.at(0);
                 vertex_tmp2 = vertex_given_level_.at(level_remove)
-                 .vec_vertex_coordinate.at(vertex_remove).parent_vertices.at(1);
+                 .vec_vertex_coordinate.at(vertex_remove)->parent_vertices.at(1);
 
                 // insert merged edge
                 if (vertex_tmp1 >vertex_tmp2) {
@@ -529,33 +620,26 @@ void GeometryConnectionInterface::MergeEdgeOnce(
             (set_vertex_remain);
         set_vertex_remain.clear();
         for (const auto& iter_vertex : set_vertex_remain_tmp) {
-            if (set_vertex_processed.find(iter_vertex)
-                == set_vertex_processed.end()) {
+            if (set_vertex_processed.find(iter_vertex) == set_vertex_processed.end()) {
                 set_vertex_processed.insert(iter_vertex);
                 // add its child vertices to set_vertex_remain
-                for (const auto& iter_child : vertex_given_level_
-                    .at(iter_vertex.first).vec_vertex_coordinate
-                    .at(iter_vertex.second).child_vertices) {
-                    set_vertex_remain.insert(std::make_pair(
-                        iter_child.first, iter_child.second));
+                for (const auto& iter_child : vertex_given_level_.at(iter_vertex.first)
+                    .vec_vertex_coordinate.at(iter_vertex.second)->child_vertices) {
+                    set_vertex_remain.insert(std::make_pair(iter_child.first, iter_child.second));
                 }
-                if (vertex_given_level_.at(iter_vertex.first)
-                    .vec_vertex_coordinate.at(iter_vertex.second)
-                    .map_linked_vertices_level.find(i_input_level)
-                    != vertex_given_level_.at(iter_vertex.first)
-                    .vec_vertex_coordinate.at(iter_vertex.second)
-                    .map_linked_vertices_level.end()) {
+                if (vertex_given_level_.at(iter_vertex.first).vec_vertex_coordinate
+                    .at(iter_vertex.second)->map_linked_vertices_level.find(i_input_level)
+                    != vertex_given_level_.at(iter_vertex.first).vec_vertex_coordinate
+                    .at(iter_vertex.second)->map_linked_vertices_level.end()) {
                     // delete linkage of the current vertex from others
                     for (const auto& iter_linked_vertex :
                         vertex_given_level_.at(iter_vertex.first)
                         .vec_vertex_coordinate.at(iter_vertex.second)
-                        .map_linked_vertices_level.at(i_input_level)) {
+                        ->map_linked_vertices_level.at(i_input_level)) {
                         vertex_given_level_.at(iter_linked_vertex.first)
-                            .vec_vertex_coordinate
-                            .at(iter_linked_vertex.second)
-                            .map_linked_vertices_level.at(i_input_level)
-                            .erase(std::make_pair(
-                                iter_vertex.first, iter_vertex.second));
+                            .vec_vertex_coordinate.at(iter_linked_vertex.second)
+                            ->map_linked_vertices_level.at(i_input_level)
+                            .erase(std::make_pair(iter_vertex.first, iter_vertex.second));
                         // remove edges
                         if (iter_vertex > iter_linked_vertex) {
                             connection_edge_given_level_.at(i_input_level).map_edge_connection
@@ -566,12 +650,10 @@ void GeometryConnectionInterface::MergeEdgeOnce(
                         }
                     }
                     // remove linkage of the current vertex at (i_input_level)
-                    vertex_given_level_.at(iter_vertex.first)
-                     .vec_vertex_coordinate.at(iter_vertex.second)
-                     .map_linked_vertices_level.erase(i_input_level);
-                    if (vertex_given_level_.at(iter_vertex.first)
-                     .vec_vertex_coordinate.at(iter_vertex.second)
-                     .map_linked_vertices_level.empty()) {
+                    vertex_given_level_.at(iter_vertex.first).vec_vertex_coordinate
+                        .at(iter_vertex.second)->map_linked_vertices_level.erase(i_input_level);
+                    if (vertex_given_level_.at(iter_vertex.first).vec_vertex_coordinate
+                        .at(iter_vertex.second)->map_linked_vertices_level.empty()) {
                         set_vertex_remove.insert(iter_vertex);
                     }
                 } else {
@@ -607,9 +689,8 @@ void GeometryConnectionInterface::MergeEdgeOnce(
                 connection_surface_given_level_.at(i_input_level)
                 .vec_surface_connection.at(vec_last));
             // update child and parent relation
-            for (const auto iter_c : connection_surface_given_level_
-                .at(i_input_level).vec_surface_connection.at(*iter_surface)
-                .child_surface) {
+            for (const auto iter_c : connection_surface_given_level_.at(i_input_level)
+                .vec_surface_connection.at(*iter_surface).child_surface) {
                 connection_surface_given_level_.at(i_input_level)
                     .vec_surface_connection.at(iter_c).parent_surface
                     = *iter_surface;
@@ -617,8 +698,7 @@ void GeometryConnectionInterface::MergeEdgeOnce(
             for (auto& iter_c : connection_surface_given_level_
                 .at(i_input_level).vec_surface_connection.at(
                 connection_surface_given_level_.at(i_input_level)
-                .vec_surface_connection.at(*iter_surface)
-                .parent_surface).child_surface) {
+                .vec_surface_connection.at(*iter_surface).parent_surface).child_surface) {
                 if (iter_c == vec_last) {
                     iter_c = *iter_surface;
                     break;
@@ -626,8 +706,7 @@ void GeometryConnectionInterface::MergeEdgeOnce(
             }
             // update index of surface in edges
             max_vertex = connection_surface_given_level_.at(i_input_level)
-                .vec_surface_connection.at(*iter_surface)
-                .vertex_connection.size() - 1;
+                .vec_surface_connection.at(*iter_surface).vertex_connection.size() - 1;
             for (DefSizet i = 0; i <= max_vertex; ++i) {
                 if (i == max_vertex) {
                     if (!bool_periodic_connection_) {
@@ -673,8 +752,7 @@ void GeometryConnectionInterface::MergeEdgeOnce(
                 }
             }
         }
-        connection_surface_given_level_.at(i_input_level)
-            .vec_surface_connection.pop_back();
+        connection_surface_given_level_.at(i_input_level).vec_surface_connection.pop_back();
     }
     // grid space
     std::vector<DefReal> grid_space;
@@ -699,20 +777,20 @@ void GeometryConnectionInterface::AddNewLinkage(const DefInt i_input_level,
     const std::pair<DefInt, DefSizet>& vertex_origin) {
     if (vertex_given_level_.at(vertex_new.first)
         .vec_vertex_coordinate.at(vertex_new.second)
-        .map_linked_vertices_level.find(i_input_level)
+        ->map_linked_vertices_level.find(i_input_level)
         == vertex_given_level_.at(vertex_new.first)
         .vec_vertex_coordinate.at(vertex_new.second)
-        .map_linked_vertices_level.end()) {
+        ->map_linked_vertices_level.end()) {
         vertex_given_level_.at(vertex_new.first).vec_vertex_coordinate
-            .at(vertex_new.second).map_linked_vertices_level.insert({
+            .at(vertex_new.second)->map_linked_vertices_level.insert({
                i_input_level, {vertex_origin}});
     } else {
         vertex_given_level_.at(vertex_new.first).vec_vertex_coordinate
-            .at(vertex_new.second).map_linked_vertices_level.at(i_input_level)
+            .at(vertex_new.second)->map_linked_vertices_level.at(i_input_level)
             .insert(vertex_origin);
     }
     vertex_given_level_.at(vertex_origin.first).vec_vertex_coordinate
-        .at(vertex_origin.second).map_linked_vertices_level
+        .at(vertex_origin.second)->map_linked_vertices_level
         .at(i_input_level).insert(vertex_new);
 }
 /**
@@ -736,28 +814,24 @@ void GeometryConnectionInterface::RemoveVertex(const DefInt i_input_level,
     for (auto iter_vertex = set_vertex_remove.rbegin();
         iter_vertex != set_vertex_remove.rend(); ++iter_vertex) {
         // sfbitset of a vertex at i_grid_level
+        std::array<DefReal, 3>& coordi(vertex_given_level_.at(iter_vertex->first)
+            .vec_vertex_coordinate.at(iter_vertex->second)->coordinate);
         sfbitset_tmp = sfbitset_aux.SFBitsetEncodingCoordi(
-            grid_space, vertex_given_level_.at(iter_vertex->first)
-            .vec_vertex_coordinate.at(iter_vertex->second).coordinates);
-        if (ptr_sfbitset_ref_removed->find(sfbitset_tmp)
-            == ptr_sfbitset_ref_removed->end()) {
+            grid_space, {coordi[0], coordi[1], coordi[2]});
+        if (ptr_sfbitset_ref_removed->find(sfbitset_tmp) == ptr_sfbitset_ref_removed->end()) {
             ptr_sfbitset_ref_removed->insert({ sfbitset_tmp, 1 });
         } else {
             ++ptr_sfbitset_ref_removed->at(sfbitset_tmp);
         }
         // delete child relation for the vertex to be removed
         vertex_tmp0 = vertex_given_level_.at(iter_vertex->first)
-            .vec_vertex_coordinate.at(iter_vertex->second)
-            .parent_vertices.at(0);
+            .vec_vertex_coordinate.at(iter_vertex->second)->parent_vertices.at(0);
         vertex_given_level_.at(vertex_tmp0.first)
-            .vec_vertex_coordinate.at(vertex_tmp0.second)
-            .child_vertices.erase(*iter_vertex);
+            .vec_vertex_coordinate.at(vertex_tmp0.second)->child_vertices.erase(*iter_vertex);
         vertex_tmp0 = vertex_given_level_.at(iter_vertex->first)
-            .vec_vertex_coordinate.at(iter_vertex->second)
-            .parent_vertices.at(1);
+            .vec_vertex_coordinate.at(iter_vertex->second)->parent_vertices.at(1);
         vertex_given_level_.at(vertex_tmp0.first)
-            .vec_vertex_coordinate.at(vertex_tmp0.second)
-            .child_vertices.erase(*iter_vertex);
+            .vec_vertex_coordinate.at(vertex_tmp0.second)->child_vertices.erase(*iter_vertex);
 
         vec_last = vertex_given_level_.at(iter_vertex->first)
             .vec_vertex_coordinate.size() - 1;
@@ -765,23 +839,17 @@ void GeometryConnectionInterface::RemoveVertex(const DefInt i_input_level,
             // update child relation for the last vertex
             vertex_tmp1 = std::make_pair(iter_vertex->first, vec_last);
             vertex_tmp0 = vertex_given_level_.at(vertex_tmp1.first)
-                .vec_vertex_coordinate.at(vertex_tmp1.second)
-                .parent_vertices.at(0);
+                .vec_vertex_coordinate.at(vertex_tmp1.second)->parent_vertices.at(0);
             vertex_given_level_.at(vertex_tmp0.first)
-                .vec_vertex_coordinate.at(vertex_tmp0.second)
-                .child_vertices.erase(vertex_tmp1);
+                .vec_vertex_coordinate.at(vertex_tmp0.second)->child_vertices.erase(vertex_tmp1);
             vertex_given_level_.at(vertex_tmp0.first)
-                .vec_vertex_coordinate.at(vertex_tmp0.second)
-                .child_vertices.insert(*iter_vertex);
+                .vec_vertex_coordinate.at(vertex_tmp0.second)->child_vertices.insert(*iter_vertex);
             vertex_tmp0 = vertex_given_level_.at(vertex_tmp1.first)
-                .vec_vertex_coordinate.at(vertex_tmp1.second)
-                .parent_vertices.at(1);
+                .vec_vertex_coordinate.at(vertex_tmp1.second)->parent_vertices.at(1);
             vertex_given_level_.at(vertex_tmp0.first)
-                .vec_vertex_coordinate.at(vertex_tmp0.second)
-                .child_vertices.erase(vertex_tmp1);
+                .vec_vertex_coordinate.at(vertex_tmp0.second)->child_vertices.erase(vertex_tmp1);
             vertex_given_level_.at(vertex_tmp0.first)
-                .vec_vertex_coordinate.at(vertex_tmp0.second)
-                .child_vertices.insert(*iter_vertex);
+                .vec_vertex_coordinate.at(vertex_tmp0.second)->child_vertices.insert(*iter_vertex);
             // swap vertices
             std::swap(vertex_given_level_.at(iter_vertex->first)
                 .vec_vertex_coordinate.at(iter_vertex->second),
@@ -794,29 +862,23 @@ void GeometryConnectionInterface::RemoveVertex(const DefInt i_input_level,
                     .erase({ iter_vertex->first, vec_last });
             }
             // update parent relation
-            for (auto& iter_child : vertex_given_level_
-                .at(iter_vertex->first).vec_vertex_coordinate
-                .at(iter_vertex->second).child_vertices) {
-                if (vertex_given_level_.at(iter_child.first)
-                    .vec_vertex_coordinate.at(iter_child.second)
-                    .parent_vertices.at(0).first == iter_vertex->first
-                    && vertex_given_level_.at(iter_child.first)
-                    .vec_vertex_coordinate.at(iter_child.second)
-                    .parent_vertices.at(0).second == vec_last) {
-                    vertex_given_level_.at(iter_child.first)
-                        .vec_vertex_coordinate.at(iter_child.second)
-                        .parent_vertices.at(0).second
-                        = iter_vertex->second;
+            for (auto& iter_child : vertex_given_level_.at(iter_vertex->first)
+                .vec_vertex_coordinate.at(iter_vertex->second)->child_vertices) {
+                if (vertex_given_level_.at(iter_child.first).vec_vertex_coordinate
+                    .at(iter_child.second)->parent_vertices.at(0).first == iter_vertex->first
+                    && vertex_given_level_.at(iter_child.first).vec_vertex_coordinate
+                    .at(iter_child.second)->parent_vertices.at(0).second == vec_last) {
+                    vertex_given_level_.at(iter_child.first).vec_vertex_coordinate
+                        .at(iter_child.second)->parent_vertices.at(0).second = iter_vertex->second;
                 } else {
-                    vertex_given_level_.at(iter_child.first)
-                        .vec_vertex_coordinate.at(iter_child.second)
-                        .parent_vertices.at(1).second = iter_vertex->second;
+                    vertex_given_level_.at(iter_child.first).vec_vertex_coordinate
+                        .at(iter_child.second)->parent_vertices.at(1).second = iter_vertex->second;
                 }
             }
             DefInt level_diff;
             for (const auto& iter_link_level : vertex_given_level_
                 .at(iter_vertex->first).vec_vertex_coordinate
-                .at(iter_vertex->second).map_linked_vertices_level) {
+                .at(iter_vertex->second)->map_linked_vertices_level) {
                 // at all the levels connected to the vertex
                 level_diff = iter_link_level.first;
                 for (const auto& iter_link : iter_link_level.second) {
@@ -824,26 +886,20 @@ void GeometryConnectionInterface::RemoveVertex(const DefInt i_input_level,
                     // update linkage
                     vertex_given_level_.at(iter_link.first)
                         .vec_vertex_coordinate.at(iter_link.second)
-                        .map_linked_vertices_level.at(level_diff)
-                        .erase(vertex_tmp0);
+                        ->map_linked_vertices_level.at(level_diff).erase(vertex_tmp0);
                     vertex_given_level_.at(iter_link.first)
                         .vec_vertex_coordinate.at(iter_link.second)
-                        .map_linked_vertices_level.at(level_diff)
-                        .insert(*iter_vertex);
+                        ->map_linked_vertices_level.at(level_diff).insert(*iter_vertex);
                     // update edge and surface for the swapped node
                     if (vertex_tmp0 > iter_link) {
                         edge_index0 = { vertex_tmp0,  iter_link };
                     } else {
                         edge_index0 = { iter_link, vertex_tmp0};
                     }
-                    for (const auto& iter_surface :
-                        connection_edge_given_level_.at(level_diff)
-                       .map_edge_connection.at(edge_index0)
-                        .set_index_surfaces) {
-                        for (auto& iter_sf_vertex :
-                            connection_surface_given_level_.at(level_diff)
-                            .vec_surface_connection.at(iter_surface)
-                            .vertex_connection) {
+                    for (const auto& iter_surface : connection_edge_given_level_
+                        .at(level_diff).map_edge_connection.at(edge_index0).set_index_surfaces) {
+                        for (auto& iter_sf_vertex : connection_surface_given_level_.at(level_diff)
+                            .vec_surface_connection.at(iter_surface).vertex_connection) {
                             if (iter_sf_vertex == vertex_tmp0) {
                                 iter_sf_vertex = *iter_vertex;
                             }
@@ -859,26 +915,22 @@ void GeometryConnectionInterface::RemoveVertex(const DefInt i_input_level,
                         == connection_edge_given_level_.at(level_diff)
                         .map_edge_connection.end()) {
                         auto edge_move = connection_edge_given_level_
-                            .at(level_diff).map_edge_connection.
-                            extract(edge_index0);
+                            .at(level_diff).map_edge_connection.extract(edge_index0);
                         edge_move.key() = edge_index1;
                         connection_edge_given_level_.at(level_diff)
                             .map_edge_connection.insert(std::move(edge_move));
                     } else {
-                        connection_edge_given_level_.at(level_diff)
-                            .map_edge_connection.at(edge_index1)
-                            .set_index_surfaces.swap(
-                                connection_edge_given_level_
-                                .at(level_diff).map_edge_connection.
-                                at(edge_index0).set_index_surfaces);
+                        connection_edge_given_level_.at(level_diff).map_edge_connection
+                            .at(edge_index1).set_index_surfaces.swap(
+                            connection_edge_given_level_.at(level_diff)
+                            .map_edge_connection.at(edge_index0).set_index_surfaces);
                         connection_edge_given_level_.at(level_diff)
                             .map_edge_connection.erase(edge_index0);
                     }
                 }
             }
         }
-        vertex_given_level_.at(iter_vertex->first)
-            .vec_vertex_coordinate.pop_back();
+        vertex_given_level_.at(iter_vertex->first).vec_vertex_coordinate.pop_back();
     }
 }
 /**
@@ -903,9 +955,8 @@ void GeometryConnectionInterface::FindSurfaceForReconstruction(
                 .vec_surface_connection.at(i_surface).vertex_connection) {
                 if (set_vertex_remove.find(iter) != set_vertex_remove.end()) {
                     bool_all_exist = false;
-                    i_surface = connection_surface_given_level_
-                        .at(i_input_level).vec_surface_connection
-                        .at(i_surface).parent_surface;
+                    i_surface = connection_surface_given_level_.at(i_input_level)
+                        .vec_surface_connection.at(i_surface).parent_surface;
                     break;
                 }
             }
@@ -1012,32 +1063,24 @@ void GeometryConnectionInterface::ReconstructSurfaceBasedOnExistingVertex(
                     == set_vertex_remove.end()) {
                     // if parent vertices exist, i.e. parent_vertices[0]
                     // != parent_vertices[1]
-                    if (vertex_given_level_
-                        .at(iter_vertex.first).vec_vertex_coordinate
-                        .at(iter_vertex.second).parent_vertices.at(0) >
-                        vertex_given_level_
-                        .at(iter_vertex.first).vec_vertex_coordinate
-                        .at(iter_vertex.second).parent_vertices.at(1)) {
+                    if (vertex_given_level_.at(iter_vertex.first).vec_vertex_coordinate
+                        .at(iter_vertex.second)->parent_vertices.at(0) >
+                        vertex_given_level_.at(iter_vertex.first).vec_vertex_coordinate
+                        .at(iter_vertex.second)->parent_vertices.at(1)) {
                         edge_of_midpoint.insert({ std::make_pair(
                             vertex_given_level_.at(iter_vertex.first)
-                        .vec_vertex_coordinate.at(iter_vertex.second)
-                        .parent_vertices.at(0), vertex_given_level_
-                        .at(iter_vertex.first).vec_vertex_coordinate
-                        .at(iter_vertex.second).parent_vertices.at(1)),
-                         iter_vertex });
-                    } else if (vertex_given_level_
-                        .at(iter_vertex.first).vec_vertex_coordinate
-                        .at(iter_vertex.second).parent_vertices.at(0)
-                        < vertex_given_level_
-                        .at(iter_vertex.first).vec_vertex_coordinate
-                        .at(iter_vertex.second).parent_vertices.at(1)) {
+                            .vec_vertex_coordinate.at(iter_vertex.second)->parent_vertices.at(0),
+                            vertex_given_level_.at(iter_vertex.first).vec_vertex_coordinate
+                            .at(iter_vertex.second)->parent_vertices.at(1)), iter_vertex });
+                    } else if (vertex_given_level_.at(iter_vertex.first).vec_vertex_coordinate
+                        .at(iter_vertex.second)->parent_vertices.at(0)
+                        < vertex_given_level_.at(iter_vertex.first).vec_vertex_coordinate
+                        .at(iter_vertex.second)->parent_vertices.at(1)) {
                         edge_of_midpoint.insert({ std::make_pair(
                             vertex_given_level_.at(iter_vertex.first)
-                        .vec_vertex_coordinate.at(iter_vertex.second)
-                        .parent_vertices.at(1), vertex_given_level_
-                        .at(iter_vertex.first).vec_vertex_coordinate
-                        .at(iter_vertex.second).parent_vertices.at(0)),
-                         iter_vertex });
+                            .vec_vertex_coordinate.at(iter_vertex.second)->parent_vertices.at(1),
+                            vertex_given_level_.at(iter_vertex.first).vec_vertex_coordinate
+                            .at(iter_vertex.second)->parent_vertices.at(0)), iter_vertex });
                     }
                 }
             }
@@ -1163,55 +1206,51 @@ void GeometryConnectionInterface::ReconstructSurfaceBasedOnExistingVertex(
                     // update vertex linkage connection
                     if (vertex_given_level_.at(vertex_tmp0.first)
                         .vec_vertex_coordinate.at(vertex_tmp0.second)
-                        .map_linked_vertices_level.find(i_input_level)
+                        ->map_linked_vertices_level.find(i_input_level)
                         == vertex_given_level_.at(vertex_tmp0.first)
                         .vec_vertex_coordinate.at(vertex_tmp0.second)
-                        .map_linked_vertices_level.end()) {
+                        ->map_linked_vertices_level.end()) {
                         vertex_given_level_.at(vertex_tmp0.first)
                             .vec_vertex_coordinate.at(vertex_tmp0.second)
-                            .map_linked_vertices_level.insert({ i_input_level,
-                                {vertex_tmp1} });
+                            ->map_linked_vertices_level.insert({ i_input_level,
+                            {vertex_tmp1} });
                     } else {
                         vertex_given_level_.at(vertex_tmp0.first)
                             .vec_vertex_coordinate.at(vertex_tmp0.second)
-                            .map_linked_vertices_level.at(i_input_level)
+                            ->map_linked_vertices_level.at(i_input_level)
                             .insert(vertex_tmp1);
                     }
                     if (vertex_given_level_.at(vertex_tmp1.first)
                         .vec_vertex_coordinate.at(vertex_tmp1.second)
-                        .map_linked_vertices_level.find(i_input_level)
+                        ->map_linked_vertices_level.find(i_input_level)
                         == vertex_given_level_.at(vertex_tmp1.first)
                         .vec_vertex_coordinate.at(vertex_tmp1.second)
-                        .map_linked_vertices_level.end()) {
+                        ->map_linked_vertices_level.end()) {
                         vertex_given_level_.at(vertex_tmp1.first)
                             .vec_vertex_coordinate.at(vertex_tmp1.second)
-                            .map_linked_vertices_level.insert({ i_input_level,
+                            ->map_linked_vertices_level.insert({ i_input_level,
                                 {vertex_tmp0} });
                     } else {
                         vertex_given_level_.at(vertex_tmp1.first)
                             .vec_vertex_coordinate.at(vertex_tmp1.second)
-                            .map_linked_vertices_level.at(i_input_level)
+                            ->map_linked_vertices_level.at(i_input_level)
                             .insert(vertex_tmp0);
                     }
                     // update edge
                     if (vertex_tmp0 > vertex_tmp1) {
-                        edge_key_tmp = std::make_pair(
-                            vertex_tmp0, vertex_tmp1);
+                        edge_key_tmp = std::make_pair(vertex_tmp0, vertex_tmp1);
                     } else {
-                        edge_key_tmp = std::make_pair(
-                            vertex_tmp1, vertex_tmp0);
+                        edge_key_tmp = std::make_pair(vertex_tmp1, vertex_tmp0);
                     }
                     if (connection_edge_given_level_.at(i_input_level)
                         .map_edge_connection.find(edge_key_tmp)
                         == connection_edge_given_level_.at(i_input_level)
                         .map_edge_connection.end()) {
-                        connection_edge_given_level_.at(i_input_level)
-                            .map_edge_connection.insert(std::make_pair(
-                                edge_key_tmp, edge_connection_tmp));
+                        connection_edge_given_level_.at(i_input_level).map_edge_connection
+                            .insert(std::make_pair(edge_key_tmp, edge_connection_tmp));
                     } else {
-                        connection_edge_given_level_.at(i_input_level)
-                            .map_edge_connection.at(edge_key_tmp)
-                            .set_index_surfaces.insert(i_surface);
+                        connection_edge_given_level_.at(i_input_level).map_edge_connection
+                            .at(edge_key_tmp).set_index_surfaces.insert(i_surface);
                     }
                 }
             }

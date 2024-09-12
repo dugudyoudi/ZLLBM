@@ -26,10 +26,10 @@
 #include <winsock2.h>
 #endif
 #include <mpi.h>
-#include "criterion/geometry_coordi.h"
 #include "grid/sfbitset_aux.h"
 #include "grid/grid_info_interface.h"
 #include "grid/grid_manager.h"
+#include "criterion/geometry_info_interface.h"
 #ifdef DEBUG_UNIT_TEST
 #include "../../googletest-main/googletest/include/gtest/gtest_prod.h"
 #endif  // DEBUG_UNIT_TEST
@@ -240,24 +240,10 @@ class MpiManager{
 
     // criterion related functions
  public:
-#ifndef  DEBUG_DISABLE_2D_FUNCTIONS
     std::unique_ptr<char[]> SerializeCoordiOrigin(
-        const std::vector<GeometryCoordinate2D>& vec_points, int* const ptr_buffer_size) const;
-    void DeserializeCoordiOrigin(const std::unique_ptr<char[]>& buffer,
-        std::vector<GeometryCoordinate2D>* const vec_points) const;
-    void IniSendNReceivePartitionedGeoCoordi(const std::array<DefReal, 2>& background_space,
-        const SFBitsetAux2D& bitset_aux, const std::vector<DefSFBitset>& bitset_max,
-        std::vector<GeometryCoordinate2D>* ptr_vec_coordinate);
-#endif  // DEBUG_DISABLE_2D_FUNCTIONS
-#ifndef  DEBUG_DISABLE_3D_FUNCTION
-    std::unique_ptr<char[]> SerializeCoordiOrigin(
-        const std::vector<GeometryCoordinate3D>& vec_points, int* const ptr_buffer_size) const;
-    void DeserializeCoordiOrigin(const std::unique_ptr<char[]>& buffer,
-        std::vector<GeometryCoordinate3D>* const vec_points) const;
-    void IniSendNReceivePartitionedGeoCoordi(const std::array<DefReal, 3>& background_space,
-        const SFBitsetAux3D& bitset_aux, const std::vector<DefSFBitset>& bitset_max,
-        std::vector<GeometryCoordinate3D>* ptr_vec_coordinate);
-#endif  // DEBUG_DISABLE_3D_FUNCTIONS
+        const std::vector<std::unique_ptr<GeometryVertex>>& vec_vertices, int* const ptr_buffer_size) const;
+    void DeserializeCoordiOrigin(const std::unique_ptr<char[]>& buffer, GeometryInfoInterface* const ptr_geo_info,
+        std::vector<std::unique_ptr<GeometryVertex>>* const ptr_vec_vertices) const;
 
     // functions to serialize and deserialize grid node information
  public:

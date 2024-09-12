@@ -89,7 +89,7 @@ void AmrManager::InitializeMesh() {
     std::vector<DefMap<DefInt>> sfbitset_one_lower_level(ptr_grid_manager_->k0MaxLevel_ + 1);
     DefInt i_geo = 0;
     if (rank_id == 0) {
-        std::vector<DefReal> real_offset(ptr_grid_manager_->k0GridDims_);
+        std::array<DefReal, 3> real_offset{};
         std::vector<DefReal> domain_dx = ptr_grid_manager_->GetDomainDxArrAsVec();
         std::vector<DefAmrLUint> domain_min_index = ptr_grid_manager_->GetMinIndexOfBackgroundNodeArrAsVec();
         for (DefInt i_dims = 0; i_dims < ptr_grid_manager_->k0GridDims_; ++i_dims) {

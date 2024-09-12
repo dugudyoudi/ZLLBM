@@ -54,10 +54,10 @@ DefSFBitset SFBitsetAux2D::SFBitsetEncoding(
     const std::array<DefAmrLUint, 2>& coordi_index) const {
     DefSFBitset sfbitset_code = 0;
     for (auto i = 0; i < (kSFBitsetBit / 2); ++i) {
-        sfbitset_code |= ((coordi_index.at(kXIndex) &
-            ((static_cast<DefAmrLUint>(1)) << i)) << i)
-            | ((coordi_index.at(kYIndex) &
-                ((static_cast<DefAmrLUint>(1)) << i)) << (i + 1));
+        sfbitset_code |= ((coordi_index.at(kXIndex)
+            &((static_cast<DefAmrLUint>(1)) << i)) << i)
+            |((coordi_index.at(kYIndex)
+            &((static_cast<DefAmrLUint>(1)) << i)) << (i + 1));
     }
     return sfbitset_code;
 }
@@ -72,8 +72,8 @@ DefSFBitset SFBitsetAux2D::SFBitsetEncodingCoordi(
     const std::vector<DefReal>& grid_space,
     const std::vector<DefReal>& coordi) const {
     std::array<DefAmrLUint, 2> coordi_index =
-    { static_cast<DefAmrLUint>(coordi.at(kXIndex) / grid_space[kXIndex] + kEps),
-      static_cast<DefAmrLUint>(coordi.at(kYIndex) / grid_space[kYIndex] + kEps)};
+        {static_cast<DefAmrLUint>(coordi.at(kXIndex) / grid_space[kXIndex] + kEps),
+        static_cast<DefAmrLUint>(coordi.at(kYIndex) / grid_space[kYIndex] + kEps)};
     return this->SFBitsetEncoding(coordi_index);
 }
 /**

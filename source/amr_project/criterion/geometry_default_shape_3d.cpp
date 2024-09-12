@@ -8,7 +8,7 @@
 * @date  2022-8-5
 */
 #include <limits>
-#include "auxiliary_inline_func.h"
+#include "./auxiliary_inline_func.h"
 #include "io/log_write.h"
 #include "criterion/geometry_default_shape.h"
 #include "criterion/geometry_info_interface.h"
@@ -21,97 +21,99 @@ namespace amrproject {
 */
 void GeoShapeDefaultCubic3D::InitialShape(const DefReal dx) {
     if (ptr_geo_info_ == nullptr) {
-        LogManager::LogError("pointer to geometry infomation instance is nullptr in "
-            + std::string(__FILE__) + " at line " + std::to_string(__LINE__));
+        LogManager::LogError("pointer to geometry infomation instance is nullptr");
     }
-    GeometryInfo3DInterface* ptr_geo = dynamic_cast<GeometryInfo3DInterface*>(ptr_geo_info_);
-    DefInt num_point = static_cast<DefInt>(length_ / dx + kEps);
-    ptr_geo->flood_fill_origin_ = ptr_geo->geometry_center_;
-    ptr_geo->coordinate_origin_ = std::vector<GeometryCoordinate3D>(
-        6 * num_point * num_point);
+    DefInt num_point_dir = static_cast<DefInt>(length_ / dx + kEps);
+    ptr_geo_info_->flood_fill_origin_ = ptr_geo_info_->geometry_center_;
+    DefSizet num_points = 6 * num_point_dir * num_point_dir;
+    ptr_geo_info_->vec_vertices_.resize(num_points);
     DefInt num_sum = 0;
     DefReal x_coordi, y_coordi, z_coordi;
-    z_coordi = ptr_geo->geometry_center_[kZIndex] - length_ / 2;
-    for (DefInt iy = 0; iy < num_point; ++iy) {
-        for (DefInt ix = 0; ix < num_point; ++ix) {
-            ptr_geo->coordinate_origin_.at(num_sum)
-                .coordinate.at(kXIndex) = dx / 2 + ix * dx - length_ / 2
-                + ptr_geo->geometry_center_[kXIndex];
-            ptr_geo->coordinate_origin_.at(num_sum)
-                .coordinate.at(kYIndex) = dx / 2 + iy * dx - length_ / 2
-                + ptr_geo->geometry_center_[kYIndex];
-            ptr_geo->coordinate_origin_.at(num_sum)
-                .coordinate.at(kZIndex) = z_coordi;
+    z_coordi = ptr_geo_info_->geometry_center_[kZIndex] - length_ / 2;
+    for (DefInt iy = 0; iy < num_point_dir; ++iy) {
+        for (DefInt ix = 0; ix < num_point_dir; ++ix) {
+            ptr_geo_info_->vec_vertices_.at(num_sum) = ptr_geo_info_->GeoVertexCreator();
+            ptr_geo_info_->vec_vertices_.at(num_sum)
+                ->coordinate.at(kXIndex) = dx / 2 + ix * dx - length_ / 2
+                + ptr_geo_info_->geometry_center_[kXIndex];
+            ptr_geo_info_->vec_vertices_.at(num_sum)
+                ->coordinate.at(kYIndex) = dx / 2 + iy * dx - length_ / 2
+                + ptr_geo_info_->geometry_center_[kYIndex];
+            ptr_geo_info_->vec_vertices_.at(num_sum)
+                ->coordinate.at(kZIndex) = z_coordi;
             num_sum++;
         }
     }
-    z_coordi = ptr_geo->geometry_center_[kZIndex] + length_ / 2;
-    for (DefInt iy = 0; iy < num_point; ++iy) {
-        for (DefInt ix = 0; ix < num_point; ++ix) {
-            ptr_geo->coordinate_origin_.at(num_sum)
-                .coordinate.at(kXIndex) = dx / 2 + ix * dx - length_ / 2
-                + ptr_geo->geometry_center_[kXIndex];
-            ptr_geo->coordinate_origin_.at(num_sum)
-                .coordinate.at(kYIndex) = dx / 2 + iy * dx - length_ / 2
-                + ptr_geo->geometry_center_[kYIndex];
-            ptr_geo->coordinate_origin_.at(num_sum)
-                .coordinate.at(kZIndex) = z_coordi;
+    z_coordi = ptr_geo_info_->geometry_center_[kZIndex] + length_ / 2;
+    for (DefInt iy = 0; iy < num_point_dir; ++iy) {
+        for (DefInt ix = 0; ix < num_point_dir; ++ix) {
+            ptr_geo_info_->vec_vertices_.at(num_sum) = ptr_geo_info_->GeoVertexCreator();
+            ptr_geo_info_->vec_vertices_.at(num_sum)
+                ->coordinate.at(kXIndex) = dx / 2 + ix * dx - length_ / 2
+                + ptr_geo_info_->geometry_center_[kXIndex];
+            ptr_geo_info_->vec_vertices_.at(num_sum)
+                ->coordinate.at(kYIndex) = dx / 2 + iy * dx - length_ / 2
+                + ptr_geo_info_->geometry_center_[kYIndex];
+            ptr_geo_info_->vec_vertices_.at(num_sum)
+                ->coordinate.at(kZIndex) = z_coordi;
             num_sum++;
         }
     }
-    y_coordi = ptr_geo->geometry_center_[kYIndex] - length_ / 2;
-    for (DefInt iz = 0; iz < num_point; ++iz) {
-        for (DefInt ix = 0; ix < num_point; ++ix) {
-            ptr_geo->coordinate_origin_.at(num_sum)
-                .coordinate.at(kXIndex) = dx / 2 + ix * dx - length_ / 2
-                + ptr_geo->geometry_center_[kXIndex];
-            ptr_geo->coordinate_origin_.at(num_sum)
-                .coordinate.at(kYIndex) = y_coordi;
-            ptr_geo->coordinate_origin_.at(num_sum)
-                .coordinate.at(kZIndex) = dx / 2 + iz * dx - length_ / 2
-                + ptr_geo->geometry_center_[kZIndex];
+    y_coordi = ptr_geo_info_->geometry_center_[kYIndex] - length_ / 2;
+    for (DefInt iz = 0; iz < num_point_dir; ++iz) {
+        for (DefInt ix = 0; ix < num_point_dir; ++ix) {
+            ptr_geo_info_->vec_vertices_.at(num_sum) = ptr_geo_info_->GeoVertexCreator();
+            ptr_geo_info_->vec_vertices_.at(num_sum)
+                ->coordinate.at(kXIndex) = dx / 2 + ix * dx - length_ / 2
+                + ptr_geo_info_->geometry_center_[kXIndex];
+            ptr_geo_info_->vec_vertices_.at(num_sum)
+                ->coordinate.at(kYIndex) = y_coordi;
+            ptr_geo_info_->vec_vertices_.at(num_sum)
+                ->coordinate.at(kZIndex) = dx / 2 + iz * dx - length_ / 2
+                + ptr_geo_info_->geometry_center_[kZIndex];
             num_sum++;
         }
     }
-    y_coordi = ptr_geo->geometry_center_[kYIndex] + length_ / 2;
-    for (DefInt iz = 0; iz < num_point; ++iz) {
-        for (DefInt ix = 0; ix < num_point; ++ix) {
-            ptr_geo->coordinate_origin_.at(num_sum)
-                .coordinate.at(kXIndex) = dx / 2 + ix * dx - length_ / 2
-                + ptr_geo->geometry_center_[kXIndex];
-            ptr_geo->coordinate_origin_.at(num_sum)
-                .coordinate.at(kYIndex) = y_coordi;
-            ptr_geo->coordinate_origin_.at(num_sum)
-                .coordinate.at(kZIndex) = dx / 2 + iz * dx - length_ / 2
-                + ptr_geo->geometry_center_[kZIndex];
+    y_coordi = ptr_geo_info_->geometry_center_[kYIndex] + length_ / 2;
+    for (DefInt iz = 0; iz < num_point_dir; ++iz) {
+        for (DefInt ix = 0; ix < num_point_dir; ++ix) {
+            ptr_geo_info_->vec_vertices_.at(num_sum) = ptr_geo_info_->GeoVertexCreator();
+            ptr_geo_info_->vec_vertices_.at(num_sum)
+                ->coordinate.at(kXIndex) = dx / 2 + ix * dx - length_ / 2
+                + ptr_geo_info_->geometry_center_[kXIndex];
+            ptr_geo_info_->vec_vertices_.at(num_sum)
+                ->coordinate.at(kYIndex) = y_coordi;
+            ptr_geo_info_->vec_vertices_.at(num_sum)
+                ->coordinate.at(kZIndex) = dx / 2 + iz * dx - length_ / 2
+                + ptr_geo_info_->geometry_center_[kZIndex];
             num_sum++;
         }
     }
-    x_coordi = ptr_geo->geometry_center_[kXIndex] - length_ / 2;
-    for (DefInt iz = 0; iz < num_point; ++iz) {
-        for (DefInt iy = 0; iy < num_point; ++iy) {
-            ptr_geo->coordinate_origin_.at(num_sum)
-                .coordinate.at(kXIndex) = x_coordi;
-            ptr_geo->coordinate_origin_.at(num_sum)
-                .coordinate.at(kYIndex) = dx / 2 + iy * dx - length_ / 2
-                + ptr_geo->geometry_center_[kYIndex];
-            ptr_geo->coordinate_origin_.at(num_sum)
-                .coordinate.at(kZIndex) = dx / 2 + iz * dx - length_ / 2
-                + ptr_geo->geometry_center_[kZIndex];
+    x_coordi = ptr_geo_info_->geometry_center_[kXIndex] - length_ / 2;
+    for (DefInt iz = 0; iz < num_point_dir; ++iz) {
+        for (DefInt iy = 0; iy < num_point_dir; ++iy) {
+            ptr_geo_info_->vec_vertices_.at(num_sum) = ptr_geo_info_->GeoVertexCreator();
+            ptr_geo_info_->vec_vertices_.at(num_sum)->coordinate.at(kXIndex) = x_coordi;
+            ptr_geo_info_->vec_vertices_.at(num_sum)
+                ->coordinate.at(kYIndex) = dx / 2 + iy * dx - length_ / 2
+                + ptr_geo_info_->geometry_center_[kYIndex];
+            ptr_geo_info_->vec_vertices_.at(num_sum)
+                ->coordinate.at(kZIndex) = dx / 2 + iz * dx - length_ / 2
+                + ptr_geo_info_->geometry_center_[kZIndex];
             num_sum++;
         }
     }
-    x_coordi = ptr_geo->geometry_center_[kXIndex] + length_ / 2;
-    for (DefInt iz = 0; iz < num_point; ++iz) {
-        for (DefInt iy = 0; iy < num_point; ++iy) {
-            ptr_geo->coordinate_origin_.at(num_sum)
-                .coordinate.at(kXIndex) = x_coordi;
-            ptr_geo->coordinate_origin_.at(num_sum)
-                .coordinate.at(kYIndex) = dx / 2 + iy * dx - length_ / 2
-                + ptr_geo->geometry_center_[kYIndex];
-            ptr_geo->coordinate_origin_.at(num_sum)
-                .coordinate.at(kZIndex) = dx / 2 + iz * dx - length_ / 2
-                + ptr_geo->geometry_center_[kZIndex];
+    x_coordi = ptr_geo_info_->geometry_center_[kXIndex] + length_ / 2;
+    for (DefInt iz = 0; iz < num_point_dir; ++iz) {
+        for (DefInt iy = 0; iy < num_point_dir; ++iy) {
+            ptr_geo_info_->vec_vertices_.at(num_sum) = ptr_geo_info_->GeoVertexCreator();
+            ptr_geo_info_->vec_vertices_.at(num_sum)->coordinate.at(kXIndex) = x_coordi;
+            ptr_geo_info_->vec_vertices_.at(num_sum)
+                ->coordinate.at(kYIndex) = dx / 2 + iy * dx - length_ / 2
+                + ptr_geo_info_->geometry_center_[kYIndex];
+            ptr_geo_info_->vec_vertices_.at(num_sum)
+                ->coordinate.at(kZIndex) = dx / 2 + iz * dx - length_ / 2
+                + ptr_geo_info_->geometry_center_[kZIndex];
             num_sum++;
         }
     }
@@ -129,15 +131,14 @@ void GeoShapeDefaultCubic3D::UpdateShape(const DefReal dx) {
 // (neighbor)       (diagonal)
 void GeoShapeDefaultQuadrilateral3D::InitialShape(const DefReal dx_background) {
     if (ptr_geo_info_ == nullptr) {
-        LogManager::LogError("pointer to geometry infomation instance is nullptr in "
-            + std::string(__FILE__) + " at line " + std::to_string(__LINE__));
+        LogManager::LogError("pointer to geometry infomation instance is nullptr");
     }
-    GeometryInfo3DInterface* ptr_geo = dynamic_cast<GeometryInfo3DInterface*>(ptr_geo_info_);
-    const DefReal dx = dx_background/TwoPowerN(ptr_geo->i_level_);
-    ptr_geo->geometry_center_ = {start_point_.at(kXIndex) + diagonal_point_.at(kXIndex) + ptr_geo->k0RealMin_[kXIndex],
-            start_point_.at(kYIndex) + diagonal_point_.at(kYIndex) + ptr_geo->k0RealMin_[kYIndex],
-            start_point_.at(kZIndex) + diagonal_point_.at(kZIndex) + ptr_geo->k0RealMin_[kZIndex]};
-    ptr_geo->flood_fill_origin_ = ptr_geo->geometry_center_;
+    const DefReal dx = dx_background/TwoPowerN(ptr_geo_info_->i_level_);
+    ptr_geo_info_->geometry_center_ = {
+        start_point_.at(kXIndex) + diagonal_point_.at(kXIndex) + ptr_geo_info_->k0RealMin_[kXIndex],
+        start_point_.at(kYIndex) + diagonal_point_.at(kYIndex) + ptr_geo_info_->k0RealMin_[kYIndex],
+        start_point_.at(kZIndex) + diagonal_point_.at(kZIndex) + ptr_geo_info_->k0RealMin_[kZIndex]};
+    ptr_geo_info_->flood_fill_origin_ = ptr_geo_info_->geometry_center_;
     DefReal edge1_length = std::sqrt(Square(start_point_.at(kXIndex) - neighbor_point_.at(kXIndex))
         + Square(start_point_.at(kYIndex) - neighbor_point_.at(kYIndex))
         + Square(start_point_.at(kZIndex) - neighbor_point_.at(kZIndex)));
@@ -146,8 +147,8 @@ void GeoShapeDefaultQuadrilateral3D::InitialShape(const DefReal dx_background) {
         + Square(diagonal_point_.at(kZIndex) - neighbor_point_.at(kZIndex)));
     DefSizet edge1_num_points = DefSizet(edge1_length / dx + kEps) + 1;
     DefSizet edge2_num_points = DefSizet(edge2_length / dx + kEps) + 1;
-    num_points_ = edge1_num_points * edge2_num_points;
-    ptr_geo->coordinate_origin_ = std::vector<GeometryCoordinate3D>(num_points_);
+    DefSizet num_points = edge1_num_points * edge2_num_points;
+    ptr_geo_info_->vec_vertices_.resize(num_points);
     DefReal edge1_arc = edge1_length / edge1_num_points,
         edge2_arc = edge2_length / edge2_num_points,
         edge1_dir_x = (start_point_.at(kXIndex) - neighbor_point_.at(kXIndex)) / edge1_length,
@@ -160,18 +161,19 @@ void GeoShapeDefaultQuadrilateral3D::InitialShape(const DefReal dx_background) {
     DefSizet node_index;
     for (DefSizet i = 0; i < edge1_num_points; ++i) {
         mid_x = neighbor_point_.at(kXIndex) + (i + 0.5) * edge1_dir_x * edge1_arc
-            + ptr_geo->k0RealMin_[kXIndex];
+            + ptr_geo_info_->k0RealMin_[kXIndex];
         mid_y = neighbor_point_.at(kYIndex) + (i + 0.5) * edge1_dir_y * edge1_arc
-            + ptr_geo->k0RealMin_[kYIndex];
+            + ptr_geo_info_->k0RealMin_[kYIndex];
         mid_z = neighbor_point_.at(kZIndex) + (i + 0.5) * edge1_dir_z * edge1_arc
-            + ptr_geo->k0RealMin_[kZIndex];
+            + ptr_geo_info_->k0RealMin_[kZIndex];
         for (DefSizet j = 0; j < edge2_num_points; ++j) {
             node_index = i*edge1_num_points + j;
-            ptr_geo->coordinate_origin_.at(node_index).coordinate[kXIndex] =
+            ptr_geo_info_->vec_vertices_.at(node_index) = ptr_geo_info_->GeoVertexCreator();
+            ptr_geo_info_->vec_vertices_.at(node_index)->coordinate[kXIndex] =
                 mid_x + (j + 0.5) * edge2_dir_x * edge2_arc;
-            ptr_geo->coordinate_origin_.at(node_index).coordinate[kYIndex] =
+            ptr_geo_info_->vec_vertices_.at(node_index)->coordinate[kYIndex] =
                 mid_y + (j + 0.5) * edge2_dir_y * edge2_arc;
-            ptr_geo->coordinate_origin_.at(node_index).coordinate[kZIndex] =
+            ptr_geo_info_->vec_vertices_.at(node_index)->coordinate[kZIndex] =
                 mid_z + (j + 0.5) * edge2_dir_z * edge2_arc;
         }
     }

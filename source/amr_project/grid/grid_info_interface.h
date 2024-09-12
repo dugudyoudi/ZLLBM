@@ -33,6 +33,7 @@ class Base64Utility;
 */
 struct TrackingNode {
  public:
+    // the first element (DefInt) refers to the level of  criterion points
     std::set<std::pair<DefInt, DefSizet>> set_point_index;
     ///< count of this tracking node relies on how many criterion points
     std::vector<DefInt> vec_int{};

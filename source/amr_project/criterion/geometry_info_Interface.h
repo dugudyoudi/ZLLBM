@@ -17,7 +17,6 @@
 #include <string>
 #include "../defs_libs.h"
 #include "criterion/criterion_numerates.h"
-#include "criterion/geometry_coordi.h"
 #include "criterion/geometry_default_shape.h"
 namespace rootproject {
 namespace amrproject {
@@ -27,12 +26,11 @@ class SFBitsetAuxInterface;
 class GridInfoInterface;
 class GeoShapeInterface;
 /**
-* @struct GeometryVertexInfo
+* @struct GeometryVertex
 * @brief struct used to store information of a geometry vertex
 */
-struct GeometryVertexInfo {
-    std::vector<DefInt> vec_int{};
-    std::vector<DefReal> vec_real{};
+struct GeometryVertex {
+    std::array<DefReal, 3> coordinate{};
 };
 /**
 * @class GeometryInfoInterface
@@ -51,38 +49,59 @@ class GeometryInfoInterface {
     std::string node_type_;
 
     // information stored on each vertex
-    DefInt k0NumIntForEachVertex_ = 0;
-    DefInt k0NumRealForEachVertex_ = 0;
-    std::vector<GeometryVertexInfo> vec_vertices_info_{};
+    std::vector<std::unique_ptr<GeometryVertex>> vec_vertices_{};
+    virtual DefSizet GetNumOfGeometryPoints() const {
+        return vec_vertices_.size();
+    }
 
     TrackingGridInfoCreatorInterface* ptr_tracking_grid_info_creator_ = nullptr;
     GhostGridInfoCreatorInterface* ptr_ghost_grid_info_creator_ = nullptr;
 
-
     // number of extended layer based on geometry
-    std::vector<DefInt> k0XIntExtendPositive_, k0XIntExtendNegative_,
-     k0YIntExtendPositive_, k0YIntExtendNegative_, k0ZIntExtendPositive_, k0ZIntExtendNegative_;
-     ///< number of extened layers
+    std::vector<DefInt> k0XIntExtendPositive_, k0XIntExtendNegative_, k0YIntExtendPositive_,
+        k0YIntExtendNegative_, k0ZIntExtendPositive_, k0ZIntExtendNegative_;
+        ///< number of extened layers
 
     /* number of layer extended inside the geometry
      at (i_level - 1) refinement level*/
-    std::vector<DefInt>  k0IntInnerExtend_;
+    std::vector<DefInt> k0IntInnerExtend_;
     ///< number of extened layers inside the geometry
 
-    virtual void SetIndex() = 0;
-    virtual bool SetOffset(const std::vector<DefReal>& vec_offset) = 0;
+    void SetOffset(const std::array<DefReal, 3>& array_offset) {
+        k0RealMin_ = array_offset;
+    }
     std::unique_ptr<GeoShapeInterface> ptr_geo_shape_;
     virtual int InitialGeometry(const DefReal dx);
     virtual int UpdateGeometry(const DefReal sum_t);
     virtual void FindTrackingNodeBasedOnGeo(
-     const SFBitsetAuxInterface& sfbitset_aux, GridInfoInterface* const ptr_grid_info) = 0;
-    virtual std::vector<DefReal> GetFloodFillOriginArrAsVec() const = 0;
-    virtual DefSizet GetNumOfGeometryPoints() const = 0;
+        const SFBitsetAuxInterface& sfbitset_aux, GridInfoInterface* const ptr_grid_info) = 0;
+
+    std::vector<DefReal> GetFloodFillOriginArrAsVec() const {
+        if (k0GeoDim_ == 2) {
+            return {flood_fill_origin_[kXIndex], flood_fill_origin_[kYIndex]};
+        } else {
+            return {flood_fill_origin_[kXIndex], flood_fill_origin_[kYIndex], flood_fill_origin_[kZIndex]};
+        }
+    }
+
+    std::array<DefReal, 3> geometry_center_{};
+    std::array<DefReal, 3> flood_fill_origin_{};
+    std::array<DefReal, 3> k0RealMin_{};
+    virtual std::unique_ptr<GeometryVertex> GeoVertexCreator() {
+        return std::make_unique<GeometryVertex>();
+    }
+
+    explicit GeometryInfoInterface(const DefInt dims) : k0GeoDim_(dims) {
+        this->node_type_ = "GeometryInfoInterface";
+        this->geometry_cell_type_ = EGeometryCellType::kPolyLine;
+    }
     virtual ~GeometryInfoInterface() {}
 
  protected:
-    GeometryVertexInfo geo_vertex_info_instance_;
-    ///< instance for a geometry vertex with preset vector sizes
+    DefInt k0GeoDim_ = 0;
+
+ private:
+    GeometryInfoInterface();
 };
 /**
 * @class GeometryInfoCreatorInterface
@@ -90,59 +109,9 @@ class GeometryInfoInterface {
 */
 class GeometryInfoCreatorInterface {
  public:
-    virtual std::shared_ptr<GeometryInfoInterface> CreateGeometryInfo() = 0;
+    virtual std::shared_ptr<GeometryInfoInterface> CreateGeometryInfo(const DefInt dims) = 0;
 };
-#ifndef  DEBUG_DISABLE_2D_FUNCTIONS
-/**
-* @class GeometryInfo2DInterface
-* @brief interface class used to store 2D information of a geometry
-*/
-class GeometryInfo2DInterface: virtual public GeometryInfoInterface {
- public:
-    // information of geometry itself
-    std::array<DefReal, 2> geometry_center_{};
-    std::array<DefReal, 2> flood_fill_origin_{};
-    std::array<DefReal, 2> k0RealMin_{};
-    std::vector<GeometryCoordinate2D> coordinate_origin_{};
 
-    bool SetOffset(const std::vector<DefReal>& vec_offset) final {
-        if (vec_offset.size() != 2) {
-            return false;
-        }
-        k0RealMin_[kXIndex] = vec_offset.at(kXIndex);
-        k0RealMin_[kYIndex] = vec_offset.at(kYIndex);
-        return true;
-    }
-
-    virtual ~GeometryInfo2DInterface() {}
-};
-#endif  // DEBUG_DISABLE_2D_FUNCTIONS
-#ifndef  DEBUG_DISABLE_3D_FUNCTIONS
-/**
-* @class GeometryInfo3DInterface
-* @brief interface class used to store 3D information of a geometry
-*/
-class GeometryInfo3DInterface: virtual public GeometryInfoInterface {
- public:
-    // information of geometry itself
-    std::array<DefReal, 3> geometry_center_{};
-    std::array<DefReal, 3> flood_fill_origin_{};
-    std::array<DefReal, 3> k0RealMin_{};
-    std::vector<GeometryCoordinate3D> coordinate_origin_{};
-
-    bool SetOffset(const std::vector<DefReal>& vec_offset) final {
-        if (vec_offset.size() != 3) {
-            return false;
-        }
-        k0RealMin_[kXIndex] = vec_offset.at(kXIndex);
-        k0RealMin_[kYIndex] = vec_offset.at(kYIndex);
-        k0RealMin_[kZIndex] = vec_offset.at(kZIndex);
-        return true;
-    }
-
-    virtual ~GeometryInfo3DInterface() {}
-};
-#endif  // DEBUG_DISABLE_3D_FUNCTIONS
 }  // end namespace amrproject
 }  // end namespace rootproject
 #endif  // SOURCE_AMR_PROJECT_CRITERION_GEOMETRY_INFO_INTERFACE_H_

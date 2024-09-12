@@ -26,14 +26,12 @@ class GeoShapeInterface {
 class GeoShapeDefaultCircle2D : public GeoShapeInterface {
  public:
     DefReal radius_ = 0.5;
-    DefSizet num_points_ = 400;
     void InitialShape(const DefReal dx) override;
     void UpdateShape(const DefReal sum_t) override;
 };
 class GeoShapeDefaultLine2D : public GeoShapeInterface {
  public:
     std::array<DefReal, 2> start_point_, end_point_;
-    DefSizet num_points_ = 400;
     void InitialShape(const DefReal dx) override;
     void UpdateShape(const DefReal sum_t) override;
 };
@@ -48,7 +46,6 @@ class GeoShapeDefaultCubic3D : public GeoShapeInterface {
 class GeoShapeDefaultQuadrilateral3D : public GeoShapeInterface {
  public:
     std::array<DefReal, 3> start_point_, neighbor_point_, diagonal_point_;
-    DefSizet num_points_ = 400;
     void InitialShape(const DefReal dx) override;
     void UpdateShape(const DefReal sum_t) override;
 };

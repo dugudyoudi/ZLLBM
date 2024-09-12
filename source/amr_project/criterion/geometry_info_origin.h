@@ -19,68 +19,27 @@
 #include "criterion/geometry_info_connection.h"
 namespace rootproject {
 namespace amrproject {
-#ifndef  DEBUG_DISABLE_2D_FUNCTIONS
-class  SFBitsetAux2D;
-#endif  // DEBUG_DISABLE_2D_FUNCTIONS
-#ifndef  DEBUG_DISABLE_3D_FUNCTIONS
-class  SFBitsetAux3D;
-#endif  // DEBUG_DISABLE_3D_FUNCTIONS
-#ifndef  DEBUG_DISABLE_2D_FUNCTIONS
-class GeometryInfoOrigin2D : public GeometryInfo2DInterface {
+class GeometryInfoOrigin : public GeometryInfoInterface {
  public:
-    void SetIndex() override;
     int InitialGeometry(const DefReal dx) override;
     void FindTrackingNodeBasedOnGeo(
         const SFBitsetAuxInterface& sfbitset_aux, GridInfoInterface* const ptr_grid_info) override;
-    std::vector<DefReal> GetFloodFillOriginArrAsVec() const final {
-        return {flood_fill_origin_[kXIndex], flood_fill_origin_[kYIndex]};
-    }
-    GeometryInfoOrigin2D() {
-        this->node_type_ = "GeometryInfoOrigin2D";
-    }
+
     DefSizet GetNumOfGeometryPoints() const final {
-        return coordinate_origin_.size();
+        return vec_vertices_.size();
+    }
+
+    explicit GeometryInfoOrigin(const DefInt dims) : GeometryInfoInterface(dims) {
+        this->node_type_ = "GeometryInfoOrigin";
     }
 };
-class GeometryInfoOrigin2DCreator :public GeometryInfoCreatorInterface {
+class GeometryInfoOriginCreator :public GeometryInfoCreatorInterface {
  public:
-    std::shared_ptr<GeometryInfoInterface> CreateGeometryInfo() override {
-        std::shared_ptr<GeometryInfoOrigin2D> ptr_tmp =
-         std::make_shared<GeometryInfoOrigin2D>();
-        ptr_tmp->node_type_ = "Origin2D";
-        ptr_tmp->geometry_cell_type_ = EGeometryCellType::kPolyLine;
+    std::shared_ptr<GeometryInfoInterface> CreateGeometryInfo(const DefInt dims) override {
+        std::shared_ptr<GeometryInfoOrigin> ptr_tmp = std::make_shared<GeometryInfoOrigin>(dims);
         return ptr_tmp;
     };
 };
-#endif  // DEBUG_DISABLE_2D_FUNCTIONS
-#ifndef  DEBUG_DISABLE_3D_FUNCTIONS
-class GeometryInfoOrigin3D : public GeometryInfo3DInterface {
- public:
-    void SetIndex() override;
-    int InitialGeometry(const DefReal dx) override;
-    void FindTrackingNodeBasedOnGeo(
-        const SFBitsetAuxInterface& sfbitset_aux, GridInfoInterface* const ptr_grid_info) override;
-    std::vector<DefReal> GetFloodFillOriginArrAsVec() const final {
-        return {flood_fill_origin_[kXIndex], flood_fill_origin_[kYIndex], flood_fill_origin_[kZIndex]};
-    }
-    GeometryInfoOrigin3D() {
-        this->node_type_ = "GeometryInfoOrigin3D";
-    }
-    DefSizet GetNumOfGeometryPoints() const final {
-        return coordinate_origin_.size();
-    }
-};
-class GeometryInfoOrigin3DCreator :public GeometryInfoCreatorInterface {
- public:
-    std::shared_ptr<GeometryInfoInterface> CreateGeometryInfo() override {
-        std::shared_ptr<GeometryInfoOrigin3D> ptr_tmp =
-         std::make_shared<GeometryInfoOrigin3D>();
-        ptr_tmp->node_type_ = "Origin3D";
-        ptr_tmp->geometry_cell_type_ = EGeometryCellType::kPolyLine;
-        return ptr_tmp;
-    };
-};
-#endif  // DEBUG_DISABLE_3D_FUNCTIONS
 }  // end namespace amrproject
 }  // end namespace rootproject
 #endif  // SOURCE_AMR_PROJECT_CRITERION_GEOMETRY_INFO_ORIGIN_H_

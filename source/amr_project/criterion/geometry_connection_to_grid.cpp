@@ -30,15 +30,6 @@ void GeometryConnectionInterface::FindTrackingNodeBasedOnGeo(DefInt i_geo, DefIn
     const EGridExtendType grid_extend_type, const SFBitsetAuxInterface& sfbitset_aux,
     GridInfoInterface* const ptr_grid_info) {
     DefInt dims = DefInt(ptr_grid_info->grid_space_.size());
-    if (ptr_grid_info->grid_space_.size() != vertex_given_level_.at(0)
-        .vec_vertex_coordinate.at(0).coordinates.size()) {
-        LogManager::LogError("Size of grid_space ("
-            + std::to_string(ptr_grid_info->grid_space_.size()) +
-            ") is not equal to size of coordinates ("
-            + std::to_string(vertex_given_level_.at(0).vec_vertex_coordinate
-            .at(0).coordinates.size()) + ") in vertex_given_level_ "
-            + " in "+ std::string(__FILE__) + " at line " + std::to_string(__LINE__));
-    }
     DefInt level_diff = ptr_grid_info->i_level_ - i_level;
 
     std::pair<ECriterionType, DefInt> key_tracking_grid = { ECriterionType::kGeometry, i_geo };
@@ -49,11 +40,12 @@ void GeometryConnectionInterface::FindTrackingNodeBasedOnGeo(DefInt i_geo, DefIn
 
     DefSFBitset sfbitset_tmp;
     for (auto& iter : connection_vertex_given_level_.at(level_diff)) {
-        sfbitset_tmp = sfbitset_aux.SFBitsetEncodingCoordi(
-            ptr_grid_info->grid_space_, vertex_given_level_.at(iter.first)
-            .vec_vertex_coordinate.at(iter.second).coordinates);
+        std::array<DefReal, 3>& coordinate = vertex_given_level_.at(iter.first)
+            .vec_vertex_coordinate.at(iter.second)->coordinate;
+        sfbitset_tmp = sfbitset_aux.SFBitsetEncodingCoordi(ptr_grid_info->grid_space_,
+            {coordinate[kXIndex], coordinate[kYIndex], coordinate[kZIndex]});
         vertex_given_level_.at(iter.first).vec_vertex_coordinate
-            .at(iter.second).map_bitset_ref
+            .at(iter.second)->map_bitset_ref
             .insert({ ptr_grid_info->i_level_, sfbitset_tmp });
         if (ptr_grid_info->CheckIfNodeOutsideCubicDomain(dims, sfbitset_tmp, sfbitset_aux)
             >= GridInfoInterface::kFlagInsideDomain_) {
@@ -63,8 +55,8 @@ void GeometryConnectionInterface::FindTrackingNodeBasedOnGeo(DefInt i_geo, DefIn
                 ->k0TrackNodeInstance_ });
             }
         } else {
-            std::vector<DefReal>& coordi = vertex_given_level_.at(iter.first)
-                .vec_vertex_coordinate.at(iter.second).coordinates;
+            std::array<DefReal, 3>& coordi = vertex_given_level_.at(iter.first)
+                .vec_vertex_coordinate.at(iter.second)->coordinate;
             if (dims == 2) {
                 LogManager::LogError("coordinate (" + std::to_string(coordi[kXIndex]) + ", "
                 + std::to_string(coordi[kYIndex]) + ") is outside the computational domain in "

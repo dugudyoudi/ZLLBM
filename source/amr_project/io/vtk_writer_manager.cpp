@@ -9,7 +9,7 @@
 */
 #include <typeinfo>
 #include <filesystem>
-#include "auxiliary_inline_func.h"
+#include "./auxiliary_inline_func.h"
 #include "io/log_write.h"
 #include "io/io_manager.h"
 #include "criterion/criterion_manager.h"
@@ -682,22 +682,9 @@ void VtkWriterManager::WriteGeometryPieces(
         + k0StrVtkAsciiOrBinary_ + "\">\n");
     fprintf_s(fp, str_tmp.c_str());
     DefSizet num_points = 0;
-#ifndef DEBUG_DISABLE_2D_FUNCTIONS
-    if (dims == 2) {
-        const GeometryInfo2DInterface& geo_info_2d =
-            dynamic_cast<const GeometryInfo2DInterface&> (geo_info);
-        num_points = WriteGeometryCoordinates(fp, bool_binary, dims,
-            grid_offset, output_data_format, geo_info_2d);
-    }
-#endif  // DEBUG_DISABLE_2D_FUNCTIONS
-#ifndef DEBUG_DISABLE_3D_FUNCTIONS
-    if (dims == 3) {
-        const GeometryInfo3DInterface& geo_info_3d =
-            dynamic_cast<const GeometryInfo3DInterface&> (geo_info);
-        num_points = WriteGeometryCoordinates(fp, bool_binary, dims,
-            grid_offset, output_data_format, geo_info_3d);
-    }
-#endif  // DEBUG_DISABLE_3D_FUNCTIONS
+
+    num_points = WriteGeometryCoordinates(fp, bool_binary, dims,
+            grid_offset, output_data_format, geo_info);
 
     fprintf_s(fp, "    </DataArray>\n");
     fprintf_s(fp, "   </Points>\n");
@@ -712,7 +699,7 @@ void VtkWriterManager::WriteGeometryPieces(
     DefSizet num_cell = 0;
     switch (geo_info.geometry_cell_type_) {
     case  EGeometryCellType::kPolyLine: {
-            WriteGeometryCellConnectivitykPolyLine(
+            WriteGeometryCellConnectivityPolyLine(
                 fp, bool_binary, num_points, output_data_format);
             if (num_points > 0) {
                 num_cell = num_points - 1;
@@ -769,13 +756,13 @@ DefSizet VtkWriterManager::CalculateNumOfGeometryCells(
     return num_cell;
 }
 /**
-* @brief   function to write connection informtion for polyline
+* @brief   function to write connection information for poly line
 * @param[in]  fp   pointer to output file.
-* @param[in]  bool_binary write data in bindary or ascii format
+* @param[in]  bool_binary write data in binary or ascii format
 * @param[in]  num_points number of geometry points
 * @param[in]  output_data_format output data (real or integer) format
 */
-void VtkWriterManager::WriteGeometryCellConnectivitykPolyLine(FILE* const fp,
+void VtkWriterManager::WriteGeometryCellConnectivityPolyLine(FILE* const fp,
     const bool bool_binary, const DefSizet num_points,
     const OutputDataFormat& output_data_format) {
     if (bool_binary) {
@@ -853,7 +840,7 @@ void VtkWriterManager::WriteGeometryCellOffset(FILE* const fp,
 /**
 * @brief   function to write cell type.
 * @param[in]  fp   pointer to output file.
-* @param[in]  bool_binary write data in bindary or ascii format
+* @param[in]  bool_binary write data in binary or ascii format
 * @param[in]  num_points number of geometry points
 * @param[in]  geometry_cell_type cell type of geometry
 */
@@ -882,6 +869,47 @@ void VtkWriterManager::WriteGeometryCellType(
             }
         }
     }
+}
+/**
+* @brief   function to write geometry coordinates.
+* @param[in]  fp   pointer to output file.
+* @param[in]  bool_binary write data in binary or ascii format
+* @param[in]  dims dimension
+* @param[in]  grid_offset offset coordinates of the mesh
+* @param[in]  output_data_format output data (real or integer) format
+* @param[in]  geo_info   instance of geometry information.
+*/
+DefSizet VtkWriterManager::WriteGeometryCoordinates(FILE* const fp,
+    const bool bool_binary, const DefInt dims, const std::array<DefReal, 3>& grid_offset,
+    const OutputDataFormat& output_data_format, const GeometryInfoInterface& geo_info) {
+    std::string str_format = "   "
+        + output_data_format.output_real_.printf_format_ + " "
+        + output_data_format.output_real_.printf_format_ + " "
+        + output_data_format.output_real_.printf_format_ + "\n";
+    if (bool_binary) {
+        std::vector<uint8_t> vec_uint8{}, vec_base64{};
+        for (const auto& iter : geo_info.vec_vertices_) {
+            base64_instance_.AddToVecChar(output_data_format.output_real_.CastType(
+                iter->coordinate.at(kXIndex) - grid_offset.at(kXIndex)), &vec_uint8);
+            base64_instance_.AddToVecChar(output_data_format.output_real_.CastType(
+                iter->coordinate.at(kYIndex)- grid_offset.at(kYIndex)), &vec_uint8);
+            base64_instance_.AddToVecChar(output_data_format.output_real_.CastType(
+                iter->coordinate.at(kZIndex)- grid_offset.at(kZIndex)), &vec_uint8);
+        }
+        base64_instance_.Encode(&vec_uint8, &vec_base64);
+        for (const auto& iter : vec_base64) {
+            fprintf_s(fp, "%c", iter);
+        }
+        fprintf_s(fp, "\n");
+    } else {
+        for (const auto& iter : geo_info.vec_vertices_) {
+            fprintf_s(fp, str_format.c_str(),
+                iter->coordinate.at(kXIndex) - grid_offset.at(kXIndex),
+                iter->coordinate.at(kYIndex) - grid_offset.at(kYIndex),
+                iter->coordinate.at(kZIndex) - grid_offset.at(kZIndex));
+        }
+    }
+    return geo_info.vec_vertices_.size();
 }
 #ifndef DEBUG_DISABLE_2D_FUNCTIONS
 /**
@@ -932,7 +960,7 @@ std::array<DefSizet, 2> VtkWriterManager::CalculateNumOfGridCells(
 /**
 * @brief   function to write grid coordinates.
 * @param[in]  fp   pointer to output file.
-* @param[in]  bool_binary write data in bindary or ascii format
+* @param[in]  bool_binary write data in binary or ascii format
 * @param[in]  output_data_format output data (real or integer) format
 * @param[in]  grid_manager2d class to manage 3d grid information
 * @param[in]  grid_info   instance of grid information.
@@ -1003,12 +1031,12 @@ void VtkWriterManager::WriteGridCoordinates(FILE* const fp,
 /**
 * @brief   function to write connectivity relation of cells
 * @param[in]  fp   pointer to output file.
-* @param[in]  bool_binary write data in bindary or ascii format
+* @param[in]  bool_binary write data in binary or ascii format
 * @param[in]  output_data_format output data (real or integer) format
 * @param[in]  bitset_aux2d   class to manage functions of spacing
 *                          filling code related manipulations.
 * @param[in]  map_grid_node   grid nodes
-* @param[in]  map_node_index   indices of nodes for unstructure grid.
+* @param[in]  map_node_index   indices of nodes for unstructured grid.
 */
 void VtkWriterManager::WriteGridCellConnectivity(FILE* const fp,
     const bool bool_binary,
@@ -1054,54 +1082,6 @@ void VtkWriterManager::WriteGridCellConnectivity(FILE* const fp,
         }
     }
 }
-/**
-* @brief   function to write geometry coordinates.
-* @param[in]  fp   pointer to output file.
-* @param[in]  bool_binary write data in bindary or ascii format
-* @param[in]  dims dimension
-* @param[in]  grid_offset offset coordinates of the mesh
-* @param[in]  output_data_format output data (real or integer) format
-* @param[in]  geo_info class to manage geometry information
-*/
-DefSizet VtkWriterManager::WriteGeometryCoordinates(FILE* const fp,
-    const bool bool_binary, const DefInt dims,
-    const std::array<DefReal, 3>& grid_offset,
-    const OutputDataFormat& output_data_format,
-    const GeometryInfo2DInterface& geo_info) {
-
-    std::string str_format = "   "
-        + output_data_format.output_real_.printf_format_ + " "
-        + output_data_format.output_real_.printf_format_ + " "
-        + output_data_format.output_real_.printf_format_ + "\n";
-    if (bool_binary) {
-        std::vector<uint8_t> vec_uint8{}, vec_base64{};
-        for (const auto& iter : geo_info.coordinate_origin_) {
-            base64_instance_.AddToVecChar(
-                output_data_format.output_real_.CastType(
-                    iter.coordinate.at(kXIndex)
-                    - grid_offset.at(kXIndex)), &vec_uint8);
-            base64_instance_.AddToVecChar(
-                output_data_format.output_real_.CastType(
-                    iter.coordinate.at(kYIndex)
-                    - grid_offset.at(kYIndex)), &vec_uint8);
-            base64_instance_.AddToVecChar(
-                output_data_format.output_real_.CastType(0.), &vec_uint8);
-        }
-        base64_instance_.Encode(&vec_uint8, &vec_base64);
-        for (const auto& iter : vec_base64) {
-            fprintf_s(fp, "%c", iter);
-        }
-        fprintf_s(fp, "\n");
-    } else {
-        for (const auto& iter : geo_info.coordinate_origin_) {
-            fprintf_s(fp, str_format.c_str(),
-                iter.coordinate.at(kXIndex) - grid_offset.at(kXIndex),
-                iter.coordinate.at(kYIndex) - grid_offset.at(kYIndex),
-                0.);
-        }
-    }
-    return geo_info.coordinate_origin_.size();
-}
 #endif  // DEBUG_DISABLE_2D_FUNCTIONS
 #ifndef DEBUG_DISABLE_3D_FUNCTIONS
 /**
@@ -1110,8 +1090,7 @@ DefSizet VtkWriterManager::WriteGeometryCoordinates(FILE* const fp,
 * @param[in]  map_grid_node   grid nodes at the same refinement level.
 * @param[in]  bool_overlap write overlapping region or not
 * @param[in]  overlap_flag flag indicates nodes in the overlapping region
-* @param[out]  ptr_map_node_index   indices of grid nodes
-*                           for unstructure grid.
+* @param[out]  ptr_map_node_index   indices of grid nodes for unstructured grid.
 * @return  number of nodes and number of cells.
 */
 std::array<DefSizet, 2> VtkWriterManager::CalculateNumOfGridCells(
@@ -1154,11 +1133,11 @@ std::array<DefSizet, 2> VtkWriterManager::CalculateNumOfGridCells(
 /**
 * @brief   function to write grid coordinates.
 * @param[in]  fp   pointer to output file.
-* @param[in]  bool_binary write data in bindary or ascii format
+* @param[in]  bool_binary write data in binary or ascii format
 * @param[in]  output_data_format output data (real or integer) format
 * @param[in]  grid_manager2d class to manage 3d grid information
 * @param[in]  grid_info   instance of grid information.
-* @param[in]  map_node_index    indices of nodes for unstructure grid.
+* @param[in]  map_node_index    indices of nodes for unstructured grid.
 */
 void VtkWriterManager::WriteGridCoordinates(FILE* const fp,
     const bool bool_binary,
@@ -1227,11 +1206,11 @@ void VtkWriterManager::WriteGridCoordinates(FILE* const fp,
 /**
 * @brief   function to write connectivity relation of cells
 * @param[in]  fp   pointer to output file.
-* @param[in]  bool_binary write data in bindary or ascii format
+* @param[in]  bool_binary write data in binary or ascii format
 * @param[in]  output_data_format output data (real or integer) format
 * @param[in]  bitset_aux3d   class to manage functions of spacing
 *                          filling code related manipulations.
-* @param[in]  map_node_index   indices of nodes for unstructure grid.
+* @param[in]  map_node_index   indices of nodes for unstructured grid.
 */
 void VtkWriterManager::WriteGridCellConnectivity(FILE* const fp,
     const bool bool_binary,
@@ -1278,56 +1257,6 @@ void VtkWriterManager::WriteGridCellConnectivity(FILE* const fp,
             }
         }
     }
-}
-/**
-* @brief   function to write geometry coordinates.
-* @param[in]  fp   pointer to output file.
-* @param[in]  bool_binary write data in bindary or ascii format
-* @param[in]  dims dimension
-* @param[in]  grid_offset offset coordinates of the mesh
-* @param[in]  output_data_format output data (real or integer) format
-* @param[in]  geo_info   instance of geometry information.
-*/
-DefSizet VtkWriterManager::WriteGeometryCoordinates(FILE* const fp,
-    const bool bool_binary, const DefInt dims,
-    const std::array<DefReal, 3>& grid_offset,
-    const OutputDataFormat& output_data_format,
-    const GeometryInfo3DInterface& geo_info) {
-
-    std::string str_format = "   "
-        + output_data_format.output_real_.printf_format_ + " "
-        + output_data_format.output_real_.printf_format_ + " "
-        + output_data_format.output_real_.printf_format_ + "\n";
-    if (bool_binary) {
-        std::vector<uint8_t> vec_uint8{}, vec_base64{};
-        for (const auto& iter : geo_info.coordinate_origin_) {
-            base64_instance_.AddToVecChar(
-                output_data_format.output_real_.CastType(
-                    iter.coordinate.at(kXIndex)
-                    - grid_offset.at(kXIndex)), &vec_uint8);
-            base64_instance_.AddToVecChar(
-                output_data_format.output_real_.CastType(
-                    iter.coordinate.at(kYIndex)
-                    - grid_offset.at(kYIndex)), &vec_uint8);
-            base64_instance_.AddToVecChar(
-                output_data_format.output_real_.CastType(
-                    iter.coordinate.at(kZIndex)
-                    - grid_offset.at(kZIndex)), &vec_uint8);
-        }
-        base64_instance_.Encode(&vec_uint8, &vec_base64);
-        for (const auto& iter : vec_base64) {
-            fprintf_s(fp, "%c", iter);
-        }
-        fprintf_s(fp, "\n");
-    } else {
-        for (const auto& iter : geo_info.coordinate_origin_) {
-            fprintf_s(fp, str_format.c_str(),
-                iter.coordinate.at(kXIndex) - grid_offset.at(kXIndex),
-                iter.coordinate.at(kYIndex) - grid_offset.at(kYIndex),
-                iter.coordinate.at(kZIndex) - grid_offset.at(kZIndex));
-        }
-    }
-    return geo_info.coordinate_origin_.size();
 }
 #endif  // DEBUG_DISABLE_3D_FUNCTIONS
 }  // end namespace amrproject
