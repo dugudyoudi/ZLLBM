@@ -27,6 +27,7 @@ namespace rootproject {
 namespace amrproject {
 class OutputDataFormat;
 class Base64Utility;
+class GridManagerInterface;
 /**
 * @struct TrackingNode
 * @brief structure to nodes information for tracking movement
@@ -108,8 +109,6 @@ class TrackingGridInfoInterface {
 
     // information of TrackingNode
     DefMap<TrackingNode> map_tracking_node_{};
-    DefInt k0NumIntForEachNode_ = 1;
-    DefInt k0NumRealForEachNode_ = 0;
     TrackingNode k0TrackNodeInstance_;
 };
 /**
@@ -137,8 +136,6 @@ class GhostGridInfoInterface {
 
     // information of GhostNode
     DefMap<GhostNode> map_ghost_node_{};
-    DefInt k0NumIntForEachNode_ = 1;
-    DefInt k0NumRealForEachNode_ = 0;
     virtual ~GhostGridInfoInterface() {}
  protected:
     virtual void InitialGhostNode(const DefSFBitset& bitset_in) = 0;
@@ -186,8 +183,6 @@ class GridInfoInterface {
     // information of GridNode
     DefMap<std::unique_ptr<GridNode>> map_grid_node_{};
     DefMap<DefInt> map_grid_count_exist_{};
-    DefInt k0NumIntForEachNode_ = 0;
-    DefInt k0NumRealForEachNode_ = 0;
     virtual void SetNodeVariablesAsZeros(GridNode* const ptr_node) {}  // will be called in interpolation
 
     // domain boundary related
@@ -233,6 +228,15 @@ class GridInfoInterface {
     // debug
     virtual void DebugWrite() {}
     virtual void DebugWriteNode(const GridNode& node) {}
+
+ protected:
+    GridManagerInterface* ptr_parent_grid_manager_ = nullptr;
+
+ public:
+    void SetPtrToParentGridManager(GridManagerInterface* ptr_grid_manager) {
+        ptr_parent_grid_manager_ = ptr_grid_manager;}
+    GridManagerInterface* GetPtrToParentGridManager() const {
+        return ptr_parent_grid_manager_;}
 
     // interpolation
  public:
@@ -317,8 +321,7 @@ class GridInfoInterface {
 */
 class GridInfoCreatorInterface {
  public:
-    virtual std::shared_ptr<GridInfoInterface>
-        CreateGridInfo() const = 0;
+    virtual std::shared_ptr<GridInfoInterface> CreateGridInfo() const = 0;
     virtual ~GridInfoCreatorInterface() {}
 };
 }  // end namespace amrproject

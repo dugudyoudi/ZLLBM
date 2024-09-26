@@ -78,6 +78,12 @@ class AmrManager {
     static AmrManager* amr_instance_;
     AmrManager(void) {}
     ~AmrManager(void) {}
+
+#ifdef DEBUG_UNIT_TEST
+    // functions for the purpose of debug
+ public:
+    void CheckMeshAfterInitialization() const;
+#endif
 };
 }  // end namespace amrproject
 }  // end namespace rootproject

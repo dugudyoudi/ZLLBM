@@ -59,15 +59,6 @@ void BoundaryPeriodic2D::CalBoundaryCondition(const ELbmBoundaryType boundary_ty
             for (i = 0; i < num_q_one_direction; ++i) {
                 node.f_.at(indices[i]) = node_counterpart.f_.at(indices[i]);
             }
-        } else {
-            std::array<DefReal, 2> coordinates, coordinates2,
-            grid_space = {ptr_grid_info->grid_space_[kXIndex], ptr_grid_info->grid_space_[kYIndex]};
-            grid_manager2d.SFBitsetComputeCoordinate(iter_node.first, grid_space, &coordinates2);
-            grid_manager2d.SFBitsetComputeCoordinate(sfbitset_counterpart, grid_space, &coordinates);
-            amrproject::LogManager::LogError("Node (" + std::to_string(coordinates2[kXIndex]) + ", "
-                + std::to_string(coordinates2[kYIndex]) + ") at periodic boundary is not found for node ("
-                + std::to_string(coordinates[kXIndex]) + ", "+ std::to_string(coordinates[kYIndex]) + ") in "
-                + std::string(__FILE__) + " at line " + std::to_string(__LINE__));
         }
     }
 }
@@ -125,18 +116,6 @@ void BoundaryPeriodic3D::CalBoundaryCondition(const ELbmBoundaryType boundary_ty
             for (i = 0; i < num_q_one_direction; ++i) {
                 node.f_.at(indices[i]) = node_counterpart.f_.at(indices[i]);
             }
-        } else {
-            std::array<DefReal, 3> coordinates, coordinates2,
-                grid_space = {ptr_grid_info->grid_space_[kXIndex], ptr_grid_info->grid_space_[kYIndex],
-                ptr_grid_info->grid_space_[kZIndex]};
-            grid_manager3d.SFBitsetComputeCoordinate(iter_node.first, grid_space, &coordinates);
-            grid_manager3d.SFBitsetComputeCoordinate(sfbitset_counterpart, grid_space, &coordinates);
-            amrproject::LogManager::LogError("Node (" + std::to_string(coordinates2[kXIndex]) + ", "
-                + std::to_string(coordinates2[kYIndex])  + ", " + std::to_string(coordinates2[kZIndex])
-                + ") at periodic boundary is not found for node ("
-                + std::to_string(coordinates[kXIndex]) + ", "+ std::to_string(coordinates[kYIndex])
-                + ", "+ std::to_string(coordinates[kZIndex]) + ") in "
-                + std::string(__FILE__) + " at line " + std::to_string(__LINE__));
         }
     }
 }

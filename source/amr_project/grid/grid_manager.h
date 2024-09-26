@@ -67,9 +67,9 @@ class MultiTimeSteppingC2F : public TimeSteppingSchemeInterface {
 */
 struct NodeBitStatus {
     inline static DefInt kNodeStatus0_ = 0;
-    inline static DefInt kNodeStatusCoarse2Fine0_ = 1 << 1;  ///< flag indicating node on the outmost fine layer
+    inline static DefInt kNodeStatusCoarse2Fine0_ = 1 << 1;  ///< flag indicating node on the outmost coarse layer
     inline static DefInt kNodeStatusCoarse2FineGhost_ = 1 << 2;
-    inline static DefInt kNodeStatusFine2Coarse0_ = 1 << 3;  ///< flag indicating node on outmost coarse layer
+    inline static DefInt kNodeStatusFine2Coarse0_ = 1 << 3;  ///< flag indicating node on outmost fine layer
     inline static DefInt kNodeStatusFine2CoarseGhost_ = 1 << 4;
     inline static DefInt kNodeStatusMpiPartitionOuter_ = 1 << 5;
     inline static DefInt kNodeStatusMpiPartitionInner_ = 1 << 6;
@@ -211,9 +211,16 @@ class GridManagerInterface{
     const DefInt kFlag0_ = 0;  // flag to initialize status of a node
 
     // functions to generate grid
+    void ExtendGivenNumbOfLayer(DefInt i_level,
+        const std::vector<DefAmrLUint> num_extend_neg,
+        const std::vector<DefAmrLUint> num_extend_pos,
+        const DefMap<DefInt>& map_start_layer,
+        DefMap<DefInt>* const ptr_map_exist,
+        DefMap<DefInt>* const ptr_map_outmost) const;
     void InstantiateOverlapLayerOfRefinementInterface(
         const std::vector<DefMap<DefInt>>& sfbitset_one_lower_level);
-    void InstantiatePeriodicNodes(const bool bool_min, const DefInt i_dim, const DefInt i_level,
+    void InstantiatePeriodicNodes(const bool bool_min, const DefInt flag_normal_outer_node,
+        const DefInt i_dim, const DefInt i_level,
         const DefInt num_ghost_layer, const int boundary_min, const DefSFBitset sfbitset_in,
         const DefSFCodeToUint code_min_background_level, const DefSFCodeToUint code_max_background_level,
         const SFBitsetAuxInterface& sfbitset_aux, GridInfoInterface* const ptr_grid_info,
@@ -233,6 +240,14 @@ class GridManagerInterface{
         const std::array<DefMap<DefInt>* const, 3>& arr_ptr_layer,
         DefMap<DefInt>* const ptr_node_coarse_interface_outer);
     void IdentifyInterfaceNodeOnEdge(
+        const std::array<std::pair<DefSFBitset, std::array<bool, 2>>, 2>& arr_bitset_lower,
+        const std::array<DefSFBitset, 3>& arr_bitset_current,
+        const std::array<DefMap<DefInt>* const, 3>& arr_ptr_layer);
+    void IdentifyInterfaceNodeDiagonal(
+        const std::array<std::pair<DefSFBitset, std::array<bool, 2>>, 4>& arr_bitset_lower,
+        const DefSFBitset bitset_center_higher,
+        const std::array<DefMap<DefInt>* const, 3>& arr_ptr_layer);
+    void IdentifyInterfaceNodeOnEdge(
         const std::array<DefSFBitset, 2>& arr_bitset_lower,
         const DefSFBitset bitset_mid_higher,
         const SFBitsetAuxInterface& sfbitset_aux,
@@ -247,6 +262,10 @@ class GridManagerInterface{
         const DefMap<std::unique_ptr<GridNode>>& node_current,
         const std::array<DefMap<DefInt>* const, 3>& arr_ptr_layer,
         DefMap<DefInt>* const ptr_coarse_outer);
+    void IdentifyInterfaceNodeOnEdgeAcrossTwoLevels(
+        const std::array<std::pair<DefSFBitset, DefInt>, 2>& arr_bitset_lower,
+        const DefSFBitset bitset_mid_higher, const SFBitsetAuxInterface& sfbitset_aux,
+        const DefMap<DefInt>& node_outmost, const std::array<DefMap<DefInt>* const, 3>& arr_ptr_layer);
     virtual void OverlapLayerFromHighToLow(
         const DefMap<DefInt>& layer_high_level,
         DefMap<DefInt>* const ptr_layer_low_level) = 0;
@@ -263,13 +282,6 @@ class GridManagerInterface{
  private:
     const DefInt K0IMaxFloodFill_ = static_cast<DefInt>(90000);
     ///<  maximum iteration for flood fill
-
-    void ExtendGivenNumbOfLayer(DefInt i_level,
-        const std::vector<DefAmrLUint> num_extend_neg,
-        const std::vector<DefAmrLUint> num_extend_pos,
-        const DefMap<DefInt>& map_start_layer,
-        DefMap<DefInt>* const ptr_map_exist,
-        DefMap<DefInt>* const ptr_map_outmost) const;
     void FindOverlappingLayersBasedOnOutermostCoarse(
         const DefMap<DefInt>& layer_coarse_0,
         const DefMap<DefInt>& sfbitset_exist,
@@ -361,34 +373,33 @@ class GridManagerInterface{
         const DefMap<std::unique_ptr<GridNode>>& map_grid_node_higher_level,
         const SFBitsetAuxInterface& sfbitset_aux, std::map<int, DefMap<DefInt>>* const ptr_mpi_inner_layer,
         DefMap<std::unique_ptr<GridNode>> *const ptr_map_grid_node);
+    void ResetBackgroundGridAsMpiLayer(const DefInt num_mpi_layers, const GridInfoInterface& background_grid_info,
+        const DefMap<DefInt>& level1_grid, DefMap<DefInt>* const ptr_background_grid);
 
  protected:
-    void InstantiateOverlapLayerOfRefinementInterfaceMpi(
-        const DefInt i_level, const DefInt num_partition_outer_layer,
+    virtual void IdentifyInterfaceForACellAcrossTwoLevels(const DefInt flag_extra,
+        const DefSFBitset bitset_in, const DefMap<DefInt>& node_coarse_interface,
+        const DefMap<DefInt>& node_exist, const DefMap<DefInt>& sfbitset_exist_coarse,
+        DefMap<DefInt>* const ptr_inner_layer, DefMap<DefInt>* const ptr_mid_layer,
+        DefMap<DefInt>* const ptr_outer_layer) = 0;
+     void FindOverlappingLayersBasedOnOutermostCoarseAndLowerLevelNodes(const DefInt flag_extra,
+        const DefMap<DefInt>& layer_coarse_0, const DefMap<DefInt>& sfbitset_exist,
+        const DefMap<DefInt>& sfbitset_exist_coarse, DefMap<DefInt>* const ptr_layer_coarse_m1,
+        DefMap<DefInt>* const ptr_layer_fine_0, DefMap<DefInt>* const ptr_layer_fine_m1,
+        DefMap<DefInt>* const ptr_layer_fine_m2);
+    void InstantiateOverlapLayerOfRefinementInterfaceMpi(const DefInt i_level, const DefInt num_partition_outer_layer,
         const DefInt flag_outmost_refinement_n_outer_mpi,
-        const DefSFCodeToUint code_min, const DefSFCodeToUint code_max,
-        const SFBitsetAuxInterface& sfbitset_aux, const DefMap<DefInt>& map_sfbitset_one_lower_level,
+        const DefSFCodeToUint code_min, const DefSFCodeToUint code_max, const SFBitsetAuxInterface& sfbitset_aux,
+        const DefMap<DefInt>& map_sfbitset_one_lower_level, const DefMap<DefInt>& map_c2f_one_lower_level,
         const DefMap<DefInt>& sfbitset_partition_interface_background,
-        DefMap<DefInt>* const ptr_outer_layer_current_level,
-        DefMap<DefInt>* const ptr_outer_layer_lower_level);
+        DefMap<DefInt>* const ptr_outer_layer_current_level, DefMap<DefInt>* const ptr_outer_layer_lower_level);
     void InstantiateDomainBoundaryForMpi(const DefAmrLUint num_partition_outer_layer,
+        const DefInt flag_normal_outer_node, const DefInt flag_periodic_outer_node,
         const DefSFCodeToUint code_min_background_level, const DefSFCodeToUint code_max_background_level,
         const std::vector<bool>& periodic_min, const std::vector<bool>& periodic_max,
         const DefMap<DefInt>& sfbitset_one_lower_level,
         const SFBitsetAuxInterface& sfbitset_aux, GridInfoInterface* const ptr_grid_info,
         DefMap<DefInt>* const ptr_inner_layer, DefMap<DefInt>* const ptr_outer_layer);
-
-#ifdef DEBUG_UNIT_TEST
-
- private:
-     // gtest to access private member functions
-#ifndef  DEBUG_DISABLE_2D_FUNCTIONS
-     FRIEND_TEST(GridManagerGeneration2D, ExtendNumbOfLayerAndFindInterface);
-#endif  // DEBUG_DISABLE_2D_FUNCTIONS
-#ifndef  DEBUG_DISABLE_3D_FUNCTIONS
-     FRIEND_TEST(GridManagerGeneration3D, ExtendNumbOfLayerAndFindInterface);
-#endif  // DEBUG_DISABLE_3D_FUNCTIONS
-#endif  // DEBUG_UNIT_TEST
 };
 #ifndef  DEBUG_DISABLE_2D_FUNCTIONS
 /**
@@ -518,23 +529,19 @@ class GridManager2D :public  GridManagerInterface, public SFBitsetAux2D {
         DefMap<DefInt>* const ptr_layer_lower_level,
         DefMap<DefInt>* const ptr_layer_lower_level_outer) override;
 
+    // used in mpi mesh generation
+    void IdentifyInterfaceForACellAcrossTwoLevels(const DefInt flag_extra,
+        const DefSFBitset bitset_in, const DefMap<DefInt>& node_coarse_interface,
+        const DefMap<DefInt>& node_exist, const DefMap<DefInt>& sfbitset_exist_coarse,
+        DefMap<DefInt>* const ptr_inner_layer, DefMap<DefInt>* const ptr_mid_layer,
+        DefMap<DefInt>* const ptr_outer_layer) override;
+
  private:
     DefInt kFlagCurrentNodeXNeg_ = 1, kFlagCurrentNodeXPos_ = 1 << 1,
         kFlagCurrentNodeYNeg_ = 1 << 2, kFlagCurrentNodeYPos_ = 1 << 3;
     DefInt FindAllNeighborsWithSpecifiedDirection(const DefSFBitset bitset_in,
         const std::array<bool, 2>& bool_neg, const std::array<bool, 2>& bool_pos,
         std::vector <DefSFBitset>* const ptr_vec_neighbors) const;
-
-#ifdef DEBUG_UNIT_TEST
-
- private:
-        // gtest to access private member functions
-        FRIEND_TEST(GridManagerGeneration2D, ResetExtendLayer);
-        FRIEND_TEST(GridManagerGeneration2D, IdentifyLayerThroughFloodFill);
-        FRIEND_TEST(GridManagerGeneration2D, ExtendGridOneLayer);
-        FRIEND_TEST(GridManagerGeneration2D, ExtendNumbOfLayerAndFindInterface);
-        FRIEND_TEST(GridManagerGeneration2D, FindInterfaceCurrentLevel);
-#endif  // DEBUG_UNIT_TEST
 };
 #endif  // DEBUG_DISABLE_2D_FUNCTIONS
 #ifndef  DEBUG_DISABLE_3D_FUNCTIONS
@@ -663,6 +670,13 @@ class GridManager3D :public  GridManagerInterface, public SFBitsetAux3D {
         DefMap<DefInt>* const ptr_layer_lower_level,
         DefMap<DefInt>* const ptr_layer_lower_level_outer) override;
 
+    // used in mpi mesh generation
+    void IdentifyInterfaceForACellAcrossTwoLevels(const DefInt flag_extra,
+        const DefSFBitset bitset_in, const DefMap<DefInt>& node_coarse_interface,
+        const DefMap<DefInt>& node_exist, const DefMap<DefInt>& sfbitset_exist_coarse,
+        DefMap<DefInt>* const ptr_inner_layer, DefMap<DefInt>* const ptr_mid_layer,
+        DefMap<DefInt>* const ptr_outer_layer) override;
+
  private:
     DefInt kFlagCurrentNodeXNeg_ = 1, kFlagCurrentNodeXPos_ = 1 << 1,
         kFlagCurrentNodeYNeg_ = 1 << 2, kFlagCurrentNodeYPos_ = 1 << 3,
@@ -675,17 +689,11 @@ class GridManager3D :public  GridManagerInterface, public SFBitsetAux3D {
         const DefSFBitset bitset_center_higher,
         const DefMap<DefInt>& node_coarse_interface,
         const std::array<DefMap<DefInt>* const, 3>& arr_ptr_layer);
-
-#ifdef DEBUG_UNIT_TEST
-
- private:
-     // gtest to access private member functions
-     FRIEND_TEST(GridManagerGeneration3D, ResetExtendLayer);
-     FRIEND_TEST(GridManagerGeneration3D, IdentifyLayerThroughFloodFill);
-     FRIEND_TEST(GridManagerGeneration3D, ExtendGridOneLayer);
-     FRIEND_TEST(GridManagerGeneration3D, ExtendNumbOfLayerAndFindInterface);
-     FRIEND_TEST(GridManagerGeneration3D, FindInterfaceCurrentLevel);
-#endif  // DEBUG_UNIT_TEST
+    void IdentifyInterfaceNodeDiagonal(
+        const std::array<std::pair<DefSFBitset, DefInt>, 4>& arr_bitset_lower,
+        const DefSFBitset bitset_center_higher,
+        const DefMap<DefInt>& node_coarse_interface,
+        const std::array<DefMap<DefInt>* const, 3>& arr_ptr_layer);
 };
 #endif  // DEBUG_DISABLE_3D_FUNCTIONS
 /**

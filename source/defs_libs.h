@@ -11,6 +11,7 @@
 #ifndef SOURCE_DEFS_LIBS_H_
 #define SOURCE_DEFS_LIBS_H_
 // libraries
+#include <mpi.h>  // for debug
 #include <bitset>
 #include <cstdint>
 #include <unordered_map>

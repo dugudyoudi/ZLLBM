@@ -30,9 +30,6 @@
 #include "grid/grid_info_interface.h"
 #include "grid/grid_manager.h"
 #include "criterion/geometry_info_interface.h"
-#ifdef DEBUG_UNIT_TEST
-#include "../../googletest-main/googletest/include/gtest/gtest_prod.h"
-#endif  // DEBUG_UNIT_TEST
 namespace rootproject {
 namespace amrproject {
 /**
@@ -247,9 +244,9 @@ class MpiManager{
 
     // functions to serialize and deserialize grid node information
  public:
-    std::unique_ptr<char[]> SerializeNodeStoreUint(const DefMap<DefInt>& map_nodes,
+    std::unique_ptr<char[]> SerializeNodeStoreInt(const DefMap<DefInt>& map_nodes,
         int* const ptr_buffer_size) const;
-    void DeserializeNodeStoreUint(const std::unique_ptr<char[]>& buffer,
+    void DeserializeNodeStoreInt(const std::unique_ptr<char[]>& buffer,
         DefMap<DefInt>* const map_nodes) const;
     std::unique_ptr<char[]> SerializeNodeSFBitset(const DefMap<DefInt>& map_nodes,
         int* const ptr_buffer_size) const;
@@ -281,7 +278,7 @@ class MpiManager{
         const SFBitsetAuxInterface& sfbitset_aux,
         const std::vector<DefMap<DefInt>>& vec_sfbitset_rank0,
         std::vector<DefMap<DefInt>>* const ptr_sfbitset_each,
-        std::vector<DefMap<DefInt>>* const ptr_sfbitset_ghost_each,
+        std::vector<DefMap<DefInt>>* const ptr_sfbitset_c2f_each,
         std::vector<std::shared_ptr<GridInfoInterface>>* const ptr_vec_grid_info) const;
     void IniSendNReceiveGridInfoAtAllLevels(const DefInt flag_size0,
         const DefInt flag_coarse2fine, const DefInt dims, const DefInt max_level,
@@ -375,10 +372,6 @@ class MpiManager{
         }
     }
 
-    // functions for the purpose of debug
- public:
-    void CheckMpiNodesCorrespondence(const GridInfoInterface& grid_info) const;
-
     // functions for the purpose of initialization
  public:
 #ifndef  DEBUG_DISABLE_2D_FUNCTION
@@ -435,6 +428,14 @@ class MpiManager{
         const std::vector<DefSFBitset>& domain_max_p1_n_level,
         DefMap<DefInt>* const ptr_map_ghost_layer) const;
 #endif  // DEBUG_DISABLE_3D_FUNCTIONS
+
+#ifdef DEBUG_UNIT_TEST
+    // functions for the purpose of debug
+ public:
+    void DebugMpiForAllGrids(const GridManagerInterface& grid_manager) const;
+    void CheckMpiNodesCorrespondence(const GridInfoInterface& grid_info) const;
+    void CheckMpiPeriodicCorrespondence(const GridInfoInterface& grid_info) const;
+#endif
 };
 }  //  end namespace amrproject
 }  //  end namespace rootproject

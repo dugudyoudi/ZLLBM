@@ -12,6 +12,7 @@
 #define SOURCE_AMR_PROJECT_GRID_SFBITSET_AUX_H_
 #include <array>
 #include <vector>
+#include <utility>
 #ifdef DEBUG_UNIT_TEST
 #include "../../googletest-main/googletest/include/gtest/gtest_prod.h"
 #endif  // DEBUG_UNIT_TEST
@@ -63,20 +64,17 @@ class SFBitsetAuxInterface {
         const std::vector<DefSFBitset>& domain_min_n_level,
         const std::vector<DefSFBitset>& domain_max_n_level,
         std::vector<DefSFBitset>* const ptr_sfbitset_node) const = 0;
-    virtual void GetMinM1AtGivenLevel(const DefInt i_level,
-        std::vector<DefAmrLUint> indices_min,
-        std::vector<DefSFBitset>* const ptr_min_m1_bitsets) const = 0;
-    virtual void GetMaxP1AtGivenLevel(const DefInt i_level,
-        std::vector<DefAmrLUint> indices_max,
-        std::vector<DefSFBitset>* const ptr_max_p1_bitset) const = 0;
-    virtual void GetMinAtGivenLevel(const DefInt i_level,
-        std::vector<DefAmrLUint> indices_min,
-        std::vector<DefSFBitset>* const ptr_min_bitsets) const = 0;
-    virtual void GetMaxAtGivenLevel(const DefInt i_level,
-        std::vector<DefAmrLUint> indices_max,
-        std::vector<DefSFBitset>* const ptr_max_bitset) const = 0;
+    virtual DefAmrLUint FindNodesInPeriodicRegionCenter(const DefSFBitset& sfbitset_in,
+        const DefAmrLUint region_length_neg, const DefAmrLUint region_length_pos,
+        const std::vector<bool>& periodic_min, const std::vector<bool>& periodic_max,
+        const std::vector<DefSFBitset>& domain_min_n_level,
+        const std::vector<DefSFBitset>& domain_max_n_level,
+        std::vector<DefSFBitset>* const ptr_sfbitset_node) const = 0;
     virtual void FindNeighboringCoarseFromFine(const DefSFBitset& sfbitset_fine,
         std::vector<DefSFBitset>* const ptr_vec_coarse) const = 0;
+    virtual bool CheckExistenceCurrentLevel(
+        const DefSFBitset& sfbitset_in, const DefMap<DefInt>& exist_nodes) const = 0;
+
     // compared to inline function, this virtual is costly, avoiding using this if possible
     virtual DefSFBitset SFBitsetToNLowerLevelVir(
         const DefInt n_level, const DefSFBitset& sfbitset_in) const = 0;
@@ -92,6 +90,22 @@ class SFBitsetAuxInterface {
         std::vector<DefSFBitset>* const ptr_vec_neighbors) const = 0;
     virtual void SFBitsetComputeCoordinateVir(const DefSFBitset& bitset_in,
         const std::vector<DefReal>& grid_space, std::vector<DefReal>* const ptr_coordi) const = 0;
+
+    virtual std::vector<DefAmrLUint> GetMinBackgroundIndices() const = 0;
+    virtual std::vector<DefAmrLUint> GetMaxBackgroundIndices() const = 0;
+    virtual void GetMinM1AtGivenLevel(const DefInt i_level,
+        std::vector<DefAmrLUint> indices_min,
+        std::vector<DefSFBitset>* const ptr_min_m1_bitsets) const = 0;
+    virtual void GetMaxP1AtGivenLevel(const DefInt i_level,
+        std::vector<DefAmrLUint> indices_max,
+        std::vector<DefSFBitset>* const ptr_max_p1_bitset) const = 0;
+    virtual void GetMinAtGivenLevel(const DefInt i_level,
+        std::vector<DefAmrLUint> indices_min,
+        std::vector<DefSFBitset>* const ptr_min_bitsets) const = 0;
+    virtual void GetMaxAtGivenLevel(const DefInt i_level,
+        std::vector<DefAmrLUint> indices_max,
+        std::vector<DefSFBitset>* const ptr_max_bitset) const = 0;
+
     virtual ~SFBitsetAuxInterface() {}
 
  protected:
@@ -167,6 +181,9 @@ class  SFBitsetAux2D : public SFBitsetAuxInterface {
     bool SFBitsetBelongToOneCell(const DefSFBitset& sfbitset_in,
         const DefMap<DataType>& map_node_exist,
         std::array<DefSFBitset, 4>* const ptr_sfbitsets) const;
+    bool SFBitsetBelongToOneCellAcrossTwoLevels(const DefSFBitset& sfbitset_in,
+        const DefMap<DefInt>& map_node_exist, const DefMap<DefInt>& map_node_exist_coarse,
+        std::array<std::pair<DefSFBitset, DefInt>, 4>* const ptr_sfbitsets) const;
     int ResetIndicesExceedingDomain(const std::array<DefAmrLUint, 2>& domain_min_indices,
         const std::array<DefAmrLUint, 2>& domain_max_indices,
         DefSFCodeToUint* const ptr_i_code, DefSFBitset* ptr_bitset_tmp) const;
@@ -222,20 +239,15 @@ class  SFBitsetAux2D : public SFBitsetAuxInterface {
         const std::vector<DefSFBitset>& domain_min_n_level,
         const std::vector<DefSFBitset>& domain_max_n_level,
         std::vector<DefSFBitset>* const ptr_sfbitset_node) const final;
-    void GetMinM1AtGivenLevel(const DefInt i_level,
-        std::vector<DefAmrLUint> indices_min,
-        std::vector<DefSFBitset>* const ptr_min_m1_bitsets) const final;
-    void GetMaxP1AtGivenLevel(const DefInt i_level,
-        std::vector<DefAmrLUint> indices_max,
-        std::vector<DefSFBitset>* const ptr_max_p1_bitset) const final;
-    void GetMinAtGivenLevel(const DefInt i_level,
-        std::vector<DefAmrLUint> indices_min,
-        std::vector<DefSFBitset>* const ptr_min_bitsets) const final;
-    void GetMaxAtGivenLevel(const DefInt i_level,
-        std::vector<DefAmrLUint> indices_max,
-        std::vector<DefSFBitset>* const ptr_max_bitset) const final;
-    void FindNeighboringCoarseFromFine(const DefSFBitset& sfbitset_fine,
-        std::vector<DefSFBitset>* const ptr_vec_coarse) const  final;
+    DefAmrLUint FindNodesInPeriodicRegionCenter(const DefSFBitset& sfbitset_in,
+        const DefAmrLUint region_length_neg, const DefAmrLUint region_length_pos,
+        const std::vector<bool>& periodic_min, const std::vector<bool>& periodic_max,
+        const std::vector<DefSFBitset>& domain_min_n_level,
+        const std::vector<DefSFBitset>& domain_max_n_level,
+        std::vector<DefSFBitset>* const ptr_sfbitset_node) const final;
+    bool CheckExistenceCurrentLevel(
+        const DefSFBitset& sfbitset_in, const DefMap<DefInt>& exist_nodes) const final;
+
     DefSFBitset SFBitsetToNLowerLevelVir(const DefInt n_level,
         const DefSFBitset& morton_in) const final {
         return SFBitsetToNLowerLevel(n_level, morton_in);
@@ -254,8 +266,30 @@ class  SFBitsetAux2D : public SFBitsetAuxInterface {
         memcpy(ptr_vec_neighbors->data(), array_neighbors.data(),
             9 * sizeof(DefSFBitset));
     };
-    SFBitsetAux2D() { SFBitsetInitial(); }
 
+
+    std::vector<DefAmrLUint> GetMinBackgroundIndices() const final {
+        return {k0MinIndexOfBackgroundNode_[kXIndex], k0MinIndexOfBackgroundNode_[kYIndex]};
+    }
+    std::vector<DefAmrLUint> GetMaxBackgroundIndices() const final {
+        return {k0MaxIndexOfBackgroundNode_[kXIndex], k0MaxIndexOfBackgroundNode_[kYIndex]};
+    }
+    void GetMinM1AtGivenLevel(const DefInt i_level,
+        std::vector<DefAmrLUint> indices_min,
+        std::vector<DefSFBitset>* const ptr_min_m1_bitsets) const final;
+    void GetMaxP1AtGivenLevel(const DefInt i_level,
+        std::vector<DefAmrLUint> indices_max,
+        std::vector<DefSFBitset>* const ptr_max_p1_bitset) const final;
+    void GetMinAtGivenLevel(const DefInt i_level,
+        std::vector<DefAmrLUint> indices_min,
+        std::vector<DefSFBitset>* const ptr_min_bitsets) const final;
+    void GetMaxAtGivenLevel(const DefInt i_level,
+        std::vector<DefAmrLUint> indices_max,
+        std::vector<DefSFBitset>* const ptr_max_bitset) const final;
+    void FindNeighboringCoarseFromFine(const DefSFBitset& sfbitset_fine,
+        std::vector<DefSFBitset>* const ptr_vec_coarse) const final;
+
+    SFBitsetAux2D() { SFBitsetInitial(); }
 
 #ifdef ENABLE_MPI
     // mpi related
@@ -358,6 +392,9 @@ class  SFBitsetAux3D : public SFBitsetAuxInterface {
     template<typename DataType>
     bool SFBitsetBelongToOneCell(const DefSFBitset& sfbitset_in,
         const DefMap<DataType>& map_node_exist, std::array<DefSFBitset, 8>* const ptr_sfbitsets) const;
+    bool SFBitsetBelongToOneCellAcrossTwoLevels(const DefSFBitset& sfbitset_in,
+        const DefMap<DefInt>& map_node_exist, const DefMap<DefInt>& map_node_exist_coarse,
+        std::array<std::pair<DefSFBitset, DefInt>, 8>* const ptr_sfbitsets) const;
     int ResetIndicesExceedingDomain(const std::array<DefAmrLUint, 3>& domain_min_indices,
         const std::array<DefAmrLUint, 3>& domain_max_indices,
         DefSFCodeToUint* const ptr_i_code, DefSFBitset* ptr_bitset_tmp) const;
@@ -421,20 +458,17 @@ class  SFBitsetAux3D : public SFBitsetAuxInterface {
         const std::vector<DefSFBitset>& domain_min_n_level,
         const std::vector<DefSFBitset>& domain_max_n_level,
         std::vector<DefSFBitset>* const ptr_sfbitset_node) const final;
-    void GetMinM1AtGivenLevel(const DefInt i_level,
-        std::vector<DefAmrLUint> indices_min,
-        std::vector<DefSFBitset>* const ptr_min_m1_bitsets) const final;
-    void GetMaxP1AtGivenLevel(const DefInt i_level,
-        std::vector<DefAmrLUint> indices_max,
-        std::vector<DefSFBitset>* const ptr_max_p1_bitset) const final;
-    void GetMinAtGivenLevel(const DefInt i_level,
-        std::vector<DefAmrLUint> indices_min,
-        std::vector<DefSFBitset>* const ptr_min_bitsets) const final;
-    void GetMaxAtGivenLevel(const DefInt i_level,
-        std::vector<DefAmrLUint> indices_max,
-        std::vector<DefSFBitset>* const ptr_max_bitset) const final;
+    DefAmrLUint FindNodesInPeriodicRegionCenter(const DefSFBitset& sfbitset_in,
+        const DefAmrLUint region_length_neg, const DefAmrLUint region_length_pos,
+        const std::vector<bool>& periodic_min, const std::vector<bool>& periodic_max,
+        const std::vector<DefSFBitset>& domain_min_n_level,
+        const std::vector<DefSFBitset>& domain_max_n_level,
+        std::vector<DefSFBitset>* const ptr_sfbitset_node) const final;
+    bool CheckExistenceCurrentLevel(
+        const DefSFBitset& sfbitset_in, const DefMap<DefInt>& exist_nodes) const final;
     void FindNeighboringCoarseFromFine(const DefSFBitset& sfbitset_fine,
         std::vector<DefSFBitset>* const ptr_vec_coarse) const final;
+
     DefSFBitset  SFBitsetToNLowerLevelVir(const DefInt n_level, const DefSFBitset& morton_in) const final {
         return SFBitsetToNLowerLevel(n_level, morton_in);
     }
@@ -452,6 +486,27 @@ class  SFBitsetAux3D : public SFBitsetAuxInterface {
         memcpy(ptr_vec_neighbors->data(), array_neighbors.data(),
             27 * sizeof(DefSFBitset));
     };
+
+    std::vector<DefAmrLUint> GetMinBackgroundIndices() const final {
+        return {k0MinIndexOfBackgroundNode_[kXIndex], k0MinIndexOfBackgroundNode_[kYIndex],
+            k0MinIndexOfBackgroundNode_[kZIndex]};
+    }
+    std::vector<DefAmrLUint> GetMaxBackgroundIndices() const final {
+        return {k0MaxIndexOfBackgroundNode_[kXIndex], k0MaxIndexOfBackgroundNode_[kYIndex],
+            k0MaxIndexOfBackgroundNode_[kZIndex]};
+    }
+    void GetMinM1AtGivenLevel(const DefInt i_level,
+        std::vector<DefAmrLUint> indices_min,
+        std::vector<DefSFBitset>* const ptr_min_m1_bitsets) const final;
+    void GetMaxP1AtGivenLevel(const DefInt i_level,
+        std::vector<DefAmrLUint> indices_max,
+        std::vector<DefSFBitset>* const ptr_max_p1_bitset) const final;
+    void GetMinAtGivenLevel(const DefInt i_level,
+        std::vector<DefAmrLUint> indices_min,
+        std::vector<DefSFBitset>* const ptr_min_bitsets) const final;
+    void GetMaxAtGivenLevel(const DefInt i_level,
+        std::vector<DefAmrLUint> indices_max,
+        std::vector<DefSFBitset>* const ptr_max_bitset) const final;
 
     SFBitsetAux3D() { SFBitsetInitial(); }
 
@@ -556,8 +611,7 @@ namespace amrproject {
 * @param[in]  sfbitset_in   bitset of the node at the origin of a cell
 * @param[in]  map_node_exist grid instance containing nodes at the same level
 * @param[out] ptr_sfbitsets of nodes on the cell 
-* @return  a bool value if true indicates
-           the given node is at the origin of a cell
+* @return  if true indicates the given node belongs to a cell
 * @note ptr_sfbitsets[0]:(0, 0); ptr_sfbitsets[1]:(+x, 0);
 *       ptr_sfbitsets[2]:(0, +y); ptr_sfbitsets[3]:(+x, +y);
 */
@@ -593,8 +647,7 @@ bool SFBitsetAux2D::SFBitsetBelongToOneCell(
 * @param[in]  sfbitset_in   bitset of the node at the origin of a cell
 * @param[in]  map_node_exist grid instance containing nodes at the same level
 * @param[out] ptr_sfbitsets of nodes on the cell
-* @return  a bool value if true indicates
-           the given node is at the origin of a cell
+* @return  if true indicates the given node belongs to a cell
 * @note ptr_sfbitsets[0]:(0, 0, 0); ptr_sfbitsets[1]:(+x, 0, 0);
 *       ptr_sfbitsets[2]:(0, +y, 0); ptr_sfbitsets[3]:(+x, +y, 0);
 *       ptr_sfbitsets[4]:(0, 0, +z);  ptr_sfbitsets[5]:(+x, 0, +z);

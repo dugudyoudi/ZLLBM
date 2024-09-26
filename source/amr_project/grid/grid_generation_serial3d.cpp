@@ -397,129 +397,129 @@ void GridManager3D::ComputeSFBitsetOnBoundaryAtGivenLevel(
 * @param[in] bitset_in space filling code of the center node.
 * @param[in] bool_neg indicators of extending in negative directions.
 * @param[in] bool_pos indicators of extending in positive directions.
-* @param[out] ptr_vec_neigbours space filling codes of neighbors.
+* @param[out] ptr_vec_neighbors space filling codes of neighbors.
 * @return indicators of current node on boundaries.
 */
 DefInt GridManager3D::FindAllNeighborsWithSpecifiedDirection(
     const DefSFBitset bitset_in,
     const std::array<bool, 3>& bool_neg, const std::array<bool, 3>& bool_pos,
-    std::vector <DefSFBitset>* const ptr_vec_neigbours) const {
-    ptr_vec_neigbours->clear();
+    std::vector <DefSFBitset>* const ptr_vec_neighbors) const {
+    ptr_vec_neighbors->clear();
     DefInt flag_current_node = 0;
     DefSFBitset sfbitset_tmp, sfbitset_tmp1, sfbitset_tmp2;
     if (bool_neg[kXIndex]) {  // (-x, 0, 0)
         sfbitset_tmp = FindXNeg(bitset_in);
-        ptr_vec_neigbours->push_back(sfbitset_tmp);
+        ptr_vec_neighbors->push_back(sfbitset_tmp);
         if (bool_neg[kYIndex]) {  // (-x, -y, 0)
             sfbitset_tmp1 = FindYNeg(sfbitset_tmp);
-            ptr_vec_neigbours->push_back(sfbitset_tmp1);
+            ptr_vec_neighbors->push_back(sfbitset_tmp1);
             if (bool_neg[kZIndex]) {  // (-x, -y, -z)
                 sfbitset_tmp2 = FindZNeg(sfbitset_tmp1);
-                ptr_vec_neigbours->push_back(sfbitset_tmp2);
+                ptr_vec_neighbors->push_back(sfbitset_tmp2);
             }
             if (bool_pos[kZIndex]) {  // (-x, -y, +z)
                 sfbitset_tmp2 = FindZPos(sfbitset_tmp1);
-                ptr_vec_neigbours->push_back(sfbitset_tmp2);
+                ptr_vec_neighbors->push_back(sfbitset_tmp2);
             }
         }
         if (bool_pos[kYIndex]) {  // (-x, +y, 0)
             sfbitset_tmp1 = FindYPos(sfbitset_tmp);
-            ptr_vec_neigbours->push_back(sfbitset_tmp1);
+            ptr_vec_neighbors->push_back(sfbitset_tmp1);
             if (bool_neg[kZIndex]) {  // (-x, +y, -z)
                 sfbitset_tmp2 = FindZNeg(sfbitset_tmp1);
-                ptr_vec_neigbours->push_back(sfbitset_tmp2);
+                ptr_vec_neighbors->push_back(sfbitset_tmp2);
             }
             if (bool_pos[kZIndex]) {  // (-x, +y, +z)
                 sfbitset_tmp2 = FindZPos(sfbitset_tmp1);
-                ptr_vec_neigbours->push_back(sfbitset_tmp2);
+                ptr_vec_neighbors->push_back(sfbitset_tmp2);
             }
         }
         if (bool_neg[kZIndex]) {  // (-x, 0, -z)
             sfbitset_tmp1 = FindZNeg(sfbitset_tmp);
-            ptr_vec_neigbours->push_back(sfbitset_tmp1);
+            ptr_vec_neighbors->push_back(sfbitset_tmp1);
         }
         if (bool_pos[kZIndex]) {  // (-x, 0, +z)
             sfbitset_tmp1 = FindZPos(sfbitset_tmp);
-            ptr_vec_neigbours->push_back(sfbitset_tmp1);
+            ptr_vec_neighbors->push_back(sfbitset_tmp1);
         }
     } else {
         flag_current_node |= kFlagCurrentNodeXNeg_;
     }
     if (bool_pos[kXIndex]) {  // (+x, 0, 0)
         sfbitset_tmp = FindXPos(bitset_in);
-        ptr_vec_neigbours->push_back(sfbitset_tmp);
+        ptr_vec_neighbors->push_back(sfbitset_tmp);
         if (bool_neg[kYIndex]) {  // (+x, -y, 0)
             sfbitset_tmp1 = FindYNeg(sfbitset_tmp);
-            ptr_vec_neigbours->push_back(sfbitset_tmp1);
+            ptr_vec_neighbors->push_back(sfbitset_tmp1);
             if (bool_neg[kZIndex]) {  // (+x, -y, -z)
                 sfbitset_tmp2 = FindZNeg(sfbitset_tmp1);
-                ptr_vec_neigbours->push_back(sfbitset_tmp2);
+                ptr_vec_neighbors->push_back(sfbitset_tmp2);
             }
             if (bool_pos[kZIndex]) {  // (+x, -y, +z)
                 sfbitset_tmp2 = FindZPos(sfbitset_tmp1);
-                ptr_vec_neigbours->push_back(sfbitset_tmp2);
+                ptr_vec_neighbors->push_back(sfbitset_tmp2);
             }
         }
         if (bool_pos[kYIndex]) {  // (+x, +y, 0)
             sfbitset_tmp1 = FindYPos(sfbitset_tmp);
-            ptr_vec_neigbours->push_back(sfbitset_tmp1);
+            ptr_vec_neighbors->push_back(sfbitset_tmp1);
             if (bool_neg[kZIndex]) {  // (+x, +y, -z)
                 sfbitset_tmp2 = FindZNeg(sfbitset_tmp1);
-                ptr_vec_neigbours->push_back(sfbitset_tmp2);
+                ptr_vec_neighbors->push_back(sfbitset_tmp2);
             }
             if (bool_pos[kZIndex]) {  // (+x, +y, +z)
                 sfbitset_tmp2 = FindZPos(sfbitset_tmp1);
-                ptr_vec_neigbours->push_back(sfbitset_tmp2);
+                ptr_vec_neighbors->push_back(sfbitset_tmp2);
             }
         }
         if (bool_neg[kZIndex]) {  // (+x, 0, -z)
             sfbitset_tmp1 = FindZNeg(sfbitset_tmp);
-            ptr_vec_neigbours->push_back(sfbitset_tmp1);
+            ptr_vec_neighbors->push_back(sfbitset_tmp1);
         }
         if (bool_pos[kZIndex]) {  // (+x, 0, +z)
             sfbitset_tmp1 = FindZPos(sfbitset_tmp);
-            ptr_vec_neigbours->push_back(sfbitset_tmp1);
+            ptr_vec_neighbors->push_back(sfbitset_tmp1);
         }
     } else {
         flag_current_node |= kFlagCurrentNodeXPos_;
     }
     if (bool_neg[kYIndex]) {  // (0, -y, 0)
         sfbitset_tmp = FindYNeg(bitset_in);
-        ptr_vec_neigbours->push_back(sfbitset_tmp);
+        ptr_vec_neighbors->push_back(sfbitset_tmp);
         if (bool_neg[kZIndex]) {  // (0, -y, -z)
             sfbitset_tmp1 = FindZNeg(sfbitset_tmp);
-            ptr_vec_neigbours->push_back(sfbitset_tmp1);
+            ptr_vec_neighbors->push_back(sfbitset_tmp1);
         }
         if (bool_pos[kZIndex]) {  // (0, -y, +z)
             sfbitset_tmp1 = FindZPos(sfbitset_tmp);
-            ptr_vec_neigbours->push_back(sfbitset_tmp1);
+            ptr_vec_neighbors->push_back(sfbitset_tmp1);
         }
     } else {
         flag_current_node |= kFlagCurrentNodeYNeg_;
     }
     if (bool_pos[kYIndex]) {  // (0, +y, 0)
         sfbitset_tmp = FindYPos(bitset_in);
-        ptr_vec_neigbours->push_back(sfbitset_tmp);
+        ptr_vec_neighbors->push_back(sfbitset_tmp);
         if (bool_neg[kZIndex]) {  // (0, +y, -z)
             sfbitset_tmp1 = FindZNeg(sfbitset_tmp);
-            ptr_vec_neigbours->push_back(sfbitset_tmp1);
+            ptr_vec_neighbors->push_back(sfbitset_tmp1);
         }
         if (bool_pos[kZIndex]) {  // (0, +y, +z)
             sfbitset_tmp1 = FindZPos(sfbitset_tmp);
-            ptr_vec_neigbours->push_back(sfbitset_tmp1);
+            ptr_vec_neighbors->push_back(sfbitset_tmp1);
         }
     } else {
         flag_current_node |= kFlagCurrentNodeYPos_;
     }
     if (bool_neg[kZIndex]) {  // (0, 0, -z)
         sfbitset_tmp = FindZNeg(bitset_in);
-        ptr_vec_neigbours->push_back(sfbitset_tmp);
+        ptr_vec_neighbors->push_back(sfbitset_tmp);
     } else {
         flag_current_node |= kFlagCurrentNodeZNeg_;
     }
     if (bool_pos[kZIndex]) {  // (0, 0, +z)
         sfbitset_tmp = FindZPos(bitset_in);
-        ptr_vec_neigbours->push_back(sfbitset_tmp);
+        ptr_vec_neighbors->push_back(sfbitset_tmp);
     } else {
         flag_current_node |= kFlagCurrentNodeZPos_;
     }
@@ -590,8 +590,8 @@ void  GridManager3D::FindOutmostLayerForFineGrid(
         flag_node_boundary = FindAllNeighborsWithSpecifiedDirection(
             iter.first, bool_neg_not_boundary,
             bool_pos_not_boundary, &vec_neighbors);
-        for (const auto& iter_neighour : vec_neighbors) {
-            if (map_exist->find(iter_neighour) == map_exist->end()) {
+        for (const auto& iter_neighbour : vec_neighbors) {
+            if (map_exist->find(iter_neighbour) == map_exist->end()) {
                 ptr_interface_outmost->insert({ iter.first, kFlag0_ });
                 map_exist->at(iter.first) |= NodeBitStatus::kNodeStatusCoarse2Fine0_;
                 // find interface at lower level
@@ -626,19 +626,19 @@ void  GridManager3D::FindOutmostLayerForFineGrid(
                         == vec_bitset_max_lower[kZIndex]);
                 FindAllNeighborsWithSpecifiedDirection(
                     bitset_lower_level, bool_neg_not_boundary,
-                    bool_pos_not_boundary, &vec_neighbors);
+                    bool_pos_not_boundary, &vec_lower_neighbors);
                 sfbitset_tmp = SFBitsetToOneHigherLevel(bitset_lower_level);
                 if (map_exist->find(sfbitset_tmp) == map_exist->end()) {
                     ptr_layer_lower_level_outer->insert({
                         bitset_lower_level, kFlag0_ });
-                    for (const auto& iter_lower : vec_neighbors) {
+                    for (const auto& iter_lower : vec_lower_neighbors) {
                         bitset_neighbor = SFBitsetToOneHigherLevel(iter_lower);
                         if (map_exist->find(bitset_neighbor) != map_exist->end()) {
                             ptr_layer_lower_level->insert({ iter_lower, kFlagSize0_ });
                         }
                     }
                 } else {
-                    for (const auto& iter_lower : vec_neighbors) {
+                    for (const auto& iter_lower : vec_lower_neighbors) {
                         bitset_neighbor = SFBitsetToOneHigherLevel(iter_lower);
                         if (map_exist->find(bitset_neighbor) == map_exist->end()) {
                             ptr_layer_lower_level->insert({ iter_lower, kFlagSize0_ });

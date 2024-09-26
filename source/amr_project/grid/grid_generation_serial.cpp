@@ -20,7 +20,7 @@ namespace amrproject {
 void GridManagerInterface::GenerateGridFromHighToLowLevelSerial(
     const std::vector<std::shared_ptr<GeometryInfoInterface>>&vec_geo_info,
     std::vector<DefMap<DefInt>>* const ptr_sfbitset_one_lower_level) {
-    SFBitsetAuxInterface* sfbitset_aux_ptr = this->GetSFBitsetAuxPtr();
+    SFBitsetAuxInterface* ptr_sfbitset_aux = this->GetSFBitsetAuxPtr();
     if (vec_ptr_grid_info_.size() != k0MaxLevel_ + 1) {
         LogManager::LogError("Number of grid refinement level " + std::to_string(
             vec_ptr_grid_info_.size() - 1) + " is different from k0MaxLevel_ "
@@ -32,13 +32,12 @@ void GridManagerInterface::GenerateGridFromHighToLowLevelSerial(
     DefInt i_geo = 0;
     for (auto& iter : vec_geo_info) {
         iter->i_geo_ = i_geo;
-        iter->FindTrackingNodeBasedOnGeo(*sfbitset_aux_ptr, vec_ptr_grid_info_.at(iter->i_level_).get());
+        iter->FindTrackingNodeBasedOnGeo(*ptr_sfbitset_aux, vec_ptr_grid_info_.at(iter->i_level_).get());
         ++i_geo;
     }
 
     std::vector<DefReal> flood_fill_origin(k0GridDims_);
-    std::map<std::pair<ECriterionType, DefInt>, DefMap<DefInt>>
-        innermost_layer, outermost_layer;
+    std::map<std::pair<ECriterionType, DefInt>, DefMap<DefInt>> innermost_layer, outermost_layer;
     GeometryInfoInterface* ptr_geo_info = nullptr;
     struct NumExtendLayer {
         std::vector<DefAmrLUint> neg;
@@ -56,8 +55,7 @@ void GridManagerInterface::GenerateGridFromHighToLowLevelSerial(
     for (DefInt i_level = k0MaxLevel_; i_level > 0; --i_level) {
         std::map<std::pair<ECriterionType, DefInt>, NumExtendLayer>
             map_num_extend_inner_layer, map_num_extend_outer_layer;
-        std::map<std::pair<ECriterionType, DefInt>, DefMap<DefInt>>
-            innermost_layer_current, outermost_layer_current;
+        std::map<std::pair<ECriterionType, DefInt>, DefMap<DefInt>> innermost_layer_current, outermost_layer_current;
         // add nodes based on tracking nodes
         for (auto& iter_tracking_grid_info : vec_ptr_grid_info_.at(i_level)
             ->map_ptr_tracking_grid_info_) {
@@ -107,8 +105,7 @@ void GridManagerInterface::GenerateGridFromHighToLowLevelSerial(
                     { iter_tracking_grid_info.first, node_near_tracking });
             }
             for (const auto& iter_tracking : node_near_tracking) {
-                ptr_sfbitset_one_lower_level->at(i_level)
-                 .insert({iter_tracking.first, kFlagSize0_});
+                ptr_sfbitset_one_lower_level->at(i_level).insert({iter_tracking.first, kFlagSize0_});
             }
         }
         // extend the inner layer (number of extended layer
@@ -170,18 +167,12 @@ void GridManagerInterface::GenerateGridFromHighToLowLevelSerial(
                     &ptr_interface_info->k0ExtendInnerPos_,
                     &ptr_interface_info->k0ExtendOuterNeg_,
                     &ptr_interface_info->k0ExtendOuterPos_);
-                num_extend_layer.neg =
-                    ptr_interface_info->k0ExtendInnerNeg_;
-                num_extend_layer.pos =
-                    ptr_interface_info->k0ExtendInnerPos_;
-                map_num_extend_inner_layer.insert(
-                    { iter_outer.first, num_extend_layer });
-                num_extend_layer.neg =
-                    ptr_interface_info->k0ExtendOuterNeg_;
-                num_extend_layer.pos =
-                    ptr_interface_info->k0ExtendOuterPos_;
-                map_num_extend_outer_layer.insert(
-                    { iter_outer.first, num_extend_layer });
+                num_extend_layer.neg = ptr_interface_info->k0ExtendInnerNeg_;
+                num_extend_layer.pos = ptr_interface_info->k0ExtendInnerPos_;
+                map_num_extend_inner_layer.insert({ iter_outer.first, num_extend_layer });
+                num_extend_layer.neg = ptr_interface_info->k0ExtendOuterNeg_;
+                num_extend_layer.pos = ptr_interface_info->k0ExtendOuterPos_;
+                map_num_extend_outer_layer.insert({ iter_outer.first, num_extend_layer });
             }
             if (outermost_layer_current.find(iter_outer.first)
                 == outermost_layer_current.end()) {
@@ -202,8 +193,7 @@ void GridManagerInterface::GenerateGridFromHighToLowLevelSerial(
         if (vec_ptr_grid_info_.at(level_low)->k0NumCoarse2FineLayer_ < 2) {
         LogManager::LogError("Number of coarse to fine layers should be greater than 2, which is"
             + std::to_string(vec_ptr_grid_info_.at(level_low)->k0NumCoarse2FineLayer_)
-            + "at refinement level" + std::to_string(level_low)
-            + " in "+ std::string(__FILE__) + " at line " + std::to_string(__LINE__));
+            + "at refinement level " + std::to_string(level_low));
         }
         for (auto& iter_inner : innermost_layer_current) {
             innermost_layer.at(iter_inner.first).clear();
@@ -251,14 +241,11 @@ void GridManagerInterface::GenerateGridFromHighToLowLevelSerial(
 /**
 * @brief   function to add a given number of layers.
 * @param[in]  i_level   level of refinement.
-* @param[in]  flag_extend type of extending grid which determines
-*                  the number of layers need to be extended in all directions.
-* @param[in]  the based layer for extension.
-* @param[out]  ptr_map_exist existing nodes.
-* @param[out]  ptr_map_outmost nodes on the outmost layer.
-* @note  add the number of layer around the geometry in all the directions.
-*        Used to set number of layers inside the geometry different from that
-*        outside the geometry.
+* @param[in]  num_extend_neg number of extended layers in negative direction.
+* @param[in]  num_extend_pos number of extended layers in negative direction.
+* @param[in]  map_start_layer the layer to be extended.
+* @param[out]  ptr_map_exist pointer to all the nodes.
+* @param[out]  ptr_map_outmost pointer to nodes on the outmost layer.
 */
 void GridManagerInterface::ExtendGivenNumbOfLayer(
     const DefInt i_level, const std::vector<DefAmrLUint> num_extend_neg,
@@ -330,14 +317,11 @@ void GridManagerInterface::ExtendGivenNumbOfLayer(
     }
 }
 /**
-* @brief   function to do flood fill on existing nodes around geometry points
-*          (only two layers)
+* @brief   function to do flood fill on existing nodes around geometry points (only two layers)
 * @param[in]  sfbitset_inside  space filling code of a node inside geometry
 * @param[in]  map_nodes_exist nodes exist for flood fill.
-* @param[out]  ptr_map_nodes_outside
-*                  nodes outside the geometry.
-* @param[out]  ptr_map_nodes_inside
-*                  nodes inside the geometry (colored by flood fill method).
+* @param[out]  ptr_map_nodes_outside  nodes outside the geometry.
+* @param[out]  ptr_map_nodes_inside nodes inside the geometry (colored by flood fill method).
 */
 int GridManagerInterface::FloodFillForInAndOut(
     const DefSFBitset& sfbitset_inside,
@@ -420,6 +404,48 @@ int GridManagerInterface::FloodFillForInAndOut(
         }
         return 0;
     }
+}
+/**
+* @brief   function to reset background grid as mpi outer layer near coarse to fine interface.
+* @param[in]  num_mpi_layers  number of mpi outer layers.
+* @param[in]  background_grid_info class of grid information for background grid.
+* @param[in]  level1_grid  nodes in level 1 grid.
+* @param[out]  ptr_background_grid pointer to nodes in level 0 grid (background).
+* @note nodes in grid of level 1 (on fine to coarse interface) is not included in background grid.
+*/
+void GridManagerInterface::ResetBackgroundGridAsMpiLayer(const DefInt num_mpi_layers,
+    const GridInfoInterface& background_grid_info, const DefMap<DefInt>& level1_grid,
+    DefMap<DefInt>* const ptr_background_grid) {
+    SFBitsetAuxInterface* ptr_sfbitset_aux = GetSFBitsetAuxPtr();
+    if (k0MaxLevel_ > 0) {
+        ptr_background_grid->clear();
+        std::vector<DefSFBitset> domain_min_m1_n_level(k0GridDims_), domain_max_p1_n_level(k0GridDims_), vec_region;
+        ptr_sfbitset_aux->GetMinM1AtGivenLevel(
+            0, ptr_sfbitset_aux->GetMinBackgroundIndices(), &domain_min_m1_n_level);
+        ptr_sfbitset_aux->GetMaxP1AtGivenLevel(
+            0, ptr_sfbitset_aux->GetMaxBackgroundIndices(), &domain_max_p1_n_level);
+        for (const auto& iter_interface : background_grid_info.map_ptr_interface_layer_info_) {
+            for (const auto& iter_node : iter_interface.second->vec_inner_coarse2fine_.at(0)) {
+                ptr_sfbitset_aux->FindNodesInReginOfGivenLength(iter_node.first, num_mpi_layers,
+                    domain_min_m1_n_level, domain_max_p1_n_level, &vec_region);
+                for (const auto& iter_region : vec_region) {
+                    if (level1_grid.find(iter_region) == level1_grid.end()) {
+                        ptr_background_grid->insert({iter_region, kFlag0_});
+                    }
+                }
+            }
+            for (const auto& iter_node : iter_interface.second->vec_outer_coarse2fine_.at(0)) {
+                ptr_sfbitset_aux->FindNodesInReginOfGivenLength(iter_node.first, num_mpi_layers,
+                    domain_min_m1_n_level, domain_max_p1_n_level, &vec_region);
+                for (const auto& iter_region : vec_region) {
+                    if (level1_grid.find(iter_region) == level1_grid.end()) {
+                        ptr_background_grid->insert({iter_region, kFlag0_});
+                    }
+                }
+            }
+        }
+    }
+
 }
 }  // end namespace amrproject
 }  // end namespace rootproject

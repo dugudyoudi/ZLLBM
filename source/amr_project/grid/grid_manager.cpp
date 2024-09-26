@@ -55,6 +55,7 @@ void GridManagerInterface::CreateSameGridInstanceForAllLevel(const std::shared_p
     for (DefInt i_level = 0; i_level < k0MaxLevel_ + 1; ++i_level) {
         vec_ptr_grid_info_.emplace_back(grid_creator.CreateGridInfo());
         GridInfoInterface& grid_ref = *(vec_ptr_grid_info_).back();
+        grid_ref.SetPtrToParentGridManager(this);
         grid_ref.i_level_ = i_level;
         grid_ref.ptr_solver_ = ptr_solver;
         if (k0GridDims_ == 2) {
@@ -592,6 +593,103 @@ void GridManagerInterface::IdentifyInterfaceNodeOnEdge(
         }
     }
 }
+
+/**
+* @brief   function to identify types of interface nodes which may cross two refinement levels
+* @param[in] arr_bitset_lower   two nodes of an edge at lower level
+* @param[in] arr_bitset_current   three nodes on the edge at current level
+* @param[out] arr_ptr_layer pointer to maps storing interface layers
+* @note noting that it assumes input nodes at lower level should exist on current or lower level
+*/
+// arr_bitset_lower[0] overlaps arr_bitset_current[0] and arr_bitset_lower[1] overlaps arr_bitset_current[2]
+void GridManagerInterface::IdentifyInterfaceNodeOnEdge(
+    const std::array<std::pair<DefSFBitset, std::array<bool, 2>>, 2>& arr_bitset_lower,
+    const std::array<DefSFBitset, 3>& arr_bitset_current,
+    const std::array<DefMap<DefInt>* const, 3>& arr_ptr_layer) {
+    // first bit: if on current rank and refinement level, second bit: if on given interface
+    // at least one node exist in desired grid
+    if (arr_bitset_lower.at(0).second.at(0) || arr_bitset_lower.at(1).second.at(0)) {
+        if (arr_bitset_lower.at(0).second.at(1) && arr_bitset_lower.at(1).second.at(1)) {
+            // both nodes on given interface
+            if (arr_bitset_lower.at(0).second.at(0)) {
+                arr_ptr_layer[2]->insert({arr_bitset_current.at(0), kFlag0_ });
+            }
+            if (arr_bitset_lower.at(0).second.at(0) || arr_bitset_lower.at(1).second.at(0)) {
+                arr_ptr_layer[2]->insert({arr_bitset_current.at(1), kFlag0_});
+            }
+            if (arr_bitset_lower.at(1).second.at(0)) {
+                arr_ptr_layer[2]->insert({arr_bitset_current.at(2), kFlag0_ });
+            }
+            return;
+        }
+        if ((!arr_bitset_lower.at(0).second.at(1)) && (!arr_bitset_lower.at(1).second.at(1))) {
+            // neither node on given interface
+            if (arr_bitset_lower.at(0).second.at(0)) {
+                arr_ptr_layer[0]->insert({arr_bitset_current.at(0), kFlag0_ });
+            }
+            if (arr_bitset_lower.at(0).second.at(0) || arr_bitset_lower.at(1).second.at(0)) {
+                arr_ptr_layer[0]->insert({arr_bitset_current.at(1), kFlag0_});
+            }
+            if (arr_bitset_lower.at(1).second.at(0)) {
+                arr_ptr_layer[0]->insert({arr_bitset_current.at(2), kFlag0_ });
+            }
+            return;
+        }
+        if ((arr_bitset_lower.at(0).second.at(1)) && (!arr_bitset_lower.at(1).second.at(1))) {
+            // node 0 on given interface
+            if (arr_bitset_lower.at(0).second.at(0)) {
+                arr_ptr_layer[2]->insert({arr_bitset_current.at(0), kFlag0_ });
+            }
+            if (arr_bitset_lower.at(0).second.at(0) || arr_bitset_lower.at(1).second.at(0)) {
+                arr_ptr_layer[1]->insert({arr_bitset_current.at(1), kFlag0_});
+            }
+            if (arr_bitset_lower.at(1).second.at(0)) {
+                arr_ptr_layer[0]->insert({arr_bitset_current.at(2), kFlag0_ });
+            }
+            return;
+        }
+        if ((!arr_bitset_lower.at(0).second.at(1)) && (arr_bitset_lower.at(1).second.at(1))) {
+            // node 1 on given interface
+            if (arr_bitset_lower.at(0).second.at(0)) {
+                arr_ptr_layer[0]->insert({arr_bitset_current.at(0), kFlag0_ });
+            }
+            if (arr_bitset_lower.at(0).second.at(0) || arr_bitset_lower.at(1).second.at(0)) {
+                arr_ptr_layer[1]->insert({arr_bitset_current.at(1), kFlag0_});
+            }
+            if (arr_bitset_lower.at(1).second.at(0)) {
+                arr_ptr_layer[2]->insert({arr_bitset_current.at(2), kFlag0_ });
+            }
+            return;
+        }
+    }
+}
+/**
+* @brief   function to Identify types of interface diagonal node
+* @param[in]  flag_interface   flag of marked interface node
+* @param[in] arr_bitset_lower   two nodes of an edge
+* @param[in] bitset_mid_higher   node at the mid point of the edge
+* @param[in] node_coarse_interface   existing nodes on the outermost layer of coarse grid
+* @param[out]  arr_ptr_layer pointer to map store interface layers
+*/
+void GridManagerInterface::IdentifyInterfaceNodeDiagonal(
+    const std::array<std::pair<DefSFBitset, std::array<bool, 2>>, 4>& arr_bitset_lower,
+    const DefSFBitset bitset_center_higher,
+    const std::array<DefMap<DefInt>* const, 3>& arr_ptr_layer) {
+    if (arr_bitset_lower.at(0).second.at(0) || arr_bitset_lower.at(1).second.at(0)
+        ||arr_bitset_lower.at(2).second.at(0) || arr_bitset_lower.at(3).second.at(0)) {
+        if (arr_bitset_lower.at(0).second.at(1) == arr_bitset_lower.at(1).second.at(1)
+            && arr_bitset_lower.at(1).second.at(1) == arr_bitset_lower.at(2).second.at(1)
+            && arr_bitset_lower.at(2).second.at(1) == arr_bitset_lower.at(3).second.at(1)) {
+            if (arr_bitset_lower.at(0).second.at(1)) {
+                arr_ptr_layer[2]->insert({ bitset_center_higher, kFlag0_ });
+            } else {
+                arr_ptr_layer[0]->insert({ bitset_center_higher, kFlag0_ });
+            }
+        } else {
+            arr_ptr_layer[1]->insert({ bitset_center_higher, kFlag0_ });
+        }
+    }
+}
 /**
 * @brief   function to identify types of interface nodes based on the innermost coarse to fine interface
 * @param[in] arr_bitset_lower   two nodes of an edge
@@ -763,6 +861,78 @@ void GridManagerInterface::IdentifyInterfaceNodeOnEdge(
             ptr_node_coarse_interface_outer->insert({arr_bitset_lower[1], kFlag0_ });
         }
         return;
+    }
+}
+/**
+* @brief   function to identify types of interface nodes which may cross two refinement levels
+* @param[in] arr_bitset_lower   two nodes of an edge
+* @param[in] bitset_mid_higher   node at the mid point of the edge
+* @param[in] node_coarse_interface   nodes on interface layer of coarser grid
+* @param[out] arr_ptr_layer pointer to maps storing interface layers
+*/
+void GridManagerInterface::IdentifyInterfaceNodeOnEdgeAcrossTwoLevels(
+    const std::array<std::pair<DefSFBitset, DefInt>, 2>& arr_bitset_lower,
+    const DefSFBitset bitset_mid_higher, const SFBitsetAuxInterface& sfbitset_aux,
+    const DefMap<DefInt>& node_coarse_interface,
+    const std::array<DefMap<DefInt>* const, 3>& arr_ptr_layer) {
+    const DefInt& flag_node_0 = arr_bitset_lower.at(0).second, flag_node_1 = arr_bitset_lower.at(1).second;
+    // at least one node exist in desired grid
+    if (((flag_node_0 == 1) || (flag_node_1 == 1)) && ((flag_node_0 > 0) && (flag_node_1 > 0))) {
+        bool node0_flag = node_coarse_interface.find(arr_bitset_lower[0].first) != node_coarse_interface.end(),
+            node1_flag = node_coarse_interface.find(arr_bitset_lower[1].first) != node_coarse_interface.end();
+        if (node0_flag == node1_flag) {
+            if (node0_flag) {
+                if (flag_node_0 == 1) {
+                    arr_ptr_layer[2]->insert({
+                        sfbitset_aux.SFBitsetToNHigherLevelVir(1, arr_bitset_lower[0].first), kFlag0_ });
+                }
+                if (flag_node_0 == 1 || flag_node_1 == 1) {
+                     arr_ptr_layer[2]->insert({ bitset_mid_higher, kFlag0_ });
+                }
+                if (flag_node_1 == 1) {
+                    arr_ptr_layer[2]->insert({
+                        sfbitset_aux.SFBitsetToNHigherLevelVir(1, arr_bitset_lower[1].first), kFlag0_ });
+                }
+            } else {
+                if (flag_node_0 == 1) {
+                    arr_ptr_layer[0]->insert({
+                        sfbitset_aux.SFBitsetToNHigherLevelVir(1, arr_bitset_lower[0].first), kFlag0_ });
+                }
+                if (flag_node_0 == 1 || flag_node_1 == 1) {
+                     arr_ptr_layer[0]->insert({ bitset_mid_higher, kFlag0_ });
+                }
+                if (flag_node_1 == 1) {
+                    arr_ptr_layer[0]->insert({
+                        sfbitset_aux.SFBitsetToNHigherLevelVir(1, arr_bitset_lower[1].first), kFlag0_ });
+                }
+            }
+        } else {
+            if (node0_flag) {
+                if (flag_node_0 == 1) {
+                    arr_ptr_layer[2]->insert({
+                        sfbitset_aux.SFBitsetToNHigherLevelVir(1, arr_bitset_lower[0].first), kFlag0_ });
+                }
+                if (flag_node_0 == 1 || flag_node_1 == 1) {
+                     arr_ptr_layer[1]->insert({ bitset_mid_higher, kFlag0_ });
+                }
+                if (flag_node_1 == 1) {
+                    arr_ptr_layer[0]->insert({
+                        sfbitset_aux.SFBitsetToNHigherLevelVir(1, arr_bitset_lower[1].first), kFlag0_ });
+                }
+            } else {
+                if (flag_node_0 == 1) {
+                    arr_ptr_layer[0]->insert({
+                        sfbitset_aux.SFBitsetToNHigherLevelVir(1, arr_bitset_lower[0].first), kFlag0_ });
+                }
+                if (flag_node_0 == 1 || flag_node_1 == 1) {
+                     arr_ptr_layer[1]->insert({ bitset_mid_higher, kFlag0_ });
+                }
+                if (flag_node_1 == 1) {
+                    arr_ptr_layer[2]->insert({
+                        sfbitset_aux.SFBitsetToNHigherLevelVir(1, arr_bitset_lower[1].first), kFlag0_ });
+                }
+            }
+        }
     }
 }
 /**

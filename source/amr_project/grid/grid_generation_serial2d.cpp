@@ -359,6 +359,7 @@ DefInt GridManager2D::FindAllNeighborsWithSpecifiedDirection(
     } else {
         flag_current_node |= kFlagCurrentNodeXPos_;
     }
+
     if (bool_neg[kYIndex]) {  // (0, -y)
         sfbitset_tmp = FindYNeg(bitset_in);
         ptr_vec_neighbors->push_back(sfbitset_tmp);
@@ -371,20 +372,22 @@ DefInt GridManager2D::FindAllNeighborsWithSpecifiedDirection(
     } else {
         flag_current_node |= kFlagCurrentNodeYPos_;
     }
+
+
     return flag_current_node;
 }
 /**
 * @brief   function to find interface between grids of different refinement levels.
 * @param[in] i_level higher refinement level.
 * @param[in] map_outmost_layer outmost layer of the grid at the higher refinement level.
-* @param[out] ptr_map_exist existing nodes at the higher refinement level.
-* @param[out] ptr_interface_outmost nodes on the outmost fine to coarse layer (innermost coarse to fine layer).
-* @param[out] ptr_layer_lower_level nodes at the lower refinement level.
-* @param[out] ptr_layer_lower_level_outer outer nodes at the lower refinement level.
+* @param[in, out] ptr_map_exist pointer to existing nodes at the higher refinement level.
+* @param[out] ptr_interface_outmost pointer to nodes on the outmost fine to coarse layer (innermost coarse to fine layer).
+* @param[out] ptr_layer_lower_level pointer to nodes at the lower refinement level.
+* @param[out] ptr_layer_lower_level_outer pointer to outer nodes at the lower refinement level.
 */
 void GridManager2D::FindOutmostLayerForFineGrid(
     const DefInt i_level, const DefMap<DefInt>& map_outmost_layer,
-    DefMap<DefInt>* const map_exist,
+    DefMap<DefInt>* const ptr_map_exist,
     DefMap<DefInt>* const ptr_interface_outmost,
     DefMap<DefInt>* const ptr_layer_lower_level,
     DefMap<DefInt>* const ptr_layer_lower_level_outer) {
@@ -417,6 +420,8 @@ void GridManager2D::FindOutmostLayerForFineGrid(
     DefInt flag_node_boundary;
     std::vector<DefSFBitset> vec_neighbors, vec_lower_neighbors;
     DefSFBitset bitset_lower_level, sfbitset_tmp, bitset_neighbor;
+
+
     for (const auto& iter : map_outmost_layer) {
         bool_neg_not_boundary[kXIndex]
             = !((iter.first & k0SFBitsetTakeXRef_[kRefCurrent_])
@@ -433,10 +438,11 @@ void GridManager2D::FindOutmostLayerForFineGrid(
         flag_node_boundary = FindAllNeighborsWithSpecifiedDirection(
             iter.first, bool_neg_not_boundary,
             bool_pos_not_boundary, &vec_neighbors);
+
         for (const auto& iter_neighbour : vec_neighbors) {
-            if (map_exist->find(iter_neighbour) == map_exist->end()) {
+            if (ptr_map_exist->find(iter_neighbour) == ptr_map_exist->end()) {
                 ptr_interface_outmost->insert({ iter.first, kFlag0_ });
-                map_exist->at(iter.first) |= NodeBitStatus::kNodeStatusCoarse2Fine0_;
+                ptr_map_exist->at(iter.first) |= NodeBitStatus::kNodeStatusCoarse2Fine0_;
                 // find interface at lower level
                 bitset_lower_level = SFBitsetToOneLowerLevel(iter.first);
                 if (ptr_layer_lower_level->find(bitset_lower_level)
@@ -461,21 +467,20 @@ void GridManager2D::FindOutmostLayerForFineGrid(
                         == vec_bitset_min_lower[kYIndex]);
                 FindAllNeighborsWithSpecifiedDirection(
                     bitset_lower_level, bool_neg_not_boundary,
-                    bool_pos_not_boundary, &vec_neighbors);
+                    bool_pos_not_boundary, &vec_lower_neighbors);
                 sfbitset_tmp = SFBitsetToOneHigherLevel(bitset_lower_level);
-                if (map_exist->find(sfbitset_tmp) == map_exist->end()) {
+                if (ptr_map_exist->find(sfbitset_tmp) == ptr_map_exist->end()) {
                     ptr_layer_lower_level_outer->insert({bitset_lower_level, kFlag0_ });
-                    for (const auto& iter_lower : vec_neighbors) {
+                    for (const auto& iter_lower : vec_lower_neighbors) {
                         bitset_neighbor = SFBitsetToOneHigherLevel(iter_lower);
-                        if (map_exist->find(bitset_neighbor)
-                            != map_exist->end()) {
+                        if (ptr_map_exist->find(bitset_neighbor) != ptr_map_exist->end()) {
                             ptr_layer_lower_level->insert({ iter_lower, kFlagSize0_ });
                         }
                     }
                 } else {
-                    for (const auto& iter_lower : vec_neighbors) {
+                    for (const auto& iter_lower : vec_lower_neighbors) {
                         bitset_neighbor = SFBitsetToOneHigherLevel(iter_lower);
-                        if (map_exist->find(bitset_neighbor) == map_exist->end()) {
+                        if (ptr_map_exist->find(bitset_neighbor) == ptr_map_exist->end()) {
                             ptr_layer_lower_level->insert({ iter_lower, kFlagSize0_ });
                             ptr_layer_lower_level_outer->insert({ iter_lower, kFlag0_ });
                         }

@@ -110,6 +110,11 @@ void AmrManager::InitializeMesh() {
     }
 
 #ifdef ENABLE_MPI
+    if (rank_id == 0 && sfbitset_one_lower_level.size() > 1) {
+        ptr_grid_manager_->ResetBackgroundGridAsMpiLayer(ptr_mpi_manager_->k0NumPartitionOuterLayers_,
+            *(ptr_grid_manager_->vec_ptr_grid_info_.at(0)), sfbitset_one_lower_level.at(1),
+            &sfbitset_one_lower_level.at(0));
+    }
     // mpi partition sending and receiving nodes
     std::vector<DefInt> vec_cost;
     for (auto iter_grid : ptr_grid_manager_->vec_ptr_grid_info_) {
@@ -192,8 +197,8 @@ void AmrManager::InitializeMesh() {
     for (DefInt i_level = 0; i_level < ptr_grid_manager_->k0MaxLevel_; ++i_level) {
         for (const auto & iter_interfaces :
             ptr_grid_manager_->vec_ptr_grid_info_.at(i_level)->map_ptr_interface_layer_info_) {
-            for (const auto & iter_coarse2fine : iter_interfaces.second->vec_outer_coarse2fine_) {
-                for (const auto & iter_node : iter_coarse2fine) {
+            for (const auto& iter_coarse2fine : iter_interfaces.second->vec_outer_coarse2fine_) {
+                for (const auto& iter_node : iter_coarse2fine) {
                     if (ptr_grid_manager_->vec_ptr_grid_info_.at(i_level)->map_grid_node_.find(iter_node.first)
                         == ptr_grid_manager_->vec_ptr_grid_info_.at(i_level)->map_grid_node_.end()) {
                         ptr_grid_manager_->vec_ptr_grid_info_.at(i_level)->map_grid_node_.insert(

@@ -6,7 +6,6 @@
 * @author Zhengliang Liu
 * @brief functions used for manage LBM grid interface.
 */
-#include <mpi.h>  // for debug
 #include "./lbm_interface.h"
 #include "io/log_write.h"
 #include "io/vtk_writer.h"
