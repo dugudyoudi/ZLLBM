@@ -1,0 +1,3 @@
+
+FILE(GLOB SOURCE_AMR_DEBUG "./*.cpp")
+target_sources(${AMR_PROJECT_NAME} PRIVATE ${SOURCE_AMR_DEBUG})

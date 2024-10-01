@@ -429,13 +429,13 @@ class MpiManager{
         DefMap<DefInt>* const ptr_map_ghost_layer) const;
 #endif  // DEBUG_DISABLE_3D_FUNCTIONS
 
-#ifdef DEBUG_UNIT_TEST
+#ifdef DEBUG_CHECK_GRID
     // functions for the purpose of debug
  public:
     void DebugMpiForAllGrids(const GridManagerInterface& grid_manager) const;
     void CheckMpiNodesCorrespondence(const GridInfoInterface& grid_info) const;
     void CheckMpiPeriodicCorrespondence(const GridInfoInterface& grid_info) const;
-#endif
+#endif  // DEBUG_CHECK_GRID
 };
 }  //  end namespace amrproject
 }  //  end namespace rootproject

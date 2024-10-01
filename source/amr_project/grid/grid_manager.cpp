@@ -664,33 +664,6 @@ void GridManagerInterface::IdentifyInterfaceNodeOnEdge(
     }
 }
 /**
-* @brief   function to Identify types of interface diagonal node
-* @param[in]  flag_interface   flag of marked interface node
-* @param[in] arr_bitset_lower   two nodes of an edge
-* @param[in] bitset_mid_higher   node at the mid point of the edge
-* @param[in] node_coarse_interface   existing nodes on the outermost layer of coarse grid
-* @param[out]  arr_ptr_layer pointer to map store interface layers
-*/
-void GridManagerInterface::IdentifyInterfaceNodeDiagonal(
-    const std::array<std::pair<DefSFBitset, std::array<bool, 2>>, 4>& arr_bitset_lower,
-    const DefSFBitset bitset_center_higher,
-    const std::array<DefMap<DefInt>* const, 3>& arr_ptr_layer) {
-    if (arr_bitset_lower.at(0).second.at(0) || arr_bitset_lower.at(1).second.at(0)
-        ||arr_bitset_lower.at(2).second.at(0) || arr_bitset_lower.at(3).second.at(0)) {
-        if (arr_bitset_lower.at(0).second.at(1) == arr_bitset_lower.at(1).second.at(1)
-            && arr_bitset_lower.at(1).second.at(1) == arr_bitset_lower.at(2).second.at(1)
-            && arr_bitset_lower.at(2).second.at(1) == arr_bitset_lower.at(3).second.at(1)) {
-            if (arr_bitset_lower.at(0).second.at(1)) {
-                arr_ptr_layer[2]->insert({ bitset_center_higher, kFlag0_ });
-            } else {
-                arr_ptr_layer[0]->insert({ bitset_center_higher, kFlag0_ });
-            }
-        } else {
-            arr_ptr_layer[1]->insert({ bitset_center_higher, kFlag0_ });
-        }
-    }
-}
-/**
 * @brief   function to identify types of interface nodes based on the innermost coarse to fine interface
 * @param[in] arr_bitset_lower   two nodes of an edge
 * @param[in] bitset_mid_higher   node at the mid point of the edge

@@ -1,8 +1,7 @@
 build/
+bin/
 .git/
 .vs/
-Debug/
-out/
-googletest-main/
+#googletest-main/
 *.docx
 *.pptx

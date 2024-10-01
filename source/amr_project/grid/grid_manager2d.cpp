@@ -470,7 +470,6 @@ void GridManager2D::IdentifyInterfaceForACell(const DefSFBitset bitset_in,
 }
 /**
 * @brief   function to identify interface for a given cell
-* @param[in] flag_extra   flag to indicate grid will need to extend in negative (1) or/and positive (2) directions
 * @param[in] sfbitset_in   space filling code of the given node at lower level(level - 1)
 * @param[in] node_coarse_innermost nodes on the innermost interface layer of coarser grid
 * @param[in] map_node_exist   existing fine nodes at lower level (level - 1)
@@ -479,7 +478,7 @@ void GridManager2D::IdentifyInterfaceForACell(const DefSFBitset bitset_in,
 * @param[out] ptr_mid_layer map storing nodes on the middle layer
 * @param[out] ptr_outer_layer map storing nodes on the outer layer
 */
-void GridManager2D::IdentifyInterfaceForACellAcrossTwoLevels(const DefInt flag_extra,
+void GridManager2D::IdentifyInterfaceForACellAcrossTwoLevels(
     const DefSFBitset bitset_in, const DefMap<DefInt>& node_coarse_innermost,
     const DefMap<DefInt>& map_node_exist, const DefMap<DefInt>& map_exist_coarse,
     DefMap<DefInt>* const ptr_inner_layer, DefMap<DefInt>* const ptr_mid_layer,
@@ -522,9 +521,8 @@ void GridManager2D::IdentifyInterfaceForACellAcrossTwoLevels(const DefInt flag_e
             bitset_mid_higher, *this, node_coarse_innermost, arr_ptr_layer);
 
         // diagonal (0 + x/2, 0 + dy/2)
-        bitset_mid_higher = FindXNeg(bitset_mid_higher);
-        if (bitset_neighbors[0].second > 0 || bitset_neighbors[1].second > 0
-            || bitset_neighbors[2].second > 0 || bitset_neighbors[3].second > 0) {
+        if (bitset_neighbors[0].second == 1 || bitset_neighbors[1].second == 1
+            || bitset_neighbors[2].second == 1 || bitset_neighbors[3].second == 1) {
             ptr_mid_layer->insert({ FindXNeg(bitset_mid_higher), kFlag0_ });
         }
     }

@@ -24,9 +24,6 @@
 #include "grid/grid_info_interface.h"
 #include "grid/sfbitset_aux.h"
 #include "criterion/geometry_info_interface.h"
-#ifdef DEBUG_UNIT_TEST
-#include "../../googletest-main/googletest/include/gtest/gtest_prod.h"
-#endif  // DEBUG_UNIT_TEST
 namespace rootproject {
 namespace amrproject {
 enum class EDomainBoundaryType{
@@ -243,10 +240,6 @@ class GridManagerInterface{
         const std::array<std::pair<DefSFBitset, std::array<bool, 2>>, 2>& arr_bitset_lower,
         const std::array<DefSFBitset, 3>& arr_bitset_current,
         const std::array<DefMap<DefInt>* const, 3>& arr_ptr_layer);
-    void IdentifyInterfaceNodeDiagonal(
-        const std::array<std::pair<DefSFBitset, std::array<bool, 2>>, 4>& arr_bitset_lower,
-        const DefSFBitset bitset_center_higher,
-        const std::array<DefMap<DefInt>* const, 3>& arr_ptr_layer);
     void IdentifyInterfaceNodeOnEdge(
         const std::array<DefSFBitset, 2>& arr_bitset_lower,
         const DefSFBitset bitset_mid_higher,
@@ -377,12 +370,12 @@ class GridManagerInterface{
         const DefMap<DefInt>& level1_grid, DefMap<DefInt>* const ptr_background_grid);
 
  protected:
-    virtual void IdentifyInterfaceForACellAcrossTwoLevels(const DefInt flag_extra,
+    virtual void IdentifyInterfaceForACellAcrossTwoLevels(
         const DefSFBitset bitset_in, const DefMap<DefInt>& node_coarse_interface,
         const DefMap<DefInt>& node_exist, const DefMap<DefInt>& sfbitset_exist_coarse,
         DefMap<DefInt>* const ptr_inner_layer, DefMap<DefInt>* const ptr_mid_layer,
         DefMap<DefInt>* const ptr_outer_layer) = 0;
-     void FindOverlappingLayersBasedOnOutermostCoarseAndLowerLevelNodes(const DefInt flag_extra,
+     void FindOverlappingLayersBasedOnOutermostCoarseAndLowerLevelNodes(
         const DefMap<DefInt>& layer_coarse_0, const DefMap<DefInt>& sfbitset_exist,
         const DefMap<DefInt>& sfbitset_exist_coarse, DefMap<DefInt>* const ptr_layer_coarse_m1,
         DefMap<DefInt>* const ptr_layer_fine_0, DefMap<DefInt>* const ptr_layer_fine_m1,
@@ -530,7 +523,7 @@ class GridManager2D :public  GridManagerInterface, public SFBitsetAux2D {
         DefMap<DefInt>* const ptr_layer_lower_level_outer) override;
 
     // used in mpi mesh generation
-    void IdentifyInterfaceForACellAcrossTwoLevels(const DefInt flag_extra,
+    void IdentifyInterfaceForACellAcrossTwoLevels(
         const DefSFBitset bitset_in, const DefMap<DefInt>& node_coarse_interface,
         const DefMap<DefInt>& node_exist, const DefMap<DefInt>& sfbitset_exist_coarse,
         DefMap<DefInt>* const ptr_inner_layer, DefMap<DefInt>* const ptr_mid_layer,
@@ -671,7 +664,7 @@ class GridManager3D :public  GridManagerInterface, public SFBitsetAux3D {
         DefMap<DefInt>* const ptr_layer_lower_level_outer) override;
 
     // used in mpi mesh generation
-    void IdentifyInterfaceForACellAcrossTwoLevels(const DefInt flag_extra,
+    void IdentifyInterfaceForACellAcrossTwoLevels(
         const DefSFBitset bitset_in, const DefMap<DefInt>& node_coarse_interface,
         const DefMap<DefInt>& node_exist, const DefMap<DefInt>& sfbitset_exist_coarse,
         DefMap<DefInt>* const ptr_inner_layer, DefMap<DefInt>* const ptr_mid_layer,
@@ -689,7 +682,7 @@ class GridManager3D :public  GridManagerInterface, public SFBitsetAux3D {
         const DefSFBitset bitset_center_higher,
         const DefMap<DefInt>& node_coarse_interface,
         const std::array<DefMap<DefInt>* const, 3>& arr_ptr_layer);
-    void IdentifyInterfaceNodeDiagonal(
+    void IdentifyInterfaceNodeDiagonalAcrossTwoLevels(
         const std::array<std::pair<DefSFBitset, DefInt>, 4>& arr_bitset_lower,
         const DefSFBitset bitset_center_higher,
         const DefMap<DefInt>& node_coarse_interface,

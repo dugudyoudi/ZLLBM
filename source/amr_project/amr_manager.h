@@ -79,7 +79,7 @@ class AmrManager {
     AmrManager(void) {}
     ~AmrManager(void) {}
 
-#ifdef DEBUG_UNIT_TEST
+#ifdef DEBUG_CHECK_GRID
     // functions for the purpose of debug
  public:
     void CheckMeshAfterInitialization() const;

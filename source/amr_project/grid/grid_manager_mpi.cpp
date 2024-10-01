@@ -67,12 +67,6 @@ void GridManagerInterface::InstantiateOverlapLayerOfRefinementInterfaceMpi(
     // find interface node at current level
     DefInt layer_coarse_outer = 1, layer_coarse_innermost = 0,
         layer0 = grid_info.k0NumFine2CoarseLayer_ - 1, layer_m1 = layer0 - 1, layer_m2 = layer_m1 - 1;
-    DefInt flag_extra = 0;
-    if ((num_partition_outer_layer%2) == 0) {
-        flag_extra = 2;
-    } else {
-        flag_extra = 1;
-    }
     std::vector<DefSFBitset> sfbitset_neighbors;
     for (auto& iter_interface : grid_info_lower.map_ptr_interface_layer_info_) {
         ptr_interface_info_lower = iter_interface.second.get();
@@ -86,7 +80,7 @@ void GridManagerInterface::InstantiateOverlapLayerOfRefinementInterfaceMpi(
         // interface inside the geometry
         if (ptr_interface_info_lower->vec_inner_coarse2fine_.size() > 0) {
             ptr_interface_info->vec_inner_fine2coarse_.resize(grid_info.k0NumFine2CoarseLayer_);
-            FindOverlappingLayersBasedOnOutermostCoarseAndLowerLevelNodes(flag_extra,
+            FindOverlappingLayersBasedOnOutermostCoarseAndLowerLevelNodes(
                 ptr_interface_info_lower->vec_inner_coarse2fine_.at(layer_coarse_innermost),
                 map_sfbitset_one_lower_level, map_c2f_one_lower_level,
                 &ptr_interface_info_lower->vec_inner_coarse2fine_.at(layer_coarse_outer),
@@ -170,7 +164,7 @@ void GridManagerInterface::InstantiateOverlapLayerOfRefinementInterfaceMpi(
         if (ptr_interface_info_lower->vec_outer_coarse2fine_.size() > 0) {
             ptr_interface_info->vec_outer_fine2coarse_.resize(
                 grid_info.k0NumFine2CoarseLayer_);
-            FindOverlappingLayersBasedOnOutermostCoarseAndLowerLevelNodes(flag_extra,
+            FindOverlappingLayersBasedOnOutermostCoarseAndLowerLevelNodes(
                 ptr_interface_info_lower->vec_outer_coarse2fine_.at(layer_coarse_innermost),
                 map_sfbitset_one_lower_level, map_c2f_one_lower_level,
                 &ptr_interface_info_lower->vec_outer_coarse2fine_.at(layer_coarse_outer),
@@ -713,7 +707,6 @@ void GridManagerInterface::InstantiateGridNodeAllLevelMpi(const int i_rank,
 }
 /**
  * @brief function to find overlapping layers between grid of adjacent refinement levels based on the outermost coarse layer.
- * @param[in]  flag_extra   flag to indicate grid will need to extend in negative (1) or/and positive (2) directions 
  * @param[in]  layer_coarse_innermost  nodes in the coarse layer overlapping with ptr_layer_fine_outmost.
  * @param[in]  sfbitset_exist   existent nodes.
  * @param[in]  sfbitset_exist_coarse existent nodes at coarse nodes.
@@ -723,7 +716,7 @@ void GridManagerInterface::InstantiateGridNodeAllLevelMpi(const int i_rank,
  * @param[out] ptr_layer_fine_inner pointer to nodes in the third outermost fine layer.
  * @note nodes in sfbitset_exist_coarse and sfbitset_exist can coincide.
  */
-void GridManagerInterface::FindOverlappingLayersBasedOnOutermostCoarseAndLowerLevelNodes(const DefInt flag_extra,
+void GridManagerInterface::FindOverlappingLayersBasedOnOutermostCoarseAndLowerLevelNodes(
     const DefMap<DefInt>& layer_coarse_innermost, const DefMap<DefInt>& sfbitset_exist,
     const DefMap<DefInt>& sfbitset_exist_coarse, DefMap<DefInt>* const ptr_layer_coarse_outer,
     DefMap<DefInt>* const ptr_layer_fine_outmost,
@@ -739,7 +732,7 @@ void GridManagerInterface::FindOverlappingLayersBasedOnOutermostCoarseAndLowerLe
     for (const auto& iter_node : layer_coarse_innermost) {
         FindCornersForNeighbourCells(iter_node.first, &corner_bitsets);
         for (auto& iter_conner : corner_bitsets) {
-            IdentifyInterfaceForACellAcrossTwoLevels(flag_extra, iter_conner, layer_coarse_innermost, sfbitset_exist,
+            IdentifyInterfaceForACellAcrossTwoLevels(iter_conner, layer_coarse_innermost, sfbitset_exist,
                 sfbitset_exist_coarse, ptr_layer_fine_inner, ptr_layer_fine_mid, ptr_layer_fine_outmost);
         }
     }

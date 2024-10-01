@@ -13,9 +13,6 @@
 #include <array>
 #include <vector>
 #include <utility>
-#ifdef DEBUG_UNIT_TEST
-#include "../../googletest-main/googletest/include/gtest/gtest_prod.h"
-#endif  // DEBUG_UNIT_TEST
 #include "../defs_libs.h"
 namespace rootproject {
 namespace amrproject {
@@ -587,12 +584,6 @@ class  SFBitsetAux3D : public SFBitsetAuxInterface {
         const DefSFCodeToUint& code_partition_min, const DefSFCodeToUint& code_partition_max,
         const std::array<DefAmrLUint, 3>& code_domain_min,
         const std::array<DefAmrLUint, 3>& code_domain_max) const;
-
-#ifdef DEBUG_UNIT_TEST
-     // gtest to access private member functions
- private:
-     FRIEND_TEST(MpiPartition3D, Rank0FindPartitionedRefinementInterface);
-#endif  // DEBUG_UNIT_TEST
 #endif  // ENABLE_MPI
 };
 #endif  // DEBUG_DISABLE_3D_FUNCTION

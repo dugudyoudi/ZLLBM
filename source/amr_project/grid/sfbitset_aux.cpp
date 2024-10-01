@@ -1031,7 +1031,7 @@ void SFBitsetAux2D::GetMaxAtGivenLevel(const DefInt i_level,
 * @return  if true indicates the given node belongs to a cell
 * @note ptr_sfbitsets[0]:(0, 0); ptr_sfbitsets[1]:(+x, 0);
 *       ptr_sfbitsets[2]:(0, +y); ptr_sfbitsets[3]:(+x, +y);
-*       the bool of the pair indicating if the nodes is in map_node_exist
+*       the int value of the pair indicating if the nodes is in map_node_exist or map_node_exist_coarse
 */
 bool SFBitsetAux2D::SFBitsetBelongToOneCellAcrossTwoLevels(const DefSFBitset& sfbitset_in,
     const DefMap<DefInt>& map_node_exist, const DefMap<DefInt>& map_node_exist_coarse,
@@ -1041,7 +1041,7 @@ bool SFBitsetAux2D::SFBitsetBelongToOneCellAcrossTwoLevels(const DefSFBitset& sf
             || map_node_exist_coarse.at(sfbitset_in) == 0) {
             return false;
         } else {
-            ptr_sfbitsets->at(0).second = map_node_exist_coarse.at(sfbitset_in)&2;
+            ptr_sfbitsets->at(0).second = 2;
         }
     } else {
         ptr_sfbitsets->at(0).second = 1;
@@ -1054,7 +1054,7 @@ bool SFBitsetAux2D::SFBitsetBelongToOneCellAcrossTwoLevels(const DefSFBitset& sf
             || map_node_exist_coarse.at(ptr_sfbitsets->at(1).first) == 0) {
             return false;
         } else {
-            ptr_sfbitsets->at(1).second = map_node_exist_coarse.at(ptr_sfbitsets->at(1).first)&2;
+            ptr_sfbitsets->at(1).second = 2;
         }
     } else {
         ptr_sfbitsets->at(1).second = 1;
@@ -1067,7 +1067,7 @@ bool SFBitsetAux2D::SFBitsetBelongToOneCellAcrossTwoLevels(const DefSFBitset& sf
             || map_node_exist_coarse.at(ptr_sfbitsets->at(3).first) == 0) {
             return false;
         } else {
-            ptr_sfbitsets->at(3).second = map_node_exist_coarse.at(ptr_sfbitsets->at(3).first)&2;
+            ptr_sfbitsets->at(3).second = 2;
         }
     } else {
         ptr_sfbitsets->at(3).second = 1;
@@ -1079,7 +1079,7 @@ bool SFBitsetAux2D::SFBitsetBelongToOneCellAcrossTwoLevels(const DefSFBitset& sf
             || map_node_exist_coarse.at(ptr_sfbitsets->at(2).first) == 0) {
             return false;
         } else {
-            ptr_sfbitsets->at(2).second = map_node_exist_coarse.at(ptr_sfbitsets->at(2).first)&2;
+            ptr_sfbitsets->at(2).second = 2;
         }
     } else {
         ptr_sfbitsets->at(2).second = 1;
@@ -2976,9 +2976,9 @@ bool SFBitsetAux3D::SFBitsetBelongToOneCellAcrossTwoLevels(const DefSFBitset& sf
             || map_node_exist_coarse.at(sfbitset_in) == 0) {
             return false;
         }
-        ptr_sfbitsets->at(0).second = false;
+        ptr_sfbitsets->at(0).second = 2;
     } else {
-        ptr_sfbitsets->at(0).second = true;
+        ptr_sfbitsets->at(0).second = 1;
     }
     ptr_sfbitsets->at(0).first = sfbitset_in;
     // (+x, 0, 0)
@@ -2988,9 +2988,9 @@ bool SFBitsetAux3D::SFBitsetBelongToOneCellAcrossTwoLevels(const DefSFBitset& sf
             || map_node_exist_coarse.at(ptr_sfbitsets->at(1).first) == 0) {
             return false;
         }
-        ptr_sfbitsets->at(1).second = false;
+        ptr_sfbitsets->at(1).second = 2;
     } else {
-        ptr_sfbitsets->at(1).second = true;
+        ptr_sfbitsets->at(1).second = 1;
     }
     // (+x, +y, 0)
     ptr_sfbitsets->at(3).first = FindYPos(ptr_sfbitsets->at(1).first);
@@ -2999,9 +2999,9 @@ bool SFBitsetAux3D::SFBitsetBelongToOneCellAcrossTwoLevels(const DefSFBitset& sf
             || map_node_exist_coarse.at(ptr_sfbitsets->at(3).first) == 0) {
             return false;
         }
-        ptr_sfbitsets->at(3).second = false;
+        ptr_sfbitsets->at(3).second = 2;
     } else {
-        ptr_sfbitsets->at(3).second = true;
+        ptr_sfbitsets->at(3).second = 1;
     }
     // (0, +y, 0)
     ptr_sfbitsets->at(2).first = FindYPos(sfbitset_in);
@@ -3010,9 +3010,9 @@ bool SFBitsetAux3D::SFBitsetBelongToOneCellAcrossTwoLevels(const DefSFBitset& sf
             || map_node_exist_coarse.at(ptr_sfbitsets->at(2).first) == 0) {
             return false;
         }
-        ptr_sfbitsets->at(2).second = false;
+        ptr_sfbitsets->at(2).second = 2;
     } else {
-        ptr_sfbitsets->at(2).second = true;
+        ptr_sfbitsets->at(2).second = 1;
     }
     // (0, 0, +z)
     ptr_sfbitsets->at(4).first = FindZPos(sfbitset_in);
@@ -3021,9 +3021,9 @@ bool SFBitsetAux3D::SFBitsetBelongToOneCellAcrossTwoLevels(const DefSFBitset& sf
             || map_node_exist_coarse.at(ptr_sfbitsets->at(4).first) == 0) {
             return false;
         }
-        ptr_sfbitsets->at(4).second = false;
+        ptr_sfbitsets->at(4).second = 2;
     } else {
-        ptr_sfbitsets->at(4).second = true;
+        ptr_sfbitsets->at(4).second = 1;
     }
     // (+x, 0, +z)
     ptr_sfbitsets->at(5).first = FindXPos(ptr_sfbitsets->at(4).first);
@@ -3032,9 +3032,9 @@ bool SFBitsetAux3D::SFBitsetBelongToOneCellAcrossTwoLevels(const DefSFBitset& sf
             || map_node_exist_coarse.at(ptr_sfbitsets->at(5).first) == 0) {
             return false;
         }
-        ptr_sfbitsets->at(5).second = false;
+        ptr_sfbitsets->at(5).second = 2;
     } else {
-        ptr_sfbitsets->at(5).second = true;
+        ptr_sfbitsets->at(5).second = 1;
     }
     // (+x, +y, +z)
     ptr_sfbitsets->at(7).first = FindYPos(ptr_sfbitsets->at(5).first);
@@ -3043,9 +3043,9 @@ bool SFBitsetAux3D::SFBitsetBelongToOneCellAcrossTwoLevels(const DefSFBitset& sf
             || map_node_exist_coarse.at(ptr_sfbitsets->at(7).first) == 0) {
             return false;
         }
-        ptr_sfbitsets->at(7).second = false;
+        ptr_sfbitsets->at(7).second = 2;
     } else {
-        ptr_sfbitsets->at(7).second = true;
+        ptr_sfbitsets->at(7).second = 1;
     }
     // (0, +y, +z)
     ptr_sfbitsets->at(6).first = FindYPos(ptr_sfbitsets->at(4).first);
@@ -3054,9 +3054,9 @@ bool SFBitsetAux3D::SFBitsetBelongToOneCellAcrossTwoLevels(const DefSFBitset& sf
             || map_node_exist_coarse.at(ptr_sfbitsets->at(6).first) == 0) {
             return false;
         }
-        ptr_sfbitsets->at(6).second = false;
+        ptr_sfbitsets->at(6).second = 2;
     } else {
-        ptr_sfbitsets->at(6).second = true;
+        ptr_sfbitsets->at(6).second = 1;
     }
     return true;
 }
