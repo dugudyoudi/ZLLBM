@@ -29,10 +29,11 @@ namespace amrproject {
 enum class EDomainBoundaryType{
     kCubic = 0,
 };
-template<typename InterfaceInfo>
-concept InterfaceInfoHasType = requires(
-    InterfaceInfo type_interface) {
-    type_interface.node_type_;
+template<typename GridInfo>
+concept GridInfoHasGetLevelAndGetNodeType = requires(
+    GridInfo grid_info) {
+    {grid_info.GetGridLevel()} -> std::same_as<DefInt>;
+    {grid_info.GetNodeType()} -> std::same_as<const std::string&>;
 };
 /**
 * @class TimeSteppingSchemeInterface
@@ -81,9 +82,9 @@ class GridManagerInterface{
  public:
     /**<Constant: index corresponding to x, y, and z in vectors */
     // 2 or 3
-    DefInt  k0GridDims_ = 0;  ///< dimension
+    const DefInt  k0GridDims_ = 0;  ///< dimension
     // 9 for 2D, 27 for 3D
-    DefInt  k0NumNeighbors_ = 0;  ///< number of neighboring nodes
+    const DefInt  k0NumNeighbors_ = 0;  ///< number of neighboring nodes
     // 0 refers to uniform mesh
     DefInt  k0MaxLevel_ = 0;  ///< maximum levels of refinement
 
@@ -120,10 +121,10 @@ class GridManagerInterface{
     void DefaultInitialization(const DefInt max_level);
     virtual void PrintGridInfo(void) const = 0;
     virtual void SetGridParameters(void) = 0;
-    template<InterfaceInfoHasType InterfaceInfo>
+    template<GridInfoHasGetLevelAndGetNodeType GridInfo>
     DefSizet CheckExistenceOfTypeAtGivenLevel(
         const DefInt i_level, const std::string& type,
-        const std::vector<std::shared_ptr<InterfaceInfo>>& vec_ptr_interface) const;
+        const std::vector<std::shared_ptr<GridInfo>>& vec_ptr_interface) const;
 
     // get mesh parameters for 2D and 3D
     virtual SFBitsetAuxInterface* GetSFBitsetAuxPtr() = 0;
@@ -165,8 +166,7 @@ class GridManagerInterface{
         const DefMap<DefInt>& node_exist,
         std::vector<DefSFBitset>* const ptr_bitsets) const = 0;
     virtual bool NodesBelongToOneSurfAtHigherLevel(const DefSFBitset bitset_in,
-        const DefInt dir_norm,
-        const DefMap<DefInt>& node_exist,
+        const DefInt dir_norm, const DefMap<DefInt>& node_exist,
         std::vector<DefSFBitset>* const ptr_bitsets) const = 0;
     virtual void GridFindAllNeighborsVir(const DefSFBitset& bitset_in,
         std::vector<DefSFBitset>* const ptr_vec_neighbors) const = 0;
@@ -177,6 +177,11 @@ class GridManagerInterface{
         const DefInt n_level, const DefSFBitset& sfbitset_in) const = 0;
     virtual DefAmrLUint CalNumOfBackgroundNode() const = 0;
     virtual bool CheckBackgroundOffset(const DefSFBitset& sfbitset_in) const = 0;
+    void FindNeighborsBasedOnDirection(const DefInt num_mpi_inner_layer,
+        const DefInt node_flag, const DefSFBitset& sfbitset_in, const SFBitsetAuxInterface& sfbitset_aux,
+        const std::vector<bool>& periodic_min, const std::vector<bool>& periodic_max,
+        const std::vector<DefSFBitset>& domain_min_n_level, const std::vector<DefSFBitset>& domain_max_n_level,
+        std::vector<DefSFBitset>* const ptr_node_added);
 
     // generate grid (initialization)
     /*the method is used to create grid instance for all refinement levels.
@@ -197,11 +202,6 @@ class GridManagerInterface{
         const std::vector<DefMap<DefInt>>& sfbitset_one_lower_level);
 
     virtual ~GridManagerInterface() {}
-    GridManagerInterface() {
-        static_assert(sizeof(DefSFBitset) == sizeof(DefSFCodeToUint),
-            "size of DefSFBitset and DefSFCodeToU must be the same");
-        this->ptr_func_insert_domain_boundary_ = &GridManagerInterface::InsertCubicDomainBoundary;
-    }
 
  protected:
     //// Generate grid
@@ -271,6 +271,21 @@ class GridManagerInterface{
         const DefMap<DefInt>& map_nodes_exist,
         DefMap<DefInt>* const ptr_map_nodes_outside,
         DefMap<DefInt>* const ptr_map_nodes_inside) const;
+
+    GridManagerInterface() {
+        static_assert(sizeof(DefSFBitset) == sizeof(DefSFCodeToUint),
+            "size of DefSFBitset and DefSFCodeToU must be the same");
+        LogManager::LogWarning(
+            "Make sure assign values for dimensional constants properly"
+            " when using default GridManagerInterface constructor");
+        this->ptr_func_insert_domain_boundary_ = &GridManagerInterface::InsertCubicDomainBoundary;
+    }
+    GridManagerInterface(const DefInt dims, const DefInt num_neighbors)
+        : k0GridDims_(dims), k0NumNeighbors_(num_neighbors) {
+        static_assert(sizeof(DefSFBitset) == sizeof(DefSFCodeToUint),
+            "size of DefSFBitset and DefSFCodeToU must be the same");
+        this->ptr_func_insert_domain_boundary_ = &GridManagerInterface::InsertCubicDomainBoundary;
+    }
 
  private:
     const DefInt K0IMaxFloodFill_ = static_cast<DefInt>(90000);
@@ -393,6 +408,11 @@ class GridManagerInterface{
         const DefMap<DefInt>& sfbitset_one_lower_level,
         const SFBitsetAuxInterface& sfbitset_aux, GridInfoInterface* const ptr_grid_info,
         DefMap<DefInt>* const ptr_inner_layer, DefMap<DefInt>* const ptr_outer_layer);
+    DefInt SearchingMpiInnerNodesForNodeOnDomainBoundary(const DefInt i_level, const DefInt num_mpi_inner_layer,
+        const DefInt flag_domain_boundary, const DefSFBitset sfbitset_in, const SFBitsetAuxInterface& sfbitset_aux,
+        const DefSFCodeToUint code_min_background_level, const DefSFCodeToUint code_max_background_level,
+        const std::vector<bool>& periodic_min, const std::vector<bool>& periodic_max,
+        const std::vector<DefSFBitset>& domain_min_n_level, const std::vector<DefSFBitset>& domain_max_n_level);
 };
 #ifndef  DEBUG_DISABLE_2D_FUNCTIONS
 /**
@@ -449,9 +469,7 @@ class GridManager2D :public  GridManagerInterface, public SFBitsetAux2D {
     }
     bool CheckBackgroundOffset(const DefSFBitset& bitset_in) const override;
 
-    GridManager2D() {
-        k0GridDims_ = 2;
-        k0NumNeighbors_ = 9;
+    GridManager2D() : GridManagerInterface(2, 9) {
     }
 
  protected:
@@ -590,9 +608,7 @@ class GridManager3D :public  GridManagerInterface, public SFBitsetAux3D {
     }
     bool CheckBackgroundOffset(const DefSFBitset& bitset_in) const override;
 
-    GridManager3D() {
-        k0GridDims_ = 3;
-        k0NumNeighbors_ = 27;
+    GridManager3D() : GridManagerInterface(3, 27) {
     }
 
  protected:
@@ -699,18 +715,19 @@ class GridManager3D :public  GridManagerInterface, public SFBitsetAux3D {
 *          elements; else return the (indices + 1) of the element with
 *          the given type.
 */
-template<InterfaceInfoHasType InterfaceInfo>
+
+
+template<GridInfoHasGetLevelAndGetNodeType GridInfo>
 DefSizet GridManagerInterface::CheckExistenceOfTypeAtGivenLevel(
     const DefInt i_level, const std::string& type,
-    const std::vector<std::shared_ptr<InterfaceInfo>>&
-    vec_ptr_interface) const {
+    const std::vector<std::shared_ptr<GridInfo>>& vec_ptr_interface) const {
     DefSizet iter_count = 0;
     if (vec_ptr_interface.empty()) {
         return 0;
     } else {
         for (const auto& iter : vec_ptr_interface) {
             ++iter_count;
-            if ((iter->i_level_ == i_level) && (iter->node_type_ == type)) {
+            if ((iter->GetGridLevel() == i_level) && (iter->GetNodeType() == type)) {
                 return iter_count;
             }
         }

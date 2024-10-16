@@ -28,8 +28,9 @@ void BoundaryBounceBack2D::SetValues(const std::vector<DefReal> values) {
 void BoundaryBounceBack2D::CalBoundaryCondition(const ELbmBoundaryType boundary_type,
     const DefMap<DefInt>& boundary_nodes,
     GridInfoLbmInteface* const ptr_grid_info) const {
-    const SolverLbmInterface& lbm_solver = *(std::dynamic_pointer_cast<SolverLbmInterface>(ptr_grid_info->ptr_solver_));
-    const DefReal rho0 = lbm_solver.k0Rho_;
+    const SolverLbmInterface& lbm_solver = *(dynamic_cast<SolverLbmInterface*>(
+        ptr_grid_info->GetPtrSolver()));
+    const DefReal rho0 = lbm_solver.GetDefaultDensity();
     const std::array<DefReal, 2>& velocity = boundary_velocity_;
     DefMap<std::unique_ptr<GridNodeLbm>>& grid_node = *ptr_grid_info->ptr_lbm_grid_nodes_;
     std::vector<DefInt> indices, inverse_indices;
@@ -61,8 +62,8 @@ void BoundaryBounceBack3D::SetValues(const std::vector<DefReal> values) {
 void BoundaryBounceBack3D::CalBoundaryCondition(const ELbmBoundaryType boundary_type,
     const DefMap<DefInt>& boundary_nodes,
     GridInfoLbmInteface* const ptr_grid_info) const {
-    const SolverLbmInterface& lbm_solver = *(std::dynamic_pointer_cast<SolverLbmInterface>(ptr_grid_info->ptr_solver_));
-    const DefReal rho0 = lbm_solver.k0Rho_;
+    const SolverLbmInterface& lbm_solver = *(dynamic_cast<SolverLbmInterface*>(ptr_grid_info->GetPtrSolver()));
+    const DefReal rho0 = lbm_solver.GetDefaultDensity();
     const std::array<DefReal, 3>& velocity = boundary_velocity_;
     DefMap<std::unique_ptr<GridNodeLbm>>& grid_node = *ptr_grid_info->ptr_lbm_grid_nodes_;
     std::vector<DefInt> indices, inverse_indices;

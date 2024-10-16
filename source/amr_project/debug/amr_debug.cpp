@@ -14,10 +14,8 @@ namespace amrproject {
 void AmrManager::CheckMeshAfterInitialization() const {
 #ifdef ENABLE_MPI
     for (const auto& iter : ptr_grid_manager_->vec_ptr_grid_info_) {
-        if (iter->i_level_ == 1) {
-            ptr_mpi_manager_->CheckMpiNodesCorrespondence(*iter.get());
-            ptr_mpi_manager_->CheckMpiPeriodicCorrespondence(*iter.get());
-        }
+        ptr_mpi_manager_->CheckMpiNodesCorrespondence(*iter.get());
+        ptr_mpi_manager_->CheckMpiPeriodicCorrespondence(*iter.get());
     }
 #endif  // ENABLE_MPI
 }

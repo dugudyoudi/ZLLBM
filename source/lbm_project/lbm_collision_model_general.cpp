@@ -15,7 +15,7 @@ void GridInfoLbmInteface::SetCollisionOperator() {
     const SolverLbmInterface& lbm_solver = *(std::dynamic_pointer_cast<SolverLbmInterface>(ptr_solver_));
     switch (k0CollisionOperatorType_) {
     case ELbmCollisionOperatorType::kLbmSrt: {
-        if (bool_forces_) {
+        if (lbm_solver.bool_forces_) {
             ptr_collision_operator_ = LbmSrtForceCollisionOptCreator(lbm_solver);
         } else {
             ptr_collision_operator_ = LbmSrtCollisionOptCreator(lbm_solver);
@@ -29,7 +29,7 @@ void GridInfoLbmInteface::SetCollisionOperator() {
     }
 }
 LbmCollisionOptInterface::LbmCollisionOptInterface(const SolverLbmInterface& lbm_solver) {
-    viscosity_lbm_ = lbm_solver.k0LbmViscosity_;
+    viscosity_lbm_ = lbm_solver.GetDefaultViscosity();
 }
 /**
  * @brief function to calculate relaxation time ratio between coarse and fine grid.

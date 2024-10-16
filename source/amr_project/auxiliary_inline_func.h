@@ -22,9 +22,14 @@ inline DefReal Square(DefReal x) {
 * @param[in]  n        power exponent.
 */
 inline DefSizet TwoPowerN(DefSizet n) {
-DefSizet two = 1;
-two <<= n;
-return two;
+    DefSizet two = 1;
+    two <<= n;
+    return two;
+}
+inline DefAmrLUint TwoPowerN(DefInt n) {
+    DefAmrLUint two = 1;
+    two <<= n;
+    return two;
 }
 constexpr DefReal SqrtNewtonRaphson(DefReal x, DefReal current, DefReal previous) {
     return current == previous ? current : SqrtNewtonRaphson(x, 0.5 * (current + x / current), current);

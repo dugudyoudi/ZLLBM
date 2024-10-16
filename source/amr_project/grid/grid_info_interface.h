@@ -52,7 +52,6 @@ struct GhostNode{
 /**
 * @struct GridNode
 * @brief struct used to store information of a node
-* @date  2022-6-4
 */
 struct GridNode {
  public:
@@ -63,6 +62,10 @@ struct GridNode {
     virtual void InterpolationAdditionAssignCoefficient(const GridNode& node_in, const DefReal coefficient) {
         // *this += node_in * coefficient;
     }
+    virtual void CopyVariablesToBuffer(const GridNode& node_ref, char* const ptr_node_buffer) const {}
+    virtual void ReadVariablesFromBuffer(const char* ptr_node_buffer, const GridNode* const ptr_node) {}
+    virtual void CopyNodInfoToBuffer(char* const ptr_node_buffer) const {}
+    virtual void ReadNodInfoFromBuffer(const char* ptr_node_buffer) {}
 };
 /**
 * @struct OutputNodeVariableInfoInterface
@@ -71,7 +74,7 @@ struct GridNode {
 struct OutputNodeVariableInfoInterface {
     DefInt variable_dims_;
     std::string output_name_;
-    virtual void WriteNodeVariable(const GridNode grid_node){}
+    virtual void WriteNodeVariable(const GridNode& grid_node){}
 };
 /**
 * @class InterfaceLayerInfo
@@ -155,21 +158,15 @@ class GhostGridInfoCreatorInterface {
 * @brief class used to store grid information at i_level_ of refinement
 */
 class GridInfoInterface {
- public:
-    // level of refinement
-    DefInt i_level_ = 0;
-
+ protected:
+    DefInt i_level_ = 0;  ///< level of refinement
     std::map<std::string, void*> kMemberNames_;
-    void SetMemberVariable(const std::string& member_name, int value);
-
     DefInt computational_cost_ = 1;
     std::string node_type_;
     std::vector<DefReal> grid_space_;
     std::shared_ptr<SolverInterface> ptr_solver_ = nullptr;
     SFBitsetAuxInterface* ptr_sfbitset_aux_ = nullptr;
 
-    std::map<std::pair<ECriterionType, DefInt>,
-        std::shared_ptr<TrackingGridInfoInterface>> map_ptr_tracking_grid_info_;
     std::shared_ptr<GhostGridInfoInterface> ptr_ghost_grid_info_;
 
     // interface between grid of different refinement levels
@@ -177,6 +174,33 @@ class GridInfoInterface {
     DefInt k0NumCoarse2FineLayer_ = 2;
     DefInt k0NumFine2CoarseGhostLayer_ = k0NumFine2CoarseLayer_/2 + 1;
     DefInt k0NumCoarse2FineGhostLayer_ = k0NumCoarse2FineLayer_/2;
+
+ public:
+    // set and get protected members
+    DefInt GetGridLevel() const {return i_level_;}
+    DefInt GetComputationalCost() const {return computational_cost_;}
+    const std::vector<DefReal>& GetGridSpace() const {return grid_space_;}
+    DefInt GetNumFine2CoarseLayer() const {return k0NumFine2CoarseLayer_;}
+    DefInt GetNumCoarse2FineLayer() const {return k0NumCoarse2FineLayer_;}
+    DefInt GetNumFine2CoarseGhostLayer() const {return k0NumFine2CoarseGhostLayer_;}
+    DefInt GetNumCoarse2FineGhostLayer() const {return k0NumCoarse2FineGhostLayer_;}
+    SolverInterface* GetPtrSolver() const {return ptr_solver_.get();}
+    SFBitsetAuxInterface* GetPtrSFBitsetAux() const {return ptr_sfbitset_aux_;}
+    const std::string& GetNodeType() const {return node_type_;}
+
+    void SetGridLevel(const DefInt i_level);
+    void SetComputationalCost(const DefInt computational_cost);
+    void SetGridSpace(const std::vector<DefReal>& grid_space);
+    void SetPtrSFBitsetAux(SFBitsetAuxInterface* const ptr_sfbitset_aux);
+    void SetPtrSolver(const std::shared_ptr<SolverInterface>& ptr_solver);
+    void SetMemberVariable(const std::string& member_name, int value);
+    void SetNodeType(const std::string& node_type);
+    void SetNumFine2CoarseLayer(const DefInt num_fine2coarse_layer);
+    void SetNumCoarse2FineLayer(const DefInt num_coarse2fine_layer);
+
+    // layers for refinement
+    std::map<std::pair<ECriterionType, DefInt>,
+        std::shared_ptr<TrackingGridInfoInterface>> map_ptr_tracking_grid_info_;
     std::map<std::pair<ECriterionType, DefInt>,
         std::shared_ptr<InterfaceLayerInfo>> map_ptr_interface_layer_info_;
 
@@ -187,7 +211,7 @@ class GridInfoInterface {
 
     // domain boundary related
     // noting that kFlagInsideDomain indicates nodes are not on the domain boundary
-    static constexpr int kFlagInsideDomain_ = 0,  kFlagOutsideDomain_ = -1,
+    static constexpr DefInt kFlagInsideDomain_ = 0,  kFlagOutsideDomain_ = -1,
         kFlagXMinBoundary_ = 1, kFlagXMaxBoundary_ = 2, kFlagYMinBoundary_ = 4,
         kFlagYMaxBoundary_ = 8, kFlagZMinBoundary_ = 16, kFlagZMaxBoundary_ = 32;
     std::vector<DefSFBitset> k0VecBitsetDomainMin_, k0VecBitsetDomainMax_;
@@ -229,6 +253,7 @@ class GridInfoInterface {
     virtual void DebugWrite() {}
     virtual void DebugWriteNode(const GridNode& node) {}
 
+    // parent grid manager
  protected:
     GridManagerInterface* ptr_parent_grid_manager_ = nullptr;
 
@@ -240,14 +265,14 @@ class GridInfoInterface {
 
     // interpolation
  public:
-    EInterpolationMethod interp_method_ = EInterpolationMethod::kLinear;
+    EInterpolationMethod interp_method_ = EInterpolationMethod::kLagrangian;
     DefAmrLUint max_interp_length_ = 2;
     ///< the maximum half length of a cubic region used for interpolation
     std::function<int(const DefAmrLUint, const DefAmrLUint, const DefInt, const DefSFBitset&,
         const amrproject::SFBitsetAuxInterface&, const std::vector<DefSFBitset>&,
         const DefMap<std::unique_ptr<GridNode>>& nodes_fine, const amrproject::GridInfoInterface& coarse_grid_info,
         const DefMap<std::unique_ptr<GridNode>>& nodes_coarse, GridNode* const ptr_node)> func_node_interp_;
-    void ChooseInterpolationMethod();
+    void ChooseInterpolationMethod(const DefInt dims);
     virtual void NodeInfoCoarse2fine(const GridNode& coarse_node, GridNode* const ptr_fine_node) const {}
     virtual void NodeInfoFine2Coarse(const GridNode& fine_node, GridNode* const ptr_coarse_node) const {}
     // linear interpolation
@@ -298,7 +323,7 @@ class GridInfoInterface {
         return false;
     }
     virtual int SizeOfGridNodeInfoForMpiCommunication() const {return 0;}
-    virtual int CopyNodeInfoToBuffer(const DefMap<DefInt>& map_nodes, char* const ptr_buffer) {return 0;}
+    virtual int CopyNodeInfoToBuffer(const DefMap<DefInt>& map_nodes, char* const ptr_buffer) const;
     virtual int CopyInterpolationNodeInfoToBuffer(const GridInfoInterface& grid_info_lower,
         const DefMap<DefInt>& map_nodes, char* const ptr_buffer) {return 0;}
     virtual int ReadInterpolationNodeInfoFromBuffer(
@@ -306,13 +331,22 @@ class GridInfoInterface {
     virtual void ComputeInfoInMpiLayers(
         const std::map<int, DefMap<DefInt>>& map_inner_nodes,
         const DefMap<DefInt>& map_outer_nodes) {}
-    virtual void ReadNodeInfoFromBuffer(const DefSizet buffer_size, const std::unique_ptr<char[]>& buffer) {}
+    virtual void ReadNodeInfoFromBuffer(const DefSizet buffer_size, const std::unique_ptr<char[]>& buffer);
     void SetPeriodicBoundaryAsPartitionInterface(DefInt dims, const SFBitsetAuxInterface& sfbitset_aux,
         const std::vector<bool>& bool_periodic_min, const std::vector<bool>& bool_periodic_max,
         DefMap<DefInt>* const ptr_partition_interface);
+    void RemoveUnnecessaryF2CNodesOnMpiOuterLayer(const DefSFCodeToUint code_min,
+        const DefSFCodeToUint code_max, const DefInt num_outer_layer, DefMap<DefInt>* const ptr_mpi_outer_layer);
+    virtual DefSizet GetVariablesSizeForCopy() const { return 0;}
+    int CopyNodeVariablesToBuffer(
+        const std::function<void(const GridNode& node_ref, char* const)>& func_copy_buffer,
+        const DefMap<DefInt>& map_nodes, char* const ptr_buffer);
+    int ReadNodeVariablesFromBuffer(const DefSizet buffer_size,
+        const std::function<void(const char* ptr_node_buffer, const GridNode* const ptr_node)> func_read_buffer,
+        const std::unique_ptr<char[]>& buffer,  DefMap<std::unique_ptr<GridNode>>* const ptr_grid_nodes);
 
     // general purpose functions
-    virtual void InitialGridInfo() = 0;
+    virtual void InitialGridInfo(const DefInt dims) = 0;
     virtual ~GridInfoInterface() {}
 };
 /**

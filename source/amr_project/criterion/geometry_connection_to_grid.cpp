@@ -10,7 +10,7 @@
 #include <algorithm>
 #include <queue>
 #include <vector>
-#include "auxiliary_inline_func.h"
+#include "./auxiliary_inline_func.h"
 #include "io/log_write.h"
 #include "criterion/geometry_info_connection.h"
 #include "grid/sfbitset_aux.h"
@@ -18,19 +18,21 @@
 namespace rootproject {
 namespace amrproject {
 /**
-* @brief function to find tracking near the geometry described
-*               by connection relations.
+* @brief function to find tracking near the geometry described by connection relations.
+* @param[in]  dims   dimension of the geometry.
 * @param[in]  i_geo   the ith geometry.
 * @param[in]  i_level   level of geometry.
 * @param[in]  grid_extend_type type of extension.
 * @param[in]  sfbitset_aux   class manage space filling curves.
 * @param[out]  ptr_grid_info grid with updated tracking node information.
 */
-void GeometryConnectionInterface::FindTrackingNodeBasedOnGeo(DefInt i_geo, DefInt i_level,
+void GeometryConnectionInterface::FindTrackingNodeBasedOnGeo(DefInt dims,
+    DefInt i_geo, DefInt i_level,
     const EGridExtendType grid_extend_type, const SFBitsetAuxInterface& sfbitset_aux,
     GridInfoInterface* const ptr_grid_info) {
-    DefInt dims = DefInt(ptr_grid_info->grid_space_.size());
-    DefInt level_diff = ptr_grid_info->i_level_ - i_level;
+    const DefInt i_level_grid = ptr_grid_info->GetGridLevel();
+    const DefInt level_diff = i_level_grid - i_level;
+    const std::vector<DefReal>& grid_space = ptr_grid_info->GetGridSpace();
 
     std::pair<ECriterionType, DefInt> key_tracking_grid = { ECriterionType::kGeometry, i_geo };
     ptr_grid_info->map_ptr_tracking_grid_info_
@@ -42,11 +44,10 @@ void GeometryConnectionInterface::FindTrackingNodeBasedOnGeo(DefInt i_geo, DefIn
     for (auto& iter : connection_vertex_given_level_.at(level_diff)) {
         std::array<DefReal, 3>& coordinate = vertex_given_level_.at(iter.first)
             .vec_vertex_coordinate.at(iter.second)->coordinate;
-        sfbitset_tmp = sfbitset_aux.SFBitsetEncodingCoordi(ptr_grid_info->grid_space_,
+        sfbitset_tmp = sfbitset_aux.SFBitsetEncodingCoordi(grid_space,
             {coordinate[kXIndex], coordinate[kYIndex], coordinate[kZIndex]});
         vertex_given_level_.at(iter.first).vec_vertex_coordinate
-            .at(iter.second)->map_bitset_ref
-            .insert({ ptr_grid_info->i_level_, sfbitset_tmp });
+            .at(iter.second)->map_bitset_ref.insert({i_level_grid, sfbitset_tmp});
         if (ptr_grid_info->CheckIfNodeOutsideCubicDomain(dims, sfbitset_tmp, sfbitset_aux)
             >= GridInfoInterface::kFlagInsideDomain_) {
             if (ptr_tracking_node->find(sfbitset_tmp) == ptr_tracking_node->end()) {

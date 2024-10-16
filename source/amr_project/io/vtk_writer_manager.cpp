@@ -976,14 +976,11 @@ void VtkWriterManager::WriteGridCoordinates(FILE* const fp,
         + output_data_format.output_real_.printf_format_ + " "
         + output_data_format.output_real_.printf_format_ + " "
         + output_data_format.output_real_.printf_format_ + "\n";
-    DefReal x_offset = 0., y_offset = 0., z_offset = 0.;
+    const std::vector<DefReal>& grid_space = grid_info.GetGridSpace();
     std::array<DefReal, 2> grid_space_2d, coordi_2d;
 
     DefSizet i_nodes = 0;
-    x_offset = grid_manager2d.k0RealMin_.at(kXIndex);
-    y_offset = grid_manager2d.k0RealMin_.at(kYIndex);
-    grid_space_2d = { grid_info.grid_space_[kXIndex],
-        grid_info.grid_space_[kYIndex] };
+    grid_space_2d = { grid_space[kXIndex], grid_space[kYIndex] };
 
     std::vector<DefReal> coordi(3, 0.);
     if (bool_binary) {
@@ -992,19 +989,15 @@ void VtkWriterManager::WriteGridCoordinates(FILE* const fp,
             iter != ptr_map_node_index->end(); ++iter) {
             iter->second = i_nodes;
             // compute coordinates
-            grid_manager2d.SFBitsetComputeCoordinate(iter->first,
-                grid_space_2d, &coordi_2d);
+            grid_manager2d.SFBitsetComputeCoordinate(iter->first, grid_space_2d, &coordi_2d);
             coordi = { coordi_2d[kXIndex], coordi_2d[kYIndex], 0 };
             // convert to uint8
             base64_instance_.AddToVecChar(
-                output_data_format.output_real_.CastType(
-                    coordi[kXIndex] - x_offset), &vec_uint8);
+                output_data_format.output_real_.CastType(coordi[kXIndex]), &vec_uint8);
             base64_instance_.AddToVecChar(
-                output_data_format.output_real_.CastType(
-                    coordi[kYIndex] - y_offset), &vec_uint8);
+                output_data_format.output_real_.CastType(coordi[kYIndex]), &vec_uint8);
             base64_instance_.AddToVecChar(
-                output_data_format.output_real_.CastType(
-                    coordi[kZIndex] - z_offset), &vec_uint8);
+                output_data_format.output_real_.CastType(coordi[kZIndex]), &vec_uint8);
 
             ++i_nodes;
         }
@@ -1019,11 +1012,9 @@ void VtkWriterManager::WriteGridCoordinates(FILE* const fp,
             iter->second = i_nodes;
             grid_manager2d.SFBitsetComputeCoordinate(iter->first,
                 grid_space_2d, &coordi_2d);
-            coordi = { coordi_2d[kXIndex], coordi_2d[kYIndex], 0 };
+            coordi = {coordi_2d[kXIndex], coordi_2d[kYIndex], 0 };
             fprintf_s(fp, str_format.c_str(),
-                coordi[kXIndex] - x_offset,
-                coordi[kYIndex] - y_offset,
-                coordi[kZIndex] - z_offset);
+                coordi[kXIndex], coordi[kYIndex], coordi[kZIndex]);
             ++i_nodes;
         }
     }
@@ -1149,13 +1140,9 @@ void VtkWriterManager::WriteGridCoordinates(FILE* const fp,
         + output_data_format.output_real_.printf_format_ + " "
         + output_data_format.output_real_.printf_format_ + " "
         + output_data_format.output_real_.printf_format_ + "\n";
-    DefReal x_offset = 0., y_offset = 0., z_offset = 0.;
     std::array<DefReal, 3> grid_space_3d, coordi_3d;
-    x_offset = grid_manager3d.k0RealMin_.at(kXIndex);
-    y_offset = grid_manager3d.k0RealMin_.at(kYIndex);
-    z_offset = grid_manager3d.k0RealMin_.at(kZIndex);
-    grid_space_3d = { grid_info.grid_space_[kXIndex],
-        grid_info.grid_space_[kYIndex],  grid_info.grid_space_[kZIndex] };
+    const std::vector<DefReal>& grid_space = grid_info.GetGridSpace();
+    grid_space_3d = {grid_space[kXIndex], grid_space[kYIndex],  grid_space[kZIndex] };
     std::vector<DefReal> coordi(3, 0.);
     DefSizet i_node = 0;
     if (bool_binary) {
@@ -1170,14 +1157,11 @@ void VtkWriterManager::WriteGridCoordinates(FILE* const fp,
                     coordi_3d[kZIndex] };
             // convert to uint8
             base64_instance_.AddToVecChar(
-                output_data_format.output_real_.CastType(
-                    coordi[kXIndex] - x_offset), &vec_uint8);
+                output_data_format.output_real_.CastType(coordi[kXIndex]), &vec_uint8);
             base64_instance_.AddToVecChar(
-                output_data_format.output_real_.CastType(
-                    coordi[kYIndex] - y_offset), &vec_uint8);
+                output_data_format.output_real_.CastType(coordi[kYIndex]), &vec_uint8);
             base64_instance_.AddToVecChar(
-                output_data_format.output_real_.CastType(
-                    coordi[kZIndex] - z_offset), &vec_uint8);
+                output_data_format.output_real_.CastType(coordi[kZIndex]), &vec_uint8);
 
             ++i_node;
         }
@@ -1195,9 +1179,7 @@ void VtkWriterManager::WriteGridCoordinates(FILE* const fp,
                 coordi = { coordi_3d[kXIndex], coordi_3d[kYIndex],
                     coordi_3d[kZIndex] };
             fprintf_s(fp, str_format.c_str(),
-                coordi[kXIndex] - x_offset,
-                coordi[kYIndex] - y_offset,
-                coordi[kZIndex] - z_offset);
+                coordi[kXIndex], coordi[kYIndex], coordi[kZIndex]);
 
             ++i_node;
         }

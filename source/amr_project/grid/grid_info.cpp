@@ -12,6 +12,32 @@
 #include "io/log_write.h"
 namespace rootproject {
 namespace amrproject {
+
+void GridInfoInterface::SetGridLevel(DefInt i_level) {
+    i_level_ = i_level;
+}
+void GridInfoInterface::SetComputationalCost(DefInt computational_cost) {
+    computational_cost_ = computational_cost;
+}
+void GridInfoInterface::SetGridSpace(const std::vector<DefReal>& grid_space) {
+    if (grid_space.size() > 3) {
+        LogManager::LogError("Dimension of grid space should not be greater than 3");
+    } else {
+        grid_space_ = grid_space;
+    }
+}
+void GridInfoInterface::SetPtrSFBitsetAux(SFBitsetAuxInterface* const ptr_sfbitset_aux) {
+    ptr_sfbitset_aux_ = ptr_sfbitset_aux;
+}
+void GridInfoInterface::SetPtrSolver(const std::shared_ptr<SolverInterface>& ptr_solver) {
+    ptr_solver_ = ptr_solver;
+}
+void GridInfoInterface::SetNumFine2CoarseLayer(DefInt num_fine2coarse_layer) {
+    k0NumFine2CoarseLayer_ = num_fine2coarse_layer;
+}
+void GridInfoInterface::SetNumCoarse2FineLayer(DefInt num_coarse2fine_layer) {
+    k0NumCoarse2FineLayer_ = num_coarse2fine_layer;
+}
 /**
  * @brief function to set the value of a member variable identified by a string.
  * @param str_var the name of the member variable to be set
@@ -37,16 +63,17 @@ void GridInfoInterface::SetMemberVariable(const std::string& str_var, int value)
  * @param[in] dims dimension of the grid.
  * @param[in] bitset_in spacing filling code of a grid node.
  * @param[in] sfbitset_aux class to manage functions for space filling code computation.
- * @return flag indicate node on which domain boundaries, 1: x min, 8: x max, 2: y min, 16: y max, 4: z min, 32: z max,
- *         0 inside domain, -1 outside domain
+ * @return flag indicate node on which domain boundaries.
  */
-int GridInfoInterface::CheckIfNodeOutsideCubicDomain(const DefInt dims,
+DefInt GridInfoInterface::CheckIfNodeOutsideCubicDomain(const DefInt dims,
     const DefSFBitset& bitset_in, const SFBitsetAuxInterface& sfbitset_aux) const {
     DefInt current_bit = sfbitset_aux.kRefCurrent_;
     DefSFCodeToUint code_one_dim, code_boundary;
-    int flag_node = kFlagInsideDomain_;
+    DefInt flag_node = kFlagInsideDomain_;
+    const std::array<DefSFBitset, 2>& take_xref = sfbitset_aux.GetTakeXRef(),
+        take_yref =  sfbitset_aux.GetTakeYRef(), take_zref = sfbitset_aux.GetTakeZRef();
     // x min
-    code_one_dim = (bitset_in&sfbitset_aux.k0SFBitsetTakeXRef_[current_bit]).to_ullong();
+    code_one_dim = (bitset_in&take_xref[current_bit]).to_ullong();
     code_boundary = k0VecBitsetDomainMin_[kXIndex].to_ullong();
     if (code_one_dim < code_boundary) {
         return kFlagOutsideDomain_;
@@ -54,7 +81,7 @@ int GridInfoInterface::CheckIfNodeOutsideCubicDomain(const DefInt dims,
         flag_node |= kFlagXMinBoundary_;
     }
     // x max
-    code_one_dim = (bitset_in&sfbitset_aux.k0SFBitsetTakeXRef_[current_bit]).to_ullong();
+    code_one_dim = (bitset_in&take_xref[current_bit]).to_ullong();
     code_boundary = k0VecBitsetDomainMax_[kXIndex].to_ullong();
     if (code_one_dim > code_boundary) {
         return kFlagOutsideDomain_;
@@ -62,7 +89,7 @@ int GridInfoInterface::CheckIfNodeOutsideCubicDomain(const DefInt dims,
         flag_node |= kFlagXMaxBoundary_;
     }
     // y min
-    code_one_dim = (bitset_in&sfbitset_aux.k0SFBitsetTakeYRef_[current_bit]).to_ullong();
+    code_one_dim = (bitset_in&take_yref[current_bit]).to_ullong();
     code_boundary = k0VecBitsetDomainMin_[kYIndex].to_ullong();
     if (code_one_dim < code_boundary) {
         return kFlagOutsideDomain_;
@@ -70,7 +97,7 @@ int GridInfoInterface::CheckIfNodeOutsideCubicDomain(const DefInt dims,
         flag_node |= kFlagYMinBoundary_;
     }
     // y max
-    code_one_dim = (bitset_in&sfbitset_aux.k0SFBitsetTakeYRef_[current_bit]).to_ullong();
+    code_one_dim = (bitset_in&take_yref[current_bit]).to_ullong();
     code_boundary = k0VecBitsetDomainMax_[kYIndex].to_ullong();
     if (code_one_dim > code_boundary) {
         return kFlagOutsideDomain_;
@@ -79,7 +106,7 @@ int GridInfoInterface::CheckIfNodeOutsideCubicDomain(const DefInt dims,
     }
     if (dims == 3) {
         // z min
-        code_one_dim = (bitset_in&sfbitset_aux.k0SFBitsetTakeZRef_[current_bit]).to_ullong();
+        code_one_dim = (bitset_in&take_zref[current_bit]).to_ullong();
         code_boundary = k0VecBitsetDomainMin_[kZIndex].to_ullong();
         if (code_one_dim < code_boundary) {
             return kFlagOutsideDomain_;
@@ -87,7 +114,7 @@ int GridInfoInterface::CheckIfNodeOutsideCubicDomain(const DefInt dims,
             flag_node |= kFlagZMinBoundary_;
         }
         // z max
-        code_one_dim = (bitset_in&sfbitset_aux.k0SFBitsetTakeZRef_[current_bit]).to_ullong();
+        code_one_dim = (bitset_in&take_zref[current_bit]).to_ullong();
         code_boundary = k0VecBitsetDomainMax_[kZIndex].to_ullong();
         if (code_one_dim > code_boundary) {
             return kFlagOutsideDomain_;
@@ -112,41 +139,43 @@ void GridInfoInterface::CheckNodesOnCubicPeriodicBoundary(const DefInt dims, con
     ptr_nodes_periodic->clear();
     DefInt current_bit = sfbitset_aux.kRefCurrent_;
     DefInt other_bit = sfbitset_aux.kRefOthers_;
+    const std::array<DefSFBitset, 2>& take_xref = sfbitset_aux.GetTakeXRef(),
+        take_yref =  sfbitset_aux.GetTakeYRef(), take_zref = sfbitset_aux.GetTakeZRef();
     // x min
     if (periodic_min.at(kXIndex)
-        && ((bitset_in&sfbitset_aux.k0SFBitsetTakeXRef_[current_bit]) == k0VecBitsetDomainMin_[kXIndex])) {
-        ptr_nodes_periodic->push_back((bitset_in&sfbitset_aux.k0SFBitsetTakeXRef_[other_bit])
+        && ((bitset_in&take_xref[current_bit]) == k0VecBitsetDomainMin_[kXIndex])) {
+        ptr_nodes_periodic->push_back((bitset_in&take_xref[other_bit])
             |k0VecBitsetDomainMax_[kXIndex]);
     }
     // x max
     if (periodic_max.at(kXIndex)
-        && ((bitset_in&sfbitset_aux.k0SFBitsetTakeXRef_[current_bit]) == k0VecBitsetDomainMax_[kXIndex])) {
-        ptr_nodes_periodic->push_back((bitset_in&sfbitset_aux.k0SFBitsetTakeXRef_[other_bit])
+        && ((bitset_in&take_xref[current_bit]) == k0VecBitsetDomainMax_[kXIndex])) {
+        ptr_nodes_periodic->push_back((bitset_in&take_xref[other_bit])
             |k0VecBitsetDomainMin_[kXIndex]);
     }
     // y min
     if (periodic_min.at(kYIndex)
-        && ((bitset_in&sfbitset_aux.k0SFBitsetTakeYRef_[current_bit]) == k0VecBitsetDomainMin_[kYIndex])) {
-        ptr_nodes_periodic->push_back((bitset_in&sfbitset_aux.k0SFBitsetTakeYRef_[other_bit])
+        && ((bitset_in&take_yref[current_bit]) == k0VecBitsetDomainMin_[kYIndex])) {
+        ptr_nodes_periodic->push_back((bitset_in&take_yref[other_bit])
             |k0VecBitsetDomainMax_[kYIndex]);
     }
     // y max
     if (periodic_max.at(kYIndex)
-        && ((bitset_in&sfbitset_aux.k0SFBitsetTakeYRef_[current_bit]) == k0VecBitsetDomainMax_[kYIndex])) {
-        ptr_nodes_periodic->push_back((bitset_in&sfbitset_aux.k0SFBitsetTakeYRef_[other_bit])
+        && ((bitset_in&take_yref[current_bit]) == k0VecBitsetDomainMax_[kYIndex])) {
+        ptr_nodes_periodic->push_back((bitset_in&take_yref[other_bit])
             |k0VecBitsetDomainMin_[kYIndex]);
     }
     if (dims == 3) {
         // z min
         if (periodic_min.at(kZIndex)
-            && ((bitset_in&sfbitset_aux.k0SFBitsetTakeZRef_[current_bit]) == k0VecBitsetDomainMin_[kZIndex])) {
-            ptr_nodes_periodic->push_back((bitset_in&sfbitset_aux.k0SFBitsetTakeZRef_[other_bit])
+            && ((bitset_in&take_zref[current_bit]) == k0VecBitsetDomainMin_[kZIndex])) {
+            ptr_nodes_periodic->push_back((bitset_in&take_zref[other_bit])
                 |k0VecBitsetDomainMax_[kZIndex]);
         }
         // z max
         if (periodic_max.at(kZIndex)
-            && ((bitset_in&sfbitset_aux.k0SFBitsetTakeZRef_[current_bit]) == k0VecBitsetDomainMax_[kZIndex])) {
-            ptr_nodes_periodic->push_back((bitset_in&sfbitset_aux.k0SFBitsetTakeYRef_[other_bit])
+            && ((bitset_in&take_zref[current_bit]) == k0VecBitsetDomainMax_[kZIndex])) {
+            ptr_nodes_periodic->push_back((bitset_in&take_zref[other_bit])
                 |k0VecBitsetDomainMin_[kZIndex]);
         }
     }

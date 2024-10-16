@@ -11,6 +11,7 @@
 #define SOURCE_LBM_PROJECT_D3Q19_MODEL_LBM_D3Q19_H_
 #include <array>
 #include <memory>
+#include <vector>
 #include "./lbm_interface.h"
 namespace rootproject {
 namespace lbmproject {
@@ -39,10 +40,10 @@ namespace lbmproject {
 class SolverLbmD3Q19 :public SolverLbmInterface {
  public:
     // f
-    static constexpr DefInt kFX0Y0Z0 = 0,
-        kFXnY0Z0 = 2, kFXpY0Z0 = 1,  kFX0YnZ0 = 4, kFX0YpZ0 = 3, kFX0Y0Zn = 6, kFX0Y0Zp = 5,
-        kFXnYnZ0 = 10, kFXnYpZ0 = 8, kFXpYnZ0 = 9, kFXpYpZ0 = 7, kFXnY0Zn = 14, kFXnY0Zp = 12,
-        kFXpY0Zn = 13, kFXpY0Zp = 11, kFX0YnZn = 18, kFX0YnZp = 16, kFX0YpZn = 17, kFX0YpZp = 15;
+    static constexpr DefInt kFX0Y0Z0_ = 0,
+        kFXnY0Z0_ = 2, kFXpY0Z0_ = 1,  kFX0YnZ0_ = 4, kFX0YpZ0_ = 3, kFX0Y0Zn_ = 6, kFX0Y0Zp_ = 5,
+        kFXnYnZ0_ = 10, kFXnYpZ0_ = 8, kFXpYnZ0_ = 9, kFXpYpZ0_ = 7, kFXnY0Zn_ = 14, kFXnY0Zp_ = 12,
+        kFXpY0Zn_ = 13, kFXpY0Zp_ = 11, kFX0YnZn_ = 18, kFX0YnZp_ = 16, kFX0YpZn_ = 17, kFX0YpZp_ = 15;
         /**< indices of distribution functions*/
     static constexpr std::array<std::array<DefReal, 19>, 19> kMatrixMMrt = {{
         { 1., 1., 1., 1., 1., 1., 1., 1., 1., 1., 1., 1., 1., 1., 1., 1., 1., 1., 1., },
@@ -112,6 +113,36 @@ class SolverLbmD3Q19 :public SolverLbmInterface {
         DefMap<std::unique_ptr<GridNodeLbm>>* const ptr_map_grid_nodes) const final;
     void StreamInForAGivenNode(const DefSFBitset sfbitset_in, const amrproject::SFBitsetAuxInterface& sfbitset_aux,
         DefMap<std::unique_ptr<GridNodeLbm>>* const ptr_map_grid_nodes) const final;
+
+    SolverLbmD3Q19() : SolverLbmInterface(19, 5, InitCx(), InitCy(), InitCz(),
+        InitWeights(), IniIndexNeg(), IniIndexPos()) {
+        k0SolverDims_ = 3;
+    }
+
+ private:
+    static std::vector<DefReal> InitCx() {
+        return { 0., 1., -1., 0.,  0., 0.,  0., 1., -1.,  1., -1., 1., -1.,  1., -1., 0., 0.,   0.,  0.};
+    }
+    static std::vector<DefReal> InitCy() {
+        return { 0., 0.,  0., 1., -1., 0.,  0., 1.,  1., -1., -1., 0.,  0.,  0.,  0., 1., -1.,  1., -1.};
+    }
+    static std::vector<DefReal> InitCz() {
+        return { 0., 0.,  0., 0.,  0., 1., -1., 0.,  0.,  0.,  0., 1.,  1., -1., -1., 1.,  1., -1., -1.};
+    }
+    static std::vector<DefReal> InitWeights() {
+        return { 1./3., 1./18., 1./18., 1./18., 1./18., 1./18., 1./18.,
+            1./36., 1./36., 1./36., 1./36., 1./36., 1./36., 1./36., 1./36., 1./36., 1./36., 1./36., 1./36. };
+    }
+    static std::vector<std::vector<DefInt>> IniIndexNeg() {
+        return {{kFXnY0Z0_, kFXnYnZ0_, kFXnYpZ0_, kFXnY0Zn_, kFXnY0Zp_},
+        {kFX0YnZ0_, kFXnYnZ0_, kFXpYnZ0_, kFX0YnZn_, kFX0YnZp_},
+        {kFX0Y0Zn_, kFXnY0Zn_, kFXpY0Zn_, kFX0YnZn_, kFX0YpZn_}};
+    }
+    static std::vector<std::vector<DefInt>> IniIndexPos() {
+        return {{kFXpY0Z0_, kFXpYpZ0_, kFXpYnZ0_, kFXpY0Zp_, kFXpY0Zn_},
+            {kFX0YpZ0_, kFXpYpZ0_, kFXnYpZ0_, kFX0YpZp_, kFX0YpZn_},
+            {kFX0Y0Zp_, kFXpY0Zp_, kFXnY0Zp_, kFX0YpZp_, kFX0YnZp_}};
+    }
 };
 class SolverCreatorLbmD3Q19 final :public amrproject::SolverCreatorInterface {
  public:

@@ -24,7 +24,7 @@ void MpiManager::DebugMpiForAllGrids(const GridManagerInterface& grid_manager) c
 * @param[in]  grid_info   reference to grid information.
 */
 void MpiManager::CheckMpiNodesCorrespondence(const GridInfoInterface& grid_info) const {
-    DefInt i_level = grid_info.i_level_;
+    const DefInt i_level = grid_info.GetGridLevel();
     std::vector<bool> vec_receive_ranks(IdentifyRanksReceivingGridNode(i_level));
     std::vector<BufferSizeInfo> send_buffer_info, receive_buffer_info;
     std::vector<std::vector<MPI_Request>> vec_vec_reqs_send, vec_vec_reqs_receive;
@@ -109,30 +109,9 @@ void MpiManager::CheckMpiNodesCorrespondence(const GridInfoInterface& grid_info)
         }
     }
 
-//     if (rank_id_ == 2) {
-//         std::ofstream file1("test0.txt");
-//         for (auto iter : map_received) {
-//             amrproject::SFBitsetAux2D aux2d;
-//             std::array<DefAmrLUint, 2> indices;
-//             aux2d.SFBitsetComputeIndices(iter.first, &indices);
-//             file1  << indices[0] << " " << indices[1] << std::endl;
-
-//         }
-//         file1.close();
-
-//        file1.open("test1.txt");
-//         for (auto iter : mpi_communication_outer_layers_.at(1)) {
-//             amrproject::SFBitsetAux2D aux2d;
-//             std::array<DefAmrLUint, 2> indices;
-//             aux2d.SFBitsetComputeIndices(iter.first, &indices);
-//             file1 << indices[0] << " " << indices[1] << std::endl;
-//         }
-//         file1.close();
-// }
-
-
-    if (mpi_communication_outer_layers_.at(i_level).size() != map_received.size()) {
-        LogManager::LogError("the number of received nodes is not the same as the number of nodes"
+    // received nodes may be more than nodes in mpi outer layer in coarse to fine layers
+    if (mpi_communication_outer_layers_.at(i_level).size() > map_received.size()) {
+        LogManager::LogError("the number of received nodes is less than the number of nodes"
             " in mpi outer layer on rank " + std::to_string(rank_id_) + " at level " + std::to_string(i_level));
     }
     for (const auto& iter : mpi_communication_outer_layers_.at(i_level)) {
@@ -152,74 +131,119 @@ void MpiManager::CheckMpiPeriodicCorrespondence(const GridInfoInterface& grid_in
     std::vector<bool> periodic_min(dims, false), periodic_max(dims, false);
     grid_info.CheckIfPeriodicDomainRequired(dims, &periodic_min, &periodic_max);
     std::vector<DefSFBitset> domain_min_n_level(dims), domain_max_n_level(dims);
-    std::vector<DefAmrLUint> indices_min = grid_info.GetPtrToParentGridManager()->GetMinIndexOfBackgroundNodeArrAsVec(),
+    const std::vector<DefAmrLUint>
+        indices_min = grid_info.GetPtrToParentGridManager()->GetMinIndexOfBackgroundNodeArrAsVec(),
         indices_max = grid_info.GetPtrToParentGridManager()->GetMaxIndexOfBackgroundNodeArrAsVec();
-    grid_info.ptr_sfbitset_aux_->GetMinAtGivenLevel(grid_info.i_level_, indices_min, &domain_min_n_level);
-    grid_info.ptr_sfbitset_aux_->GetMaxAtGivenLevel(grid_info.i_level_, indices_max, &domain_max_n_level);
+    const DefInt i_level = grid_info.GetGridLevel();
+    grid_info.GetPtrSFBitsetAux()->GetMinAtGivenLevel(i_level, indices_min, &domain_min_n_level);
+    grid_info.GetPtrSFBitsetAux()->GetMaxAtGivenLevel(i_level, indices_max, &domain_max_n_level);
+    DefSFBitset sfbitset_max, sfbitset_min, sfbitset_tmp;
+    std::vector<DefReal> coordinates(dims), coordinates2(dims);
     std::vector<DefSFBitset> vec_in_region;
-        //  if (i_rank == 2) {
-        //     std::ofstream file1("test0.txt");
-        // for (auto& iter : map_ghost_n_refinement) {
-        //     amrproject::SFBitsetAux2D aux2d;
-        //     std::array<DefAmrLUint, 2> indices;
-        //     aux2d.SFBitsetComputeIndices(iter.first, &indices);
-        //     file1  << indices[0] << " " << indices[1] << " " << iter.second << std::endl;
-
-        // }        file1.close();
-        // }
-
-    for (int i = 0; i< grid_info.domain_boundary_min_.size(); ++i) {
+    const std::array<DefSFBitset, 2>& take_xref = grid_info.GetPtrSFBitsetAux()->GetTakeXRef(),
+        take_yref = grid_info.GetPtrSFBitsetAux()->GetTakeYRef(),
+        take_zref = grid_info.GetPtrSFBitsetAux()->GetTakeZRef();
+    for (int i = 0; i < dims; ++i) {
         if (periodic_min.at(i)) {
+            std::vector<DefInt> neg_layers(dims, k0NumPartitionOuterLayers_),
+                pos_layers(dims, k0NumPartitionOuterLayers_);
+            pos_layers.at(i) = k0NumPartitionOuterLayers_ - 1;
             for (const auto& iter_node : grid_info.domain_boundary_min_.at(i)) {
-                if ((grid_info.map_grid_node_.at(iter_node.first)->flag_status_
-                    &NodeBitStatus::kNodeStatusMpiPartitionOuter_)
-                    != NodeBitStatus::kNodeStatusMpiPartitionOuter_) {
-                    grid_info.ptr_sfbitset_aux_->FindNodesInPeriodicRegionCenter(iter_node.first,
-                        k0NumPartitionOuterLayers_, periodic_min, periodic_max,
-                        domain_min_n_level, domain_max_n_level, &vec_in_region);
-                    for (const auto& iter_region : vec_in_region) {
-                        if (iter_region != grid_info.ptr_sfbitset_aux_->kInvalidSFbitset
-                            && grid_info.map_grid_node_.find(iter_region) == grid_info.map_grid_node_.end()) {
-                            std::vector<DefReal> coordinates(dims), coordinates2(dims);
-                            if (dims == 2) {
-                                grid_info.ptr_sfbitset_aux_->SFBitsetComputeCoordinateVir(
-                                    iter_region, grid_info.grid_space_, &coordinates);
-                                grid_info.ptr_sfbitset_aux_->SFBitsetComputeCoordinateVir(
-                                    iter_region, grid_info.grid_space_, &coordinates2);
-                                const std::array<DefReal, 2>& domain_min = dynamic_cast<SFBitsetAux2D*>(
-                                    grid_info.ptr_sfbitset_aux_)->k0RealMin_;
-                                coordinates[kXIndex] -= domain_min[kXIndex];
-                                coordinates[kYIndex] -= domain_min[kYIndex];
-                                coordinates2[kXIndex] -= domain_min[kXIndex];
-                                coordinates2[kYIndex] -= domain_min[kYIndex];
-                                LogManager::LogError("Node (" + std::to_string(coordinates2[kXIndex]) + ", "
-                                    + std::to_string(coordinates2[kYIndex])
-                                    + ") at periodic boundary is not found for node ("
-                                    + std::to_string(coordinates[kXIndex]) + ", "
-                                    + std::to_string(coordinates[kYIndex]) + ") at level "
-                                    + std::to_string(grid_info.i_level_));
-                            } else {
-                                grid_info.ptr_sfbitset_aux_->SFBitsetComputeCoordinateVir(
-                                    iter_region, grid_info.grid_space_, &coordinates);
-                                grid_info.ptr_sfbitset_aux_->SFBitsetComputeCoordinateVir(
-                                    iter_region, grid_info.grid_space_, &coordinates2);
-                                const std::array<DefReal, 3>& domain_min = dynamic_cast<SFBitsetAux3D*>(
-                                    grid_info.ptr_sfbitset_aux_)->k0RealMin_;
-                                coordinates[kXIndex] -= domain_min[kXIndex];
-                                coordinates[kYIndex] -= domain_min[kYIndex];
-                                coordinates[kZIndex] -= domain_min[kZIndex];
-                                coordinates2[kXIndex] -= domain_min[kXIndex];
-                                coordinates2[kYIndex] -= domain_min[kYIndex];
-                                coordinates2[kZIndex] -= domain_min[kZIndex];
-                                LogManager::LogError("Node (" + std::to_string(coordinates2[kXIndex]) + ", "
-                                    + std::to_string(coordinates2[kYIndex])  + ", "
-                                    + std::to_string(coordinates2[kZIndex])
-                                    + ") at periodic boundary is not found for node ("
-                                    + std::to_string(coordinates[kXIndex]) + ", "+ std::to_string(coordinates[kYIndex])
-                                    + ", "+ std::to_string(coordinates[kZIndex]) + ") at level "
-                                    + std::to_string(grid_info.i_level_));
-                            }
+                if (i == kXIndex) {
+                    sfbitset_max = (take_xref[SFBitsetAuxInterface::kRefOthers_]&iter_node.first)|domain_max_n_level[i];
+                } else if (i == kYIndex) {
+                    sfbitset_max = (take_yref[SFBitsetAuxInterface::kRefOthers_]&iter_node.first)|domain_max_n_level[i];
+                } else if (i == kZIndex) {
+                    sfbitset_max = (take_zref[SFBitsetAuxInterface::kRefOthers_]&iter_node.first)|domain_max_n_level[i];
+                }
+                bool exist_inner_mpi_node = false;
+                grid_info.GetPtrSFBitsetAux()->FindNodesInPeriodicRegionCenter(iter_node.first, neg_layers, pos_layers,
+                    periodic_min, periodic_max, domain_min_n_level, domain_max_n_level, &vec_in_region);
+                for (const auto iter_region : vec_in_region) {
+                    if (iter_region != SFBitsetAuxInterface::kInvalidSFbitset
+                        && grid_info.map_grid_node_.find(iter_region) != grid_info.map_grid_node_.end()
+                        && ((grid_info.map_grid_node_.at(iter_region)->flag_status_
+                        &NodeBitStatus::kNodeStatusMpiPartitionOuter_)
+                        !=NodeBitStatus::kNodeStatusMpiPartitionOuter_)) {
+                            exist_inner_mpi_node = true;
+                            break;
                         }
+                }
+                if (exist_inner_mpi_node && grid_info.domain_boundary_max_.at(i).find(sfbitset_max)
+                    == grid_info.domain_boundary_max_.at(i).end()) {
+                    grid_info.GetPtrSFBitsetAux()->SFBitsetComputeCoordinateVir(
+                        iter_node.first, grid_info.GetGridSpace(), &coordinates);
+                    grid_info.GetPtrSFBitsetAux()->SFBitsetComputeCoordinateVir(
+                        sfbitset_max, grid_info.GetGridSpace(), &coordinates2);
+                    if (dims == 2) {
+                        LogManager::LogError("Can not find counterpart node ("
+                            + std::to_string(coordinates2[kXIndex]) + ", "
+                            + std::to_string(coordinates2[kYIndex]) + ") in direction " + std::to_string(i)
+                            + " on the maximum boundary for node ("
+                            + std::to_string(coordinates[kXIndex]) + ", "
+                            + std::to_string(coordinates[kYIndex]) + ") on the minimum boundary at level "
+                            + std::to_string(i_level) + " on rank " + std::to_string(rank_id_));
+                    } else if (dims == 3) {
+                        LogManager::LogError("Can not find counterpart node ("
+                            + std::to_string(coordinates2[kXIndex]) + ", "
+                            + std::to_string(coordinates2[kYIndex]) + ", "
+                            + std::to_string(coordinates2[kZIndex]) + ") in direction " + std::to_string(i)
+                            + " on the maximum boundary for node ("
+                            + std::to_string(coordinates[kXIndex]) + ", "+ std::to_string(coordinates[kYIndex])
+                            + ", "+ std::to_string(coordinates[kZIndex]) + ") on the minimum boundary at level "
+                            + std::to_string(i_level) + " on rank " + std::to_string(rank_id_));
+                    }
+                }
+            }
+        }
+        if (periodic_max.at(i)) {
+            std::vector<DefInt> neg_layers(dims, k0NumPartitionOuterLayers_),
+                pos_layers(dims, k0NumPartitionOuterLayers_);
+            neg_layers.at(i) = k0NumPartitionOuterLayers_ - 1;
+            for (const auto& iter_node : grid_info.domain_boundary_max_.at(i)) {
+                if (i == kXIndex) {
+                    sfbitset_min = (take_xref[SFBitsetAuxInterface::kRefOthers_]&iter_node.first)|domain_min_n_level[i];
+                } else if (i == kYIndex) {
+                    sfbitset_min = (take_yref[SFBitsetAuxInterface::kRefOthers_]&iter_node.first)|domain_min_n_level[i];
+                } else if (i == kZIndex) {
+                    sfbitset_min = (take_zref[SFBitsetAuxInterface::kRefOthers_]&iter_node.first)|domain_min_n_level[i];
+                }
+                bool exist_inner_mpi_node = false;
+                grid_info.GetPtrSFBitsetAux()->FindNodesInPeriodicRegionCenter(iter_node.first, neg_layers, pos_layers,
+                    periodic_min, periodic_max, domain_min_n_level, domain_max_n_level, &vec_in_region);
+                for (const auto iter_region : vec_in_region) {
+                    if (iter_region != SFBitsetAuxInterface::kInvalidSFbitset
+                        && grid_info.map_grid_node_.find(iter_region) != grid_info.map_grid_node_.end()
+                        && ((grid_info.map_grid_node_.at(iter_region)->flag_status_
+                        &NodeBitStatus::kNodeStatusMpiPartitionOuter_)
+                        !=NodeBitStatus::kNodeStatusMpiPartitionOuter_)) {
+                            exist_inner_mpi_node = true;
+                            break;
+                        }
+                }
+                if (exist_inner_mpi_node && grid_info.domain_boundary_min_.at(i).find(sfbitset_min)
+                    == grid_info.domain_boundary_min_.at(i).end()) {
+                    grid_info.GetPtrSFBitsetAux()->SFBitsetComputeCoordinateVir(
+                        iter_node.first, grid_info.GetGridSpace(), &coordinates);
+                    grid_info.GetPtrSFBitsetAux()->SFBitsetComputeCoordinateVir(
+                        sfbitset_min, grid_info.GetGridSpace(), &coordinates2);
+                    if (dims == 2) {
+                        LogManager::LogError("Can not find counterpart node ("
+                            + std::to_string(coordinates2[kXIndex]) + ", "
+                            + std::to_string(coordinates2[kYIndex]) + ") in direction " + std::to_string(i)
+                            + " on the minimum boundary for node ("
+                            + std::to_string(coordinates[kXIndex]) + ", "
+                            + std::to_string(coordinates[kYIndex]) + ") on the maximum boundary at level "
+                            + std::to_string(i_level) + " on rank " + std::to_string(rank_id_));
+                    } else if (dims == 3) {
+                        LogManager::LogError("Can not find counterpart node ("
+                            + std::to_string(coordinates2[kXIndex]) + ", "
+                            + std::to_string(coordinates2[kYIndex]) + ", "
+                            + std::to_string(coordinates2[kZIndex]) + ") in direction " + std::to_string(i)
+                            + " on the minimum boundary for node ("
+                            + std::to_string(coordinates[kXIndex]) + ", "+ std::to_string(coordinates[kYIndex])
+                            + ", "+ std::to_string(coordinates[kZIndex]) + ") on the maximum boundary at level "
+                            + std::to_string(i_level) + " on rank " + std::to_string(rank_id_));
                     }
                 }
             }

@@ -51,30 +51,31 @@ void GridManagerInterface::CreateTrackingGridInstanceForAGeo(const DefInt i_geo,
 */
 void GridManagerInterface::CreateSameGridInstanceForAllLevel(const std::shared_ptr<SolverInterface>& ptr_solver,
     const GridInfoCreatorInterface& grid_creator) {
-    ptr_solver->ptr_grid_manager_ = this;
+    ptr_solver->SetPtrToGridManager(this);
     for (DefInt i_level = 0; i_level < k0MaxLevel_ + 1; ++i_level) {
         vec_ptr_grid_info_.emplace_back(grid_creator.CreateGridInfo());
         GridInfoInterface& grid_ref = *(vec_ptr_grid_info_).back();
         grid_ref.SetPtrToParentGridManager(this);
-        grid_ref.i_level_ = i_level;
-        grid_ref.ptr_solver_ = ptr_solver;
+        grid_ref.SetGridLevel(i_level);
+        grid_ref.SetPtrSolver(ptr_solver);
         if (k0GridDims_ == 2) {
-            grid_ref.ptr_sfbitset_aux_ = dynamic_cast<GridManager2D*>(this);
+            grid_ref.SetPtrSFBitsetAux(dynamic_cast<GridManager2D*>(this));
         } else {
-            grid_ref.ptr_sfbitset_aux_ = dynamic_cast<GridManager3D*>(this);
+            grid_ref.SetPtrSFBitsetAux(dynamic_cast<GridManager3D*>(this));
         }
 
         // set computational cost for each node 2^i_level
-        grid_ref.computational_cost_ = static_cast<DefInt>(TwoPowerN(i_level));
+        grid_ref.SetComputationalCost(TwoPowerN(i_level));
         grid_ref.InitialNotComputeNodeFlag();
 
         // grid spacing
-        grid_ref.grid_space_ = std::vector<DefReal>(k0GridDims_, 0.);
+        std::vector<DefReal>grid_space = std::vector<DefReal>(k0GridDims_, 0.);
         std::vector<DefReal> domain_dx_ = GetDomainDxArrAsVec();
         for (DefInt idim = 0; idim < k0GridDims_; ++idim) {
-            grid_ref.grid_space_.at(idim) =
+            grid_space.at(idim) =
                 domain_dx_.at(idim) / static_cast<DefReal>(TwoPowerN(i_level));
         }
+        grid_ref.SetGridSpace(grid_space);
 
         // domain boundary related
         CalDomainBoundsAtGivenLevel(i_level,
@@ -94,7 +95,7 @@ void GridManagerInterface::CreateSameGridInstanceForAllLevel(const std::shared_p
  */
 bool GridManagerInterface::InstantiateGridNode(const DefSFBitset& bitset_in,
     GridInfoInterface* const ptr_grid_info) {
-    int flag_node = ptr_grid_info->CheckIfNodeOutsideCubicDomain(k0GridDims_, bitset_in, *GetSFBitsetAuxPtr());
+    DefInt flag_node = ptr_grid_info->CheckIfNodeOutsideCubicDomain(k0GridDims_, bitset_in, *GetSFBitsetAuxPtr());
     if (flag_node >= GridInfoInterface::kFlagInsideDomain_) {
         ptr_grid_info->map_grid_node_.insert({bitset_in, ptr_grid_info->GridNodeCreator()});
         (this->*ptr_func_insert_domain_boundary_)(flag_node, bitset_in, ptr_grid_info);
@@ -356,22 +357,24 @@ void GridManagerInterface::InstantiateOverlapLayerOfRefinementInterface(
             *(vec_ptr_grid_info_.at(i_level - 1));
         DefMap<std::unique_ptr<GridNode>>& map_grid = grid_info.map_grid_node_;
         DefMap<std::unique_ptr<GridNode>>& map_grid_lower = grid_info_lower.map_grid_node_;
+        DefInt num_f2c_layer = grid_info.GetNumFine2CoarseLayer();
 #ifdef DEBUG_CHECK_GRID
-        if (grid_info_lower.k0NumCoarse2FineLayer_ < 2) {
+        if (grid_info_lower.GetNumCoarse2FineLayer() < 2) {
             LogManager::LogError("number of coarse to fine layers at level "
                 + std::to_string(i_level - 1) + " is at least 1"
                 + " in "+ std::string(__FILE__) + " at line " + std::to_string(__LINE__));
         }
-        if (grid_info.k0NumFine2CoarseLayer_ < 3) {
+        if (num_f2c_layer < 3) {
             LogManager::LogError("number of fine to coarse layers at level "
                 + std::to_string(i_level) + " is at least 3"
                 + " in "+ std::string(__FILE__) + " at line " + std::to_string(__LINE__));
         }
 #endif  // DEBUG_CHECK_GRID
         // find interface node at current level
+         DefInt num_f2c_ghost_layer = grid_info.GetNumFine2CoarseGhostLayer();
         layer_coarse_outer = 1;
         layer_coarse_innermost = 0;
-        layer0 = grid_info.k0NumFine2CoarseLayer_ - 1;
+        layer0 = num_f2c_layer - 1;
         layer_m1 = layer0 - 1;
         layer_m2 = layer_m1 - 1;
         for (auto& iter_interface :
@@ -385,7 +388,7 @@ void GridManagerInterface::InstantiateOverlapLayerOfRefinementInterface(
             ptr_interface_info = grid_info.map_ptr_interface_layer_info_.at(iter_interface.first).get();
             // interface inside the geometry
             if (ptr_interface_info_lower->vec_inner_coarse2fine_.size() > 0) {
-                ptr_interface_info->vec_inner_fine2coarse_.resize(grid_info.k0NumFine2CoarseLayer_);
+                ptr_interface_info->vec_inner_fine2coarse_.resize(num_f2c_layer);
                 FindOverlappingLayersBasedOnOutermostCoarse(
                     ptr_interface_info_lower->vec_inner_coarse2fine_.at(layer_coarse_innermost),
                     sfbitset_one_lower_level.at(i_level),
@@ -400,7 +403,7 @@ void GridManagerInterface::InstantiateOverlapLayerOfRefinementInterface(
                     if (ilayer == maxlayer - 1) {
                         flag_tmp |= NodeBitStatus::kNodeStatusFine2Coarse0_;
                     }
-                    if (ilayer >= maxlayer - grid_info.k0NumFine2CoarseGhostLayer_) {
+                    if (ilayer >= maxlayer - num_f2c_ghost_layer) {
                         flag_tmp |=  NodeBitStatus::kNodeStatusFine2CoarseGhost_;
                     }
                     for (const auto& iter_layer_node : ptr_interface_info
@@ -420,7 +423,7 @@ void GridManagerInterface::InstantiateOverlapLayerOfRefinementInterface(
                     if (ilayer == maxlayer - 1) {
                         flag_tmp |= NodeBitStatus::kNodeStatusCoarse2Fine0_;
                     }
-                    if (ilayer >= maxlayer - grid_info_lower.k0NumCoarse2FineGhostLayer_) {
+                    if (ilayer >= maxlayer - num_f2c_ghost_layer) {
                         flag_tmp |= NodeBitStatus::kNodeStatusCoarse2FineGhost_;
                     }
                     for (const auto& iter_layer_node : ptr_interface_info_lower
@@ -437,8 +440,7 @@ void GridManagerInterface::InstantiateOverlapLayerOfRefinementInterface(
             }
             // interface outside the geometry
             if (ptr_interface_info_lower->vec_outer_coarse2fine_.size() > 0) {
-                ptr_interface_info->vec_outer_fine2coarse_.resize(
-                    grid_info.k0NumFine2CoarseLayer_);
+                ptr_interface_info->vec_outer_fine2coarse_.resize(num_f2c_layer);
                 FindOverlappingLayersBasedOnOutermostCoarse(
                     ptr_interface_info_lower
                     ->vec_outer_coarse2fine_.at(layer_coarse_innermost),
@@ -455,7 +457,7 @@ void GridManagerInterface::InstantiateOverlapLayerOfRefinementInterface(
                     if (ilayer == maxlayer - 1) {
                         flag_tmp |= NodeBitStatus::kNodeStatusFine2Coarse0_;
                     }
-                    if (ilayer >= maxlayer - grid_info.k0NumFine2CoarseGhostLayer_) {
+                    if (ilayer >= maxlayer - num_f2c_ghost_layer) {
                         flag_tmp |=  NodeBitStatus::kNodeStatusFine2CoarseGhost_;
                     }
                     for (const auto& iter_layer_node : ptr_interface_info
@@ -475,7 +477,7 @@ void GridManagerInterface::InstantiateOverlapLayerOfRefinementInterface(
                     if (ilayer == maxlayer - 1) {
                         flag_tmp |= NodeBitStatus::kNodeStatusCoarse2Fine0_;
                     }
-                    if (ilayer >= maxlayer - grid_info_lower.k0NumCoarse2FineGhostLayer_) {
+                    if (ilayer >= maxlayer - grid_info_lower.GetNumCoarse2FineGhostLayer()) {
                         flag_tmp |= NodeBitStatus::kNodeStatusCoarse2FineGhost_;
                     }
                     for (const auto& iter_layer_node : ptr_interface_info_lower
@@ -504,7 +506,7 @@ void GridManagerInterface::InstantiateGridNodeAllLevel(const DefSFBitset sfbitse
     DefMap<DefInt> background_occupied;
     // initialize grid information, will be used for instantiate grid nodes
     for (DefInt i_level = 0; i_level <= k0MaxLevel_; ++i_level) {
-        vec_ptr_grid_info_.at(i_level)->InitialGridInfo();
+        vec_ptr_grid_info_.at(i_level)->InitialGridInfo(k0GridDims_);
     }
     InstantiateOverlapLayerOfRefinementInterface(sfbitset_one_lower_level);
     DefSFCodeToUint code_min = sfbitset_min.to_ullong(), code_max = sfbitset_max.to_ullong();

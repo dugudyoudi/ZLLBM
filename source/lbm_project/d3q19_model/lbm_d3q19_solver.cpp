@@ -25,96 +25,110 @@ void SolverLbmD3Q19::Stream(const DefInt flag_not_compute, const amrproject::SFB
         for (auto& iter_node : *ptr_map_grid_nodes) {
             if (iter_node.second->flag_status_ & flag_not_compute) {
             } else {
-                iter_node.second->f_.at(kFX0Y0Z0) = iter_node.second->f_collide_.at(kFX0Y0Z0);
+                iter_node.second->f_.at(kFX0Y0Z0_) = iter_node.second->f_collide_.at(kFX0Y0Z0_);
                 // f(-x, 0, 0)
                 sfbitset_tmp = sfbitset_aux3d.FindXPos(iter_node.first);
                 if (ptr_map_grid_nodes->find(sfbitset_tmp) != ptr_map_grid_nodes->end()) {
-                    iter_node.second->f_.at(kFXnY0Z0) = ptr_map_grid_nodes->at(sfbitset_tmp)->f_collide_.at(kFXnY0Z0);
+                    iter_node.second->f_.at(kFXnY0Z0_) = ptr_map_grid_nodes->at(sfbitset_tmp)->f_collide_.at(kFXnY0Z0_);
                 }
                 // f(-x, -y, 0)
                 sfbitset_tmp1 = sfbitset_aux3d.FindYPos(sfbitset_tmp);
                 if (ptr_map_grid_nodes->find(sfbitset_tmp1) != ptr_map_grid_nodes->end()) {
-                    iter_node.second->f_.at(kFXnYnZ0) = ptr_map_grid_nodes->at(sfbitset_tmp1)->f_collide_.at(kFXnYnZ0);
+                    iter_node.second->f_.at(kFXnYnZ0_) =
+                        ptr_map_grid_nodes->at(sfbitset_tmp1)->f_collide_.at(kFXnYnZ0_);
                 }
                 // f(-x, +y, 0)
                 sfbitset_tmp1 = sfbitset_aux3d.FindYNeg(sfbitset_tmp);
                 if (ptr_map_grid_nodes->find(sfbitset_tmp1) != ptr_map_grid_nodes->end()) {
-                    iter_node.second->f_.at(kFXnYpZ0) = ptr_map_grid_nodes->at(sfbitset_tmp1)->f_collide_.at(kFXnYpZ0);
+                    iter_node.second->f_.at(kFXnYpZ0_) =
+                        ptr_map_grid_nodes->at(sfbitset_tmp1)->f_collide_.at(kFXnYpZ0_);
                 }
                 // f(-x, 0, -z)
                 sfbitset_tmp1 = sfbitset_aux3d.FindZPos(sfbitset_tmp);
                 if (ptr_map_grid_nodes->find(sfbitset_tmp1) != ptr_map_grid_nodes->end()) {
-                    iter_node.second->f_.at(kFXnY0Zn) = ptr_map_grid_nodes->at(sfbitset_tmp1)->f_collide_.at(kFXnY0Zn);
+                    iter_node.second->f_.at(kFXnY0Zn_) =
+                        ptr_map_grid_nodes->at(sfbitset_tmp1)->f_collide_.at(kFXnY0Zn_);
                 }
                 // f(-x, 0, +z)
                 sfbitset_tmp1 = sfbitset_aux3d.FindZNeg(sfbitset_tmp);
                 if (ptr_map_grid_nodes->find(sfbitset_tmp1) != ptr_map_grid_nodes->end()) {
-                    iter_node.second->f_.at(kFXnY0Zp) = ptr_map_grid_nodes->at(sfbitset_tmp1)->f_collide_.at(kFXnY0Zp);
+                    iter_node.second->f_.at(kFXnY0Zp_) =
+                        ptr_map_grid_nodes->at(sfbitset_tmp1)->f_collide_.at(kFXnY0Zp_);
                 }
                 // f(+x, 0, 0)
                 sfbitset_tmp = sfbitset_aux3d.FindXNeg(iter_node.first);
                 if (ptr_map_grid_nodes->find(sfbitset_tmp) != ptr_map_grid_nodes->end()) {
-                    iter_node.second->f_.at(kFXpY0Z0) = ptr_map_grid_nodes->at(sfbitset_tmp)->f_collide_.at(kFXpY0Z0);
+                    iter_node.second->f_.at(kFXpY0Z0_) =
+                        ptr_map_grid_nodes->at(sfbitset_tmp)->f_collide_.at(kFXpY0Z0_);
                 }
                 // f(+x, -y, 0)
                 sfbitset_tmp1 = sfbitset_aux3d.FindYPos(sfbitset_tmp);
                 if (ptr_map_grid_nodes->find(sfbitset_tmp1) != ptr_map_grid_nodes->end()) {
-                    iter_node.second->f_.at(kFXpYnZ0) = ptr_map_grid_nodes->at(sfbitset_tmp1)->f_collide_.at(kFXpYnZ0);
+                    iter_node.second->f_.at(kFXpYnZ0_) =
+                        ptr_map_grid_nodes->at(sfbitset_tmp1)->f_collide_.at(kFXpYnZ0_);
                 }
                 // f(+x, +y, 0)
                 sfbitset_tmp1 = sfbitset_aux3d.FindYNeg(sfbitset_tmp);
                 if (ptr_map_grid_nodes->find(sfbitset_tmp1) != ptr_map_grid_nodes->end()) {
-                    iter_node.second->f_.at(kFXpYpZ0) = ptr_map_grid_nodes->at(sfbitset_tmp1)->f_collide_.at(kFXpYpZ0);
+                    iter_node.second->f_.at(kFXpYpZ0_) =
+                        ptr_map_grid_nodes->at(sfbitset_tmp1)->f_collide_.at(kFXpYpZ0_);
                 }
                 // f(+x, 0, -z)
                 sfbitset_tmp1 = sfbitset_aux3d.FindZPos(sfbitset_tmp);
                 if (ptr_map_grid_nodes->find(sfbitset_tmp1) != ptr_map_grid_nodes->end()) {
-                    iter_node.second->f_.at(kFXpY0Zn) = ptr_map_grid_nodes->at(sfbitset_tmp1)->f_collide_.at(kFXpY0Zn);
+                    iter_node.second->f_.at(kFXpY0Zn_) =
+                        ptr_map_grid_nodes->at(sfbitset_tmp1)->f_collide_.at(kFXpY0Zn_);
                 }
                 // f(+x, 0, +z)
                 sfbitset_tmp1 = sfbitset_aux3d.FindZNeg(sfbitset_tmp);
                 if (ptr_map_grid_nodes->find(sfbitset_tmp1) != ptr_map_grid_nodes->end()) {
-                    iter_node.second->f_.at(kFXpY0Zp) = ptr_map_grid_nodes->at(sfbitset_tmp1)->f_collide_.at(kFXpY0Zp);
+                    iter_node.second->f_.at(kFXpY0Zp_) =
+                        ptr_map_grid_nodes->at(sfbitset_tmp1)->f_collide_.at(kFXpY0Zp_);
                 }
                 // f(0, -y, 0)
                 sfbitset_tmp = sfbitset_aux3d.FindYPos(iter_node.first);
                 if (ptr_map_grid_nodes->find(sfbitset_tmp) != ptr_map_grid_nodes->end()) {
-                    iter_node.second->f_.at(kFX0YnZ0) = ptr_map_grid_nodes->at(sfbitset_tmp)->f_collide_.at(kFX0YnZ0);
+                    iter_node.second->f_.at(kFX0YnZ0_) =
+                        ptr_map_grid_nodes->at(sfbitset_tmp)->f_collide_.at(kFX0YnZ0_);
                 }
                 // f(0, -y, -z)
                 sfbitset_tmp1 = sfbitset_aux3d.FindZPos(sfbitset_tmp);
                 if (ptr_map_grid_nodes->find(sfbitset_tmp1) != ptr_map_grid_nodes->end()) {
-                    iter_node.second->f_.at(kFX0YnZn) = ptr_map_grid_nodes->at(sfbitset_tmp1)->f_collide_.at(kFX0YnZn);
+                    iter_node.second->f_.at(kFX0YnZn_) =
+                        ptr_map_grid_nodes->at(sfbitset_tmp1)->f_collide_.at(kFX0YnZn_);
                 }
                 // f((0, -y, +z)
                 sfbitset_tmp1 = sfbitset_aux3d.FindZNeg(sfbitset_tmp);
                 if (ptr_map_grid_nodes->find(sfbitset_tmp1) != ptr_map_grid_nodes->end()) {
-                    iter_node.second->f_.at(kFX0YnZp) = ptr_map_grid_nodes->at(sfbitset_tmp1)->f_collide_.at(kFX0YnZp);
+                    iter_node.second->f_.at(kFX0YnZp_) =
+                        ptr_map_grid_nodes->at(sfbitset_tmp1)->f_collide_.at(kFX0YnZp_);
                 }
                 // f(0, +y, 0)
                 sfbitset_tmp = sfbitset_aux3d.FindYNeg(iter_node.first);
                 if (ptr_map_grid_nodes->find(sfbitset_tmp) != ptr_map_grid_nodes->end()) {
-                    iter_node.second->f_.at(kFX0YpZ0) = ptr_map_grid_nodes->at(sfbitset_tmp)->f_collide_.at(kFX0YpZ0);
+                    iter_node.second->f_.at(kFX0YpZ0_) = ptr_map_grid_nodes->at(sfbitset_tmp)->f_collide_.at(kFX0YpZ0_);
                 }
                 // f(0, +y, -z)
                 sfbitset_tmp1 = sfbitset_aux3d.FindZPos(sfbitset_tmp);
                 if (ptr_map_grid_nodes->find(sfbitset_tmp1) != ptr_map_grid_nodes->end()) {
-                    iter_node.second->f_.at(kFX0YpZn) = ptr_map_grid_nodes->at(sfbitset_tmp1)->f_collide_.at(kFX0YpZn);
+                    iter_node.second->f_.at(kFX0YpZn_) =
+                        ptr_map_grid_nodes->at(sfbitset_tmp1)->f_collide_.at(kFX0YpZn_);
                 }
                 // f((0, +y, +z)
                 sfbitset_tmp1 = sfbitset_aux3d.FindZNeg(sfbitset_tmp);
                 if (ptr_map_grid_nodes->find(sfbitset_tmp1) != ptr_map_grid_nodes->end()) {
-                    iter_node.second->f_.at(kFX0YpZp) = ptr_map_grid_nodes->at(sfbitset_tmp1)->f_collide_.at(kFX0YpZp);
+                    iter_node.second->f_.at(kFX0YpZp_) =
+                        ptr_map_grid_nodes->at(sfbitset_tmp1)->f_collide_.at(kFX0YpZp_);
                 }
                 // f(0, 0, -z)
                 sfbitset_tmp = sfbitset_aux3d.FindZPos(iter_node.first);
                 if (ptr_map_grid_nodes->find(sfbitset_tmp) != ptr_map_grid_nodes->end()) {
-                    iter_node.second->f_.at(kFX0Y0Zn) = ptr_map_grid_nodes->at(sfbitset_tmp)->f_collide_.at(kFX0Y0Zn);
+                    iter_node.second->f_.at(kFX0Y0Zn_) = ptr_map_grid_nodes->at(sfbitset_tmp)->f_collide_.at(kFX0Y0Zn_);
                 }
                 // f(0, 0, +z)
                 sfbitset_tmp = sfbitset_aux3d.FindZNeg(iter_node.first);
                 if (ptr_map_grid_nodes->find(sfbitset_tmp) != ptr_map_grid_nodes->end()) {
-                    iter_node.second->f_.at(kFX0Y0Zp) = ptr_map_grid_nodes->at(sfbitset_tmp)->f_collide_.at(kFX0Y0Zp);
+                    iter_node.second->f_.at(kFX0Y0Zp_) = ptr_map_grid_nodes->at(sfbitset_tmp)->f_collide_.at(kFX0Y0Zp_);
                 }
             }
         }

@@ -43,7 +43,7 @@ void AmrManager::LoadModules(DefInt dims) {
 #endif
     if (dims == 2) {
         ptr_grid_manager_ = std::make_unique<GridManager2D>();
-    } else {
+    } else if (dims == 3) {
         ptr_grid_manager_ = std::make_unique<GridManager3D>();
     }
     ptr_io_manager_ = std::make_unique<IoManager>();
@@ -83,7 +83,7 @@ void AmrManager::SetupParameters() {
 void AmrManager::InitializeMesh() {
     int rank_id = 0;
 #ifdef ENABLE_MPI
-    rank_id = ptr_mpi_manager_->rank_id_;
+    rank_id = ptr_mpi_manager_->GetRankId();
 #endif  // ENABLE_MPI
     std::array<DefSFBitset, 2> sfbitset_bound_current;
     std::vector<DefMap<DefInt>> sfbitset_one_lower_level(ptr_grid_manager_->k0MaxLevel_ + 1);
@@ -111,19 +111,19 @@ void AmrManager::InitializeMesh() {
 
 #ifdef ENABLE_MPI
     if (rank_id == 0 && sfbitset_one_lower_level.size() > 1) {
-        ptr_grid_manager_->ResetBackgroundGridAsMpiLayer(ptr_mpi_manager_->k0NumPartitionOuterLayers_,
+        ptr_grid_manager_->ResetBackgroundGridAsMpiLayer(ptr_mpi_manager_->GetNumPartitionOuterLayers(),
             *(ptr_grid_manager_->vec_ptr_grid_info_.at(0)), sfbitset_one_lower_level.at(1),
             &sfbitset_one_lower_level.at(0));
     }
     // mpi partition sending and receiving nodes
     std::vector<DefInt> vec_cost;
     for (auto iter_grid : ptr_grid_manager_->vec_ptr_grid_info_) {
-        vec_cost.push_back(iter_grid->computational_cost_);
+        vec_cost.push_back(iter_grid->GetComputationalCost());
     }
     std::vector<DefMap<DefInt>> sfbitset_one_lower_level_current_rank(ptr_grid_manager_->k0MaxLevel_ + 1),
        sfbitset_ghost_one_lower_level_current_rank(ptr_grid_manager_->k0MaxLevel_ + 1);
-    ptr_mpi_manager_->sfbitset_min_current_rank_ = sfbitset_bound_current.at(0);
-    ptr_mpi_manager_->sfbitset_max_current_rank_ = sfbitset_bound_current.at(1);
+    ptr_mpi_manager_->SetSFBitsetMinCurrentRank(sfbitset_bound_current.at(0));
+    ptr_mpi_manager_->SetSFBitsetMaxCurrentRank(sfbitset_bound_current.at(1));
     DefMap<DefInt> partition_interface_background;
     if (ptr_grid_manager_->k0GridDims_ == 2) {
 #ifndef  DEBUG_DISABLE_2D_FUNCTIONS
@@ -144,14 +144,14 @@ void AmrManager::InitializeMesh() {
             sfbitset_one_lower_level.shrink_to_fit();
         }
         ptr_mpi_manager_->IniFindInterfaceForPartitionFromMinNMax(
-            ptr_mpi_manager_->vec_sfcode_min_all_ranks_.at(rank_id),
-            ptr_mpi_manager_->vec_sfcode_max_all_ranks_.at(rank_id),
+            ptr_mpi_manager_->GetSFCodeMinAllRanks().at(rank_id),
+            ptr_mpi_manager_->GetSFCodeMaxAllRanks().at(rank_id),
             ptr_grid_manager_2d->k0MinIndexOfBackgroundNode_, ptr_grid_manager_2d->k0MaxIndexOfBackgroundNode_,
             *ptr_grid_manager_2d, &partition_interface_background);
 
-        ptr_grid_manager_->InstantiateGridNodeAllLevelMpi(rank_id, ptr_mpi_manager_->k0NumPartitionInnerLayers_,
-            ptr_mpi_manager_->k0NumPartitionOuterLayers_, ptr_mpi_manager_->vec_sfcode_min_all_ranks_,
-            ptr_mpi_manager_->vec_sfcode_max_all_ranks_,
+        ptr_grid_manager_->InstantiateGridNodeAllLevelMpi(rank_id, ptr_mpi_manager_->GetNumPartitionInnerLayers(),
+            ptr_mpi_manager_->GetNumPartitionOuterLayers(), ptr_mpi_manager_->GetSFCodeMinAllRanks(),
+            ptr_mpi_manager_->GetSFCodeMaxAllRanks(),
             *ptr_grid_manager_2d, sfbitset_one_lower_level_current_rank,
             sfbitset_ghost_one_lower_level_current_rank, partition_interface_background,
             &ptr_mpi_manager_->mpi_communication_inner_layers_, &ptr_mpi_manager_->mpi_communication_outer_layers_);
@@ -178,14 +178,14 @@ void AmrManager::InitializeMesh() {
             sfbitset_one_lower_level.shrink_to_fit();
         }
         ptr_mpi_manager_->IniFindInterfaceForPartitionFromMinNMax(
-            ptr_mpi_manager_->vec_sfcode_min_all_ranks_.at(rank_id),
-            ptr_mpi_manager_->vec_sfcode_max_all_ranks_.at(rank_id),
+            ptr_mpi_manager_->GetSFCodeMinAllRanks().at(rank_id),
+            ptr_mpi_manager_->GetSFCodeMaxAllRanks().at(rank_id),
             ptr_grid_manager_3d->k0MinIndexOfBackgroundNode_, ptr_grid_manager_3d->k0MaxIndexOfBackgroundNode_,
             *ptr_grid_manager_3d, &partition_interface_background);
 
-        ptr_grid_manager_->InstantiateGridNodeAllLevelMpi(rank_id, ptr_mpi_manager_->k0NumPartitionInnerLayers_,
-            ptr_mpi_manager_->k0NumPartitionOuterLayers_, ptr_mpi_manager_->vec_sfcode_min_all_ranks_,
-            ptr_mpi_manager_->vec_sfcode_max_all_ranks_,
+        ptr_grid_manager_->InstantiateGridNodeAllLevelMpi(rank_id, ptr_mpi_manager_->GetNumPartitionInnerLayers(),
+            ptr_mpi_manager_->GetNumPartitionOuterLayers(), ptr_mpi_manager_->GetSFCodeMinAllRanks(),
+            ptr_mpi_manager_->GetSFCodeMaxAllRanks(),
             *ptr_grid_manager_3d, sfbitset_one_lower_level_current_rank,
             sfbitset_ghost_one_lower_level_current_rank, partition_interface_background,
             &ptr_mpi_manager_->mpi_communication_inner_layers_, &ptr_mpi_manager_->mpi_communication_outer_layers_);
@@ -257,7 +257,7 @@ void AmrManager::TimeMarching(const DefAmrLUint time_step_background) {
         if (ptr_mpi_manager_->SendNReceiveGridNodes(&send_buffer_info, &receive_buffer_info,
             &vec_vec_reqs_send, &vec_vec_reqs_receive, &vec_ptr_buffer_send,
             &vec_ptr_buffer_receive, &grid_ref) != 0) {
-            LogManager::LogError("failed to send grid nodes from rank " + std::to_string(ptr_mpi_manager_->rank_id_)
+            LogManager::LogError("failed to send grid nodes from rank " + std::to_string(ptr_mpi_manager_->GetRankId())
                 + " in function AmrManager::TimeMarching in file "
                 + std::string(__FILE__) + " at line " + std::to_string(__LINE__));
         }
@@ -265,13 +265,13 @@ void AmrManager::TimeMarching(const DefAmrLUint time_step_background) {
 
 
         // update criterion information for tracking nodes
-        for (auto& iter : grid_ref.map_ptr_tracking_grid_info_) {
+        for (auto& iter : grid_ref.map_ptr_interface_layer_info_) {
             if (iter.first.first == ECriterionType::kGeometry) {
                 ptr_criterion_manager_->vec_ptr_geometries_.at(iter.first.second)->UpdateGeometry(time_step_current);
             }
         }
 
-        grid_ref.ptr_solver_->RunSolverForNodesOnNormalGrid(k0TimeSteppingType_,
+        grid_ref.GetPtrSolver()->RunSolverForNodesOnNormalGrid(k0TimeSteppingType_,
             time_step_level[i_level], *ptr_grid_manager_->GetSFBitsetAuxPtr(), &grid_ref);
 
 #ifdef ENABLE_MPI
@@ -283,11 +283,11 @@ void AmrManager::TimeMarching(const DefAmrLUint time_step_background) {
             k0TimeSteppingType_, time_step_level[i_level], *ptr_grid_manager_->GetSFBitsetAuxPtr());
 #endif  //  ENABLE_MPI
 
-        grid_ref.ptr_solver_->CallDomainBoundaryCondition(k0TimeSteppingType_,
+        grid_ref.GetPtrSolver()->CallDomainBoundaryCondition(k0TimeSteppingType_,
             time_step_level[i_level], *ptr_grid_manager_->GetSFBitsetAuxPtr(), &grid_ref);
 
         // use information in current time step
-        grid_ref.ptr_solver_->InformationFromGridOfDifferentLevel(
+        grid_ref.GetPtrSolver()->InformationFromGridOfDifferentLevel(
             ETimingInOneStep::kStepEnd, k0TimeSteppingType_,
             time_step_level[i_level], *ptr_grid_manager_->GetSFBitsetAuxPtr(), &grid_ref);
     }
@@ -306,6 +306,12 @@ void AmrManager::SetupSolverForGrids() {
 */
 void AmrManager::AddSolverToGridManager(const SolverCreatorInterface& solver_creator) {
     ptr_grid_manager_->vec_ptr_solver_.push_back(solver_creator.CreateSolver());
+    if (ptr_grid_manager_->k0GridDims_ != ptr_grid_manager_->vec_ptr_solver_.back()->GetSolverDim()) {
+        LogManager::LogWarning("Grid dimension (" + std::to_string(ptr_grid_manager_->k0GridDims_)
+            +") mismatches with solver dimension ("
+            + std::to_string(ptr_grid_manager_->vec_ptr_solver_.back()->GetSolverDim())
+            +") for the solver " + ptr_grid_manager_->vec_ptr_solver_.back()->GetSolverMethod());
+    }
 }
 /**
 * @brief   function to set solver dependent information as the same.

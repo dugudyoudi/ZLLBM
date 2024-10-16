@@ -40,14 +40,10 @@ void DebugWriterManager::WriteCoordinatesInPts(const DefInt dims, const std::str
             sfbitset_aux.SFBitsetComputeCoordinateVir(iter.first, grid_space, &coordinates);
             if (dims == 2) {
                 fprintf_s(fp, str_format.c_str(),
-                    coordinates.at(kXIndex) - grid_offset.at(kXIndex),
-                    coordinates.at(kYIndex) - grid_offset.at(kYIndex),
-                    0.);
+                    coordinates.at(kXIndex), coordinates.at(kYIndex), 0.);
             } else {
                 fprintf_s(fp, str_format.c_str(),
-                    coordinates.at(kXIndex) - grid_offset.at(kXIndex),
-                    coordinates.at(kYIndex) - grid_offset.at(kYIndex),
-                    coordinates.at(kZIndex) - grid_offset.at(kZIndex));
+                    coordinates.at(kXIndex), coordinates.at(kYIndex), coordinates.at(kZIndex));
             }
         }
         fclose(fp);

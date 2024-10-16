@@ -22,11 +22,7 @@ namespace amrproject {
 */
 class SFBitsetAuxInterface {
  public:
-    static std::array<DefSFBitset, 2> k0SFBitsetTakeXRef_, k0SFBitsetTakeYRef_;
     static constexpr DefSFBitset kInvalidSFbitset = ~0;
-#ifndef  DEBUG_DISABLE_3D_FUNCTION
-    static std::array<DefSFBitset, 2> k0SFBitsetTakeZRef_;
-#endif  // DEBUG_DISABLE_3D_FUNCTIONS
     /**< reference bitset used to take digitals at a given direction
           by bool operator.*/
     // for k0SFBitsetTakeXRef_, k0SFBitsetTakeYRef_ and k0SFBitsetTakeZRef_
@@ -36,7 +32,11 @@ class SFBitsetAuxInterface {
     DefSFBitset k0SfBitsetCurrentLevelBits_ = 0;
     /**< reference bitset used to take digitals at the center of
     a cell of one level lower.*/
-    std::vector<DefReal> k0SpaceBackground_;
+
+    std::vector<DefReal> GetBackgroundGridSpacing() const {
+        return k0SpaceBackground_;
+    }
+
     virtual void SFBitsetInitial() = 0;
     virtual DefSFBitset SFBitsetEncodingCoordi(
         const std::vector<DefReal>& grid_space, const std::vector<DefReal>& coordi) const = 0;
@@ -45,24 +45,30 @@ class SFBitsetAuxInterface {
     virtual DefSFBitset FindNodeInNeg(const DefInt dir, const DefSFBitset& sfbitset_in) const = 0;
     virtual DefSFBitset FindNodeInPos(const DefInt dir, const DefSFBitset& sfbitset_in) const = 0;
     virtual void FindNodesInReginOfGivenLength(const DefSFBitset& sfbitset_in,
-        const DefAmrLUint region_length,
+        const DefInt region_length,
         const std::vector<DefSFBitset>& domain_min_m1_n_level,
         const std::vector<DefSFBitset>& domain_max_p1_n_level,
         std::vector<DefSFBitset>* const ptr_sfbitset_nodes) const = 0;
-    virtual DefAmrLUint FindNodesInPeriodicRegionCorner(const DefSFBitset& sfbitset_in,
-        const DefAmrLUint region_length,
+    virtual DefInt FindNodesInPeriodicRegionCorner(const DefSFBitset& sfbitset_in,
+        const DefInt region_length,
         const std::vector<bool>& periodic_min, const std::vector<bool>& periodic_max,
         const std::vector<DefSFBitset>& domain_min_n_level,
         const std::vector<DefSFBitset>& domain_max_n_level,
         std::vector<DefSFBitset>* const ptr_sfbitset_node) const = 0;
-    virtual DefAmrLUint FindNodesInPeriodicRegionCenter(const DefSFBitset& sfbitset_in,
-        const DefAmrLUint region_length,
+    virtual DefInt FindNodesInPeriodicRegionCenter(const DefSFBitset& sfbitset_in,
+        const DefInt region_length,
         const std::vector<bool>& periodic_min, const std::vector<bool>& periodic_max,
         const std::vector<DefSFBitset>& domain_min_n_level,
         const std::vector<DefSFBitset>& domain_max_n_level,
         std::vector<DefSFBitset>* const ptr_sfbitset_node) const = 0;
-    virtual DefAmrLUint FindNodesInPeriodicRegionCenter(const DefSFBitset& sfbitset_in,
-        const DefAmrLUint region_length_neg, const DefAmrLUint region_length_pos,
+    virtual void FindNodesInPeriodicRegionCenter(const DefSFBitset& sfbitset_in,
+        const std::vector<DefInt>& region_length_neg, const std::vector<DefInt>& region_length_pos,
+        const std::vector<bool>& periodic_min, const std::vector<bool>& periodic_max,
+        const std::vector<DefSFBitset>& domain_min_n_level,
+        const std::vector<DefSFBitset>& domain_max_n_level,
+        std::vector<DefSFBitset>* const ptr_sfbitset_node) const = 0;
+    virtual void FindNodesInPeriodicRegionCenter(const DefSFBitset& sfbitset_in,
+        const DefInt region_length_neg, const DefInt region_length_pos,
         const std::vector<bool>& periodic_min, const std::vector<bool>& periodic_max,
         const std::vector<DefSFBitset>& domain_min_n_level,
         const std::vector<DefSFBitset>& domain_max_n_level,
@@ -105,7 +111,19 @@ class SFBitsetAuxInterface {
 
     virtual ~SFBitsetAuxInterface() {}
 
+    // set and get protected members
+    virtual void SetSpaceBackground(const std::vector<DefReal>& space_background) = 0;
+    std::array<DefSFBitset, 2>& GetTakeXRef() const { return k0SFBitsetTakeXRef_; }
+    std::array<DefSFBitset, 2>& GetTakeYRef() const { return k0SFBitsetTakeYRef_; }
+    std::array<DefSFBitset, 2>& GetTakeZRef() const { return k0SFBitsetTakeZRef_; }
+
+    // mpi related
+    virtual void GetNLevelCorrespondingOnes(const DefInt i_level,
+        std::vector<DefSFBitset>* const ptr_last_ones) const = 0;
+
  protected:
+    std::vector<DefReal> k0SpaceBackground_;
+    static std::array<DefSFBitset, 2> k0SFBitsetTakeXRef_, k0SFBitsetTakeYRef_, k0SFBitsetTakeZRef_;
     const DefInt max_reset_code_ = 1000;
     ///<  maximum iteration for reseting indices
 };
@@ -198,17 +216,21 @@ class  SFBitsetAux2D : public SFBitsetAuxInterface {
         ptr_vec_edge_nodes->at(3) = FindYPos(morton_in);
     }
     DefSFBitset FindNodeInNeg(const DefInt dir, const DefSFBitset& sfbitset_in) const override {
-        if (dir == 0) {
+        if (dir == kXIndex) {
             return FindXNeg(sfbitset_in);
-        } else {
+        } else if (dir == kYIndex) {
             return FindYNeg(sfbitset_in);
+        } else {
+            return sfbitset_in;
         }
     }
     DefSFBitset FindNodeInPos(const DefInt dir, const DefSFBitset& sfbitset_in) const override {
-        if (dir == 0) {
+        if (dir == kXIndex) {
             return FindXPos(sfbitset_in);
-        } else {
+        } else if (dir == kYIndex) {
             return FindYPos(sfbitset_in);
+        } else {
+            return sfbitset_in;
         }
     }
     void SFBitsetComputeCoordinateVir(const DefSFBitset& bitset_in,
@@ -220,24 +242,30 @@ class  SFBitsetAux2D : public SFBitsetAuxInterface {
         ptr_coordi->at(kYIndex) = arr_coordi[kYIndex];
     }
     void FindNodesInReginOfGivenLength(const DefSFBitset& sfbitset_in,
-        const DefAmrLUint region_length,
+        const DefInt region_length,
         const std::vector<DefSFBitset>& domain_min_m1_n_level,
         const std::vector<DefSFBitset>& domain_max_p1_n_level,
         std::vector<DefSFBitset>* const ptr_sfbitset_nodes) const final;
-    DefAmrLUint FindNodesInPeriodicRegionCorner(const DefSFBitset& sfbitset_in,
-        const DefAmrLUint region_length,
+    DefInt FindNodesInPeriodicRegionCorner(const DefSFBitset& sfbitset_in,
+        const DefInt region_length,
         const std::vector<bool>& periodic_min, const std::vector<bool>& periodic_max,
         const std::vector<DefSFBitset>& domain_min_n_level,
         const std::vector<DefSFBitset>& domain_max_n_level,
         std::vector<DefSFBitset>* const ptr_sfbitset_node) const final;
-    DefAmrLUint FindNodesInPeriodicRegionCenter(const DefSFBitset& sfbitset_in,
-        const DefAmrLUint region_length,
+    DefInt FindNodesInPeriodicRegionCenter(const DefSFBitset& sfbitset_in,
+        const DefInt region_length,
         const std::vector<bool>& periodic_min, const std::vector<bool>& periodic_max,
         const std::vector<DefSFBitset>& domain_min_n_level,
         const std::vector<DefSFBitset>& domain_max_n_level,
         std::vector<DefSFBitset>* const ptr_sfbitset_node) const final;
-    DefAmrLUint FindNodesInPeriodicRegionCenter(const DefSFBitset& sfbitset_in,
-        const DefAmrLUint region_length_neg, const DefAmrLUint region_length_pos,
+    void FindNodesInPeriodicRegionCenter(const DefSFBitset& sfbitset_in,
+        const DefInt region_length_neg, const DefInt region_length_pos,
+        const std::vector<bool>& periodic_min, const std::vector<bool>& periodic_max,
+        const std::vector<DefSFBitset>& domain_min_n_level,
+        const std::vector<DefSFBitset>& domain_max_n_level,
+        std::vector<DefSFBitset>* const ptr_sfbitset_node) const final;
+    void FindNodesInPeriodicRegionCenter(const DefSFBitset& sfbitset_in,
+        const std::vector<DefInt>& region_length_neg, const std::vector<DefInt>& region_length_pos,
         const std::vector<bool>& periodic_min, const std::vector<bool>& periodic_max,
         const std::vector<DefSFBitset>& domain_min_n_level,
         const std::vector<DefSFBitset>& domain_max_n_level,
@@ -288,9 +316,14 @@ class  SFBitsetAux2D : public SFBitsetAuxInterface {
 
     SFBitsetAux2D() { SFBitsetInitial(); }
 
-#ifdef ENABLE_MPI
+    // set protected members
+    void SetSpaceBackground(const std::vector<DefReal>& space_background) override;
+
     // mpi related
  public:
+    void GetNLevelCorrespondingOnes(const DefInt i_level,
+        std::vector<DefSFBitset>* const ptr_last_ones) const override;
+#ifdef ENABLE_MPI
     void FindPartitionBlocksMax(const DefSFCodeToUint& code_in, const DefAmrLUint block_length,
         const DefSFCodeToUint& code_partition_min, const DefSFCodeToUint& code_partition_max,
         const std::array<DefAmrLUint, 2>& code_domain_min, const std::array<DefAmrLUint, 2>& code_domain_max,
@@ -411,21 +444,25 @@ class  SFBitsetAux3D : public SFBitsetAuxInterface {
         ptr_vec_edge_nodes->at(5) = FindZPos(morton_in);
     }
     DefSFBitset FindNodeInNeg(const DefInt dir, const DefSFBitset& sfbitset_in) const override {
-        if (dir == 0) {
+        if (dir == kXIndex) {
             return FindXNeg(sfbitset_in);
-        } else if (dir == 1) {
+        } else if (dir == kYIndex) {
             return FindYNeg(sfbitset_in);
-        } else {
+        } else if (dir == kZIndex) {
             return FindZNeg(sfbitset_in);
+        } else {
+             return sfbitset_in;
         }
     }
     DefSFBitset FindNodeInPos(const DefInt dir, const DefSFBitset& sfbitset_in) const override {
-        if (dir == 0) {
+        if (dir == kXIndex) {
             return FindXPos(sfbitset_in);
-        } else if (dir == 1) {
+        } else if (dir == kYIndex) {
             return FindYPos(sfbitset_in);
-        } else {
+        } else if (dir == kZIndex) {
             return FindZPos(sfbitset_in);
+        } else {
+             return sfbitset_in;
         }
     }
     void SFBitsetComputeCoordinateVir(const DefSFBitset& bitset_in,
@@ -439,24 +476,30 @@ class  SFBitsetAux3D : public SFBitsetAuxInterface {
         ptr_coordi->at(kZIndex) = arr_coordi[kZIndex];
     }
     void FindNodesInReginOfGivenLength(const DefSFBitset& sfbitset_in,
-        const DefAmrLUint region_length,
+        const DefInt region_length,
         const std::vector<DefSFBitset>& domain_min_m1_n_level,
         const std::vector<DefSFBitset>& domain_max_p1_n_level,
         std::vector<DefSFBitset>* const ptr_sfbitset_nodes) const final;
-    DefAmrLUint FindNodesInPeriodicRegionCorner(const DefSFBitset& sfbitset_in,
-        const DefAmrLUint region_length,
+    DefInt FindNodesInPeriodicRegionCorner(const DefSFBitset& sfbitset_in,
+        const DefInt region_length,
         const std::vector<bool>& periodic_min, const std::vector<bool>& periodic_max,
         const std::vector<DefSFBitset>& domain_min_n_level,
         const std::vector<DefSFBitset>& domain_max_n_level,
         std::vector<DefSFBitset>* const ptr_sfbitset_node) const final;
-    DefAmrLUint FindNodesInPeriodicRegionCenter(const DefSFBitset& sfbitset_in,
-        const DefAmrLUint region_length,
+    DefInt FindNodesInPeriodicRegionCenter(const DefSFBitset& sfbitset_in,
+        const DefInt region_length,
         const std::vector<bool>& periodic_min, const std::vector<bool>& periodic_max,
         const std::vector<DefSFBitset>& domain_min_n_level,
         const std::vector<DefSFBitset>& domain_max_n_level,
         std::vector<DefSFBitset>* const ptr_sfbitset_node) const final;
-    DefAmrLUint FindNodesInPeriodicRegionCenter(const DefSFBitset& sfbitset_in,
-        const DefAmrLUint region_length_neg, const DefAmrLUint region_length_pos,
+    void FindNodesInPeriodicRegionCenter(const DefSFBitset& sfbitset_in,
+        const DefInt region_length_neg, const DefInt region_length_pos,
+        const std::vector<bool>& periodic_min, const std::vector<bool>& periodic_max,
+        const std::vector<DefSFBitset>& domain_min_n_level,
+        const std::vector<DefSFBitset>& domain_max_n_level,
+        std::vector<DefSFBitset>* const ptr_sfbitset_node) const final;
+    void FindNodesInPeriodicRegionCenter(const DefSFBitset& sfbitset_in,
+        const std::vector<DefInt>& region_length_neg, const std::vector<DefInt>& region_length_pos,
         const std::vector<bool>& periodic_min, const std::vector<bool>& periodic_max,
         const std::vector<DefSFBitset>& domain_min_n_level,
         const std::vector<DefSFBitset>& domain_max_n_level,
@@ -507,9 +550,14 @@ class  SFBitsetAux3D : public SFBitsetAuxInterface {
 
     SFBitsetAux3D() { SFBitsetInitial(); }
 
-#ifdef ENABLE_MPI
+    // set protected members
+    void SetSpaceBackground(const std::vector<DefReal>& space_background) override;
+
     // mpi related
  public:
+    void GetNLevelCorrespondingOnes(const DefInt i_level,
+        std::vector<DefSFBitset>* const ptr_last_ones) const override;
+#ifdef ENABLE_MPI
     void FindPartitionBlocksMax(const DefSFCodeToUint& code_in, const DefInt block_level,
         const DefSFCodeToUint& code_partition_min, const DefSFCodeToUint& code_partition_max,
         const std::array<DefAmrLUint, 3>& code_domain_min, const std::array<DefAmrLUint, 3>& code_domain_max,

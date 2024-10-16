@@ -37,16 +37,31 @@ namespace amrproject {
 * @brief class used to manage the mpi processes.
 */
 class MpiManager{
- public:
+ protected:
     int num_of_ranks_ = 1;  ///< total number of mpi ranks
     int rank_id_;  ///< current rank
-
     DefSFBitset sfbitset_min_current_rank_, sfbitset_max_current_rank_;
     ///< space filling codes of background nodes on the interfaces of partitioned grid
     std::vector<DefSFCodeToUint> vec_sfcode_min_all_ranks_, vec_sfcode_max_all_ranks_;
-
     DefInt k0NumPartitionOuterLayers_ = 2;
     DefInt k0NumPartitionInnerLayers_ = k0NumPartitionOuterLayers_;
+
+ public:
+    // set and get protected members
+    int GetNumOfRanks() const { return num_of_ranks_; }
+    int GetRankId() const { return rank_id_; }
+    DefSFBitset GetSFBitsetMinCurrentRank() const { return sfbitset_min_current_rank_; }
+    DefSFBitset GetSFBitsetMaxCurrentRank() const { return sfbitset_max_current_rank_; }
+    const std::vector<DefSFCodeToUint>& GetSFCodeMinAllRanks() const { return vec_sfcode_min_all_ranks_; }
+    const std::vector<DefSFCodeToUint>& GetSFCodeMaxAllRanks() const { return vec_sfcode_max_all_ranks_; }
+    DefInt GetNumPartitionOuterLayers() const { return k0NumPartitionOuterLayers_; }
+    DefInt GetNumPartitionInnerLayers() const { return k0NumPartitionInnerLayers_; }
+    void SetSFBitsetMinCurrentRank(const DefSFBitset& sfbitset_min) { sfbitset_min_current_rank_ = sfbitset_min; }
+    void SetSFBitsetMaxCurrentRank(const DefSFBitset& sfbitset_max) { sfbitset_max_current_rank_ = sfbitset_max; }
+    void SetNumPartitionOuterLayers(const DefInt num_outer_layers) { k0NumPartitionOuterLayers_ = num_outer_layers; }
+    void SetNumPartitionInnerLayers(const DefInt num_inner_layers) { k0NumPartitionInnerLayers_ = num_inner_layers; }
+
+ 
     std::vector<std::map<int, DefMap<DefInt>>> mpi_communication_inner_layers_;
     ///< inner layers (for sending) for mpi communication of all refinement levels
     /** nodes not on the partition interface and whose spacing filling code is
@@ -63,7 +78,7 @@ class MpiManager{
     void SetUpMpi();
     void FinalizeMpi();
 
-    void IniBroadcastBitsetBounds(std::vector<DefSFBitset>* const ptr_bitset_bounds);
+    void IniBroadcastSFBitsetBounds(std::vector<DefSFBitset>* const ptr_bitset_bounds);
     /**
      * @brief function to find space filling code is on which rank.
      * @param[in] sfcode_in space filling code at background level.
@@ -384,8 +399,6 @@ class MpiManager{
         const DefSFCodeToUint& code_max, const std::array<DefAmrLUint, 2>& code_domain_min,
         const std::array<DefAmrLUint, 2>& code_domain_max, const SFBitsetAux2D& bitset_aux2d,
         DefMap<DefInt>* const ptr_partition_interface_background) const;
-    void GetNLevelCorrespondingOnes2D(const DefInt i_level,
-        const SFBitsetAux2D& bitset_aux2d, std::vector<DefSFBitset>* const ptr_last_ones) const;
     int CheckNodeOnPartitionInterface2D(DefInt i_level,
         const DefSFCodeToUint code_min, const DefSFCodeToUint code_max,
         const DefSFBitset bitset_in, const SFBitsetAux2D& bitset_aux2d,
@@ -411,8 +424,6 @@ class MpiManager{
         const DefSFCodeToUint& bitset_max, const std::array<DefAmrLUint, 3>& code_domain_min,
         const std::array<DefAmrLUint, 3>& code_domain_max, const SFBitsetAux3D& bitset_aux2d,
         DefMap<DefInt>* const ptr_partition_interface_background) const;
-    void GetNLevelCorrespondingOnes3D(const DefInt i_level,
-        const SFBitsetAux3D& bitset_aux3d, std::vector<DefSFBitset>* const ptr_last_ones) const;
     int CheckNodeOnPartitionInterface3D(DefInt i_level,
         const DefSFCodeToUint code_min, const DefSFCodeToUint code_max,
         const DefSFBitset bitset_in, const SFBitsetAux3D& bitset_aux3d,

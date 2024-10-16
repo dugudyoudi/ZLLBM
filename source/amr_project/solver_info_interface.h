@@ -25,11 +25,13 @@ class MpiManager;
 * @brief abstract class used to manager solver.
 */
 class SolverInterface {
- public:
+ protected:
     DefInt k0SolverDims_ = 0;  ///< dimension
     std::string solver_type_;
-    std::unique_ptr<GridInfoCreatorInterface> ptr_grid_info_creator_;
     GridManagerInterface* ptr_grid_manager_ = nullptr;
+
+ public:
+    std::unique_ptr<GridInfoCreatorInterface> ptr_grid_info_creator_;
     virtual std::string GetSolverMethod() = 0;
     virtual void SolverInitial() = 0;
     virtual void RunSolverForNodesOnNormalGrid(const ETimeSteppingScheme time_scheme,
@@ -42,6 +44,19 @@ class SolverInterface {
         const ETimingInOneStep timing, const ETimeSteppingScheme time_scheme,
         const DefInt time_step_current, const SFBitsetAuxInterface& sfbitset_aux,
         GridInfoInterface* const ptr_grid_info) {return 0;}
+
+    // set and get functions
+    void SetSolverDims(const DefInt k0SolverDims) {k0SolverDims_ = k0SolverDims;}
+    void SetSolverType(const std::string& solver_type) {solver_type_ = solver_type;}
+    void SetPtrToGridManager(GridManagerInterface* const ptr_grid_manager) {
+        ptr_grid_manager_ = ptr_grid_manager;
+    }
+
+    DefInt GetSolverDim() const {return k0SolverDims_;}
+    std::string GetSolverType() const {return solver_type_;}
+    GridManagerInterface* GetPtrToParentGridManager() const {return ptr_grid_manager_;}
+
+    virtual ~SolverInterface() = default;
 };
 /**
 * @class SolverCreatorInterface

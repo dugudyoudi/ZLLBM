@@ -20,28 +20,29 @@ namespace lbmproject {
  * @param[out] ptr_grid_info pointer to class storing grid information.
  */
 void BoundaryPeriodic2D::CalBoundaryCondition(const ELbmBoundaryType boundary_type,
-    const DefMap<DefInt>& boundary_nodes,
-    GridInfoLbmInteface* const ptr_grid_info) const {
-    const SolverLbmInterface& lbm_solver = *(std::dynamic_pointer_cast<SolverLbmInterface>(ptr_grid_info->ptr_solver_));
+    const DefMap<DefInt>& boundary_nodes, GridInfoLbmInteface* const ptr_grid_info) const {
+    const SolverLbmInterface& lbm_solver = *(dynamic_cast<SolverLbmInterface*>(ptr_grid_info->GetPtrSolver()));
     DefSFBitset boundary_counterpart, set_coordinate;
     const amrproject::GridManager2D& grid_manager2d =
-        *dynamic_cast<amrproject::GridManager2D*>(ptr_grid_info->ptr_solver_->ptr_grid_manager_);
+        *dynamic_cast<amrproject::GridManager2D*>(ptr_grid_info->GetPtrToParentGridManager());
+    const std::array<DefSFBitset, 2>& take_xref = grid_manager2d.GetTakeXRef(),
+        take_yref =  grid_manager2d.GetTakeYRef();
     switch (boundary_type) {
     case ELbmBoundaryType::kBoundaryXMin:
         boundary_counterpart = ptr_grid_info->k0VecBitsetDomainMax_.at(kXIndex);
-        set_coordinate = grid_manager2d.k0SFBitsetTakeXRef_.at(grid_manager2d.kRefOthers_);
+        set_coordinate = take_xref.at(grid_manager2d.kRefOthers_);
         break;
     case ELbmBoundaryType::kBoundaryXMax:
         boundary_counterpart = ptr_grid_info->k0VecBitsetDomainMin_.at(kXIndex);
-        set_coordinate = grid_manager2d.k0SFBitsetTakeXRef_.at(grid_manager2d.kRefOthers_);
+        set_coordinate = take_xref.at(grid_manager2d.kRefOthers_);
         break;
     case ELbmBoundaryType::kBoundaryYMin:
         boundary_counterpart = ptr_grid_info->k0VecBitsetDomainMax_.at(kYIndex);
-        set_coordinate = grid_manager2d.k0SFBitsetTakeYRef_.at(grid_manager2d.kRefOthers_);
+        set_coordinate = take_yref.at(grid_manager2d.kRefOthers_);
         break;
     case ELbmBoundaryType::kBoundaryYMax:
         boundary_counterpart = ptr_grid_info->k0VecBitsetDomainMin_.at(kYIndex);
-        set_coordinate = grid_manager2d.k0SFBitsetTakeYRef_.at(grid_manager2d.kRefOthers_);
+        set_coordinate = take_yref.at(grid_manager2d.kRefOthers_);
         break;
     default:
         break;
@@ -71,34 +72,36 @@ void BoundaryPeriodic2D::CalBoundaryCondition(const ELbmBoundaryType boundary_ty
 void BoundaryPeriodic3D::CalBoundaryCondition(const ELbmBoundaryType boundary_type,
     const DefMap<DefInt>& boundary_nodes,
     GridInfoLbmInteface* const ptr_grid_info) const {
-    const SolverLbmInterface& lbm_solver = *(std::dynamic_pointer_cast<SolverLbmInterface>(ptr_grid_info->ptr_solver_));
+    const SolverLbmInterface& lbm_solver = *(dynamic_cast<SolverLbmInterface*>(ptr_grid_info->GetPtrSolver()));
     DefSFBitset boundary_counterpart, set_coordinate;
     const amrproject::GridManager3D& grid_manager3d =
-        *dynamic_cast<amrproject::GridManager3D*>(ptr_grid_info->ptr_solver_->ptr_grid_manager_);
+        *dynamic_cast<amrproject::GridManager3D*>(lbm_solver.GetPtrToParentGridManager());
+    const std::array<DefSFBitset, 2>& take_xref = grid_manager3d.GetTakeXRef(),
+        take_yref =  grid_manager3d.GetTakeYRef(), take_zref = grid_manager3d.GetTakeZRef();
     switch (boundary_type) {
     case ELbmBoundaryType::kBoundaryXMin:
         boundary_counterpart = ptr_grid_info->k0VecBitsetDomainMax_.at(kXIndex);
-        set_coordinate = grid_manager3d.k0SFBitsetTakeXRef_.at(grid_manager3d.kRefOthers_);
+        set_coordinate = take_xref.at(grid_manager3d.kRefOthers_);
         break;
     case ELbmBoundaryType::kBoundaryXMax:
         boundary_counterpart = ptr_grid_info->k0VecBitsetDomainMin_.at(kXIndex);
-        set_coordinate = grid_manager3d.k0SFBitsetTakeXRef_.at(grid_manager3d.kRefOthers_);
+        set_coordinate = take_xref.at(grid_manager3d.kRefOthers_);
         break;
     case ELbmBoundaryType::kBoundaryYMin:
         boundary_counterpart = ptr_grid_info->k0VecBitsetDomainMax_.at(kYIndex);
-        set_coordinate = grid_manager3d.k0SFBitsetTakeYRef_.at(grid_manager3d.kRefOthers_);
+        set_coordinate = take_yref.at(grid_manager3d.kRefOthers_);
         break;
     case ELbmBoundaryType::kBoundaryYMax:
         boundary_counterpart = ptr_grid_info->k0VecBitsetDomainMin_.at(kYIndex);
-        set_coordinate = grid_manager3d.k0SFBitsetTakeYRef_.at(grid_manager3d.kRefOthers_);
+        set_coordinate = take_yref.at(grid_manager3d.kRefOthers_);
         break;
     case ELbmBoundaryType::kBoundaryZMin:
         boundary_counterpart = ptr_grid_info->k0VecBitsetDomainMax_.at(kZIndex);
-        set_coordinate = grid_manager3d.k0SFBitsetTakeZRef_.at(grid_manager3d.kRefOthers_);
+        set_coordinate = take_zref.at(grid_manager3d.kRefOthers_);
         break;
     case ELbmBoundaryType::kBoundaryZMax:
         boundary_counterpart = ptr_grid_info->k0VecBitsetDomainMin_.at(kZIndex);
-        set_coordinate = grid_manager3d.k0SFBitsetTakeZRef_.at(grid_manager3d.kRefOthers_);
+        set_coordinate = take_zref.at(grid_manager3d.kRefOthers_);
         break;
     default:
         break;

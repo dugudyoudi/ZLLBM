@@ -61,7 +61,7 @@ void MpiManager::FinalizeMpi() {
  * @brief function to broadcast grid bounds of all ranks on rank 0 to other ranks.
  * @param[in] ptr_bitset_bounds pointer to bounds.
  */
-void MpiManager::IniBroadcastBitsetBounds(std::vector<DefSFBitset>* const ptr_bitset_bounds) {
+void MpiManager::IniBroadcastSFBitsetBounds(std::vector<DefSFBitset>* const ptr_bitset_bounds) {
     if (rank_id_ == 0) {  // bitset_bounds on rank has be calculated
         int bit_size = static_cast<int>(ptr_bitset_bounds->size()) * sizeof(DefSFBitset);
         MPI_Bcast(ptr_bitset_bounds->data(), bit_size, MPI_BYTE, 0, MPI_COMM_WORLD);

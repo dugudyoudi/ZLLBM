@@ -242,7 +242,8 @@ void GeometryConnectionInterface::BisectEdgeOnce(
     DefInt i_grid_level = i_level + i_input_level;
     DefReal grid_scale = DefReal(TwoPowerN(i_grid_level));
     DefSFBitset sfbitset_tmp;
-    for (const auto iter : sfbitset_aux.k0SpaceBackground_) {
+    std::vector<DefReal> grid_space_background = sfbitset_aux.GetBackgroundGridSpacing();
+    for (const auto iter : grid_space_background) {
         grid_space.push_back(iter / grid_scale);
     }
     std::array<DefReal, 3> coordinate;
@@ -759,7 +760,8 @@ void GeometryConnectionInterface::MergeEdgeOnce(const DefInt i_level,
     DefInt i_grid_level = i_level + i_input_level;
     DefReal grid_scale = DefReal(TwoPowerN(i_grid_level));
     DefSFBitset sfbitset_tmp;
-    for (const auto iter : sfbitset_aux.k0SpaceBackground_) {
+    std::vector<DefReal> grid_space_background = sfbitset_aux.GetBackgroundGridSpacing();
+    for (const auto iter : grid_space_background) {
         grid_space.push_back(iter / grid_scale);
     }
     // remove coordinates from (vertex_given_level_)

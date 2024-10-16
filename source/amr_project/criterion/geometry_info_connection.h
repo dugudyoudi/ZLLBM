@@ -144,7 +144,7 @@ class GeometryConnectionInterface {
         std::pair<DefInt, DefSizet>>>& edge_for_bisect,
         std::set<std::pair<std::pair<DefInt, DefSizet>, std::pair<DefInt, DefSizet>>>*
         const ptr_surface_remain_for_bisect, DefMap<DefInt>* const ptr_sfbitset_ref_added);
-    void FindTrackingNodeBasedOnGeo(DefInt i_geo, DefInt i_level,
+    void FindTrackingNodeBasedOnGeo(DefInt dims, DefInt i_geo, DefInt i_level,
         const EGridExtendType grid_extend_type, const SFBitsetAuxInterface& sfbitset_aux,
         GridInfoInterface* const ptr_grid_info);
 
@@ -174,7 +174,7 @@ class GeometryInfoConnection : public GeometryInfoInterface, public GeometryConn
     int InitialGeometry(const DefReal dx) override;
     void FindTrackingNodeBasedOnGeo(const SFBitsetAuxInterface& sfbitset_aux,
         GridInfoInterface* const ptr_grid_info) override {
-        GeometryConnectionInterface::FindTrackingNodeBasedOnGeo(i_geo_, i_level_,
+        GeometryConnectionInterface::FindTrackingNodeBasedOnGeo(k0GeoDim_, i_geo_, i_level_,
          grid_extend_type_, sfbitset_aux, ptr_grid_info);
     }
 

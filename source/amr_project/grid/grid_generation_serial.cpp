@@ -190,10 +190,10 @@ void GridManagerInterface::GenerateGridFromHighToLowLevelSerial(
 
         // find interface between different grids
         DefInt level_low = i_level - 1;
-        if (vec_ptr_grid_info_.at(level_low)->k0NumCoarse2FineLayer_ < 2) {
+        const DefInt num_coarse2fine_layer = vec_ptr_grid_info_.at(level_low)->GetNumCoarse2FineLayer();
+        if (num_coarse2fine_layer < 2) {
         LogManager::LogError("Number of coarse to fine layers should be greater than 2, which is"
-            + std::to_string(vec_ptr_grid_info_.at(level_low)->k0NumCoarse2FineLayer_)
-            + "at refinement level " + std::to_string(level_low));
+            + std::to_string(num_coarse2fine_layer) + "at refinement level " + std::to_string(level_low));
         }
         for (auto& iter_inner : innermost_layer_current) {
             innermost_layer.at(iter_inner.first).clear();
@@ -205,10 +205,8 @@ void GridManagerInterface::GenerateGridFromHighToLowLevelSerial(
             }
             ptr_interface_info = vec_ptr_grid_info_.at(level_low)
                 ->map_ptr_interface_layer_info_.at(iter_inner.first).get();
-            ptr_interface_info->vec_inner_coarse2fine_.resize(
-                vec_ptr_grid_info_.at(level_low)->k0NumCoarse2FineLayer_);
-            ptr_interface_info->vec_outer_coarse2fine_.resize(
-                vec_ptr_grid_info_.at(level_low)->k0NumCoarse2FineLayer_);
+            ptr_interface_info->vec_inner_coarse2fine_.resize(num_coarse2fine_layer);
+            ptr_interface_info->vec_outer_coarse2fine_.resize(num_coarse2fine_layer);
             FindOutmostLayerForFineGrid(i_level, iter_inner.second,
                 &ptr_sfbitset_one_lower_level->at(i_level),
                 &ptr_interface_info->vec_inner_coarse2fine_.at(0),
@@ -225,10 +223,8 @@ void GridManagerInterface::GenerateGridFromHighToLowLevelSerial(
             }
             ptr_interface_info = vec_ptr_grid_info_.at(level_low)
                 ->map_ptr_interface_layer_info_.at(iter_outer.first).get();
-            ptr_interface_info->vec_inner_coarse2fine_.resize(
-                vec_ptr_grid_info_.at(level_low)->k0NumCoarse2FineLayer_);
-            ptr_interface_info->vec_outer_coarse2fine_.resize(
-                vec_ptr_grid_info_.at(level_low)->k0NumCoarse2FineLayer_);
+            ptr_interface_info->vec_inner_coarse2fine_.resize(num_coarse2fine_layer);
+            ptr_interface_info->vec_outer_coarse2fine_.resize(num_coarse2fine_layer);
             FindOutmostLayerForFineGrid(i_level, iter_outer.second,
                 &ptr_sfbitset_one_lower_level->at(i_level),
                 &ptr_interface_info->vec_outer_coarse2fine_.at(0),

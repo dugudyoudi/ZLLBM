@@ -60,6 +60,23 @@ struct GridNodeLbm : public amrproject::GridNode {
             f_.shrink_to_fit();
             f_collide_.shrink_to_fit();
     }
+
+    // compulsory function from the GridNode base class
+    void CopyNodInfoToBuffer(char* const ptr_node_buffer) const override {
+        DefSizet f_size = f_.size() * sizeof(DefReal);
+        std::memcpy(ptr_node_buffer, f_.data(), f_size);
+        if (!force_.empty()) {
+            std::memcpy(ptr_node_buffer + f_size, force_.data(), force_.size() * sizeof(DefReal));
+        }
+    }
+    void ReadNodInfoFromBuffer(const char* ptr_node_buffer) override {
+        DefSizet f_size = f_.size() * sizeof(DefReal);
+        std::memcpy(f_.data(), ptr_node_buffer, f_size);
+        if (!force_.empty()) {
+            std::memcpy(force_.data(), ptr_node_buffer + f_size, force_.size() * sizeof(DefReal));
+        }
+    }
+
     // GridNodeLbm& operator=(const GridNodeLbm& node_r) {
     //     this->rho_ = node_r.rho_;
     //     this->velocity_.resize(node_r.velocity_.size());
@@ -209,10 +226,11 @@ struct OutputLBMNodeVariableInfo : public amrproject::OutputNodeVariableInfoInte
 * @brief  class to store LBM grid information at each refinement level
 */
 class GridInfoLbmInteface : public amrproject::GridInfoInterface {
- public:
-    bool bool_forces_ = false;
+ protected:
     std::vector<DefReal> f_ini_, f_collide_ini_;
-    void InitialGridInfo() override;
+
+ public:
+    void InitialGridInfo(const DefInt dims) override;
 
     // convert pointer to current type
     DefMap<std::unique_ptr<GridNodeLbm>>* ptr_lbm_grid_nodes_ = nullptr;
@@ -281,14 +299,12 @@ class GridInfoLbmInteface : public amrproject::GridInfoInterface {
     // mpi related
     int k0SizeOfAllDistributionFunctions_ = 0;
     int SizeOfGridNodeInfoForMpiCommunication() const override;
-    int CopyNodeInfoToBuffer(const DefMap<DefInt>& map_nodes, char* const ptr_buffer) override;
     int CopyInterpolationNodeInfoToBuffer(const GridInfoInterface& grid_info_lower,
         const DefMap<DefInt>& map_nodes, char* const ptr_buffer) override;
     int ReadInterpolationNodeInfoFromBuffer(
         const DefSizet buffer_size, const std::unique_ptr<char[]>& buffer) override;
     void ComputeInfoInMpiLayers(const std::map<int, DefMap<DefInt>>& map_inner_nodes,
         const DefMap<DefInt>& map_outer_nodes) override;
-    void ReadNodeInfoFromBuffer(const DefSizet buffer_size, const std::unique_ptr<char[]>& buffer) override;
     virtual void ComputeNodeInfoBeforeMpiCommunication(const DefSFBitset sfbitset_in,
         const SolverLbmInterface& lbm_solver);
     virtual void ComputeNodeInfoAfterMpiCommunication(const DefSFBitset sfbitset_in,
@@ -303,16 +319,42 @@ class GridInfoLbmIntefaceCreator :
     };
 };
 class SolverLbmInterface :public amrproject::SolverInterface {
- public:
-    DefInt k0NumQ_ = 0;
-    std::vector<DefReal> k0Cx_, k0Cy_, k0Cz_;  ///< directions of particle velocity
-    std::vector<DefReal> k0Weights_;
-    DefInt k0NumQInOneDirection_ = 0;   ///< number of Q indices in one direction
-    // noting that the nth element in k0QIndicesPos_ must be the inverse index of the nth element in k0QIndicesNeg_
-    std::vector<std::vector<DefInt>> k0QIndicesNeg_, k0QIndicesPos_;
+ protected:
+    DefInt NumForces_ = 0;
     DefReal k0LbmViscosity_ = 0.;  // the lbm viscosity at background level, where dt_lbm is 1
     DefReal k0Rho_ = 1.;  // default density
     std::vector<DefReal> k0Velocity_, k0Force_;  // default velocity and forces
+
+ public:
+    // get and set functions
+    void SetDefaultViscosity(const DefReal viscosity_in) { k0LbmViscosity_ = viscosity_in;}
+    void SetDefaultDensity(const DefReal rho_in) { k0Rho_ = rho_in;}
+    void SetDefaultVelocity(const std::vector<DefReal>& velocity_in) { k0Velocity_ = velocity_in;}
+    void SetDefaultForce(const std::vector<DefReal>& force_in) { k0Force_ = force_in;}
+    DefReal GetDefaultViscosity() const { return k0LbmViscosity_;}
+    DefReal GetDefaultDensity() const { return k0Rho_;}
+    const std::vector<DefReal>& GetDefaultVelocity() const { return k0Velocity_;}
+    const std::vector<DefReal>& GetDefaultForce() const { return k0Force_;}
+    DefInt GetNumForces() const {
+        if (bool_forces_) {
+            return NumForces_;
+        } else {
+            return 0;
+        }
+    }
+    void SetNumForces(const DefInt num_forces) {
+        bool_forces_ = true;
+        NumForces_ = num_forces;
+        k0Force_.resize(num_forces, 0.);
+    }
+
+    bool bool_forces_ = false;
+    const DefInt k0NumQ_ = 0;
+    const std::vector<DefReal> k0Cx_, k0Cy_, k0Cz_;  ///< directions of particle velocity
+    const std::vector<DefReal> k0Weights_;
+    const DefInt k0NumQInOneDirection_ = 0;   ///< number of Q indices in each direction
+    // noting that the nth element in k0QIndicesPos_ must be the inverse index of the nth element in k0QIndicesNeg_
+    const std::vector<std::vector<DefInt>> k0QIndicesNeg_, k0QIndicesPos_;
     static constexpr DefReal kCs_Reciprocal_ = SqrtConstexpr(3.), kCs_Sq_Reciprocal_ = 3.,
         kCs_ = 1. / SqrtConstexpr(3.), kCs_Sq_ = 1./ 3.;           ///< Lattice sound speed related
     std::string GetSolverMethod() final {
@@ -320,9 +362,6 @@ class SolverLbmInterface :public amrproject::SolverInterface {
             + "Q" + std::to_string(k0NumQ_) + " Model is active.";
     }
 
-    SolverLbmInterface() {
-        ptr_grid_info_creator_ = std::make_unique<GridInfoLbmIntefaceCreator>();
-    }
     void SolverInitial() override;
     void RunSolverForNodesOnNormalGrid(const amrproject::ETimeSteppingScheme time_scheme,
         const DefInt time_step_current, const amrproject::SFBitsetAuxInterface& sfbitset_aux,
@@ -376,7 +415,7 @@ class SolverLbmInterface :public amrproject::SolverInterface {
         const std::vector<DefReal>& velocity, std::vector<DefReal>* const ptr_feq) const;
 
     // function to calculate the LBM forcing term
-    virtual std::vector<DefReal> GetAllForcesForANode(const DefInt dims, const GridNodeLbm& lbm_node) const;
+    virtual const std::vector<DefReal>& GetAllForcesForANode(const GridNodeLbm& lbm_node) const;
     DefReal (SolverLbmInterface::*ptr_func_cal_force_iq_)(
         const int iq, const GridNodeLbm& node, const std::vector<DefReal>& force) const = nullptr;
     DefReal CalForceIq2D(const int iq, const GridNodeLbm& node, const std::vector<DefReal>& force) const;
@@ -396,6 +435,8 @@ class SolverLbmInterface :public amrproject::SolverInterface {
     std::function<void(const DefReal dt_lbm, const GridNodeLbm& node, const std::vector<DefReal>& force,
         DefReal* const ptr_rho, std::vector<DefReal>* const ptr_velocity)> func_macro_with_force_;
 
+    virtual ~SolverLbmInterface() {}
+
  protected:
     void CalMacro2DCompressible(const GridNodeLbm& node,
         DefReal* const ptr_rho, std::vector<DefReal>* const ptr_velocity) const;
@@ -413,16 +454,34 @@ class SolverLbmInterface :public amrproject::SolverInterface {
         const std::vector<DefReal>& force, DefReal* const ptr_rho, std::vector<DefReal>* const ptr_velocity) const;
     void CalMacroForce3DIncompressible(const DefReal dt_lbm, const GridNodeLbm& node,
         const std::vector<DefReal>& force, DefReal* const ptr_rho, std::vector<DefReal>* const ptr_velocity) const;
+
+    SolverLbmInterface();
+    SolverLbmInterface(const DefInt num_q, const DefInt num_q_in_one_direction,
+        const std::vector<DefReal>& cx, const std::vector<DefReal>& cy, const std::vector<DefReal>& cz,
+        const std::vector<DefReal>& weights,
+        const std::vector<std::vector<DefInt>>& q_indices_neg, const std::vector<std::vector<DefInt>>& q_indices_pos)
+        : k0NumQ_(num_q), k0NumQInOneDirection_(num_q_in_one_direction),
+        k0Cx_(cx), k0Cy_(cy), k0Cz_(cz), k0Weights_(weights),
+        k0QIndicesNeg_(q_indices_neg), k0QIndicesPos_(q_indices_pos) {
+            ptr_grid_info_creator_ = std::make_unique<GridInfoLbmIntefaceCreator>();
+    }
 };
+/**
+ * @brief function to conduct collision process for give nodes,
+ *          initially designed for separating lbm simulation and mpi communication if possible.
+ * @param[in] flag_not_collide flag indicating the node do not need collide.
+ * @param[in] node_for_computation nodes to be computed.
+ * @param[in] ptr_lbm_grid_nodes_info  pointer to class storing lbm grid nodes information.
+ */
 template <typename Node>
 void SolverLbmInterface::CollisionForGivenNodes(const DefInt flag_not_collide,
-        const DefMap<Node>& node_for_computation, GridInfoLbmInteface* const ptr_lbm_grid_nodes_info) {
+    const DefMap<Node>& node_for_computation, GridInfoLbmInteface* const ptr_lbm_grid_nodes_info) {
     DefReal dt_lbm = ptr_lbm_grid_nodes_info->ptr_collision_operator_->dt_lbm_;
     DefMap<std::unique_ptr<GridNodeLbm>>& lbm_grid_nodes = *ptr_lbm_grid_nodes_info->GetPointerToLbmGrid();
     std::function<void(const DefReal, const GridNodeLbm&,
         const std::vector<DefReal>&, DefReal* const, std::vector<DefReal>* const)> func_macro;
     if (ptr_lbm_grid_nodes_info->ptr_lbm_grid_nodes_ != nullptr) {
-        if (ptr_lbm_grid_nodes_info->bool_forces_) {
+        if (bool_forces_) {
             func_macro = func_macro_with_force_;
         } else {
             func_macro = [this](const DefReal dt_lbm, const GridNodeLbm& node, const std::vector<DefReal>& /*force*/,
@@ -434,7 +493,7 @@ void SolverLbmInterface::CollisionForGivenNodes(const DefInt flag_not_collide,
             if (lbm_grid_nodes.find(iter_node.first) != lbm_grid_nodes.end()) {
                 GridNodeLbm& lbm_node = *lbm_grid_nodes.at(iter_node.first).get();
                 if (!(lbm_node.flag_status_ & flag_not_collide)) {
-                    force = GetAllForcesForANode(k0SolverDims_, lbm_node);
+                    force = GetAllForcesForANode(lbm_node);
                     func_macro(dt_lbm, lbm_node, force, &lbm_node.rho_, &lbm_node.velocity_);
                     ptr_lbm_grid_nodes_info->ptr_collision_operator_->CollisionOperator(
                         *this, force, &lbm_node);
@@ -443,6 +502,13 @@ void SolverLbmInterface::CollisionForGivenNodes(const DefInt flag_not_collide,
         }
     }
 }
+/**
+ * @brief function to conduct stream process for give nodes,
+ *          initially designed for separating lbm simulation and mpi communication if possible.
+ * @param[in] flag_not_stream flag indicating the node do not need stream.
+ * @param[in] node_for_computation nodes to be computed.
+ * @param[in] ptr_lbm_grid_nodes_info  pointer to class storing lbm grid nodes information.
+ */
 template <typename Node>
 void SolverLbmInterface::StreamInForGivenNodes(const DefInt flag_not_stream,
     const amrproject::SFBitsetAuxInterface& sfbitset_aux,

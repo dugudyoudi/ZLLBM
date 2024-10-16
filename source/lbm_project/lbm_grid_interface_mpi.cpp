@@ -76,8 +76,9 @@ bool GridInfoLbmInteface::CheckIfPeriodicDomainRequired(const DefInt dims,
  */
 int GridInfoLbmInteface::SizeOfGridNodeInfoForMpiCommunication() const {
     int size_info = k0SizeOfAllDistributionFunctions_;
-    if (bool_forces_) {
-        size_info += ptr_solver_->k0SolverDims_*sizeof(DefReal);
+    SolverLbmInterface& lbm_solver = *std::dynamic_pointer_cast<SolverLbmInterface>(ptr_solver_).get();
+    if (lbm_solver.bool_forces_) {
+        size_info += lbm_solver.GetNumForces()*sizeof(DefReal);
     }
     return size_info;
 }
@@ -91,58 +92,16 @@ void GridInfoLbmInteface::ComputeNodeInfoBeforeMpiCommunication(
     lbm_solver.StreamInForAGivenNode(sfbitset_in, *ptr_sfbitset_aux_, ptr_lbm_grid_nodes_);
 }
 /**
- * @brief function to copy node information to a buffer.
- * @param[in] map_nodes container storing space filling codes of the nodes need to be copied.
- * @param[out] ptr_buffer pointer to the buffer storing node information.
- * @note this function is a non-constant function since some information on nodes will be calculated before sending.
- */
-int GridInfoLbmInteface::CopyNodeInfoToBuffer(
-    const DefMap<DefInt>& map_nodes, char* const ptr_buffer) {
-    GetPointerToLbmGrid();
-    if (ptr_lbm_grid_nodes_ == nullptr) {
-        amrproject::LogManager::LogError("pointer to lbm grid nodes is null");
-    } else  {
-        DefSizet position = 0;
-        SolverLbmInterface* ptr_lbm_solver = std::dynamic_pointer_cast<SolverLbmInterface>(ptr_solver_).get();
-        for (const auto& iter : map_nodes) {
-            if (ptr_lbm_grid_nodes_->find(iter.first) != ptr_lbm_grid_nodes_->end()) {
-                std::memcpy(ptr_buffer + position, &(iter.first), sizeof(DefSFBitset));
-                position+=sizeof(DefSFBitset);
-                std::memcpy(ptr_buffer + position, ptr_lbm_grid_nodes_->at(iter.first)->f_.data(),
-                    k0SizeOfAllDistributionFunctions_);
-                position+=k0SizeOfAllDistributionFunctions_;
-                if (bool_forces_) {
-                    int force_size = ptr_solver_->k0SolverDims_*sizeof(DefReal);
-                    std::memcpy(ptr_buffer + position, ptr_lbm_grid_nodes_->at(iter.first)->force_.data(), force_size);
-                    position += force_size;
-                }
-            } else {
-                std::vector<DefReal> indices;
-                ptr_sfbitset_aux_->SFBitsetComputeCoordinateVir(iter.first, grid_space_, &indices);
-                std::string msg;
-                if (indices.size() == 2) {
-                    msg = "grid node (" + std::to_string(indices[kXIndex]) + ", " + std::to_string(indices[kYIndex])
-                         + ") at " + std::to_string(i_level_) + " at level not exist for copying to a buffer";
-                } else {
-                    msg = "grid node (" + std::to_string(indices[kXIndex]) + ", " + std::to_string(indices[kYIndex])
-                        + std::to_string(indices[kZIndex]) +  + ") at " + std::to_string(i_level_)
-                        + " level does not exist for copying to a buffer";
-                }
-                amrproject::LogManager::LogError(msg);
-            }
-        }
-    }
-    return 0;
-}
-/**
  * @brief function to copy information of node needed for interpolation to a buffer.
  * @param[in] coarse_grid_info class storting grid information at lower level.
  * @param[in] map_nodes container storing space filling codes of the nodes need to be copied.
  * @param[out] ptr_buffer pointer to the buffer storing node information.
+ * @note node not exist at current level will be find in the lower level.
  */
 int GridInfoLbmInteface::CopyInterpolationNodeInfoToBuffer(const GridInfoInterface& coarse_grid_info,
     const DefMap<DefInt>& map_nodes, char* const ptr_buffer) {
     GetPointerToLbmGrid();
+    SolverLbmInterface& lbm_solver = *std::dynamic_pointer_cast<SolverLbmInterface>(ptr_solver_);
     if (ptr_lbm_grid_nodes_ == nullptr) {
         amrproject::LogManager::LogError("pointer to lbm grid nodes is null");
     }
@@ -151,17 +110,16 @@ int GridInfoLbmInteface::CopyInterpolationNodeInfoToBuffer(const GridInfoInterfa
         amrproject::LogManager::LogError("pointer to lbm grid nodes at one lower refinement level is null");
     }
     DefSizet position = 0;
-    SolverLbmInterface* ptr_lbm_solver = std::dynamic_pointer_cast<SolverLbmInterface>(ptr_solver_).get();
     const DefMap<std::unique_ptr<GridNodeLbm>>& lbm_coarse_grid_nodes = *coarse_grid_info_lbm.ptr_lbm_grid_nodes_;
     for (const auto& iter : map_nodes) {
         if (ptr_lbm_grid_nodes_->find(iter.first) != ptr_lbm_grid_nodes_->end()) {
             std::memcpy(ptr_buffer + position, &(iter.first), sizeof(DefSFBitset));
             position+=sizeof(DefSFBitset);
-            std::memcpy(ptr_buffer + position, ptr_lbm_grid_nodes_->at(iter.first)->f_collide_.data(),
+            std::memcpy(ptr_buffer + position, ptr_lbm_grid_nodes_->at(iter.first)->f_.data(),
                 k0SizeOfAllDistributionFunctions_);
             position+=k0SizeOfAllDistributionFunctions_;
-            if (bool_forces_) {
-                int force_size = ptr_solver_->k0SolverDims_*sizeof(DefReal);
+            if (lbm_solver.bool_forces_) {
+                int force_size = lbm_solver.GetNumForces()*sizeof(DefReal);
                 std::memcpy(ptr_buffer + position, ptr_lbm_grid_nodes_->at(iter.first)->force_.data(), force_size);
                 position += force_size;
             }
@@ -173,11 +131,13 @@ int GridInfoLbmInteface::CopyInterpolationNodeInfoToBuffer(const GridInfoInterfa
                     *lbm_coarse_grid_nodes.at(sfbitset_lower).get(), &node_coarse2fine);
                 std::memcpy(ptr_buffer + position, &(iter.first), sizeof(DefSFBitset));
                 position+=sizeof(DefSFBitset);
-                std::memcpy(ptr_buffer + position, node_coarse2fine.f_collide_.data(),
+
+                std::memcpy(ptr_buffer + position, node_coarse2fine.f_.data(),
                     k0SizeOfAllDistributionFunctions_);
+
                 position+=k0SizeOfAllDistributionFunctions_;
-                if (bool_forces_) {
-                    int force_size = ptr_solver_->k0SolverDims_*sizeof(DefReal);
+                if (lbm_solver.bool_forces_) {
+                    int force_size = lbm_solver.GetNumForces()*sizeof(DefReal);
                     std::memcpy(ptr_buffer + position,
                         lbm_coarse_grid_nodes.at(sfbitset_lower)->force_.data(), force_size);
                     position += force_size;
@@ -210,18 +170,12 @@ void GridInfoLbmInteface::ComputeInfoInMpiLayers(
     const std::map<int, DefMap<DefInt>>& map_inner_nodes,
     const DefMap<DefInt>& map_outer_nodes) {
     DefReal dt_lbm = ptr_collision_operator_->dt_lbm_;
-    DefInt dims = ptr_solver_->k0SolverDims_;
+    DefInt dims = ptr_solver_->GetSolverDim();
     std::function<void(const DefReal, const GridNodeLbm&, const std::vector<DefReal>&,
         DefReal* const, std::vector<DefReal>* const)> func_macro;
     SolverLbmInterface* ptr_lbm_solver = std::dynamic_pointer_cast<SolverLbmInterface>(ptr_solver_).get();
     DefMap<std::unique_ptr<GridNodeLbm>>* ptr_lbm_grid_nodes = GetPointerToLbmGrid();
-    if (bool_forces_) {
-        if (ptr_lbm_grid_nodes_->begin()->second->force_.size() != ptr_solver_->k0SolverDims_) {
-            amrproject::LogManager::LogError("Size of forces should be "
-                + std::to_string(ptr_solver_->k0SolverDims_)
-                + "rather than " + std::to_string(ptr_lbm_grid_nodes_->begin()->second->force_.size()) + " in "
-                + std::string(__FILE__) + " at line " + std::to_string(__LINE__));
-        }
+    if (ptr_lbm_solver->bool_forces_) {
         func_macro = ptr_lbm_solver->func_macro_with_force_;
     } else {
         func_macro = [ptr_lbm_solver](const DefReal dt_lbm, const GridNodeLbm& node,
@@ -235,11 +189,11 @@ void GridInfoLbmInteface::ComputeInfoInMpiLayers(
     ptr_lbm_solver->CollisionForGivenNodes<DefInt>(flag_not_collide, map_outer_nodes, this);
     DefMap<DefInt> map_one_layer_near_inner;
     std::vector<DefSFBitset> vec_neighbor;
-    std::vector<DefReal> force;
     for (const auto& iter_layer : map_inner_nodes) {
         for (const auto& iter_node : iter_layer.second) {
             if (!(ptr_lbm_grid_nodes_->at(iter_node.first)->flag_status_&flag_not_collide)) {
-                force = ptr_lbm_solver->GetAllForcesForANode(dims, *ptr_lbm_grid_nodes_->at(iter_node.first).get());
+                const std::vector<DefReal>& force
+                    = ptr_lbm_solver->GetAllForcesForANode(*ptr_lbm_grid_nodes_->at(iter_node.first).get());
                 func_macro(dt_lbm, *ptr_lbm_grid_nodes_->at(iter_node.first).get(), force,
                     &ptr_lbm_grid_nodes_->at(iter_node.first)->rho_,
                     &ptr_lbm_grid_nodes_->at(iter_node.first)->velocity_);
@@ -277,51 +231,6 @@ void GridInfoLbmInteface::ComputeNodeInfoAfterMpiCommunication(
  * @brief function to read node information from a buffer consisting all chunks.
  * @param buffer_size total size of the buffer.
  * @param buffer  pointer to the buffer storing node information.
- */
-void GridInfoLbmInteface::ReadNodeInfoFromBuffer(
-    const DefSizet buffer_size, const std::unique_ptr<char[]>& buffer) {
-    char* ptr_buffer = buffer.get();
-    int key_size = sizeof(DefSFBitset);
-    int node_info_size = SizeOfGridNodeInfoForMpiCommunication();
-    DefSizet num_nodes = buffer_size/(key_size + node_info_size);
-    int force_size = ptr_solver_->k0SolverDims_*sizeof(DefReal);
-    // deserialize data stored in buffer
-    DefSizet position = 0;
-    DefSFBitset key_code;
-    SolverLbmInterface* ptr_lbm_solver = std::dynamic_pointer_cast<SolverLbmInterface>(ptr_solver_).get();
-
-    for (DefSizet i_node = 0; i_node < num_nodes; ++i_node) {
-        std::memcpy(&key_code, ptr_buffer + position, key_size);
-        position += key_size;
-        if (ptr_lbm_grid_nodes_->find(key_code) != ptr_lbm_grid_nodes_->end()) {
-            std::memcpy(ptr_lbm_grid_nodes_->at(key_code)->f_.data(),
-                ptr_buffer + position, k0SizeOfAllDistributionFunctions_);
-            position += k0SizeOfAllDistributionFunctions_;
-            if (bool_forces_) {
-                std::memcpy(ptr_lbm_grid_nodes_->at(key_code)->force_.data(),
-                    ptr_buffer + position, force_size);
-                 position += force_size;
-            }
-        } else {
-            std::vector<DefReal> indices;
-            ptr_sfbitset_aux_->SFBitsetComputeCoordinateVir(key_code, grid_space_, &indices);
-            std::string msg;
-            if (indices.size() == 2) {
-                msg = "grid node (" + std::to_string(indices[kXIndex]) + ", " + std::to_string(indices[kYIndex])
-                    + ") at " + std::to_string(i_level_) + " level does not exist for copying from a buffer";
-            } else {
-                msg = "grid node (" + std::to_string(indices[kXIndex]) + ", " + std::to_string(indices[kYIndex])
-                    + ", " + std::to_string(indices[kZIndex]) + ") at " + std::to_string(i_level_)
-                    + " level does not exist for copying from a buffer";
-            }
-            amrproject::LogManager::LogError(msg);
-        }
-    }
-}
-/**
- * @brief function to read node information from a buffer consisting all chunks.
- * @param buffer_size total size of the buffer.
- * @param buffer  pointer to the buffer storing node information.
  * @return 0 run successfully, -1 failure since at least one node is not found. 
  */
 int GridInfoLbmInteface::ReadInterpolationNodeInfoFromBuffer(
@@ -330,35 +239,36 @@ int GridInfoLbmInteface::ReadInterpolationNodeInfoFromBuffer(
     int key_size = sizeof(DefSFBitset);
     int node_info_size = SizeOfGridNodeInfoForMpiCommunication();
     DefSizet num_nodes = buffer_size/(key_size + node_info_size);
-    int force_size = ptr_solver_->k0SolverDims_*sizeof(DefReal);
+    SolverLbmInterface& lbm_solver = *std::dynamic_pointer_cast<SolverLbmInterface>(ptr_solver_);
+    int force_size = lbm_solver.GetNumForces()*sizeof(DefReal);
     // deserialize data stored in buffer
     DefSizet position = 0;
     DefSFBitset key_code;
-    SolverLbmInterface* ptr_lbm_solver = std::dynamic_pointer_cast<SolverLbmInterface>(ptr_solver_).get();
     DefMap<std::unique_ptr<GridNodeLbm>>* ptr_lbm_interp_nodes =
         reinterpret_cast<DefMap<std::unique_ptr<GridNodeLbm>>*>(&interp_nodes_outer_layer_);
     for (DefSizet i_node = 0; i_node < num_nodes; ++i_node) {
         std::memcpy(&key_code, ptr_buffer + position, key_size);
         position += key_size;
         if (ptr_lbm_interp_nodes->find(key_code) != ptr_lbm_interp_nodes->end()) {
-            std::memcpy(ptr_lbm_interp_nodes->at(key_code)->f_collide_.data(),
+            std::memcpy(ptr_lbm_interp_nodes->at(key_code)->f_.data(),
                 ptr_buffer + position, k0SizeOfAllDistributionFunctions_);
             position += k0SizeOfAllDistributionFunctions_;
-            if (bool_forces_) {
+            if (lbm_solver.bool_forces_) {
                 std::memcpy(ptr_lbm_grid_nodes_->at(key_code)->force_.data(),
                     ptr_buffer + position, force_size);
                  position += force_size;
             }
         } else {
-            std::vector<DefReal> indices;
-            ptr_sfbitset_aux_->SFBitsetComputeCoordinateVir(key_code, grid_space_, &indices);
+            std::vector<DefReal> coordinates;
+            std::vector<DefReal> grid_spacing_background = ptr_sfbitset_aux_->GetBackgroundGridSpacing();
+            ptr_sfbitset_aux_->SFBitsetComputeCoordinateVir(key_code, grid_space_, &coordinates);
             std::string msg;
-            if (indices.size() == 2) {
-                msg = "grid node (" + std::to_string(indices[kXIndex]) + ", " + std::to_string(indices[kYIndex])
+            if (coordinates.size() == 2) {
+                msg = "grid node (" + std::to_string(coordinates[kXIndex]) + ", " + std::to_string(coordinates[kYIndex])
                     + ") at " + std::to_string(i_level_) + " level does not exist for copying from a buffer";
             } else {
-                msg = "grid node (" + std::to_string(indices[kXIndex]) + ", " + std::to_string(indices[kYIndex])
-                    + ", " + std::to_string(indices[kZIndex]) + ") at " + std::to_string(i_level_)
+                msg = "grid node (" + std::to_string(coordinates[kXIndex]) + ", " + std::to_string(coordinates[kYIndex])
+                    + ", " + std::to_string(coordinates[kZIndex]) + ") at " + std::to_string(i_level_)
                     + " level does not exist for copying from a buffer";
             }
             amrproject::LogManager::LogError(msg);

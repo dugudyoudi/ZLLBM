@@ -86,7 +86,8 @@ DefSFBitset SFBitsetAux2D::SFBitsetEncodingCoordi(
 void SFBitsetAux2D::SFBitsetComputeCoordinate(const DefSFBitset& bitset_in,
     const std::array<DefReal, 2>& grid_space,
     std::array<DefReal, 2>* const ptr_coordi)  const {
-    *ptr_coordi = { 0., 0. };
+    *ptr_coordi = {-k0SpaceBackground_[kXIndex]*k0MinIndexOfBackgroundNode_[kXIndex],
+        -k0SpaceBackground_[kYIndex]*k0MinIndexOfBackgroundNode_[kYIndex]};
     for (DefSizet i = 0; i < kSFBitsetBit / 2; ++i) {
         if (bitset_in.test(i * 2)) {
             ptr_coordi->at(kXIndex) += grid_space.at(kXIndex)
@@ -190,7 +191,7 @@ int SFBitsetAux2D::ResetIndicesExceedingDomain(const std::array<DefAmrLUint, 2>&
     return 0;
 }
 /**
- * @brief function to find coarse nodes lined to the fine nodes.
+ * @brief function to find coarse nodes where the given fine node is located in between.
  * @param[in] sfbitset_fine space filling code of the fine nodes.
  * @param[out] ptr_vec_coarse pointer to space filling codes of the coarse nodes.
  */
@@ -213,6 +214,21 @@ void SFBitsetAux2D::FindNeighboringCoarseFromFine(const DefSFBitset& sfbitset_fi
             ptr_vec_coarse->push_back(FindYPos(sfbitset_coarse));
         }
     }
+}
+/**
+ * @brief function to get spacing fill codes whose bits are 1 for the given level and 0 for the background
+ * @param[in] i_level given refinement level
+ * @param[out] ptr_last_ones pointer to spacing fill codes
+ */
+void SFBitsetAux2D::GetNLevelCorrespondingOnes(const DefInt i_level,
+    std::vector<DefSFBitset>* const ptr_last_ones) const {
+    if (ptr_last_ones->size() != 2) {
+        LogManager::LogError("size of ptr_last_ones should be 2");
+    }
+    ptr_last_ones->at(kXIndex) =
+        k0SFBitsetTakeXRef_.at(kRefCurrent_)>>(kSFBitsetBit - i_level * 2);
+    ptr_last_ones->at(kYIndex) =
+        k0SFBitsetTakeYRef_.at(kRefCurrent_)>>(kSFBitsetBit - i_level * 2);
 }
 #endif  // DEBUG_DISABLE_2D_FUNCTIONS
 #ifndef  DEBUG_DISABLE_3D_FUNCTIONS
@@ -294,7 +310,9 @@ DefSFBitset SFBitsetAux3D::SFBitsetEncodingCoordi(
 void SFBitsetAux3D::SFBitsetComputeCoordinate(const DefSFBitset& bitset_in,
      const std::array<DefReal, 3>& grid_space,
     std::array<DefReal, 3>* const ptr_coordi)  const {
-    *ptr_coordi = { 0., 0., 0.};
+    *ptr_coordi = {-k0SpaceBackground_[kXIndex]*k0MinIndexOfBackgroundNode_[kXIndex],
+        -k0SpaceBackground_[kYIndex]*k0MinIndexOfBackgroundNode_[kYIndex],
+        -k0SpaceBackground_[kZIndex]*k0MinIndexOfBackgroundNode_[kZIndex]};
     for (DefSizet i = 0; i < kSFBitsetBit / 3; ++i) {
         if (bitset_in.test(i * 3)) {
             ptr_coordi->at(kXIndex) +=
@@ -432,7 +450,7 @@ int SFBitsetAux3D::ResetIndicesExceedingDomain(const std::array<DefAmrLUint, 3>&
     return 0;
 }
 /**
- * @brief function to find coarse nodes lined to the fine nodes.
+ * @brief function to find coarse nodes where the given fine node is located in between.
  * @param[in] sfbitset_fine space filling code of the fine nodes.
  * @param[out] ptr_vec_coarse pointer to space filling codes of the coarse nodes.
  */
@@ -467,6 +485,23 @@ void SFBitsetAux3D::FindNeighboringCoarseFromFine(const DefSFBitset& sfbitset_fi
             ptr_vec_coarse->push_back(FindZPos(sfbitset_coarse));
         }
     }
+}
+/**
+ * @brief function to get spacing fill codes whose bits are 1 for the given level and 0 for the background
+ * @param[in] i_level given refinement level
+ * @param[out] ptr_last_ones pointer to spacing fill codes
+ */
+void SFBitsetAux3D::GetNLevelCorrespondingOnes(const DefInt i_level,
+    std::vector<DefSFBitset>* const ptr_last_ones) const {
+    if (ptr_last_ones->size() != 3) {
+        LogManager::LogError("size of ptr_last_ones should be 3");
+    }
+    ptr_last_ones->at(kXIndex) =
+        k0SFBitsetTakeXRef_.at(kRefCurrent_)>>(kSFBitsetBit - i_level * 3);
+    ptr_last_ones->at(kYIndex) =
+        k0SFBitsetTakeYRef_.at(kRefCurrent_)>>(kSFBitsetBit - i_level * 3);
+    ptr_last_ones->at(kZIndex) =
+        k0SFBitsetTakeZRef_.at(kRefCurrent_)>>(kSFBitsetBit - i_level * 3);
 }
 #endif  // DEBUG_DISABLE_3D_FUNCTIONS
 }  // end namespace amrproject

@@ -27,11 +27,6 @@ void GridNodeLbm::InterpolationAdditionAssignCoefficient(
         this_node.velocity_.begin(), this_node.velocity_.begin(),
         [coefficient](DefReal num1, DefReal num2) { return num2 + coefficient*num1;});
 
-    // this_node.f_collide_.resize(lbm_node_in.f_collide_.size());
-    // std::transform(lbm_node_in.f_collide_.begin(), lbm_node_in.f_collide_.end(),
-    //     this_node.f_collide_.begin(), this_node.f_collide_.begin(),
-    //     [coefficient](DefReal num1, DefReal num2) { return num2 + coefficient*num1;});
-
     this_node.f_.resize(lbm_node_in.f_.size());
     std::transform(lbm_node_in.f_.begin(), lbm_node_in.f_.end(),
         this_node.f_.begin(), this_node.f_.begin(),
@@ -45,36 +40,40 @@ void GridInfoLbmInteface::SetNodeVariablesAsZeros(amrproject::GridNode* const pt
     SolverLbmInterface* ptr_lbm_solver = std::dynamic_pointer_cast<SolverLbmInterface>(ptr_solver_).get();
     GridNodeLbm* ptr_lbm_node = dynamic_cast<GridNodeLbm*>(ptr_node);
     ptr_lbm_node->rho_ = 0.;
-    ptr_lbm_node->velocity_.assign(ptr_lbm_solver->k0SolverDims_, 0.);
+    ptr_lbm_node->velocity_.assign(ptr_lbm_solver->GetSolverDim(), 0.);
     ptr_lbm_node->f_.assign(ptr_lbm_solver->k0NumQ_, 0.);
 }
-
 /**
  * @brief function to create grid node.
  */
 std::unique_ptr<amrproject::GridNode> GridInfoLbmInteface::GridNodeCreator() {
     const SolverLbmInterface& lbm_solver = *(std::dynamic_pointer_cast<SolverLbmInterface>(ptr_solver_));
-    if (!bool_forces_) {
+    if (!lbm_solver.bool_forces_) {
         return std::make_unique<GridNodeLbm>(
-            lbm_solver.k0Rho_, lbm_solver.k0Velocity_, f_ini_, f_collide_ini_);
+            lbm_solver.GetDefaultDensity(), lbm_solver.GetDefaultVelocity(), f_ini_, f_collide_ini_);
     } else {
         return std::make_unique<GridNodeLbm>(
-            lbm_solver.k0Rho_, lbm_solver.k0Velocity_, lbm_solver.k0Force_, f_ini_, f_collide_ini_);
+            lbm_solver.GetDefaultDensity(), lbm_solver.GetDefaultVelocity(),
+            lbm_solver.GetDefaultForce(), f_ini_, f_collide_ini_);
     }
 }
 /**
  * @brief function to initializes the grid information.
  */
-void GridInfoLbmInteface::InitialGridInfo() {
+void GridInfoLbmInteface::InitialGridInfo(const DefInt dims) {
     SolverLbmInterface* ptr_lbm_solver = std::dynamic_pointer_cast<SolverLbmInterface>(ptr_solver_).get();
     ptr_lbm_solver->SetInitialDisFuncBasedOnReferenceMacros(&f_ini_, &f_collide_ini_);
     k0SizeOfAllDistributionFunctions_ = ptr_lbm_solver->k0NumQ_*sizeof(DefReal);
     SetCollisionOperator();
-    ptr_collision_operator_->viscosity_lbm_ = ptr_lbm_solver->k0LbmViscosity_;
+    ptr_collision_operator_->viscosity_lbm_ = ptr_lbm_solver->GetDefaultViscosity();
     ptr_collision_operator_->dt_lbm_ = 1./ static_cast<DefReal>(TwoPowerN(i_level_));
     ptr_collision_operator_->CalRelaxationTime();
     ptr_collision_operator_->CalRelaxationTimeRatio();
-    ChooseInterpolationMethod();
+    ChooseInterpolationMethod(dims);
+    if (ptr_lbm_solver->GetNumForces() != ptr_lbm_solver->GetDefaultForce().size()) {
+        amrproject::LogManager::LogWarning("Dimension of forces of grid info is not equal to"
+            " the dimension of default forces in the solver.");
+    }
 }
 /**
 * @brief  function to reinterpret type of grid nodes as LBM node type.
@@ -282,7 +281,7 @@ void GridInfoLbmInteface::InitialNotComputeNodeFlag() {
  */
 int GridInfoLbmInteface::TransferInfoFromCoarseGrid(const amrproject::SFBitsetAuxInterface& sfbitset_aux,
     const DefInt node_flag_not_interp, const amrproject::GridInfoInterface& grid_info_coarse) {
-    DefInt dims = ptr_solver_->k0SolverDims_;
+    const DefInt dims = ptr_solver_->GetSolverDim();
     if (GetPointerToLbmGrid() == nullptr ||
         (dynamic_cast<const GridInfoLbmInteface&>(grid_info_coarse).ptr_lbm_grid_nodes_ == nullptr)) {
         amrproject::LogManager::LogError("pointer to LBM grid nodes is null");
@@ -418,9 +417,10 @@ int GridInfoLbmInteface::TransferInfoToCoarseGrid(const amrproject::SFBitsetAuxI
     }
     DefMap<std::unique_ptr<GridNodeLbm>>* ptr_lbm_grid_coarse =
         dynamic_cast<const GridInfoLbmInteface*>(ptr_grid_info_coarse)->ptr_lbm_grid_nodes_;
+    DefInt num_c2f_ghost_layer = ptr_grid_info_coarse->GetNumCoarse2FineGhostLayer(),
+        num_c2f_layer = ptr_grid_info_coarse->GetNumCoarse2FineLayer();
     for (auto& iter_interface : ptr_grid_info_coarse->map_ptr_interface_layer_info_) {
-        for (DefInt i_layer = ptr_grid_info_coarse->k0NumCoarse2FineGhostLayer_;
-            i_layer < ptr_grid_info_coarse->k0NumCoarse2FineLayer_; ++i_layer) {
+        for (DefInt i_layer = num_c2f_ghost_layer; i_layer < num_c2f_layer; ++i_layer) {
             // layers on inner interfaces
             for (auto& iter_node : iter_interface.second->vec_inner_coarse2fine_.at(i_layer)) {
                 sfbitset_fine = sfbitset_aux.SFBitsetToNHigherLevelVir(1, iter_node.first);
@@ -452,7 +452,7 @@ void GridInfoLbmInteface::NodeInfoCoarse2fine(const amrproject::GridNode& coarse
     GridNodeLbm* ptr_fine_node = dynamic_cast<GridNodeLbm*>(ptr_base_fine_node);
     const SolverLbmInterface& lbm_solver = *std::dynamic_pointer_cast<SolverLbmInterface>(ptr_solver_).get();
     std::vector<DefReal> feq(lbm_solver.k0NumQ_);
-    ptr_fine_node->velocity_.resize(lbm_solver.k0SolverDims_);
+    ptr_fine_node->velocity_.resize(lbm_solver.GetSolverDim());
     // if (bool_forces_) {
     //     lbm_solver.func_macro_with_force_(ptr_collision_operator_->dt_lbm_, coarse_node,
     //         &ptr_fine_node->rho_, &ptr_fine_node->velocity_);
@@ -501,7 +501,7 @@ void GridInfoLbmInteface::SetupOutputVariables() {
     DefReal dt = ptr_collision_operator_->dt_lbm_;
     std::function<void(const DefReal dt_lbm, const GridNodeLbm& node, const std::vector<DefReal>& force,
         DefReal* const ptr_rho, std::vector<DefReal>* const ptr_velocity)> func_macro;
-    if (bool_forces_) {
+    if (ptr_lbm_solver->bool_forces_) {
         func_macro = ptr_lbm_solver->func_macro_with_force_;
     } else {
         func_macro = [ptr_lbm_solver](const DefReal dt_lbm, const GridNodeLbm& node,
@@ -523,11 +523,11 @@ void GridInfoLbmInteface::SetupOutputVariables() {
             output_variables_.push_back(std::make_unique<OutputLBMNodeVariableInfo>());
             OutputLBMNodeVariableInfo& output_info_tmp =
                 *dynamic_cast<OutputLBMNodeVariableInfo*>(output_variables_.back().get());
-            output_info_tmp.variable_dims_ = ptr_solver_->k0SolverDims_;
+            output_info_tmp.variable_dims_ = ptr_solver_->GetSolverDim();
             output_info_tmp.func_get_var_ = [ptr_lbm_solver, dt, func_macro]
                 (GridNodeLbm* const ptr_node)->std::vector<DefReal> {
-                std::vector<DefReal> force{
-                    ptr_lbm_solver->GetAllForcesForANode(ptr_lbm_solver->k0SolverDims_, *ptr_node)};
+                const std::vector<DefReal>& force =
+                    ptr_lbm_solver->GetAllForcesForANode(*ptr_node);
                 func_macro(dt, *ptr_node, force, &ptr_node->rho_, &ptr_node->velocity_);
                 return ptr_node->velocity_;
             };

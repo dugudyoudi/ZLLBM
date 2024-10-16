@@ -111,7 +111,7 @@ void BoundaryConditionLbmInterface::GetBoundaryNInverseIndices(
             ptr_inverse_indices->shrink_to_fit();
             break;
         case ELbmBoundaryType::kBoundaryZMin:
-            if (lbm_solver.k0SolverDims_ == 2) {
+            if (lbm_solver.GetSolverDim() == 2) {
                 amrproject::LogManager::LogError("Dimension for LBM solver is 2, does not support "
                     " boundary in z direction in "
                     + std::string(__FILE__) + " at line " + std::to_string(__LINE__));
@@ -120,7 +120,7 @@ void BoundaryConditionLbmInterface::GetBoundaryNInverseIndices(
             *ptr_inverse_indices = lbm_solver.k0QIndicesNeg_.at(kZIndex);
             break;
         case ELbmBoundaryType::kBoundaryZMax:
-            if (lbm_solver.k0SolverDims_ == 2) {
+            if (lbm_solver.GetSolverDim() == 2) {
                 amrproject::LogManager::LogError("Dimension for LBM solver is 2, does not support "
                     " boundary in z direction in "
                     + std::string(__FILE__) + " at line " + std::to_string(__LINE__));

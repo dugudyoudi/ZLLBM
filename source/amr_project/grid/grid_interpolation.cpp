@@ -13,11 +13,15 @@
 #include "io/log_write.h"
 namespace rootproject {
 namespace amrproject {
-void GridInfoInterface::ChooseInterpolationMethod() {
+/**
+ * @brief function to choose interpolation method.
+ * @param[in] dims interpolation dimension.
+ */
+void GridInfoInterface::ChooseInterpolationMethod(const DefInt dims) {
     switch (interp_method_) {
     case amrproject::EInterpolationMethod::kLinear:
         max_interp_length_ = 1;
-        if (ptr_solver_->k0SolverDims_ == 2) {
+        if (dims == 2) {
             func_node_interp_ = [this](const DefAmrLUint interp_length, const DefAmrLUint region_length,
                 const DefInt flag_not_for_interp_coarse,
                 const DefSFBitset& sfbitset_in, const amrproject::SFBitsetAuxInterface& sfbitset_aux,
@@ -28,7 +32,7 @@ void GridInfoInterface::ChooseInterpolationMethod() {
                         region_length, flag_not_for_interp_coarse, sfbitset_in, sfbitset_aux,
                         sfbitset_region, nodes_fine, coarse_grid_info, nodes_coarse, ptr_node);
             };
-        } else {
+        } else if (dims == 3) {
             func_node_interp_ = [this](const DefAmrLUint interp_length, const DefAmrLUint region_length,
                 const DefInt flag_not_for_interp_coarse,
                 const DefSFBitset& sfbitset_in, const  amrproject::SFBitsetAuxInterface& sfbitset_aux,
@@ -40,10 +44,12 @@ void GridInfoInterface::ChooseInterpolationMethod() {
                         region_length, flag_not_for_interp_coarse, sfbitset_in, sfbitset_aux,
                         sfbitset_region, nodes_fine, coarse_grid_info, nodes_coarse, ptr_node);
             };
+        } else {
+            LogManager::LogError("dimension of interpolation method should be 2 or 3");
         }
         break;
     case amrproject::EInterpolationMethod::kLagrangian:
-        if (ptr_solver_->k0SolverDims_ == 2) {
+        if (dims == 2) {
             func_node_interp_ = [this](const DefAmrLUint interp_length, const DefAmrLUint region_length,
                 const DefInt flag_not_for_interp_coarse,
                 const DefSFBitset& sfbitset_in, const  amrproject::SFBitsetAuxInterface& sfbitset_aux,
@@ -55,7 +61,7 @@ void GridInfoInterface::ChooseInterpolationMethod() {
                         region_length, flag_not_for_interp_coarse, sfbitset_in, sfbitset_aux,
                         sfbitset_region, nodes_fine, coarse_grid_info, nodes_coarse, ptr_node);
             };
-        } else {
+        } else if (dims == 3) {
             func_node_interp_ = [this](const DefAmrLUint interp_length, const DefAmrLUint region_length,
                 const DefInt flag_not_for_interp_coarse,
                 const DefSFBitset& sfbitset_in, const  amrproject::SFBitsetAuxInterface& sfbitset_aux,
@@ -67,11 +73,17 @@ void GridInfoInterface::ChooseInterpolationMethod() {
                         region_length, flag_not_for_interp_coarse, sfbitset_in, sfbitset_aux,
                         sfbitset_region, nodes_fine, coarse_grid_info, nodes_coarse, ptr_node);
             };
+        } else {
+            LogManager::LogError("dimension of interpolation method should be 2 or 3");
         }
     default:
         break;
     }
 }
+/**
+ * @brief function for 2D linear interpolation.
+ * @param[in] region_length length of the sfbitset_coarse_region for calculating indices.
+ */
 const GridInfoInterface::LagrangianCoeff& GridInfoInterface::CalculateLagrangianInterpCoeff(
     const DefAmrLUint interp_half_length) {
     if (lagrangian_coefficients_.find(interp_half_length) == lagrangian_coefficients_.end()) {
@@ -110,7 +122,6 @@ const GridInfoInterface::LagrangianCoeff& GridInfoInterface::CalculateLagrangian
  * @param[out] ptr_node pointer to the node to be interpolated.
  * @return 0 success; -1 failure since at least one is not found in fine or coarse, 
  * -2 node is not at the center of the region, -3 size of input region does not match the region length.
- * @note need to overload operator += Node, Node * DefReal
  */
 int GridInfoInterface::InterpolationLinear2D(const DefAmrLUint region_length,
     const DefInt flag_not_for_interp_coarse,
@@ -135,7 +146,9 @@ int GridInfoInterface::InterpolationLinear2D(const DefAmrLUint region_length,
         SetNodeVariablesAsZeros(ptr_node);
         // check if x bit exist at current level
         std::array<DefReal, 2> coeffi_x, coeffi_y;
-        DefSFBitset sfbitset_bit = sfbitset_in&sfbitset_aux.k0SFBitsetTakeXRef_.at(sfbitset_aux.kRefCurrent_);
+        const std::array<DefSFBitset, 2>& take_xref = sfbitset_aux.GetTakeXRef(),
+            take_yref =  sfbitset_aux.GetTakeYRef();
+        DefSFBitset sfbitset_bit = sfbitset_in&take_xref.at(sfbitset_aux.kRefCurrent_);
         if ((sfbitset_bit&sfbitset_aux.k0SfBitsetCurrentLevelBits_) != 0) {
             coeffi_x[0] = 0.5;
             coeffi_x[1] = 0.5;
@@ -143,7 +156,7 @@ int GridInfoInterface::InterpolationLinear2D(const DefAmrLUint region_length,
             coeffi_x[0] = 1.;
             coeffi_x[1] = 0.;
         }
-        sfbitset_bit = sfbitset_in&sfbitset_aux.k0SFBitsetTakeYRef_.at(sfbitset_aux.kRefCurrent_);
+        sfbitset_bit = sfbitset_in&take_yref.at(sfbitset_aux.kRefCurrent_);
         if ((sfbitset_bit&sfbitset_aux.k0SfBitsetCurrentLevelBits_) != 0) {
             coeffi_y[0] = 0.5;
             coeffi_y[1] = 0.5;
@@ -230,15 +243,16 @@ int GridInfoInterface::InterpolationLagrangian2D(const DefAmrLUint interpolation
         // check if x bit exist at current level
         DefAmrLUint num_coeff = 2 * interpolation_length;
         std::vector<DefReal> coeffi_x(num_coeff), coeffi_y(num_coeff);
-        DefSFBitset sfbitset_bit = sfbitset_in&sfbitset_aux.k0SFBitsetTakeXRef_.at(sfbitset_aux.kRefCurrent_);
+        const std::array<DefSFBitset, 2>& take_xref = sfbitset_aux.GetTakeXRef(),
+            take_yref =  sfbitset_aux.GetTakeYRef();
+        DefSFBitset sfbitset_bit = sfbitset_in&take_xref.at(sfbitset_aux.kRefCurrent_);
         const LagrangianCoeff& coeff = CalculateLagrangianInterpCoeff(interpolation_length);
-
         if ((sfbitset_bit&sfbitset_aux.k0SfBitsetCurrentLevelBits_) != 0) {
             std::copy(coeff.coeff1.begin(), coeff.coeff1.end(), coeffi_x.begin());
         } else {
             std::copy(coeff.coeff0.begin(), coeff.coeff0.end(), coeffi_x.begin());
         }
-        sfbitset_bit = sfbitset_in&sfbitset_aux.k0SFBitsetTakeYRef_.at(sfbitset_aux.kRefCurrent_);
+        sfbitset_bit = sfbitset_in&take_yref.at(sfbitset_aux.kRefCurrent_);
         if ((sfbitset_bit&sfbitset_aux.k0SfBitsetCurrentLevelBits_) != 0) {
             std::copy(coeff.coeff1.begin(), coeff.coeff1.end(), coeffi_y.begin());
         } else {
@@ -323,7 +337,9 @@ int GridInfoInterface::InterpolationLinear3D(const DefAmrLUint region_length,
         SetNodeVariablesAsZeros(ptr_node);
         // check if x bit exist at current level
         std::array<DefReal, 2> coeffi_x, coeffi_y, coeffi_z;
-        DefSFBitset sfbitset_bit = sfbitset_in&sfbitset_aux.k0SFBitsetTakeXRef_.at(sfbitset_aux.kRefCurrent_);
+        const std::array<DefSFBitset, 2>& take_xref = sfbitset_aux.GetTakeXRef(),
+            take_yref =  sfbitset_aux.GetTakeYRef(), take_zref = sfbitset_aux.GetTakeZRef();
+        DefSFBitset sfbitset_bit = sfbitset_in&take_xref.at(sfbitset_aux.kRefCurrent_);
         if ((sfbitset_bit&sfbitset_aux.k0SfBitsetCurrentLevelBits_) != 0) {
             coeffi_x[0] = 0.5;
             coeffi_x[1] = 0.5;
@@ -331,7 +347,7 @@ int GridInfoInterface::InterpolationLinear3D(const DefAmrLUint region_length,
             coeffi_x[0] = 1.;
             coeffi_x[1] = 0.;
         }
-        sfbitset_bit = sfbitset_in&sfbitset_aux.k0SFBitsetTakeYRef_.at(sfbitset_aux.kRefCurrent_);
+        sfbitset_bit = sfbitset_in&take_yref.at(sfbitset_aux.kRefCurrent_);
         if ((sfbitset_bit&sfbitset_aux.k0SfBitsetCurrentLevelBits_) != 0) {
             coeffi_y[0] = 0.5;
             coeffi_y[1] = 0.5;
@@ -339,7 +355,7 @@ int GridInfoInterface::InterpolationLinear3D(const DefAmrLUint region_length,
             coeffi_y[0] = 1.;
             coeffi_y[1] = 0.;
         }
-        sfbitset_bit = sfbitset_in&sfbitset_aux.k0SFBitsetTakeZRef_.at(sfbitset_aux.kRefCurrent_);
+        sfbitset_bit = sfbitset_in&take_zref.at(sfbitset_aux.kRefCurrent_);
         if ((sfbitset_bit&sfbitset_aux.k0SfBitsetCurrentLevelBits_) != 0) {
             coeffi_z[0] = 0.5;
             coeffi_z[1] = 0.5;
@@ -380,9 +396,9 @@ int GridInfoInterface::InterpolationLinear3D(const DefAmrLUint region_length,
                                     {grid_space_.at(kXIndex), grid_space_.at(kYIndex), grid_space_.at(kZIndex)};
                                 sfbitset_aux3d.SFBitsetComputeCoordinateVir(sfbitset_fine, grid_space, &coordinates);
                                 LogManager::LogWarning("node ("
-                                    + std::to_string(coordinates[kXIndex] - sfbitset_aux3d.k0RealMin_[kXIndex]) + ", "
-                                    + std::to_string(coordinates[kYIndex]-sfbitset_aux3d.k0RealMin_[kYIndex]) + ", "
-                                    + std::to_string(coordinates[kZIndex]-sfbitset_aux3d.k0RealMin_[kZIndex]) +
+                                    + std::to_string(coordinates[kXIndex]) + ", "
+                                    + std::to_string(coordinates[kYIndex]) + ", "
+                                    + std::to_string(coordinates[kZIndex]) +
                                     ") is not found in fine or coarse in GridInfoInterface::InterpolationLinear3D"
                                     + std::string(__FILE__) + " at line " + std::to_string(__LINE__));
                                 return -1;
@@ -436,20 +452,22 @@ int GridInfoInterface::InterpolationLagrangian3D(const DefAmrLUint interpolation
         // check if x bit exist at current level
         DefAmrLUint num_coeff = 2 * interpolation_length;
         std::vector<DefReal> coeffi_x(num_coeff), coeffi_y(num_coeff), coeffi_z(num_coeff);
-        DefSFBitset sfbitset_bit = sfbitset_in&sfbitset_aux.k0SFBitsetTakeXRef_.at(sfbitset_aux.kRefCurrent_);
+        const std::array<DefSFBitset, 2>& take_xref = sfbitset_aux.GetTakeXRef(),
+            take_yref =  sfbitset_aux.GetTakeYRef(), take_zref = sfbitset_aux.GetTakeZRef();
+        DefSFBitset sfbitset_bit = sfbitset_in&take_xref.at(sfbitset_aux.kRefCurrent_);
         const LagrangianCoeff& coeff = CalculateLagrangianInterpCoeff(interpolation_length);
         if ((sfbitset_bit&sfbitset_aux.k0SfBitsetCurrentLevelBits_) != 0) {
             std::copy(coeff.coeff1.begin(), coeff.coeff1.end(), coeffi_x.begin());
         } else {
             std::copy(coeff.coeff0.begin(), coeff.coeff0.end(), coeffi_x.begin());
         }
-        sfbitset_bit = sfbitset_in&sfbitset_aux.k0SFBitsetTakeYRef_.at(sfbitset_aux.kRefCurrent_);
+        sfbitset_bit = sfbitset_in&take_yref.at(sfbitset_aux.kRefCurrent_);
         if ((sfbitset_bit&sfbitset_aux.k0SfBitsetCurrentLevelBits_) != 0) {
             std::copy(coeff.coeff1.begin(), coeff.coeff1.end(), coeffi_y.begin());
         } else {
             std::copy(coeff.coeff0.begin(), coeff.coeff0.end(), coeffi_y.begin());
         }
-        sfbitset_bit = sfbitset_in&sfbitset_aux.k0SFBitsetTakeZRef_.at(sfbitset_aux.kRefCurrent_);
+        sfbitset_bit = sfbitset_in&take_zref.at(sfbitset_aux.kRefCurrent_);
         if ((sfbitset_bit&sfbitset_aux.k0SfBitsetCurrentLevelBits_) != 0) {
             std::copy(coeff.coeff1.begin(), coeff.coeff1.end(), coeffi_z.begin());
         } else {

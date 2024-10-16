@@ -43,7 +43,7 @@ void GeometryInfoOrigin::FindTrackingNodeBasedOnGeo(
         if (k0GeoDim_ == 3) {
             coordi[kZIndex] = iter->coordinate[kZIndex];
         }
-        sfbitset_tmp = sfbitset_aux.SFBitsetEncodingCoordi(ptr_grid_info->grid_space_, coordi);
+        sfbitset_tmp = sfbitset_aux.SFBitsetEncodingCoordi(ptr_grid_info->GetGridSpace(), coordi);
         if (ptr_grid_info->CheckIfNodeOutsideCubicDomain(k0GeoDim_, sfbitset_tmp, sfbitset_aux)
             >= GridInfoInterface::kFlagInsideDomain_) {
             if (ptr_tracking_node->find(sfbitset_tmp) == ptr_tracking_node->end()) {

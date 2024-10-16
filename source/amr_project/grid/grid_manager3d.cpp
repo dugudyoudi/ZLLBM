@@ -10,7 +10,7 @@
 */
 #ifndef  DEBUG_DISABLE_3D_FUNCTIONS
 #include <string>
-#include "auxiliary_inline_func.h"
+#include "./auxiliary_inline_func.h"
 #include "grid/grid_manager.h"
 #include "criterion/criterion_manager.h"
 #include "io/log_write.h"
@@ -100,8 +100,7 @@ void GridManager3D::SetGridParameters() {
             k0DomainDx_.at(kZIndex) = k0DomainDx_.at(kYIndex);
         }
     }
-    k0SpaceBackground_ = { k0DomainDx_[kXIndex], k0DomainDx_[kYIndex],
-    k0DomainDx_[kZIndex] };
+    k0SpaceBackground_ = { k0DomainDx_[kXIndex], k0DomainDx_[kYIndex], k0DomainDx_[kZIndex] };
 
     // calculate number of background nodes in each direction
     k0MaxIndexOfBackgroundNode_ = {
@@ -1339,7 +1338,7 @@ void GridManager3D::InstantiateBackgroundGrid(const DefSFCodeToUint code_min,
     DefSFBitset sfbitset_tmp;
     GridInfoInterface& grid_info = *(vec_ptr_grid_info_.at(0));
     DefSFCodeToUint i_code = code_min;
-    int flag_node;
+    DefInt flag_node;
     while (i_code <= code_max) {
         ResetIndicesExceedingDomain(k0MinIndexOfBackgroundNode_, k0MaxIndexOfBackgroundNode_, &i_code, &sfbitset_tmp);
         if (map_occupied.find(sfbitset_tmp) == map_occupied.end()) {

@@ -253,25 +253,25 @@ void MpiManager::IniSendNReceivePartitionedGrid(const DefInt dims,
             }
             if (dims == 2) {
 #ifndef  DEBUG_DISABLE_2D_FUNCTIONS
-                const SFBitsetAux2D sfbitset_aux_2d = dynamic_cast<const SFBitsetAux2D&>(sfbitset_aux);
+                const SFBitsetAux2D& sfbitset_aux_2d = dynamic_cast<const SFBitsetAux2D&>(sfbitset_aux);
                 for (auto i = 0; i < num_ranks; ++i) {
                     code_min_current.at(i) = sfbitset_aux_2d.SFBitsetToNHigherLevel(
                         i_level_lower, ull_min.at(i)).to_ullong();
                     code_max_current.at(i) = sfbitset_aux_2d.SFBitsetToNHigherLevel(
                         i_level_lower, ull_max.at(i)).to_ullong();
                 }
-                GetNLevelCorrespondingOnes2D(i_level_lower, sfbitset_aux_2d, &corresponding_ones);
+                sfbitset_aux_2d.GetNLevelCorrespondingOnes(i_level_lower, &corresponding_ones);
 #endif  // DEBUG_DISABLE_2D_FUNCTIONS
             } else {
 #ifndef  DEBUG_DISABLE_3D_FUNCTIONS
-                const SFBitsetAux3D sfbitset_aux_3d = dynamic_cast<const SFBitsetAux3D&>(sfbitset_aux);
+                const SFBitsetAux3D& sfbitset_aux_3d = dynamic_cast<const SFBitsetAux3D&>(sfbitset_aux);
                 for (auto i = 0; i < num_ranks; ++i) {
                     code_min_current.at(i) = sfbitset_aux_3d.SFBitsetToNHigherLevel(
                         i_level_lower, ull_min.at(i)).to_ullong();
                     code_max_current.at(i) = sfbitset_aux_3d.SFBitsetToNHigherLevel(
                         i_level_lower, ull_max.at(i)).to_ullong();
                 }
-                GetNLevelCorrespondingOnes3D(i_level_lower, sfbitset_aux_3d, &corresponding_ones);
+                sfbitset_aux_3d.GetNLevelCorrespondingOnes(i_level_lower, &corresponding_ones);
 #endif  // DEBUG_DISABLE_3D_FUNCTIONS
             }
             sfbitset_aux.GetMinM1AtGivenLevel(i_level_lower, indices_min, &domain_min_m1_n_level);
@@ -281,7 +281,7 @@ void MpiManager::IniSendNReceivePartitionedGrid(const DefInt dims,
             std::vector<int> i_chunk_each_rank(num_ranks, -1), i_counts(num_ranks, 0);
             std::vector<DefSFCodeToUint>::iterator iter_index;
             std::vector<DefSFBitset> nodes_in_region;
-            DefInt num_extend_coarse2fine = ptr_vec_grid_info->at(i_level_lower)->k0NumCoarse2FineLayer_ - 1;
+            DefInt num_extend_coarse2fine = ptr_vec_grid_info->at(i_level_lower)->GetNumCoarse2FineLayer() - 1;
             DefMap<DefInt> map_extend_coarse2fine;
             std::vector<DefMap<DefInt>> map_partition_near_f2c_outmost(num_ranks);
             bool bool_near_fine2coarse;
@@ -768,7 +768,7 @@ void MpiManager::IniSendNReceivePartitionedGrid(const DefInt dims,
         // send and receive nodes on outmost coarse to fine refinement interfaces
         DefInt flag0 = static_cast<DefInt>(flag_size0);
         IniSendNReceiveCoarse2Fine0Interface(dims, i_level_lower,
-            ptr_vec_grid_info->at(i_level_lower)->k0NumCoarse2FineLayer_, flag0,
+            ptr_vec_grid_info->at(i_level_lower)->GetNumCoarse2FineLayer(), flag0,
             outmost_for_all_ranks, &ptr_vec_grid_info->at(i_level_lower)->map_ptr_interface_layer_info_);
     }
 }

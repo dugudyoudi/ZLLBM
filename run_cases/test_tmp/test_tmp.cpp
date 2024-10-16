@@ -35,9 +35,8 @@ void SetTestDependentParameters(
     for (auto& iter_grid : ptr_amr_instance_->ptr_grid_manager_->vec_ptr_grid_info_) {
         lbmproject::GridInfoLbmInteface& grid_ref
             = *dynamic_cast<lbmproject::GridInfoLbmInteface*>(iter_grid.get());
-        grid_ref.bool_forces_ = false;
         lbmproject::SolverLbmInterface& solver_ref
-            = *dynamic_cast<lbmproject::SolverLbmInterface*>(grid_ref.ptr_solver_.get());
+            = *dynamic_cast<lbmproject::SolverLbmInterface*>(grid_ref.GetPtrSolver());
         solver_ref.SetDomainBoundaryCondition(lbmproject::ELbmBoundaryType::kBoundaryXMin,
             lbmproject::ELbmBoundaryConditionScheme::kPeriodic, &grid_ref.domain_boundary_condition_);
         solver_ref.SetDomainBoundaryCondition(lbmproject::ELbmBoundaryType::kBoundaryXMax,
@@ -47,7 +46,7 @@ void SetTestDependentParameters(
     lbmproject::SolverLbmInterface& solver_ref = *dynamic_cast<lbmproject::SolverLbmInterface*>(
         ptr_amr_instance_->ptr_grid_manager_->vec_ptr_solver_.at(0).get());
     solver_ref.k0BoolCompressible_ = true;
-    solver_ref.k0LbmViscosity_ = sqrt(3./16) * lbmproject::SolverLbmInterface::kCs_Sq_;
+    solver_ref.SetDefaultViscosity(sqrt(3./16) * lbmproject::SolverLbmInterface::kCs_Sq_);
     DefReal lbm_height = max_domain_height_ /dx_ + 1.;  // bounce back wall at 0.5 distance to the node
     DefSizet num_probes = static_cast<DefSizet>(max_domain_height_/dx_ + 1. + kEps);
     u_analytical_.resize(num_probes);
@@ -66,7 +65,7 @@ void SetDomainBoundaryOtherThanPeriodic(
         lbmproject::GridInfoLbmInteface& grid_ref
             = *dynamic_cast<lbmproject::GridInfoLbmInteface*>(iter_grid.get());
         lbmproject::SolverLbmInterface& solver_ref
-            = *dynamic_cast<lbmproject::SolverLbmInterface*>(grid_ref.ptr_solver_.get());
+            = *dynamic_cast<lbmproject::SolverLbmInterface*>(grid_ref.GetPtrSolver());
         solver_ref.SetDomainBoundaryCondition(lbmproject::ELbmBoundaryType::kBoundaryYMin,
             boundary_condition_type, &grid_ref.domain_boundary_condition_);
         solver_ref.SetDomainBoundaryCondition(lbmproject::ELbmBoundaryType::kBoundaryYMax,

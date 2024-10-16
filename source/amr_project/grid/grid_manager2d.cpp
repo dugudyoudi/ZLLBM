@@ -93,7 +93,6 @@ void GridManager2D::SetGridParameters() {
     k0SFBitsetDomainMax_ = SFBitsetEncoding({k0MaxIndexOfBackgroundNode_[kXIndex],
         k0MaxIndexOfBackgroundNode_[kYIndex]});
 
-
     // check if domain size may exceed range of morton code
     /* the criterion is the maximum index for
     *  (domain size + offset distance)/(minimum grid spacing).
@@ -104,9 +103,8 @@ void GridManager2D::SetGridParameters() {
     *  could be used for larger domain
     */
     // number of bits available for background mesh in one dimension
-    DefInt bit_max = kSFBitsetBit / k0GridDims_ - k0MaxLevel_;
-    DefSizet index_max = TwoPowerN(bit_max);
-    DefAmrLUint scale_i_level = static_cast<DefAmrLUint>(TwoPowerN(k0MaxLevel_));
+    DefInt bit_max = kSFBitsetBit / k0GridDims_ - k0MaxLevel_ - 1;
+    DefAmrLUint index_max = TwoPowerN(bit_max);
 
     if (k0MaxIndexOfBackgroundNode_.at(kXIndex) > index_max) {
         LogManager::LogError("Domain size exceeds the limits of space filling code in"
@@ -686,7 +684,7 @@ void GridManager2D::InstantiateBackgroundGrid(const DefSFCodeToUint code_min,
     DefSFBitset sfbitset_tmp;
     GridInfoInterface& grid_info = *(vec_ptr_grid_info_.at(0));
     DefSFCodeToUint i_code = code_min;
-    int flag_node;
+    DefInt flag_node;
     while (i_code <= code_max) {
         ResetIndicesExceedingDomain(k0MinIndexOfBackgroundNode_, k0MaxIndexOfBackgroundNode_, &i_code, &sfbitset_tmp);
         if (map_occupied.find(sfbitset_tmp) == map_occupied.end()) {

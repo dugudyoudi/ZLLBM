@@ -19,28 +19,7 @@ namespace lbmproject {
  */
 std::shared_ptr<amrproject::SolverInterface> SolverCreatorLbmD3Q19::CreateSolver() const {
     std::shared_ptr<SolverLbmD3Q19> ptr_tmp = std::make_shared<SolverLbmD3Q19>();
-    ptr_tmp->k0SolverDims_ = 3;
-    ptr_tmp->k0NumQ_ = 19;
-    ptr_tmp->solver_type_ = "LbmD3Q19";
-
-    ptr_tmp->k0Cx_ = { 0., 1., -1., 0.,  0., 0.,  0., 1., -1.,  1., -1., 1., -1.,  1., -1., 0., 0.,   0.,  0.};
-    ptr_tmp->k0Cy_ = { 0., 0.,  0., 1., -1., 0.,  0., 1.,  1., -1., -1., 0.,  0.,  0.,  0., 1., -1.,  1., -1.};
-    ptr_tmp->k0Cz_ = { 0., 0.,  0., 0.,  0., 1., -1., 0.,  0.,  0.,  0., 1.,  1., -1., -1., 1.,  1., -1., -1.};
-    ptr_tmp->k0Weights_ = { 1./3., 1./18., 1./18., 1./18., 1./18., 1./18., 1./18.,
-        1./36., 1./36., 1./36., 1./36., 1./36., 1./36., 1./36., 1./36., 1./36., 1./36., 1./36., 1./36. };
-    ptr_tmp->k0NumQInOneDirection_ = 5;
-    ptr_tmp->k0QIndicesNeg_ = {{ptr_tmp->kFXnY0Z0, ptr_tmp->kFXnYnZ0, ptr_tmp->kFXnYpZ0,
-        ptr_tmp->kFXnY0Zn, ptr_tmp->kFXnY0Zp},
-        {ptr_tmp->kFX0YnZ0, ptr_tmp->kFXnYnZ0, ptr_tmp->kFXpYnZ0,
-        ptr_tmp->kFX0YnZn, ptr_tmp->kFX0YnZp},
-        {ptr_tmp->kFX0Y0Zn, ptr_tmp->kFXnY0Zn, ptr_tmp->kFXpY0Zn,
-        ptr_tmp->kFX0YnZn, ptr_tmp->kFX0YpZn}};
-    ptr_tmp->k0QIndicesPos_ = {{ptr_tmp->kFXpY0Z0, ptr_tmp->kFXpYpZ0, ptr_tmp->kFXpYnZ0,
-        ptr_tmp->kFXpY0Zp, ptr_tmp->kFXpY0Zn},
-        {ptr_tmp->kFX0YpZ0, ptr_tmp->kFXpYpZ0, ptr_tmp->kFXnYpZ0,
-        ptr_tmp->kFX0YpZp, ptr_tmp->kFX0YpZn},
-        {ptr_tmp->kFX0Y0Zp, ptr_tmp->kFXpY0Zp, ptr_tmp->kFXnY0Zp,
-        ptr_tmp->kFX0YpZp, ptr_tmp->kFX0YnZp}};
+    ptr_tmp->SetSolverType("LbmD3Q19");
     ptr_tmp->ResizeModelRelatedVectors();
     return ptr_tmp;
 }
@@ -63,114 +42,115 @@ void SolverLbmD3Q19::StreamOutForAGivenNode(const DefSFBitset sfbitset_in,
     const amrproject::SFBitsetAux3D sfbitset_aux3d = dynamic_cast<const amrproject::SFBitsetAux3D&>(sfbitset_aux);
     DefSFBitset sfbitset_tmp, sfbitset_tmp1;
     // f(-x, 0, 0)
-    ptr_map_grid_nodes->at(sfbitset_in)->f_.at(kFX0Y0Z0) = ptr_map_grid_nodes->at(sfbitset_in)->f_collide_.at(kFX0Y0Z0);
+    ptr_map_grid_nodes->at(sfbitset_in)->f_.at(kFX0Y0Z0_) =
+        ptr_map_grid_nodes->at(sfbitset_in)->f_collide_.at(kFX0Y0Z0_);
     // f(-x, 0, 0)
     sfbitset_tmp = sfbitset_aux3d.FindXNeg(sfbitset_in);
     if (ptr_map_grid_nodes->find(sfbitset_tmp) != ptr_map_grid_nodes->end()) {
-        ptr_map_grid_nodes->at(sfbitset_tmp)->f_.at(kFXnY0Z0) =
-            ptr_map_grid_nodes->at(sfbitset_in)->f_collide_.at(kFXnY0Z0);
+        ptr_map_grid_nodes->at(sfbitset_tmp)->f_.at(kFXnY0Z0_) =
+            ptr_map_grid_nodes->at(sfbitset_in)->f_collide_.at(kFXnY0Z0_);
     }
     // f(-x, -y, 0)
     sfbitset_tmp1 = sfbitset_aux3d.FindYNeg(sfbitset_tmp);
     if (ptr_map_grid_nodes->find(sfbitset_tmp1) != ptr_map_grid_nodes->end()) {
-        ptr_map_grid_nodes->at(sfbitset_tmp1)->f_.at(kFXnYnZ0) =
-            ptr_map_grid_nodes->at(sfbitset_in)->f_collide_.at(kFXnYnZ0);
+        ptr_map_grid_nodes->at(sfbitset_tmp1)->f_.at(kFXnYnZ0_) =
+            ptr_map_grid_nodes->at(sfbitset_in)->f_collide_.at(kFXnYnZ0_);
     }
     // f(-x, +y, 0)
     sfbitset_tmp1 = sfbitset_aux3d.FindYPos(sfbitset_tmp);
     if (ptr_map_grid_nodes->find(sfbitset_tmp1) != ptr_map_grid_nodes->end()) {
-        ptr_map_grid_nodes->at(sfbitset_tmp1)->f_.at(kFXnYpZ0) =
-            ptr_map_grid_nodes->at(sfbitset_in)->f_collide_.at(kFXnYpZ0);
+        ptr_map_grid_nodes->at(sfbitset_tmp1)->f_.at(kFXnYpZ0_) =
+            ptr_map_grid_nodes->at(sfbitset_in)->f_collide_.at(kFXnYpZ0_);
     }
     // f(-x, 0, -z)
     sfbitset_tmp1 = sfbitset_aux3d.FindZNeg(sfbitset_tmp);
     if (ptr_map_grid_nodes->find(sfbitset_tmp1) != ptr_map_grid_nodes->end()) {
-        ptr_map_grid_nodes->at(sfbitset_tmp1)->f_.at(kFXnY0Zn) =
-            ptr_map_grid_nodes->at(sfbitset_in)->f_collide_.at(kFXnY0Zn);
+        ptr_map_grid_nodes->at(sfbitset_tmp1)->f_.at(kFXnY0Zn_) =
+            ptr_map_grid_nodes->at(sfbitset_in)->f_collide_.at(kFXnY0Zn_);
     }
     // f(-x, 0, +z)
     sfbitset_tmp1 = sfbitset_aux3d.FindZPos(sfbitset_tmp);
     if (ptr_map_grid_nodes->find(sfbitset_tmp1) != ptr_map_grid_nodes->end()) {
-        ptr_map_grid_nodes->at(sfbitset_tmp1)->f_.at(kFXnY0Zp) =
-            ptr_map_grid_nodes->at(sfbitset_in)->f_collide_.at(kFXnY0Zp);
+        ptr_map_grid_nodes->at(sfbitset_tmp1)->f_.at(kFXnY0Zp_) =
+            ptr_map_grid_nodes->at(sfbitset_in)->f_collide_.at(kFXnY0Zp_);
     }
     // f(+x, 0, 0)
     sfbitset_tmp = sfbitset_aux3d.FindXPos(sfbitset_in);
     if (ptr_map_grid_nodes->find(sfbitset_tmp) != ptr_map_grid_nodes->end()) {
-        ptr_map_grid_nodes->at(sfbitset_tmp)->f_.at(kFXpY0Z0) =
-            ptr_map_grid_nodes->at(sfbitset_in)->f_collide_.at(kFXpY0Z0);
+        ptr_map_grid_nodes->at(sfbitset_tmp)->f_.at(kFXpY0Z0_) =
+            ptr_map_grid_nodes->at(sfbitset_in)->f_collide_.at(kFXpY0Z0_);
     }
     // f(+x, -y, 0)
     sfbitset_tmp1 = sfbitset_aux3d.FindYNeg(sfbitset_tmp);
     if (ptr_map_grid_nodes->find(sfbitset_tmp1) != ptr_map_grid_nodes->end()) {
-        ptr_map_grid_nodes->at(sfbitset_tmp1)->f_.at(kFXpYnZ0) =
-            ptr_map_grid_nodes->at(sfbitset_in)->f_collide_.at(kFXpYnZ0);
+        ptr_map_grid_nodes->at(sfbitset_tmp1)->f_.at(kFXpYnZ0_) =
+            ptr_map_grid_nodes->at(sfbitset_in)->f_collide_.at(kFXpYnZ0_);
     }
     // f(+x, +y, 0)
     sfbitset_tmp1 = sfbitset_aux3d.FindYPos(sfbitset_tmp);
     if (ptr_map_grid_nodes->find(sfbitset_tmp1) != ptr_map_grid_nodes->end()) {
-        ptr_map_grid_nodes->at(sfbitset_tmp1)->f_.at(kFXpYpZ0) =
-            ptr_map_grid_nodes->at(sfbitset_in)->f_collide_.at(kFXpYpZ0);
+        ptr_map_grid_nodes->at(sfbitset_tmp1)->f_.at(kFXpYpZ0_) =
+            ptr_map_grid_nodes->at(sfbitset_in)->f_collide_.at(kFXpYpZ0_);
     }
     // f(+x, 0, -z)
     sfbitset_tmp1 = sfbitset_aux3d.FindZNeg(sfbitset_tmp);
     if (ptr_map_grid_nodes->find(sfbitset_tmp1) != ptr_map_grid_nodes->end()) {
-        ptr_map_grid_nodes->at(sfbitset_tmp1)->f_.at(kFXpY0Zn) =
-            ptr_map_grid_nodes->at(sfbitset_in)->f_collide_.at(kFXpY0Zn);
+        ptr_map_grid_nodes->at(sfbitset_tmp1)->f_.at(kFXpY0Zn_) =
+            ptr_map_grid_nodes->at(sfbitset_in)->f_collide_.at(kFXpY0Zn_);
     }
     // f(+x, 0, +z)
     sfbitset_tmp1 = sfbitset_aux3d.FindZPos(sfbitset_tmp);
     if (ptr_map_grid_nodes->find(sfbitset_tmp1) != ptr_map_grid_nodes->end()) {
-        ptr_map_grid_nodes->at(sfbitset_tmp1)->f_.at(kFXpY0Zp) =
-            ptr_map_grid_nodes->at(sfbitset_in)->f_collide_.at(kFXpY0Zp);
+        ptr_map_grid_nodes->at(sfbitset_tmp1)->f_.at(kFXpY0Zp_) =
+            ptr_map_grid_nodes->at(sfbitset_in)->f_collide_.at(kFXpY0Zp_);
     }
     // f(0, -y, 0)
     sfbitset_tmp = sfbitset_aux3d.FindYNeg(sfbitset_in);
     if (ptr_map_grid_nodes->find(sfbitset_tmp) != ptr_map_grid_nodes->end()) {
-        ptr_map_grid_nodes->at(sfbitset_tmp)->f_.at(kFX0YnZ0) =
-            ptr_map_grid_nodes->at(sfbitset_in)->f_collide_.at(kFX0YnZ0);
+        ptr_map_grid_nodes->at(sfbitset_tmp)->f_.at(kFX0YnZ0_) =
+            ptr_map_grid_nodes->at(sfbitset_in)->f_collide_.at(kFX0YnZ0_);
     }
     // f(0, -y, -z)
     sfbitset_tmp1 = sfbitset_aux3d.FindZNeg(sfbitset_tmp);
     if (ptr_map_grid_nodes->find(sfbitset_tmp1) != ptr_map_grid_nodes->end()) {
-        ptr_map_grid_nodes->at(sfbitset_tmp1)->f_.at(kFX0YnZn) =
-            ptr_map_grid_nodes->at(sfbitset_in)->f_collide_.at(kFX0YnZn);
+        ptr_map_grid_nodes->at(sfbitset_tmp1)->f_.at(kFX0YnZn_) =
+            ptr_map_grid_nodes->at(sfbitset_in)->f_collide_.at(kFX0YnZn_);
     }
     // f((0, -y, +z)
     sfbitset_tmp1 = sfbitset_aux3d.FindZPos(sfbitset_tmp);
     if (ptr_map_grid_nodes->find(sfbitset_tmp1) != ptr_map_grid_nodes->end()) {
-        ptr_map_grid_nodes->at(sfbitset_tmp1)->f_.at(kFX0YnZp) =
-            ptr_map_grid_nodes->at(sfbitset_in)->f_collide_.at(kFX0YnZp);
+        ptr_map_grid_nodes->at(sfbitset_tmp1)->f_.at(kFX0YnZp_) =
+            ptr_map_grid_nodes->at(sfbitset_in)->f_collide_.at(kFX0YnZp_);
     }
     // f(0, +y, 0)
     sfbitset_tmp = sfbitset_aux3d.FindYPos(sfbitset_in);
     if (ptr_map_grid_nodes->find(sfbitset_tmp) != ptr_map_grid_nodes->end()) {
-        ptr_map_grid_nodes->at(sfbitset_tmp)->f_.at(kFX0YpZ0) =
-            ptr_map_grid_nodes->at(sfbitset_in)->f_collide_.at(kFX0YpZ0);
+        ptr_map_grid_nodes->at(sfbitset_tmp)->f_.at(kFX0YpZ0_) =
+            ptr_map_grid_nodes->at(sfbitset_in)->f_collide_.at(kFX0YpZ0_);
     }
     // f(0, +y, -z)
     sfbitset_tmp1 = sfbitset_aux3d.FindZNeg(sfbitset_tmp);
     if (ptr_map_grid_nodes->find(sfbitset_tmp1) != ptr_map_grid_nodes->end()) {
-        ptr_map_grid_nodes->at(sfbitset_tmp1)->f_.at(kFX0YpZn) =
-            ptr_map_grid_nodes->at(sfbitset_in)->f_collide_.at(kFX0YpZn);
+        ptr_map_grid_nodes->at(sfbitset_tmp1)->f_.at(kFX0YpZn_) =
+            ptr_map_grid_nodes->at(sfbitset_in)->f_collide_.at(kFX0YpZn_);
     }
     // f((0, +y, +z)
     sfbitset_tmp1 = sfbitset_aux3d.FindZPos(sfbitset_tmp);
     if (ptr_map_grid_nodes->find(sfbitset_tmp1) != ptr_map_grid_nodes->end()) {
-        ptr_map_grid_nodes->at(sfbitset_tmp1)->f_.at(kFX0YpZp) =
-            ptr_map_grid_nodes->at(sfbitset_in)->f_collide_.at(kFX0YpZp);
+        ptr_map_grid_nodes->at(sfbitset_tmp1)->f_.at(kFX0YpZp_) =
+            ptr_map_grid_nodes->at(sfbitset_in)->f_collide_.at(kFX0YpZp_);
     }
     // f(0, 0, -z)
     sfbitset_tmp = sfbitset_aux3d.FindZNeg(sfbitset_in);
     if (ptr_map_grid_nodes->find(sfbitset_tmp) != ptr_map_grid_nodes->end()) {
-        ptr_map_grid_nodes->at(sfbitset_tmp)->f_.at(kFX0Y0Zn) =
-            ptr_map_grid_nodes->at(sfbitset_in)->f_collide_.at(kFX0Y0Zn);
+        ptr_map_grid_nodes->at(sfbitset_tmp)->f_.at(kFX0Y0Zn_) =
+            ptr_map_grid_nodes->at(sfbitset_in)->f_collide_.at(kFX0Y0Zn_);
     }
     // f(0, 0, +z)
     sfbitset_tmp = sfbitset_aux3d.FindZPos(sfbitset_in);
     if (ptr_map_grid_nodes->find(sfbitset_tmp) != ptr_map_grid_nodes->end()) {
-        ptr_map_grid_nodes->at(sfbitset_tmp)->f_.at(kFX0Y0Zp) =
-            ptr_map_grid_nodes->at(sfbitset_in)->f_collide_.at(kFX0Y0Zp);
+        ptr_map_grid_nodes->at(sfbitset_tmp)->f_.at(kFX0Y0Zp_) =
+            ptr_map_grid_nodes->at(sfbitset_in)->f_collide_.at(kFX0Y0Zp_);
     }
 }
 /**
@@ -184,114 +164,115 @@ void SolverLbmD3Q19::StreamInForAGivenNode(const DefSFBitset sfbitset_in,
     DefMap<std::unique_ptr<GridNodeLbm>>* const ptr_map_grid_nodes) const {
     const amrproject::SFBitsetAux3D sfbitset_aux3d = dynamic_cast<const amrproject::SFBitsetAux3D&>(sfbitset_aux);
     DefSFBitset sfbitset_tmp, sfbitset_tmp1;
-    ptr_map_grid_nodes->at(sfbitset_in)->f_.at(kFX0Y0Z0) = ptr_map_grid_nodes->at(sfbitset_in)->f_collide_.at(kFX0Y0Z0);
+    ptr_map_grid_nodes->at(sfbitset_in)->f_.at(kFX0Y0Z0_) =
+        ptr_map_grid_nodes->at(sfbitset_in)->f_collide_.at(kFX0Y0Z0_);
     // f(-x, 0, 0)
     sfbitset_tmp = sfbitset_aux3d.FindXPos(sfbitset_in);
     if (ptr_map_grid_nodes->find(sfbitset_tmp) != ptr_map_grid_nodes->end()) {
-        ptr_map_grid_nodes->at(sfbitset_in)->f_.at(kFXnY0Z0) =
-            ptr_map_grid_nodes->at(sfbitset_tmp)->f_collide_.at(kFXnY0Z0);
+        ptr_map_grid_nodes->at(sfbitset_in)->f_.at(kFXnY0Z0_) =
+            ptr_map_grid_nodes->at(sfbitset_tmp)->f_collide_.at(kFXnY0Z0_);
     }
     // f(-x, -y, 0)
     sfbitset_tmp1 = sfbitset_aux3d.FindYPos(sfbitset_tmp);
     if (ptr_map_grid_nodes->find(sfbitset_tmp1) != ptr_map_grid_nodes->end()) {
-        ptr_map_grid_nodes->at(sfbitset_in)->f_.at(kFXnYnZ0) =
-            ptr_map_grid_nodes->at(sfbitset_tmp1)->f_collide_.at(kFXnYnZ0);
+        ptr_map_grid_nodes->at(sfbitset_in)->f_.at(kFXnYnZ0_) =
+            ptr_map_grid_nodes->at(sfbitset_tmp1)->f_collide_.at(kFXnYnZ0_);
     }
     // f(-x, +y, 0)
     sfbitset_tmp1 = sfbitset_aux3d.FindYNeg(sfbitset_tmp);
     if (ptr_map_grid_nodes->find(sfbitset_tmp1) != ptr_map_grid_nodes->end()) {
-        ptr_map_grid_nodes->at(sfbitset_in)->f_.at(kFXnYpZ0) =
-            ptr_map_grid_nodes->at(sfbitset_tmp1)->f_collide_.at(kFXnYpZ0);
+        ptr_map_grid_nodes->at(sfbitset_in)->f_.at(kFXnYpZ0_) =
+            ptr_map_grid_nodes->at(sfbitset_tmp1)->f_collide_.at(kFXnYpZ0_);
     }
     // f(-x, 0, -z)
     sfbitset_tmp1 = sfbitset_aux3d.FindZPos(sfbitset_tmp);
     if (ptr_map_grid_nodes->find(sfbitset_tmp1) != ptr_map_grid_nodes->end()) {
-        ptr_map_grid_nodes->at(sfbitset_in)->f_.at(kFXnY0Zn) =
-            ptr_map_grid_nodes->at(sfbitset_tmp1)->f_collide_.at(kFXnY0Zn);
+        ptr_map_grid_nodes->at(sfbitset_in)->f_.at(kFXnY0Zn_) =
+            ptr_map_grid_nodes->at(sfbitset_tmp1)->f_collide_.at(kFXnY0Zn_);
     }
     // f(-x, 0, +z)
     sfbitset_tmp1 = sfbitset_aux3d.FindZNeg(sfbitset_tmp);
     if (ptr_map_grid_nodes->find(sfbitset_tmp1) != ptr_map_grid_nodes->end()) {
-        ptr_map_grid_nodes->at(sfbitset_in)->f_.at(kFXnY0Zp) =
-            ptr_map_grid_nodes->at(sfbitset_tmp1)->f_collide_.at(kFXnY0Zp);
+        ptr_map_grid_nodes->at(sfbitset_in)->f_.at(kFXnY0Zp_) =
+            ptr_map_grid_nodes->at(sfbitset_tmp1)->f_collide_.at(kFXnY0Zp_);
     }
     // f(+x, 0, 0)
     sfbitset_tmp = sfbitset_aux3d.FindXNeg(sfbitset_in);
     if (ptr_map_grid_nodes->find(sfbitset_tmp) != ptr_map_grid_nodes->end()) {
-        ptr_map_grid_nodes->at(sfbitset_in)->f_.at(kFXpY0Z0) =
-            ptr_map_grid_nodes->at(sfbitset_tmp)->f_collide_.at(kFXpY0Z0);
+        ptr_map_grid_nodes->at(sfbitset_in)->f_.at(kFXpY0Z0_) =
+            ptr_map_grid_nodes->at(sfbitset_tmp)->f_collide_.at(kFXpY0Z0_);
     }
     // f(+x, -y, 0)
     sfbitset_tmp1 = sfbitset_aux3d.FindYPos(sfbitset_tmp);
     if (ptr_map_grid_nodes->find(sfbitset_tmp1) != ptr_map_grid_nodes->end()) {
-        ptr_map_grid_nodes->at(sfbitset_in)->f_.at(kFXpYnZ0) =
-            ptr_map_grid_nodes->at(sfbitset_tmp1)->f_collide_.at(kFXpYnZ0);
+        ptr_map_grid_nodes->at(sfbitset_in)->f_.at(kFXpYnZ0_) =
+            ptr_map_grid_nodes->at(sfbitset_tmp1)->f_collide_.at(kFXpYnZ0_);
     }
     // f(+x, +y, 0)
     sfbitset_tmp1 = sfbitset_aux3d.FindYNeg(sfbitset_tmp);
     if (ptr_map_grid_nodes->find(sfbitset_tmp1) != ptr_map_grid_nodes->end()) {
-        ptr_map_grid_nodes->at(sfbitset_in)->f_.at(kFXpYpZ0) =
-            ptr_map_grid_nodes->at(sfbitset_tmp1)->f_collide_.at(kFXpYpZ0);
+        ptr_map_grid_nodes->at(sfbitset_in)->f_.at(kFXpYpZ0_) =
+            ptr_map_grid_nodes->at(sfbitset_tmp1)->f_collide_.at(kFXpYpZ0_);
     }
     // f(+x, 0, -z)
     sfbitset_tmp1 = sfbitset_aux3d.FindZPos(sfbitset_tmp);
     if (ptr_map_grid_nodes->find(sfbitset_tmp1) != ptr_map_grid_nodes->end()) {
-        ptr_map_grid_nodes->at(sfbitset_in)->f_.at(kFXpY0Zn) =
-            ptr_map_grid_nodes->at(sfbitset_tmp1)->f_collide_.at(kFXpY0Zn);
+        ptr_map_grid_nodes->at(sfbitset_in)->f_.at(kFXpY0Zn_) =
+            ptr_map_grid_nodes->at(sfbitset_tmp1)->f_collide_.at(kFXpY0Zn_);
     }
     // f(+x, 0, +z)
     sfbitset_tmp1 = sfbitset_aux3d.FindZNeg(sfbitset_tmp);
     if (ptr_map_grid_nodes->find(sfbitset_tmp1) != ptr_map_grid_nodes->end()) {
-        ptr_map_grid_nodes->at(sfbitset_in)->f_.at(kFXpY0Zp) =
-            ptr_map_grid_nodes->at(sfbitset_tmp1)->f_collide_.at(kFXpY0Zp);
+        ptr_map_grid_nodes->at(sfbitset_in)->f_.at(kFXpY0Zp_) =
+            ptr_map_grid_nodes->at(sfbitset_tmp1)->f_collide_.at(kFXpY0Zp_);
     }
     // f(0, -y, 0)
     sfbitset_tmp = sfbitset_aux3d.FindYPos(sfbitset_in);
     if (ptr_map_grid_nodes->find(sfbitset_tmp) != ptr_map_grid_nodes->end()) {
-        ptr_map_grid_nodes->at(sfbitset_in)->f_.at(kFX0YnZ0) =
-            ptr_map_grid_nodes->at(sfbitset_tmp)->f_collide_.at(kFX0YnZ0);
+        ptr_map_grid_nodes->at(sfbitset_in)->f_.at(kFX0YnZ0_) =
+            ptr_map_grid_nodes->at(sfbitset_tmp)->f_collide_.at(kFX0YnZ0_);
     }
     // f(0, -y, -z)
     sfbitset_tmp1 = sfbitset_aux3d.FindZPos(sfbitset_tmp);
     if (ptr_map_grid_nodes->find(sfbitset_tmp1) != ptr_map_grid_nodes->end()) {
-        ptr_map_grid_nodes->at(sfbitset_in)->f_.at(kFX0YnZn) =
-            ptr_map_grid_nodes->at(sfbitset_tmp1)->f_collide_.at(kFX0YnZn);
+        ptr_map_grid_nodes->at(sfbitset_in)->f_.at(kFX0YnZn_) =
+            ptr_map_grid_nodes->at(sfbitset_tmp1)->f_collide_.at(kFX0YnZn_);
     }
     // f((0, -y, +z)
     sfbitset_tmp1 = sfbitset_aux3d.FindZNeg(sfbitset_tmp);
     if (ptr_map_grid_nodes->find(sfbitset_tmp1) != ptr_map_grid_nodes->end()) {
-        ptr_map_grid_nodes->at(sfbitset_in)->f_.at(kFX0YnZp) =
-            ptr_map_grid_nodes->at(sfbitset_tmp1)->f_collide_.at(kFX0YnZp);
+        ptr_map_grid_nodes->at(sfbitset_in)->f_.at(kFX0YnZp_) =
+            ptr_map_grid_nodes->at(sfbitset_tmp1)->f_collide_.at(kFX0YnZp_);
     }
     // f(0, +y, 0)
     sfbitset_tmp = sfbitset_aux3d.FindYNeg(sfbitset_in);
     if (ptr_map_grid_nodes->find(sfbitset_tmp) != ptr_map_grid_nodes->end()) {
-        ptr_map_grid_nodes->at(sfbitset_in)->f_.at(kFX0YpZ0) =
-            ptr_map_grid_nodes->at(sfbitset_tmp)->f_collide_.at(kFX0YpZ0);
+        ptr_map_grid_nodes->at(sfbitset_in)->f_.at(kFX0YpZ0_) =
+            ptr_map_grid_nodes->at(sfbitset_tmp)->f_collide_.at(kFX0YpZ0_);
     }
     // f(0, +y, -z)
     sfbitset_tmp1 = sfbitset_aux3d.FindZPos(sfbitset_tmp);
     if (ptr_map_grid_nodes->find(sfbitset_tmp1) != ptr_map_grid_nodes->end()) {
-        ptr_map_grid_nodes->at(sfbitset_in)->f_.at(kFX0YpZn) =
-            ptr_map_grid_nodes->at(sfbitset_tmp1)->f_collide_.at(kFX0YpZn);
+        ptr_map_grid_nodes->at(sfbitset_in)->f_.at(kFX0YpZn_) =
+            ptr_map_grid_nodes->at(sfbitset_tmp1)->f_collide_.at(kFX0YpZn_);
     }
     // f((0, +y, +z)
     sfbitset_tmp1 = sfbitset_aux3d.FindZNeg(sfbitset_tmp);
     if (ptr_map_grid_nodes->find(sfbitset_tmp1) != ptr_map_grid_nodes->end()) {
-        ptr_map_grid_nodes->at(sfbitset_in)->f_.at(kFX0YpZp) =
-            ptr_map_grid_nodes->at(sfbitset_tmp1)->f_collide_.at(kFX0YpZp);
+        ptr_map_grid_nodes->at(sfbitset_in)->f_.at(kFX0YpZp_) =
+            ptr_map_grid_nodes->at(sfbitset_tmp1)->f_collide_.at(kFX0YpZp_);
     }
     // f(0, 0, -z)
     sfbitset_tmp = sfbitset_aux3d.FindZPos(sfbitset_in);
     if (ptr_map_grid_nodes->find(sfbitset_tmp) != ptr_map_grid_nodes->end()) {
-        ptr_map_grid_nodes->at(sfbitset_in)->f_.at(kFX0Y0Zn) =
-            ptr_map_grid_nodes->at(sfbitset_tmp)->f_collide_.at(kFX0Y0Zn);
+        ptr_map_grid_nodes->at(sfbitset_in)->f_.at(kFX0Y0Zn_) =
+            ptr_map_grid_nodes->at(sfbitset_tmp)->f_collide_.at(kFX0Y0Zn_);
     }
     // f(0, 0, +z)
     sfbitset_tmp = sfbitset_aux3d.FindZNeg(sfbitset_in);
     if (ptr_map_grid_nodes->find(sfbitset_tmp) != ptr_map_grid_nodes->end()) {
-        ptr_map_grid_nodes->at(sfbitset_in)->f_.at(kFX0Y0Zp) =
-            ptr_map_grid_nodes->at(sfbitset_tmp)->f_collide_.at(kFX0Y0Zp);
+        ptr_map_grid_nodes->at(sfbitset_in)->f_.at(kFX0Y0Zp_) =
+            ptr_map_grid_nodes->at(sfbitset_tmp)->f_collide_.at(kFX0Y0Zp_);
     }
 }
 

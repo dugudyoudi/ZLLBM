@@ -29,8 +29,8 @@ void SolverLbmInterface::SolverInitial() {
     }
     InitialModelDependencies();
 }
-std::vector<DefReal> SolverLbmInterface::GetAllForcesForANode(
-    const DefInt dims, const GridNodeLbm& node) const {
+const std::vector<DefReal>& SolverLbmInterface::GetAllForcesForANode(
+    const GridNodeLbm& node) const {
     return node.force_;
 }
 /**
@@ -105,26 +105,6 @@ void SolverLbmInterface::SetDefault3DFunctions() {
 void SolverLbmInterface::ResizeModelRelatedVectors() {
     this->k0Velocity_.resize(k0SolverDims_);
     this->k0Velocity_.shrink_to_fit();
-    this->k0Force_.resize(k0SolverDims_);
-    this->k0Force_.shrink_to_fit();
-    k0Cx_.resize(k0NumQ_);
-    k0Cx_.shrink_to_fit();
-    k0Cy_.resize(k0NumQ_);
-    k0Cy_.shrink_to_fit();
-    k0Weights_.resize(k0NumQ_);
-    k0Weights_.shrink_to_fit();
-    k0QIndicesNeg_.resize(k0SolverDims_);
-    k0QIndicesNeg_.shrink_to_fit();
-    for (auto i = 0; i < k0SolverDims_; ++i) {
-        k0QIndicesNeg_.at(i).resize(k0NumQInOneDirection_);
-        k0QIndicesNeg_.at(i).shrink_to_fit();
-    }
-    k0QIndicesPos_.resize(k0SolverDims_);
-    k0QIndicesPos_.shrink_to_fit();
-     for (auto i = 0; i < k0SolverDims_; ++i) {
-        k0QIndicesPos_.at(i).resize(k0NumQInOneDirection_);
-        k0QIndicesPos_.at(i).shrink_to_fit();
-    }
 }
 /**
  * @brief function to call domain boundary conditions.
@@ -148,7 +128,7 @@ int SolverLbmInterface::InformationFromGridOfDifferentLevel(
     const amrproject::ETimingInOneStep timing, const amrproject::ETimeSteppingScheme time_scheme,
     const DefInt time_step_current, const amrproject::SFBitsetAuxInterface& sfbitset_aux,
     amrproject::GridInfoInterface* const ptr_grid_info) {
-    DefInt i_level = ptr_grid_info->i_level_;
+    const DefInt i_level = ptr_grid_info->GetGridLevel();
     if (i_level > 0 && (time_step_current%2 == 0)) {
         GridInfoLbmInteface* ptr_lbm_grid_info = dynamic_cast<GridInfoLbmInteface*>(ptr_grid_info);
         GridInfoLbmInteface* ptr_lbm_grid_info_coarse = dynamic_cast<GridInfoLbmInteface*>(
@@ -172,7 +152,7 @@ int SolverLbmInterface::InformationFromGridOfDifferentLevel(
 void SolverLbmInterface::RunSolverForNodesOnNormalGrid(const amrproject::ETimeSteppingScheme time_scheme,
     const DefInt time_step_current, const amrproject::SFBitsetAuxInterface& sfbitset_aux,
     amrproject::GridInfoInterface* const ptr_grid_info) {
-    DefInt i_level = ptr_grid_info->i_level_;
+    const DefInt i_level = ptr_grid_info->GetGridLevel();
     GridInfoLbmInteface* ptr_lbm_grid_nodes_info = dynamic_cast<GridInfoLbmInteface*>(ptr_grid_info);
     if (ptr_lbm_grid_nodes_info->GetPointerToLbmGrid() != nullptr) {
         DefMap<std::unique_ptr<GridNodeLbm>>& grid_nodes = *ptr_lbm_grid_nodes_info->GetPointerToLbmGrid();
@@ -201,10 +181,11 @@ void SolverLbmInterface::Collision(
     DefMap<std::unique_ptr<GridNodeLbm>>& grid_nodes = *ptr_lbm_grid_nodes_info->GetPointerToLbmGrid();
 
     if (ptr_lbm_grid_nodes_info->ptr_lbm_grid_nodes_ != nullptr) {
-        if (ptr_lbm_grid_nodes_info->bool_forces_) {
-            if (grid_nodes.begin()->second->force_.size() != k0SolverDims_) {
-                amrproject::LogManager::LogError("Size of forces should be " + std::to_string(k0SolverDims_)
-                    + "rather than " + std::to_string(grid_nodes.begin()->second->force_.size()) + " in "
+        if (bool_forces_) {
+            if (grid_nodes.begin()->second->force_.size() != GetNumForces()) {
+                amrproject::LogManager::LogError("Size of forces should be "
+                    + std::to_string(GetNumForces())
+                    + " rather than " + std::to_string(grid_nodes.begin()->second->force_.size()) + " in "
                     + std::string(__FILE__) + " at line " + std::to_string(__LINE__));
             }
             func_macro = func_macro_with_force_;
@@ -213,11 +194,10 @@ void SolverLbmInterface::Collision(
                 DefReal* const ptr_rho, std::vector<DefReal>* const ptr_velocity) {
                 func_macro_without_force_(node, ptr_rho, ptr_velocity);};
         }
-        std::vector<DefReal> force;
         for (auto& iter_node : grid_nodes) {
             if (iter_node.second->flag_status_ & flag_not_compute) {
             } else {
-                force = GetAllForcesForANode(k0SolverDims_, *iter_node.second.get());
+                const std::vector<DefReal>& force = GetAllForcesForANode(*iter_node.second.get());
                 func_macro(dt_lbm, *iter_node.second.get(), force,
                     &iter_node.second->rho_, &iter_node.second->velocity_);
                 ptr_lbm_grid_nodes_info->ptr_collision_operator_->CollisionOperator(
