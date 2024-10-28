@@ -38,10 +38,10 @@ void GeometryInfoOrigin::FindTrackingNodeBasedOnGeo(
     std::vector<DefReal> coordi(k0GeoDim_, 0.);
     DefSizet ipoint = 0;
     for (const auto& iter : vec_vertices_) {
-        coordi[kXIndex] = iter->coordinate[kXIndex];
-        coordi[kYIndex] = iter->coordinate[kYIndex];
+        coordi[kXIndex] = iter->coordinate_[kXIndex];
+        coordi[kYIndex] = iter->coordinate_[kYIndex];
         if (k0GeoDim_ == 3) {
-            coordi[kZIndex] = iter->coordinate[kZIndex];
+            coordi[kZIndex] = iter->coordinate_[kZIndex];
         }
         sfbitset_tmp = sfbitset_aux.SFBitsetEncodingCoordi(ptr_grid_info->GetGridSpace(), coordi);
         if (ptr_grid_info->CheckIfNodeOutsideCubicDomain(k0GeoDim_, sfbitset_tmp, sfbitset_aux)
@@ -51,9 +51,9 @@ void GeometryInfoOrigin::FindTrackingNodeBasedOnGeo(
                 ->map_ptr_tracking_grid_info_.at(key_tracking_grid).get())->k0TrackNodeInstance_ });
             }
         } else {
-            LogManager::LogError("coordinate (" + std::to_string(iter->coordinate[kXIndex]) + ", "
-                + std::to_string(iter->coordinate[kYIndex]) + ", "
-                + std::to_string(iter->coordinate[kZIndex]) + ") is outside the computational domain");
+            LogManager::LogError("coordinate (" + std::to_string(iter->coordinate_[kXIndex]) + ", "
+                + std::to_string(iter->coordinate_[kYIndex]) + ", "
+                + std::to_string(iter->coordinate_[kZIndex]) + ") is outside the computational domain");
         }
         ptr_tracking_node->at(sfbitset_tmp).set_point_index.insert({0, ipoint});
         ++ipoint;

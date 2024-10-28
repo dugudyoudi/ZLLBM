@@ -90,7 +90,13 @@ int GridInfoInterface::AddGhostNodesForInterpolation(const std::vector<bool>& bo
     }
     return 0;
 }
-
+/**
+ * @brief function to remove nodes in mpi outer layer if there's no inner layer nodes within a given distance.
+ * @param[in] code_min  minimum space filling code of current rank at background level.
+ * @param[in] code_max  maximum space filling code of current rank at background level.
+ * @param[in] num_outer_layer number of outer mpi communication layers.
+ * @param[in] ptr_mpi_outer_layer pointer to mpi outer layers.
+ */
 void GridInfoInterface::RemoveUnnecessaryF2CNodesOnMpiOuterLayer(const DefSFCodeToUint code_min,
     const DefSFCodeToUint code_max, const DefInt num_outer_layer, DefMap<DefInt>* const ptr_mpi_outer_layer) {
     std::vector<DefSFBitset> nodes_in_region;
@@ -171,20 +177,23 @@ void GridInfoInterface::RemoveUnnecessaryF2CNodesOnMpiOuterLayer(const DefSFCode
 }
 /**
  * @brief function to copy node information to a buffer.
+ * @param[in] func_copy_buffer function to copy node specified information to the buffer.
  * @param[in] map_nodes container storing space filling codes of the nodes need to be copied.
  * @param[out] ptr_buffer pointer to the buffer storing node information.
  * @note this function is a non-constant function since some information on nodes will be calculated before sending.
  */
-int GridInfoInterface::CopyNodeInfoToBuffer(
+void GridInfoInterface::CopyNodeInfoToBuffer(
+    const std::function<void(const GridNode& node_ref, char* const)>& func_copy_buffer,
     const DefMap<DefInt>& map_nodes, char* const ptr_buffer) const {
     DefSizet position = 0;
     int node_info_size = SizeOfGridNodeInfoForMpiCommunication();
+    int key_size = sizeof(DefSFBitset);
     DefSizet buffer_size = (node_info_size + sizeof(DefSFBitset)) * map_nodes.size();
     for (const auto& iter : map_nodes) {
         if (map_grid_node_.find(iter.first) != map_grid_node_.end()) {
-            std::memcpy(ptr_buffer + position, &(iter.first), sizeof(DefSFBitset));
+            std::memcpy(ptr_buffer + position, &(iter.first), key_size);
             position+=sizeof(DefSFBitset);
-            map_grid_node_.at(iter.first)->CopyNodInfoToBuffer(ptr_buffer + position);
+            func_copy_buffer(*map_grid_node_.at(iter.first), ptr_buffer + position);
             position+=node_info_size;
             if (position > buffer_size) {
                 LogManager::LogError("Buffer to store node information overflows (buffer size is "
@@ -206,14 +215,15 @@ int GridInfoInterface::CopyNodeInfoToBuffer(
             LogManager::LogError(msg);
         }
     }
-    return 0;
 }
 /**
  * @brief function to read node information from a buffer consisting all chunks.
- * @param buffer_size total size of the buffer.
- * @param buffer  pointer to the buffer storing node information.
+ * @param[in] func_read_buffer function to read node specified information to the buffer.
+ * @param[in] buffer_size total size of the buffer.
+ * @param[in] buffer  pointer to the buffer storing node information.
  */
 void GridInfoInterface::ReadNodeInfoFromBuffer(
+    const std::function<void(const char*,  GridNode* const ptr_node)>& func_read_buffer,
     const DefSizet buffer_size, const std::unique_ptr<char[]>& buffer) {
     char* ptr_buffer = buffer.get();
     int key_size = sizeof(DefSFBitset);
@@ -226,87 +236,121 @@ void GridInfoInterface::ReadNodeInfoFromBuffer(
         std::memcpy(&key_code, ptr_buffer + position, key_size);
         position += key_size;
         if (map_grid_node_.find(key_code) != map_grid_node_.end()) {
-            map_grid_node_.at(key_code)->ReadNodInfoFromBuffer(ptr_buffer + position);
-            position+=node_info_size;
-            if (position > buffer_size) {
-                LogManager::LogError("Buffer to store node information overflows, please check"
-                    " size of node info for mpi communication");
-            }
+            func_read_buffer(ptr_buffer + position, map_grid_node_.at(key_code).get());
         }   // may receive nodes that do not exist in current rank on c2f interface
+        position += node_info_size;
+        if (position > buffer_size) {
+            LogManager::LogError("Buffer to store node information overflows, please check"
+                " size of node info for mpi communication");
+        }
     }
 }
 /**
  * @brief function to copy information of node needed for interpolation to a buffer.
+ * @param[in] func_copy_buffer function to copy node specified information to the buffer.
  * @param[in] coarse_grid_info class storting grid information at lower level.
  * @param[in] map_nodes container storing space filling codes of the nodes need to be copied.
  * @param[out] ptr_buffer pointer to the buffer storing node information.
+ * @note node not exist at current level will be find in the lower level.
  */
-int GridInfoInterface::CopyNodeVariablesToBuffer(
+void GridInfoInterface::CopyInterpolationNodeInfoToBuffer(
     const std::function<void(const GridNode& node_ref, char* const)>& func_copy_buffer,
-    const DefMap<DefInt>& map_nodes, char* const ptr_buffer) {
+    const GridInfoInterface& coarse_grid_info, const DefMap<DefInt>& map_nodes, char* const ptr_buffer) {
+    int node_info_size = SizeOfGridNodeInfoForMpiCommunication();
+    int key_size = sizeof(DefSFBitset);
+
+    std::unique_ptr<GridNode> ptr_node_coarse2fine = GridNodeCreator();
     DefSizet position = 0;
-    DefSizet var_size = GetVariablesSizeForCopy();
     for (const auto& iter : map_nodes) {
         if (map_grid_node_.find(iter.first) != map_grid_node_.end()) {
-            std::memcpy(ptr_buffer + position, &(iter.first), sizeof(DefSFBitset));
+            std::memcpy(ptr_buffer + position, &(iter.first), key_size);
             position+=sizeof(DefSFBitset);
-            func_copy_buffer(*map_grid_node_.at(iter.first).get(), ptr_buffer+position);
-            position+=var_size;
+            func_copy_buffer(*map_grid_node_.at(iter.first).get(), ptr_buffer + position);
+            position += node_info_size;
         } else {
-            std::vector<DefReal> indices;
-            ptr_sfbitset_aux_->SFBitsetComputeCoordinateVir(iter.first, grid_space_, &indices);
-            std::string msg;
-            if (indices.size() == 2) {
-                msg = "grid node (" + std::to_string(indices[kXIndex]) + ", " + std::to_string(indices[kYIndex])
-                    + ") at " + std::to_string(i_level_) + " at level not exist for copying to a buffer";
+            if (&coarse_grid_info != nullptr) {
+                const DefMap<std::unique_ptr<GridNode>>& map_coarse_node = coarse_grid_info.map_grid_node_;
+                DefSFBitset sfbitset_lower = ptr_sfbitset_aux_->SFBitsetToNLowerLevelVir(1, iter.first);
+                if (map_coarse_node.find(sfbitset_lower) != map_coarse_node.end()) {
+                    std::memcpy(ptr_buffer + position, &(iter.first), key_size);
+                    position+=key_size;
+                    coarse_grid_info.NodeInfoCoarse2fine(
+                        *map_coarse_node.at(sfbitset_lower).get(), ptr_node_coarse2fine.get());
+                    func_copy_buffer(*ptr_node_coarse2fine.get(), ptr_buffer + position);
+                    position += node_info_size;
+                } else {
+                    std::vector<DefReal> indices;
+                    ptr_sfbitset_aux_->SFBitsetComputeCoordinateVir(iter.first, grid_space_, &indices);
+                    std::string msg;
+                    if (indices.size() == 2) {
+                        msg = "grid node (" + std::to_string(indices[kXIndex]) + ", " + std::to_string(indices[kYIndex])
+                            + ") at " + std::to_string(i_level_) + " at level not exist for copying to a buffer";
+                    } else {
+                        msg = "grid node (" + std::to_string(indices[kXIndex]) + ", " + std::to_string(indices[kYIndex])
+                            + std::to_string(indices[kZIndex]) +  + ") at " + std::to_string(i_level_)
+                            + " level does not exist for copying to a buffer";
+                    }
+                    amrproject::LogManager::LogError(msg);
+                }
             } else {
-                msg = "grid node (" + std::to_string(indices[kXIndex]) + ", " + std::to_string(indices[kYIndex])
-                    + std::to_string(indices[kZIndex]) +  + ") at " + std::to_string(i_level_)
-                    + " level does not exist for copying to a buffer";
+                std::vector<DefReal> indices;
+                ptr_sfbitset_aux_->SFBitsetComputeCoordinateVir(iter.first, grid_space_, &indices);
+                std::string msg;
+                if (indices.size() == 2) {
+                    msg = "grid node (" + std::to_string(indices[kXIndex]) + ", " + std::to_string(indices[kYIndex])
+                        + ") at " + std::to_string(i_level_) + " at level not exist for copying to a buffer";
+                } else {
+                    msg = "grid node (" + std::to_string(indices[kXIndex]) + ", " + std::to_string(indices[kYIndex])
+                        + std::to_string(indices[kZIndex]) +  + ") at " + std::to_string(i_level_)
+                        + " level does not exist for copying to a buffer";
+                }
+                amrproject::LogManager::LogError(msg);
             }
-            amrproject::LogManager::LogError(msg);
-            return -1;
         }
     }
-    return 0;
 }
-int GridInfoInterface::ReadNodeVariablesFromBuffer(const DefSizet buffer_size,
-        const std::function<void(const char* ptr_node_buffer, const GridNode* const ptr_node)> func_read_buffer,
-        const std::unique_ptr<char[]>& buffer,  DefMap<std::unique_ptr<GridNode>>* const ptr_grid_nodes) {
+/**
+ * @brief function to read node information for interpolation from a buffer.
+ * @param[in] func_read_buffer function to read node specified information to the buffer.
+ * @param buffer_size total size of the buffer.
+ * @param buffer  pointer to the buffer storing node information.
+ */
+void GridInfoInterface::ReadInterpolationNodeInfoFromBuffer(
+    const std::function<void(const char*,  GridNode* const ptr_node)>& func_read_buffer,
+    const DefSizet buffer_size, const std::unique_ptr<char[]>& buffer) {
     char* ptr_buffer = buffer.get();
     int key_size = sizeof(DefSFBitset);
-    DefSizet var_size = GetVariablesSizeForCopy();
-    if (buffer_size%(key_size + var_size) != 0) {
-        LogManager::LogError("Buffer size is not divisible by size of variables,"
-            " i.e. number of nodes if not an integer");
-    }
-    DefSizet num_nodes = buffer_size/(key_size + var_size);
+    int node_info_size = SizeOfGridNodeInfoForMpiCommunication();
+    DefSizet num_nodes = buffer_size/(key_size + node_info_size);
     // deserialize data stored in buffer
     DefSizet position = 0;
     DefSFBitset key_code;
     for (DefSizet i_node = 0; i_node < num_nodes; ++i_node) {
         std::memcpy(&key_code, ptr_buffer + position, key_size);
         position += key_size;
-        if (map_grid_node_.find(key_code) != map_grid_node_.end()) {
-            func_read_buffer(ptr_buffer + position, map_grid_node_.at(key_code).get());
-            position += var_size;
+        if (interp_nodes_outer_layer_.find(key_code) != interp_nodes_outer_layer_.end()) {
+            func_read_buffer(ptr_buffer + position, interp_nodes_outer_layer_.at(key_code).get());
+            position += node_info_size;
+            if (position > buffer_size) {
+                LogManager::LogError("Buffer to store node information overflows, please check"
+                    " size of node info for mpi communication");
+            }
         } else {
-            std::vector<DefReal> indices;
-            ptr_sfbitset_aux_->SFBitsetComputeCoordinateVir(key_code, grid_space_, &indices);
+            std::vector<DefReal> coordinates;
+            std::vector<DefReal> grid_spacing_background = ptr_sfbitset_aux_->GetBackgroundGridSpacing();
+            ptr_sfbitset_aux_->SFBitsetComputeCoordinateVir(key_code, grid_space_, &coordinates);
             std::string msg;
-            if (indices.size() == 2) {
-                msg = "grid node (" + std::to_string(indices[kXIndex]) + ", " + std::to_string(indices[kYIndex])
+            if (coordinates.size() == 2) {
+                msg = "grid node (" + std::to_string(coordinates[kXIndex]) + ", " + std::to_string(coordinates[kYIndex])
                     + ") at " + std::to_string(i_level_) + " level does not exist for copying from a buffer";
             } else {
-                msg = "grid node (" + std::to_string(indices[kXIndex]) + ", " + std::to_string(indices[kYIndex])
-                    + ", " + std::to_string(indices[kZIndex]) + ") at " + std::to_string(i_level_)
+                msg = "grid node (" + std::to_string(coordinates[kXIndex]) + ", " + std::to_string(coordinates[kYIndex])
+                    + ", " + std::to_string(coordinates[kZIndex]) + ") at " + std::to_string(i_level_)
                     + " level does not exist for copying from a buffer";
             }
             amrproject::LogManager::LogError(msg);
-            return -1;
         }
     }
-    return 0;
 }
 }  // end namespace amrproject
 }  // end namespace rootproject

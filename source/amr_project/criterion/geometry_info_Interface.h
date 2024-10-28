@@ -30,17 +30,16 @@ class GeoShapeInterface;
 * @brief struct used to store information of a geometry vertex
 */
 struct GeometryVertex {
-    std::array<DefReal, 3> coordinate{};
+    std::array<DefReal, 3> coordinate_{};
 };
 /**
 * @class GeometryInfoInterface
 * @brief class used to store information of a geometry
 */
 class GeometryInfoInterface {
- public:
+ protected:
     // information of geometry itself
     DefInt computational_cost_ = 1;
-    DefReal decompose_factor_ = 1.;
     DefInt i_level_ = 0;
     DefInt i_geo_ = ~0;
     EGeometryCellType geometry_cell_type_ = EGeometryCellType::kUndefined;
@@ -48,14 +47,7 @@ class GeometryInfoInterface {
     EGeometryStatus geometry_status_ = EGeometryStatus::kVirtual;
     std::string node_type_;
 
-    // information stored on each vertex
-    std::vector<std::unique_ptr<GeometryVertex>> vec_vertices_{};
-    virtual DefSizet GetNumOfGeometryPoints() const {
-        return vec_vertices_.size();
-    }
-
     TrackingGridInfoCreatorInterface* ptr_tracking_grid_info_creator_ = nullptr;
-    GhostGridInfoCreatorInterface* ptr_ghost_grid_info_creator_ = nullptr;
 
     // number of extended layer based on geometry
     std::vector<DefInt> k0XIntExtendPositive_, k0XIntExtendNegative_, k0YIntExtendPositive_,
@@ -67,9 +59,128 @@ class GeometryInfoInterface {
     std::vector<DefInt> k0IntInnerExtend_;
     ///< number of extened layers inside the geometry
 
+    std::array<DefReal, 3> geometry_center_{};
+    std::array<DefReal, 3> flood_fill_origin_{};
+    std::array<DefReal, 3> k0RealMin_{};
+
+ public:
+    // get and set functions
+    DefInt GetComputationalCost() const {
+        return computational_cost_;
+    }
+    DefInt GetGeoIndex() const {
+        return i_geo_;
+    }
+    DefInt GetLevel() const {
+        return i_level_;
+    }
+    EGeometryCellType GetCellType() const {
+        return geometry_cell_type_;
+    }
+    EGridExtendType GetGridExtendType() const {
+        return grid_extend_type_;
+    }
+    EGeometryStatus GetStatus() const {
+        return geometry_status_;
+    }
+    std::string GetNodeType() const {
+        return node_type_;
+    }
+    TrackingGridInfoCreatorInterface* GetPtrTrackingGridInfoCreatorInterface() const {
+        return ptr_tracking_grid_info_creator_;
+    }
+    std::vector<DefInt> GetXExtendPositive() const {
+        return k0XIntExtendPositive_;
+    }
+    std::vector<DefInt> GetXExtendNegative() const {
+        return k0XIntExtendNegative_;
+    }
+    std::vector<DefInt> GetYExtendPositive() const {
+        return k0YIntExtendPositive_;
+    }
+    std::vector<DefInt> GetYExtendNegative() const {
+        return k0YIntExtendNegative_;
+    }
+    std::vector<DefInt> GetZExtendPositive() const {
+        return k0ZIntExtendPositive_;
+    }
+    std::vector<DefInt> GetZExtendNegative() const {
+        return k0ZIntExtendNegative_;
+    }
+    std::vector<DefInt> GetInnerExtend() const {
+        return k0IntInnerExtend_;
+    }
+    std::array<DefReal, 3> GetGeometryCenter() const {
+        return geometry_center_;
+    }
+    std::array<DefReal, 3> GetFloodFillOrigin() const {
+        return flood_fill_origin_;
+    }
+    std::array<DefReal, 3> GetOffset() const {
+        return k0RealMin_;
+    }
+    virtual DefSizet GetNumOfGeometryPoints() const {
+        return vec_vertices_.size();
+    }
+
+    void SetComputationalCost(const DefInt computational_cost) {
+        computational_cost_ = computational_cost;
+    }
+    void SetGeoIndex(const DefInt i_geo) {
+        i_geo_ = i_geo;
+    }
+    void SetLevel(const DefInt i_level) {
+        i_level_ = i_level;
+    }
+    void SetCellType(const EGeometryCellType geometry_cell_type) {
+        geometry_cell_type_ = geometry_cell_type;
+    }
+    void SetGridExtendType(const EGridExtendType grid_extend_type) {
+        grid_extend_type_ = grid_extend_type;
+    }
+    void SetStatus(const EGeometryStatus geometry_status) {
+        geometry_status_ = geometry_status;
+    }
+    void SetNodeType(const std::string& node_type) {
+        node_type_ = node_type;
+    }
+    void SetPtrTrackingGridInfoCreatorInterface(
+        TrackingGridInfoCreatorInterface* const ptr_tracking_grid_info_creator) {
+        ptr_tracking_grid_info_creator_ = ptr_tracking_grid_info_creator;
+    }
+    void SetXExtendPositive(const std::vector<DefInt>& vec_extend) {
+        k0XIntExtendPositive_ = vec_extend;
+    }
+    void SetXExtendNegative(const std::vector<DefInt>& vec_extend) {
+        k0XIntExtendNegative_ = vec_extend;
+    }
+    void SetYExtendPositive(const std::vector<DefInt>& vec_extend) {
+        k0YIntExtendPositive_ = vec_extend;
+    }
+    void SetYExtendNegative(const std::vector<DefInt>& vec_extend) {
+        k0YIntExtendNegative_ = vec_extend;
+    }
+    void SetZExtendPositive(const std::vector<DefInt>& vec_extend) {
+        k0ZIntExtendPositive_ = vec_extend;
+    }
+    void SetZExtendNegative(const std::vector<DefInt>& vec_extend) {
+        k0ZIntExtendNegative_ = vec_extend;
+    }
+    void SetInnerExtend(const std::vector<DefInt>& vec_extend) {
+        k0IntInnerExtend_ = vec_extend;
+    }
+    void SetGeometryCenter(const std::array<DefReal, 3>& array_center) {
+        geometry_center_ = array_center;
+    }
+    void SetFloodFillOrigin(const std::array<DefReal, 3>& array_origin) {
+        flood_fill_origin_ = array_origin;
+    }
     void SetOffset(const std::array<DefReal, 3>& array_offset) {
         k0RealMin_ = array_offset;
     }
+
+    // information stored on each vertex
+    std::vector<std::unique_ptr<GeometryVertex>> vec_vertices_{};
     std::unique_ptr<GeoShapeInterface> ptr_geo_shape_;
     virtual int InitialGeometry(const DefReal dx);
     virtual int UpdateGeometry(const DefReal sum_t);
@@ -83,11 +194,7 @@ class GeometryInfoInterface {
             return {flood_fill_origin_[kXIndex], flood_fill_origin_[kYIndex], flood_fill_origin_[kZIndex]};
         }
     }
-
-    std::array<DefReal, 3> geometry_center_{};
-    std::array<DefReal, 3> flood_fill_origin_{};
-    std::array<DefReal, 3> k0RealMin_{};
-    virtual std::unique_ptr<GeometryVertex> GeoVertexCreator() {
+    virtual std::unique_ptr<GeometryVertex> GeoVertexCreator() const {
         return std::make_unique<GeometryVertex>();
     }
 

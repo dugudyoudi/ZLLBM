@@ -22,7 +22,6 @@
 #include "./solver_info_interface.h"
 #include "grid/sfbitset_aux.h"
 #include "grid/grid_info_interface.h"
-#include "immersed_boundary/immersed_boundary.h"
 #include "boundary_conditions/lbm_boundary_conditions.h"
 namespace rootproject {
 namespace lbmproject {
@@ -62,14 +61,14 @@ struct GridNodeLbm : public amrproject::GridNode {
     }
 
     // compulsory function from the GridNode base class
-    void CopyNodInfoToBuffer(char* const ptr_node_buffer) const override {
+    void CopyANodeToBufferForMpi(char* const ptr_node_buffer) const override {
         DefSizet f_size = f_.size() * sizeof(DefReal);
         std::memcpy(ptr_node_buffer, f_.data(), f_size);
         if (!force_.empty()) {
             std::memcpy(ptr_node_buffer + f_size, force_.data(), force_.size() * sizeof(DefReal));
         }
     }
-    void ReadNodInfoFromBuffer(const char* ptr_node_buffer) override {
+    void ReadANodeFromBufferForMpi(const char* ptr_node_buffer) override {
         DefSizet f_size = f_.size() * sizeof(DefReal);
         std::memcpy(f_.data(), ptr_node_buffer, f_size);
         if (!force_.empty()) {
@@ -164,61 +163,6 @@ struct GridNodeLbm : public amrproject::GridNode {
 
     void InterpolationAdditionAssignCoefficient(const GridNode& node_in, const DefReal coefficient) override;
 };
-/**
-* @brief interface class to manage LBM collision model 
-*/
-class LbmCollisionOptInterface {
- public:
-    DefReal dt_lbm_, viscosity_lbm_, tau_collision_c2f_, tau_collision_f2c_, tau_stream_c2f_, tau_stream_f2c_;
-    bool cal_tau_each_node_ = false;
-    virtual void CalRelaxationTime() = 0;
-    virtual void CalRelaxationTimeNode(const GridNodeLbm& node) = 0;
-    virtual void CollisionOperator(const SolverLbmInterface& lbm_solver,
-        const std::vector<DefReal>& force, GridNodeLbm* const ptr_node) const = 0;
-    virtual void CalRelaxationTimeRatio();
-    virtual void PostCollisionCoarse2Fine(const DefReal dt_lbm, const std::vector<DefReal>& feq,
-        const std::vector<DefReal>& f_collide_coarse, std::vector<DefReal>* const ptr_f_collide_fine);
-    virtual void PostCollisionFine2Coarse(const DefReal dt_lbm, const std::vector<DefReal>& feq,
-        const GridNodeLbm& node_fine, GridNodeLbm* const ptr_node_coarse);
-    virtual void PostStreamCoarse2Fine(const DefReal dt_lbm, const std::vector<DefReal>& feq,
-        const std::vector<DefReal>& f_coarse, std::vector<DefReal>* const ptr_f_fine);
-    virtual void PostStreamFine2Coarse(const DefReal dt_lbm, const std::vector<DefReal>& feq,
-        const GridNodeLbm& node_fine, GridNodeLbm* const ptr_node_coarse);
-    virtual void PostCollisionCoarse2FineForce(const DefReal dt_lbm, const std::vector<DefReal>& feq,
-        const SolverLbmInterface& lbm_solver,
-        DefReal (SolverLbmInterface::*ptr_func_cal_force_iq)(const int, const GridNodeLbm&) const,
-        const GridNodeLbm& node_coarse, std::vector<DefReal>* const ptr_f_collide_fine);
-    virtual void PostCollisionFine2CoarseForce(const DefReal dt_lbm, const std::vector<DefReal>& feq,
-        const SolverLbmInterface& lbm_solver,
-        DefReal (SolverLbmInterface::*ptr_func_cal_force_iq)(const int, const GridNodeLbm&) const,
-        const GridNodeLbm& node_fine, GridNodeLbm* const ptr_node_coarse);
-
-    explicit LbmCollisionOptInterface(const SolverLbmInterface& lbm_solver);
-    virtual ~LbmCollisionOptInterface() {}
-};
-/**
-* @brief interface class to manage the SRT collision model
-*/
-class LbmStrCollisionOpt : public LbmCollisionOptInterface {
- public:
-    DefReal tau_srt_;
-    void CalRelaxationTime() override;
-    void CalRelaxationTimeNode(const GridNodeLbm& node) override;
-    void CollisionOperator(const SolverLbmInterface& lbm_solver,
-        const std::vector<DefReal>& force, GridNodeLbm* const ptr_node) const override;
-    explicit LbmStrCollisionOpt(const SolverLbmInterface& lbm_solver)
-        : LbmCollisionOptInterface(lbm_solver) {}
-};
-/**
-* @brief interface class to manage the SRT collision model with forcing term
-*/
-class LbmStrForceCollisionOpt : public LbmStrCollisionOpt {
- public:
-    void CollisionOperator(const SolverLbmInterface& lbm_solver, const std::vector<DefReal>& force,
-        GridNodeLbm* const ptr_node) const override;
-    explicit LbmStrForceCollisionOpt(const SolverLbmInterface& lbm_solver)
-        : LbmStrCollisionOpt(lbm_solver) {}
-};
 struct OutputLBMNodeVariableInfo : public amrproject::OutputNodeVariableInfoInterface {
     std::function<std::vector<DefReal>(GridNodeLbm* const)> func_get_var_;
 };
@@ -228,32 +172,25 @@ struct OutputLBMNodeVariableInfo : public amrproject::OutputNodeVariableInfoInte
 class GridInfoLbmInteface : public amrproject::GridInfoInterface {
  protected:
     std::vector<DefReal> f_ini_, f_collide_ini_;
+    // convert pointer to current type
+    DefMap<std::unique_ptr<GridNodeLbm>>* ptr_lbm_grid_nodes_ = nullptr;
+    ELbmCollisionOperatorType collision_type_ = ELbmCollisionOperatorType::kLbmSrt;
 
  public:
     void InitialGridInfo(const DefInt dims) override;
 
-    // convert pointer to current type
-    DefMap<std::unique_ptr<GridNodeLbm>>* ptr_lbm_grid_nodes_ = nullptr;
     void SetPointerToCurrentNodeType() override;
-    DefMap<std::unique_ptr<GridNodeLbm>>* GetPointerToLbmGrid();
+    DefMap<std::unique_ptr<GridNodeLbm>>* GetPtrToLbmGrid();
+
+    void AdvancingAtCurrentTime(const amrproject::ETimeSteppingScheme time_scheme,
+        const DefInt time_step_level, const DefReal time_step_current,
+        amrproject::MpiManager* const ptr_mpi_manager,
+        amrproject::CriterionManager* const ptr_criterion_manager) override;
 
     // node related
     void InitialNotComputeNodeFlag() override;
-    std::unique_ptr<amrproject::GridNode> GridNodeCreator() override;
+    std::unique_ptr<amrproject::GridNode> GridNodeCreator() const override;
     void SetNodeVariablesAsZeros(amrproject::GridNode* const ptr_node) override;
-
-    //  collision models
-    ELbmCollisionOperatorType k0CollisionOperatorType_ = ELbmCollisionOperatorType::kLbmSrt;
-    std::unique_ptr<LbmCollisionOptInterface> ptr_collision_operator_;
-    void SetCollisionOperator();
-    virtual std::unique_ptr<LbmCollisionOptInterface> LbmSrtCollisionOptCreator(
-        const SolverLbmInterface& lbm_solver) const {
-        return std::make_unique<LbmStrCollisionOpt>(lbm_solver);
-    }
-    virtual std::unique_ptr<LbmCollisionOptInterface> LbmSrtForceCollisionOptCreator(
-        const SolverLbmInterface& lbm_solver) const {
-        return std::make_unique<LbmStrForceCollisionOpt>(lbm_solver);
-    }
 
     void DebugWrite() override;
     void DebugWriteNode(const amrproject::GridNode& node) override;
@@ -267,8 +204,7 @@ class GridInfoLbmInteface : public amrproject::GridInfoInterface {
     void ComputeDomainBoundaryConditionForANode(int flag_node_boundary, const DefSFBitset bitset_in);
 
     // time marching related
-    void SetUpGridAtBeginningOfTimeStep(const DefInt time_step,
-        amrproject::GridManagerInterface* const ptr_grid_manager) override;
+    void SetUpGridAtBeginningOfTimeStep(const DefInt time_step) override;
 
     // communication between grid of different refinement levels
     int TransferInfoFromCoarseGrid(const amrproject::SFBitsetAuxInterface& sfbitset_aux,
@@ -297,12 +233,7 @@ class GridInfoLbmInteface : public amrproject::GridInfoInterface {
         const DefMap<DefSizet>& map_node_index) const;
 
     // mpi related
-    int k0SizeOfAllDistributionFunctions_ = 0;
     int SizeOfGridNodeInfoForMpiCommunication() const override;
-    int CopyInterpolationNodeInfoToBuffer(const GridInfoInterface& grid_info_lower,
-        const DefMap<DefInt>& map_nodes, char* const ptr_buffer) override;
-    int ReadInterpolationNodeInfoFromBuffer(
-        const DefSizet buffer_size, const std::unique_ptr<char[]>& buffer) override;
     void ComputeInfoInMpiLayers(const std::map<int, DefMap<DefInt>>& map_inner_nodes,
         const DefMap<DefInt>& map_outer_nodes) override;
     virtual void ComputeNodeInfoBeforeMpiCommunication(const DefSFBitset sfbitset_in,
@@ -318,12 +249,76 @@ class GridInfoLbmIntefaceCreator :
         return std::make_shared<GridInfoLbmInteface>();
     };
 };
+/**
+* @brief interface class to manage LBM collision model 
+*/
+class LbmCollisionOptInterface {
+ protected:
+    DefReal dt_lbm_, viscosity_lbm_, tau_collision_c2f_, tau_collision_f2c_, tau_stream_c2f_, tau_stream_f2c_;
+
+ public:
+    DefReal GetDtLbm() const { return dt_lbm_; }
+    DefReal GetViscosityLbm() const { return viscosity_lbm_; }
+
+    bool cal_tau_each_node_ = false;
+    virtual void CalRelaxationTime() = 0;
+    virtual void CalRelaxationTimeNode(const GridNodeLbm& node) = 0;
+    virtual void CollisionOperator(const SolverLbmInterface& lbm_solver,
+        const std::vector<DefReal>& force, GridNodeLbm* const ptr_node) const = 0;
+    virtual void CalRelaxationTimeRatio();
+    virtual void PostCollisionCoarse2Fine(const std::vector<DefReal>& feq,
+        const std::vector<DefReal>& f_collide_coarse, std::vector<DefReal>* const ptr_f_collide_fine) const;
+    virtual void PostCollisionFine2Coarse(const std::vector<DefReal>& feq,
+        const GridNodeLbm& node_fine, GridNodeLbm* const ptr_node_coarse) const;
+    virtual void PostStreamCoarse2Fine(const std::vector<DefReal>& feq,
+        const std::vector<DefReal>& f_coarse, std::vector<DefReal>* const ptr_f_fine) const;
+    virtual void PostStreamFine2Coarse(const std::vector<DefReal>& feq,
+        const GridNodeLbm& node_fine, GridNodeLbm* const ptr_node_coarse) const;
+    virtual void PostCollisionCoarse2FineForce(const std::vector<DefReal>& feq,
+        const SolverLbmInterface& lbm_solver,
+        DefReal (SolverLbmInterface::*ptr_func_cal_force_iq)(const int, const GridNodeLbm&) const,
+        const GridNodeLbm& node_coarse, std::vector<DefReal>* const ptr_f_collide_fine) const;
+    virtual void PostCollisionFine2CoarseForce(const std::vector<DefReal>& feq,
+        const SolverLbmInterface& lbm_solver,
+        DefReal (SolverLbmInterface::*ptr_func_cal_force_iq)(const int, const GridNodeLbm&) const,
+        const GridNodeLbm& node_fine, GridNodeLbm* const ptr_node_coarse) const;
+
+    LbmCollisionOptInterface(const DefInt i_level, const SolverLbmInterface& lbm_solver);
+    virtual ~LbmCollisionOptInterface() {}
+};
+/**
+* @brief interface class to manage the SRT collision model
+*/
+class LbmStrCollisionOpt : public LbmCollisionOptInterface {
+ public:
+    DefReal tau_srt_;
+    void CalRelaxationTime() override;
+    void CalRelaxationTimeNode(const GridNodeLbm& node) override;
+    void CollisionOperator(const SolverLbmInterface& lbm_solver,
+        const std::vector<DefReal>& force, GridNodeLbm* const ptr_node) const override;
+    LbmStrCollisionOpt(const DefInt i_level, const SolverLbmInterface& lbm_solver)
+        : LbmCollisionOptInterface(i_level, lbm_solver) {
+        CalRelaxationTime();
+        CalRelaxationTimeRatio();
+    }
+};
+/**
+* @brief interface class to manage the SRT collision model with forcing term
+*/
+class LbmStrForceCollisionOpt : public LbmStrCollisionOpt {
+ public:
+    void CollisionOperator(const SolverLbmInterface& lbm_solver, const std::vector<DefReal>& force,
+        GridNodeLbm* const ptr_node) const override;
+    LbmStrForceCollisionOpt(DefInt i_level, const SolverLbmInterface& lbm_solver)
+        : LbmStrCollisionOpt(i_level, lbm_solver) {}
+};
 class SolverLbmInterface :public amrproject::SolverInterface {
  protected:
     DefInt NumForces_ = 0;
     DefReal k0LbmViscosity_ = 0.;  // the lbm viscosity at background level, where dt_lbm is 1
     DefReal k0Rho_ = 1.;  // default density
     std::vector<DefReal> k0Velocity_, k0Force_;  // default velocity and forces
+    std::map<DefInt, std::unique_ptr<LbmCollisionOptInterface>> collision_operators_;
 
  public:
     // get and set functions
@@ -363,20 +358,20 @@ class SolverLbmInterface :public amrproject::SolverInterface {
     }
 
     void SolverInitial() override;
-    void RunSolverForNodesOnNormalGrid(const amrproject::ETimeSteppingScheme time_scheme,
-        const DefInt time_step_current, const amrproject::SFBitsetAuxInterface& sfbitset_aux,
+    void RunSolverOnGivenGrid(const amrproject::ETimeSteppingScheme time_scheme,
+        const DefInt time_step_level, const DefReal time_step_current,
+        const amrproject::SFBitsetAuxInterface& sfbitset_aux,
         amrproject::GridInfoInterface* const ptr_grid_info) override;
     void CallDomainBoundaryCondition(const amrproject::ETimeSteppingScheme time_scheme,
-        const DefInt time_step_current, const amrproject::SFBitsetAuxInterface& sfbitset_aux,
-        amrproject::GridInfoInterface* const ptr_grid_info) override;
-    int InformationFromGridOfDifferentLevel(
-        const amrproject::ETimingInOneStep timing, const amrproject::ETimeSteppingScheme time_scheme,
-        const DefInt time_step_current, const amrproject::SFBitsetAuxInterface& sfbitset_aux,
+        const DefInt time_step_level, const DefReal time_step_current,
+        const amrproject::SFBitsetAuxInterface& sfbitset_aux, amrproject::GridInfoInterface* const ptr_grid_info);
+    void InformationFromGridOfDifferentLevel(
+        const DefInt time_step_level, const amrproject::SFBitsetAuxInterface& sfbitset_aux,
         amrproject::GridInfoInterface* const ptr_grid_info) override;
 
     virtual void InitialModelDependencies() = 0;
     template <typename Node>
-    void CollisionForGivenNodes(const DefInt flag_not_collide,
+    void CollisionForGivenNodes(const DefInt i_level, const DefInt flag_not_collide,
         const DefMap<Node>& node_for_computation, GridInfoLbmInteface* const ptr_lbm_grid_nodes_info);
     template <typename Node>
     void StreamInForGivenNodes(const DefInt flag_not_stream, const amrproject::SFBitsetAuxInterface& sfbitset_aux,
@@ -465,6 +460,19 @@ class SolverLbmInterface :public amrproject::SolverInterface {
         k0QIndicesNeg_(q_indices_neg), k0QIndicesPos_(q_indices_pos) {
             ptr_grid_info_creator_ = std::make_unique<GridInfoLbmIntefaceCreator>();
     }
+
+//  collision models
+ protected:
+    virtual std::unique_ptr<LbmCollisionOptInterface> LbmSrtCollisionOptCreator(DefInt i_level) const {
+        return std::make_unique<LbmStrCollisionOpt>(i_level, *this);
+    }
+    virtual std::unique_ptr<LbmCollisionOptInterface> LbmSrtForceCollisionOptCreator(DefInt i_level) const {
+        return std::make_unique<LbmStrForceCollisionOpt>(i_level, *this);
+    }
+
+ public:
+    void SetCollisionOperator(DefInt i_level, const ELbmCollisionOperatorType collision_operator_type);
+    const LbmCollisionOptInterface& GetCollisionOperator(DefInt i_level) const;
 };
 /**
  * @brief function to conduct collision process for give nodes,
@@ -474,13 +482,14 @@ class SolverLbmInterface :public amrproject::SolverInterface {
  * @param[in] ptr_lbm_grid_nodes_info  pointer to class storing lbm grid nodes information.
  */
 template <typename Node>
-void SolverLbmInterface::CollisionForGivenNodes(const DefInt flag_not_collide,
+void SolverLbmInterface::CollisionForGivenNodes(const DefInt i_level, const DefInt flag_not_collide,
     const DefMap<Node>& node_for_computation, GridInfoLbmInteface* const ptr_lbm_grid_nodes_info) {
-    DefReal dt_lbm = ptr_lbm_grid_nodes_info->ptr_collision_operator_->dt_lbm_;
-    DefMap<std::unique_ptr<GridNodeLbm>>& lbm_grid_nodes = *ptr_lbm_grid_nodes_info->GetPointerToLbmGrid();
+    const LbmCollisionOptInterface& collision_operator = *collision_operators_.at(i_level).get();
+    const DefReal dt_lbm = collision_operator.GetDtLbm();
+    DefMap<std::unique_ptr<GridNodeLbm>>& lbm_grid_nodes = *ptr_lbm_grid_nodes_info->GetPtrToLbmGrid();
     std::function<void(const DefReal, const GridNodeLbm&,
         const std::vector<DefReal>&, DefReal* const, std::vector<DefReal>* const)> func_macro;
-    if (ptr_lbm_grid_nodes_info->ptr_lbm_grid_nodes_ != nullptr) {
+    if (ptr_lbm_grid_nodes_info->GetPtrToLbmGrid() != nullptr) {
         if (bool_forces_) {
             func_macro = func_macro_with_force_;
         } else {
@@ -495,8 +504,7 @@ void SolverLbmInterface::CollisionForGivenNodes(const DefInt flag_not_collide,
                 if (!(lbm_node.flag_status_ & flag_not_collide)) {
                     force = GetAllForcesForANode(lbm_node);
                     func_macro(dt_lbm, lbm_node, force, &lbm_node.rho_, &lbm_node.velocity_);
-                    ptr_lbm_grid_nodes_info->ptr_collision_operator_->CollisionOperator(
-                        *this, force, &lbm_node);
+                    collision_operator.CollisionOperator(*this, force, &lbm_node);
                 }
             }
         }
@@ -513,8 +521,8 @@ template <typename Node>
 void SolverLbmInterface::StreamInForGivenNodes(const DefInt flag_not_stream,
     const amrproject::SFBitsetAuxInterface& sfbitset_aux,
     const DefMap<Node>& node_for_computation, GridInfoLbmInteface* const ptr_lbm_grid_nodes_info) {
-    DefMap<std::unique_ptr<GridNodeLbm>>& lbm_grid_nodes = *ptr_lbm_grid_nodes_info->GetPointerToLbmGrid();
-    if (ptr_lbm_grid_nodes_info->ptr_lbm_grid_nodes_ != nullptr) {
+    DefMap<std::unique_ptr<GridNodeLbm>>& lbm_grid_nodes = *ptr_lbm_grid_nodes_info->GetPtrToLbmGrid();
+    if (ptr_lbm_grid_nodes_info->GetPtrToLbmGrid() != nullptr) {
         for (auto& iter_node : node_for_computation) {
             if (lbm_grid_nodes.find(iter_node.first) != lbm_grid_nodes.end()) {
                 GridNodeLbm& lbm_node = *lbm_grid_nodes.at(iter_node.first).get();

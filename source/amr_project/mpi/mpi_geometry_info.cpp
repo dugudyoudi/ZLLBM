@@ -38,11 +38,11 @@ std::unique_ptr<char[]> MpiManager::SerializeCoordiOrigin(
     std::memcpy(ptr_buffer + position, &num_points, sizeof(int));
     position += sizeof(int);
     for (auto& iter : vec_vertices) {
-        std::memcpy(ptr_buffer + position, &iter->coordinate.at(kXIndex), real_size);
+        std::memcpy(ptr_buffer + position, &iter->coordinate_.at(kXIndex), real_size);
         position += real_size;
-        std::memcpy(ptr_buffer + position, &iter->coordinate.at(kYIndex), real_size);
+        std::memcpy(ptr_buffer + position, &iter->coordinate_.at(kYIndex), real_size);
         position += real_size;
-        std::memcpy(ptr_buffer + position, &iter->coordinate.at(kZIndex), real_size);
+        std::memcpy(ptr_buffer + position, &iter->coordinate_.at(kZIndex), real_size);
         position += real_size;
     }
     return buffer;
@@ -66,13 +66,13 @@ void MpiManager::DeserializeCoordiOrigin(const std::unique_ptr<char[]>& buffer,
     ptr_vec_vertices->resize(size_pre + num_points);
     for (int i_node = 0; i_node < num_points; ++i_node) {
         ptr_vec_vertices->at(size_pre + i_node) = ptr_geo_info->GeoVertexCreator();
-        std::memcpy(&(ptr_vec_vertices->at(size_pre + i_node)->coordinate.at(kXIndex)),
+        std::memcpy(&(ptr_vec_vertices->at(size_pre + i_node)->coordinate_.at(kXIndex)),
             ptr_buffer + position, real_size);
         position += real_size;
-        std::memcpy(&(ptr_vec_vertices->at(size_pre + i_node)->coordinate.at(kYIndex)),
+        std::memcpy(&(ptr_vec_vertices->at(size_pre + i_node)->coordinate_.at(kYIndex)),
             ptr_buffer + position, real_size);
         position += real_size;
-        std::memcpy(&(ptr_vec_vertices->at(size_pre + i_node)->coordinate.at(kZIndex)),
+        std::memcpy(&(ptr_vec_vertices->at(size_pre + i_node)->coordinate_.at(kZIndex)),
             ptr_buffer + position, real_size);
         position += real_size;
     }

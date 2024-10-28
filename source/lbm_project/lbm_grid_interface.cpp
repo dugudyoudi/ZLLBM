@@ -10,6 +10,8 @@
 #include "./lbm_interface.h"
 #include "io/log_write.h"
 #include "io/vtk_writer.h"
+#include "criterion/criterion_manager.h"
+#include "mpi/mpi_manager.h"
 namespace rootproject {
 namespace lbmproject {
 /**
@@ -44,9 +46,51 @@ void GridInfoLbmInteface::SetNodeVariablesAsZeros(amrproject::GridNode* const pt
     ptr_lbm_node->f_.assign(ptr_lbm_solver->k0NumQ_, 0.);
 }
 /**
+ * @brief function to advancing simulation at current time step.
+ * @param[in] ptr_node pointer to a node.
+ * @param[in] time_scheme enum class to identify time stepping scheme used in computation.
+ * @param[in] time_step_level time step at current grid refinement level in one background step.
+ * @param[in] time_step_current total time step at current grid refinement level.
+ * @param[in] ptr_mpi_manager pointer to class managing MPI communication.
+ * @param[out] ptr_criterion_manager pointer to managing criterion for refinement.
+ */
+void GridInfoLbmInteface::AdvancingAtCurrentTime(const amrproject::ETimeSteppingScheme time_scheme,
+    const DefInt time_step_level, const DefReal time_step_current,
+    amrproject::MpiManager* const ptr_mpi_manager,
+    amrproject::CriterionManager* const ptr_criterion_manager) {
+    const DefInt i_level = i_level_;
+#ifdef ENABLE_MPI
+    std::vector<amrproject::MpiManager::BufferSizeInfo> send_buffer_info, receive_buffer_info;
+    std::vector<std::vector<MPI_Request>> vec_vec_reqs_send, vec_vec_reqs_receive;
+    std::vector<std::unique_ptr<char[]>> vec_ptr_buffer_receive, vec_ptr_buffer_send;
+    ptr_mpi_manager->SendNReceiveGridNodes(&send_buffer_info, &receive_buffer_info,
+        &vec_vec_reqs_send, &vec_vec_reqs_receive, &vec_ptr_buffer_send, &vec_ptr_buffer_receive, this);
+#endif  //  ENABLE_MPI
+
+    ptr_solver_->RunSolverOnGivenGrid(time_scheme, time_step_level, time_step_current, *ptr_sfbitset_aux_, this);
+
+#ifdef ENABLE_MPI
+    ptr_mpi_manager->WaitAndReadGridNodesFromBuffer(send_buffer_info,
+        receive_buffer_info, vec_ptr_buffer_receive,
+        &vec_vec_reqs_send, &vec_vec_reqs_receive, this);
+
+    if (i_level > 0) {
+        ptr_mpi_manager->MpiCommunicationForInterpolation(*ptr_sfbitset_aux_,
+            *GetPtrToParentGridManager()->vec_ptr_grid_info_.at(i_level - 1).get(), this);
+    }
+#endif  //  ENABLE_MPI
+
+    SolverLbmInterface* ptr_lbm_solver = std::dynamic_pointer_cast<SolverLbmInterface>(ptr_solver_).get();
+    ptr_lbm_solver->CallDomainBoundaryCondition(time_scheme,
+        time_step_level, time_step_current, *ptr_sfbitset_aux_, this);
+
+    // use information in current time step
+    ptr_solver_->InformationFromGridOfDifferentLevel(time_step_level, *ptr_sfbitset_aux_, this);
+}
+/**
  * @brief function to create grid node.
  */
-std::unique_ptr<amrproject::GridNode> GridInfoLbmInteface::GridNodeCreator() {
+std::unique_ptr<amrproject::GridNode> GridInfoLbmInteface::GridNodeCreator() const {
     const SolverLbmInterface& lbm_solver = *(std::dynamic_pointer_cast<SolverLbmInterface>(ptr_solver_));
     if (!lbm_solver.bool_forces_) {
         return std::make_unique<GridNodeLbm>(
@@ -63,12 +107,7 @@ std::unique_ptr<amrproject::GridNode> GridInfoLbmInteface::GridNodeCreator() {
 void GridInfoLbmInteface::InitialGridInfo(const DefInt dims) {
     SolverLbmInterface* ptr_lbm_solver = std::dynamic_pointer_cast<SolverLbmInterface>(ptr_solver_).get();
     ptr_lbm_solver->SetInitialDisFuncBasedOnReferenceMacros(&f_ini_, &f_collide_ini_);
-    k0SizeOfAllDistributionFunctions_ = ptr_lbm_solver->k0NumQ_*sizeof(DefReal);
-    SetCollisionOperator();
-    ptr_collision_operator_->viscosity_lbm_ = ptr_lbm_solver->GetDefaultViscosity();
-    ptr_collision_operator_->dt_lbm_ = 1./ static_cast<DefReal>(TwoPowerN(i_level_));
-    ptr_collision_operator_->CalRelaxationTime();
-    ptr_collision_operator_->CalRelaxationTimeRatio();
+    ptr_lbm_solver->SetCollisionOperator(i_level_, collision_type_);
     ChooseInterpolationMethod(dims);
     if (ptr_lbm_solver->GetNumForces() != ptr_lbm_solver->GetDefaultForce().size()) {
         amrproject::LogManager::LogWarning("Dimension of forces of grid info is not equal to"
@@ -92,14 +131,14 @@ void GridInfoLbmInteface::SetPointerToCurrentNodeType() {
             amrproject::LogManager::LogError(msg);
         }
     } else {
-        // noting that the map is empty
+        // if the map is empty
         ptr_lbm_grid_nodes_ = reinterpret_cast<DefMap<std::unique_ptr<GridNodeLbm>>*>(&map_grid_node_);
     }
 }
 /**
  * @brief function to get pointer to the map store LBM nodes.
  */
-DefMap<std::unique_ptr<GridNodeLbm>>* GridInfoLbmInteface::GetPointerToLbmGrid() {
+DefMap<std::unique_ptr<GridNodeLbm>>* GridInfoLbmInteface::GetPtrToLbmGrid() {
     if (ptr_lbm_grid_nodes_ == nullptr) {
         SetPointerToCurrentNodeType();
     }
@@ -247,18 +286,17 @@ void GridInfoLbmInteface:: ComputeDomainBoundaryConditionForANode(
 /**
  * @brief function to setup grid information at the beginning of each time step.
  * @param[in] time_step count of time steps.
- * @param[out] ptr_grid_manager point to class manages mesh containing grids at different refinement levels.
  */
-void GridInfoLbmInteface::SetUpGridAtBeginningOfTimeStep(const DefInt time_step,
-    amrproject::GridManagerInterface* const ptr_grid_manager) {
+void GridInfoLbmInteface::SetUpGridAtBeginningOfTimeStep(const DefInt time_step) {
+    amrproject::GridManagerInterface* ptr_grid_manager = GetPtrToParentGridManager();
     // reinterpret pointer to grid information at one level lower and one level higher
     if (i_level_ > 0) {
         std::dynamic_pointer_cast<GridInfoLbmInteface>(
-            ptr_grid_manager->vec_ptr_grid_info_.at(i_level_ - 1))->GetPointerToLbmGrid();
+            ptr_grid_manager->vec_ptr_grid_info_.at(i_level_ - 1))->GetPtrToLbmGrid();
     }
     if (i_level_  < ptr_grid_manager->vec_ptr_grid_info_.size() - 1) {
         std::dynamic_pointer_cast<GridInfoLbmInteface>(
-            ptr_grid_manager->vec_ptr_grid_info_.at(i_level_ + 1))->GetPointerToLbmGrid();
+            ptr_grid_manager->vec_ptr_grid_info_.at(i_level_ + 1))->GetPtrToLbmGrid();
     }
 }
 /**
@@ -282,7 +320,7 @@ void GridInfoLbmInteface::InitialNotComputeNodeFlag() {
 int GridInfoLbmInteface::TransferInfoFromCoarseGrid(const amrproject::SFBitsetAuxInterface& sfbitset_aux,
     const DefInt node_flag_not_interp, const amrproject::GridInfoInterface& grid_info_coarse) {
     const DefInt dims = ptr_solver_->GetSolverDim();
-    if (GetPointerToLbmGrid() == nullptr ||
+    if (GetPtrToLbmGrid() == nullptr ||
         (dynamic_cast<const GridInfoLbmInteface&>(grid_info_coarse).ptr_lbm_grid_nodes_ == nullptr)) {
         amrproject::LogManager::LogError("pointer to LBM grid nodes is null");
     }
@@ -411,7 +449,7 @@ void GridInfoLbmInteface::DebugWriteNode(const amrproject::GridNode& node) {
 int GridInfoLbmInteface::TransferInfoToCoarseGrid(const amrproject::SFBitsetAuxInterface& sfbitset_aux,
     const DefInt node_flag, amrproject::GridInfoInterface* const ptr_grid_info_coarse) {
     DefSFBitset sfbitset_fine;
-    if (GetPointerToLbmGrid() == nullptr ||
+    if (GetPtrToLbmGrid() == nullptr ||
         (dynamic_cast<GridInfoLbmInteface*>(ptr_grid_info_coarse)->ptr_lbm_grid_nodes_ == nullptr)) {
         amrproject::LogManager::LogError("pointer to LBM grid is null");
     }
@@ -468,8 +506,7 @@ void GridInfoLbmInteface::NodeInfoCoarse2fine(const amrproject::GridNode& coarse
 
     lbm_solver.func_macro_without_force_(coarse_node, &ptr_fine_node->rho_, &ptr_fine_node->velocity_);
     lbm_solver.func_cal_feq_(ptr_fine_node->rho_, ptr_fine_node->velocity_, &feq);
-    ptr_collision_operator_->PostStreamCoarse2Fine(ptr_collision_operator_->dt_lbm_,
-        feq, coarse_node.f_, &ptr_fine_node->f_);
+    lbm_solver.GetCollisionOperator(i_level_).PostStreamCoarse2Fine(feq, coarse_node.f_, &ptr_fine_node->f_);
 }
 /**
  * @brief function to transfer information stored in fine LBM node to coarse node.
@@ -490,15 +527,14 @@ void GridInfoLbmInteface::NodeInfoFine2Coarse(const amrproject::GridNode& fine_b
     //     ptr_collision_operator_->PostCollisionFine2Coarse(ptr_collision_operator_->dt_lbm_,
     //         feq, fine_node,  ptr_coarse_node);
     // }
-    ptr_collision_operator_->PostStreamFine2Coarse(ptr_collision_operator_->dt_lbm_,
-            feq, fine_node,  ptr_coarse_node);
+    lbm_solver.GetCollisionOperator(i_level_).PostStreamFine2Coarse(feq, fine_node,  ptr_coarse_node);
 }
 /**
  * @brief function to setup output infomation on variables of LBM node.
  */
 void GridInfoLbmInteface::SetupOutputVariables() {
     SolverLbmInterface* ptr_lbm_solver = std::dynamic_pointer_cast<SolverLbmInterface>(ptr_solver_).get();
-    DefReal dt = ptr_collision_operator_->dt_lbm_;
+    DefReal dt = ptr_lbm_solver->GetCollisionOperator(i_level_).GetDtLbm();
     std::function<void(const DefReal dt_lbm, const GridNodeLbm& node, const std::vector<DefReal>& force,
         DefReal* const ptr_rho, std::vector<DefReal>* const ptr_velocity)> func_macro;
     if (ptr_lbm_solver->bool_forces_) {
@@ -534,7 +570,7 @@ void GridInfoLbmInteface::SetupOutputVariables() {
             output_info_tmp.output_name_ = "velocity";
         }
     }
-    GetPointerToLbmGrid();
+    GetPtrToLbmGrid();
 }
 /**
 * @brief   function to write scalar and vector variables.

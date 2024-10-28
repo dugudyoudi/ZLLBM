@@ -1139,10 +1139,7 @@ void SFBitsetAux2D::GetMaxP1AtGivenLevel(const DefInt i_level,
 void SFBitsetAux2D::GetMinAtGivenLevel(const DefInt i_level,
     std::vector<DefAmrLUint> indices_min,
     std::vector<DefSFBitset>* const ptr_min_bitsets) const {
-    if (ptr_min_bitsets->size() != 2) {
-        LogManager::LogError("size of ptr_min_m1_bitsets should be 2 in MpiManager::GetMinAtGivenLevel in "
-         + std::string(__FILE__) + " at line " + std::to_string(__LINE__));
-    }
+    ptr_min_bitsets->resize(2);
     ptr_min_bitsets->at(kXIndex) = SFBitsetToNHigherLevel(i_level, SFBitsetEncoding({indices_min[kXIndex], 0}));
     ptr_min_bitsets->at(kYIndex) = SFBitsetToNHigherLevel(i_level, SFBitsetEncoding({0, indices_min[kYIndex]}));
 }
@@ -1155,10 +1152,7 @@ void SFBitsetAux2D::GetMinAtGivenLevel(const DefInt i_level,
 void SFBitsetAux2D::GetMaxAtGivenLevel(const DefInt i_level,
     std::vector<DefAmrLUint> indices_max,
     std::vector<DefSFBitset>* const ptr_max_bitsets) const {
-    if (ptr_max_bitsets->size() != 2) {
-        LogManager::LogError("size of ptr_max_p1_bitsets should be 2 in MpiManager::GetMaAtGivenLevel in "
-         + std::string(__FILE__) + " at line " + std::to_string(__LINE__));
-    }
+    ptr_max_bitsets->resize(2);
     ptr_max_bitsets->at(kXIndex) = SFBitsetToNHigherLevel(i_level, SFBitsetEncoding({indices_max[kXIndex], 0}));
     ptr_max_bitsets->at(kYIndex) = SFBitsetToNHigherLevel(i_level, SFBitsetEncoding({0, indices_max[kYIndex]}));
 }
@@ -3369,10 +3363,7 @@ void SFBitsetAux3D::GetMaxP1AtGivenLevel(const DefInt i_level,
 void SFBitsetAux3D::GetMinAtGivenLevel(const DefInt i_level,
     std::vector<DefAmrLUint> indices_min,
     std::vector<DefSFBitset>* const ptr_min_bitsets) const {
-    if (ptr_min_bitsets->size() != 3) {
-        LogManager::LogError("size of ptr_min_m1_bitsets should be 3 in MpiManager::GetMinAtGivenLevel3D in "
-         + std::string(__FILE__) + " at line " + std::to_string(__LINE__));
-    }
+    ptr_min_bitsets->resize(3);
     ptr_min_bitsets->at(kXIndex) = SFBitsetToNHigherLevel(i_level, SFBitsetEncoding({indices_min[kXIndex], 0, 0}));
     ptr_min_bitsets->at(kYIndex) = SFBitsetToNHigherLevel(i_level, SFBitsetEncoding({0,  indices_min[kYIndex], 0}));
     ptr_min_bitsets->at(kZIndex) = SFBitsetToNHigherLevel(i_level, SFBitsetEncoding({0, 0, indices_min[kZIndex]}));
@@ -3386,10 +3377,7 @@ void SFBitsetAux3D::GetMinAtGivenLevel(const DefInt i_level,
 void SFBitsetAux3D::GetMaxAtGivenLevel(const DefInt i_level,
     std::vector<DefAmrLUint> indices_max,
     std::vector<DefSFBitset>* const ptr_max_bitsets) const {
-    if (ptr_max_bitsets->size() != 3) {
-        LogManager::LogError("size of ptr_max_p1_bitsets should be 3 in MpiManager::GetMaxAtGivenLevel3D in "
-         + std::string(__FILE__) + " at line " + std::to_string(__LINE__));
-    }
+    ptr_max_bitsets->resize(3);
     ptr_max_bitsets->at(kXIndex) = SFBitsetToNHigherLevel(i_level, SFBitsetEncoding({indices_max[kXIndex], 0, 0}));
     ptr_max_bitsets->at(kYIndex) = SFBitsetToNHigherLevel(i_level, SFBitsetEncoding({0, indices_max[kYIndex], 0}));
     ptr_max_bitsets->at(kZIndex) = SFBitsetToNHigherLevel(i_level, SFBitsetEncoding({0, 0, indices_max[kZIndex]}));

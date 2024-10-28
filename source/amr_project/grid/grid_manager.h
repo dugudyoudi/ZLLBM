@@ -127,7 +127,7 @@ class GridManagerInterface{
         const std::vector<std::shared_ptr<GridInfo>>& vec_ptr_interface) const;
 
     // get mesh parameters for 2D and 3D
-    virtual SFBitsetAuxInterface* GetSFBitsetAuxPtr() = 0;
+    virtual SFBitsetAuxInterface* GetPtrToSFBitsetAux() = 0;
     virtual std::vector<DefReal> GetDomainDxArrAsVec() const = 0;
     virtual std::vector<DefAmrLUint> GetMinIndexOfBackgroundNodeArrAsVec() const = 0;
     virtual std::vector<DefAmrLUint> GetMaxIndexOfBackgroundNodeArrAsVec() const = 0;
@@ -425,7 +425,7 @@ class GridManager2D :public  GridManagerInterface, public SFBitsetAux2D {
  public:
     void PrintGridInfo(void) const override;
     void SetGridParameters(void) override;
-    SFBitsetAuxInterface* GetSFBitsetAuxPtr() override {
+    SFBitsetAuxInterface* GetPtrToSFBitsetAux() override {
         return dynamic_cast<SFBitsetAuxInterface*>(this);
     }
     std::vector<DefReal> GetDomainDxArrAsVec() const final {
@@ -561,7 +561,7 @@ class GridManager3D :public  GridManagerInterface, public SFBitsetAux3D {
     void PrintGridInfo(void) const override;
     void SetGridParameters(void) override;
 
-    SFBitsetAuxInterface* GetSFBitsetAuxPtr() override {
+    SFBitsetAuxInterface* GetPtrToSFBitsetAux() override {
         return dynamic_cast<SFBitsetAuxInterface*>(this);
     }
     std::vector<DefReal> GetDomainDxArrAsVec() const final {

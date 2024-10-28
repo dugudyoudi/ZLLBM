@@ -20,7 +20,7 @@ namespace amrproject {
 void GridManagerInterface::GenerateGridFromHighToLowLevelSerial(
     const std::vector<std::shared_ptr<GeometryInfoInterface>>&vec_geo_info,
     std::vector<DefMap<DefInt>>* const ptr_sfbitset_one_lower_level) {
-    SFBitsetAuxInterface* ptr_sfbitset_aux = this->GetSFBitsetAuxPtr();
+    SFBitsetAuxInterface* ptr_sfbitset_aux = this->GetPtrToSFBitsetAux();
     if (vec_ptr_grid_info_.size() != k0MaxLevel_ + 1) {
         LogManager::LogError("Number of grid refinement level " + std::to_string(
             vec_ptr_grid_info_.size() - 1) + " is different from k0MaxLevel_ "
@@ -31,8 +31,8 @@ void GridManagerInterface::GenerateGridFromHighToLowLevelSerial(
     // generate tracking and ghost nodes based on geometries
     DefInt i_geo = 0;
     for (auto& iter : vec_geo_info) {
-        iter->i_geo_ = i_geo;
-        iter->FindTrackingNodeBasedOnGeo(*ptr_sfbitset_aux, vec_ptr_grid_info_.at(iter->i_level_).get());
+        iter->SetGeoIndex(i_geo);
+        iter->FindTrackingNodeBasedOnGeo(*ptr_sfbitset_aux, vec_ptr_grid_info_.at(iter->GetLevel()).get());
         ++i_geo;
     }
 
@@ -412,7 +412,7 @@ int GridManagerInterface::FloodFillForInAndOut(
 void GridManagerInterface::ResetBackgroundGridAsMpiLayer(const DefInt num_mpi_layers,
     const GridInfoInterface& background_grid_info, const DefMap<DefInt>& level1_grid,
     DefMap<DefInt>* const ptr_background_grid) {
-    SFBitsetAuxInterface* ptr_sfbitset_aux = GetSFBitsetAuxPtr();
+    SFBitsetAuxInterface* ptr_sfbitset_aux = GetPtrToSFBitsetAux();
     if (k0MaxLevel_ > 0) {
         ptr_background_grid->clear();
         std::vector<DefSFBitset> domain_min_m1_n_level(k0GridDims_), domain_max_p1_n_level(k0GridDims_), vec_region;

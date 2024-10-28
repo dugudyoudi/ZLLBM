@@ -9,6 +9,7 @@
 */
 #include <string>
 #include "grid/grid_info_interface.h"
+#include "grid/grid_manager.h"
 #include "io/log_write.h"
 namespace rootproject {
 namespace amrproject {
@@ -20,8 +21,8 @@ void GridInfoInterface::SetComputationalCost(DefInt computational_cost) {
     computational_cost_ = computational_cost;
 }
 void GridInfoInterface::SetGridSpace(const std::vector<DefReal>& grid_space) {
-    if (grid_space.size() > 3) {
-        LogManager::LogError("Dimension of grid space should not be greater than 3");
+    if (grid_space.size() != GetPtrToParentGridManager()->k0GridDims_) {
+        LogManager::LogError("Dimension of grid space is not the same as the dimension of grid.");
     } else {
         grid_space_ = grid_space;
     }
@@ -57,6 +58,21 @@ void GridInfoInterface::SetMemberVariable(const std::string& str_var, int value)
     } else {
         LogManager::LogError("variable " + str_var + " not found.");
     }
+}
+/**
+ * @brief function to get computational domain infomation at current level.
+ * @return domain information.
+ */
+DomainInfo GridInfoInterface::GetDomainInfo() const {
+    DomainInfo domain_info;
+    const std::vector<DefAmrLUint> indices_min = ptr_parent_grid_manager_->GetMinIndexOfBackgroundNodeArrAsVec(),
+        indices_max = ptr_parent_grid_manager_->GetMaxIndexOfBackgroundNodeArrAsVec();
+    ptr_sfbitset_aux_->GetMinAtGivenLevel(i_level_, indices_min, &domain_info.domain_min_n_level_);
+    ptr_sfbitset_aux_->GetMaxAtGivenLevel(i_level_, indices_max, &domain_info.domain_max_n_level_);
+    CheckIfPeriodicDomainRequired(ptr_parent_grid_manager_->k0GridDims_,
+        &domain_info.periodic_min_, &domain_info.periodic_max_);
+    domain_info.grid_space_ = GetGridSpace();
+    return domain_info;
 }
 /**
  * @brief function to check if a node is inside, on or outside the cubic domain boundary.

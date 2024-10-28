@@ -38,10 +38,12 @@ void GridManagerInterface::DefaultInitialization(const DefInt max_level) {
 void GridManagerInterface::CreateTrackingGridInstanceForAGeo(const DefInt i_geo,
     const GeometryInfoInterface& geo_info) {
     std::pair<ECriterionType, DefInt> key_tracking_grid = { ECriterionType::kGeometry, i_geo };
-    if (vec_ptr_grid_info_.at(geo_info.i_level_)->map_ptr_tracking_grid_info_.find(key_tracking_grid)
-        == vec_ptr_grid_info_.at(geo_info.i_level_)->map_ptr_tracking_grid_info_.end()) {
-        vec_ptr_grid_info_.at(geo_info.i_level_)->map_ptr_tracking_grid_info_.insert(
-        { key_tracking_grid, geo_info.ptr_tracking_grid_info_creator_->CreateTrackingGridInfo() });
+    DefInt geo_level = geo_info.GetLevel();
+    TrackingGridInfoCreatorInterface* ptr_creator = geo_info.GetPtrTrackingGridInfoCreatorInterface();
+    if (vec_ptr_grid_info_.at(geo_level)->map_ptr_tracking_grid_info_.find(key_tracking_grid)
+        == vec_ptr_grid_info_.at(geo_level)->map_ptr_tracking_grid_info_.end()) {
+        vec_ptr_grid_info_.at(geo_level)->map_ptr_tracking_grid_info_.insert(
+            {key_tracking_grid, ptr_creator->CreateTrackingGridInfo() });
     }
 }
 /**
@@ -95,7 +97,7 @@ void GridManagerInterface::CreateSameGridInstanceForAllLevel(const std::shared_p
  */
 bool GridManagerInterface::InstantiateGridNode(const DefSFBitset& bitset_in,
     GridInfoInterface* const ptr_grid_info) {
-    DefInt flag_node = ptr_grid_info->CheckIfNodeOutsideCubicDomain(k0GridDims_, bitset_in, *GetSFBitsetAuxPtr());
+    DefInt flag_node = ptr_grid_info->CheckIfNodeOutsideCubicDomain(k0GridDims_, bitset_in, *GetPtrToSFBitsetAux());
     if (flag_node >= GridInfoInterface::kFlagInsideDomain_) {
         ptr_grid_info->map_grid_node_.insert({bitset_in, ptr_grid_info->GridNodeCreator()});
         (this->*ptr_func_insert_domain_boundary_)(flag_node, bitset_in, ptr_grid_info);
@@ -229,21 +231,16 @@ void GridManagerInterface::SetNumberOfExtendLayerForGrid(const DefInt i_level,
     ptr_inner_layer_pos->assign(layer_min.begin(), layer_min.end());
     ptr_outer_layer_neg->assign(layer_min.begin(), layer_min.end());
     ptr_outer_layer_pos->assign(layer_min.begin(), layer_min.end());
-    if ((geo_info.k0IntInnerExtend_.size() > i_level)
-        && (geo_info.k0IntInnerExtend_.at(i_level) > k0IntExtendMin_)) {
-        ptr_inner_layer_neg->at(kXIndex) =
-            geo_info.k0IntInnerExtend_.at(i_level);
-        ptr_inner_layer_neg->at(kYIndex) =
-            geo_info.k0IntInnerExtend_.at(i_level);
-        ptr_inner_layer_pos->at(kXIndex) =
-            geo_info.k0IntInnerExtend_.at(i_level);
-        ptr_inner_layer_pos->at(kYIndex) =
-            geo_info.k0IntInnerExtend_.at(i_level);
+    std::vector<DefInt> geo_extend = geo_info.GetInnerExtend();
+    if ((geo_extend.size() > i_level)
+        && (geo_extend.at(i_level) > k0IntExtendMin_)) {
+        ptr_inner_layer_neg->at(kXIndex) = geo_extend.at(i_level);
+        ptr_inner_layer_neg->at(kYIndex) = geo_extend.at(i_level);
+        ptr_inner_layer_pos->at(kXIndex) = geo_extend.at(i_level);
+        ptr_inner_layer_pos->at(kYIndex) = geo_extend.at(i_level);
         if (k0GridDims_ == 3) {
-            ptr_inner_layer_neg->at(kZIndex) =
-                geo_info.k0IntInnerExtend_.at(i_level);
-            ptr_inner_layer_pos->at(kZIndex) =
-                geo_info.k0IntInnerExtend_.at(i_level);
+            ptr_inner_layer_neg->at(kZIndex) = geo_extend.at(i_level);
+            ptr_inner_layer_pos->at(kZIndex) = geo_extend.at(i_level);
         }
     } else {
         ptr_inner_layer_neg->at(kXIndex) = k0IntExtendMin_;
@@ -255,48 +252,41 @@ void GridManagerInterface::SetNumberOfExtendLayerForGrid(const DefInt i_level,
             ptr_inner_layer_pos->at(kZIndex) = k0IntExtendMin_;
         }
     }
-    if ((geo_info.k0XIntExtendNegative_.size() > i_level)
-        && (geo_info.k0XIntExtendNegative_.at(i_level) > k0IntExtendMin_)) {
-        ptr_outer_layer_neg->at(kXIndex) =
-            geo_info.k0XIntExtendNegative_.at(i_level);
+    geo_extend = geo_info.GetXExtendNegative();
+    if ((geo_extend.size() > i_level) && (geo_extend.at(i_level) > k0IntExtendMin_)) {
+        ptr_outer_layer_neg->at(kXIndex) = geo_extend.at(i_level);
     } else {
         ptr_outer_layer_neg->at(kXIndex) = k0IntExtendMin_;
     }
-    if ((geo_info.k0XIntExtendPositive_.size() > i_level)
-        && (geo_info.k0XIntExtendPositive_.at(i_level) > k0IntExtendMin_)) {
-        ptr_outer_layer_pos->at(kXIndex) =
-            geo_info.k0XIntExtendPositive_.at(i_level);
+    geo_extend = geo_info.GetXExtendPositive();
+    if ((geo_extend.size() > i_level) && (geo_extend.at(i_level) > k0IntExtendMin_)) {
+        ptr_outer_layer_pos->at(kXIndex) = geo_extend.at(i_level);
     } else {
         ptr_outer_layer_pos->at(kXIndex) = k0IntExtendMin_;
     }
-    if ((geo_info.k0YIntExtendNegative_.size() > i_level)
-        && (geo_info.k0YIntExtendNegative_.at(i_level) > k0IntExtendMin_)) {
-        ptr_outer_layer_neg->at(kYIndex) =
-            geo_info.k0YIntExtendNegative_.at(i_level);
+    geo_extend = geo_info.GetYExtendNegative();
+    if ((geo_extend.size() > i_level) && (geo_extend.at(i_level) > k0IntExtendMin_)) {
+        ptr_outer_layer_neg->at(kYIndex) = geo_extend.at(i_level);
     } else {
         ptr_outer_layer_neg->at(kYIndex) = k0IntExtendMin_;
     }
-    if ((geo_info.k0YIntExtendPositive_.size() > i_level)
-        && (geo_info.k0YIntExtendPositive_.at(i_level) > k0IntExtendMin_)) {
-        ptr_outer_layer_pos->at(kYIndex) =
-            geo_info.k0YIntExtendPositive_.at(i_level);
+    geo_extend = geo_info.GetYExtendPositive();
+    if ((geo_extend.size() > i_level) && (geo_extend.at(i_level) > k0IntExtendMin_)) {
+        ptr_outer_layer_pos->at(kYIndex) = geo_extend.at(i_level);
     } else {
         ptr_outer_layer_pos->at(kYIndex) = k0IntExtendMin_;
     }
     if (k0GridDims_ == 3) {
-        if ((geo_info.k0ZIntExtendNegative_.size() > i_level)
-            && (geo_info.k0ZIntExtendNegative_.at(i_level) >
-                k0IntExtendMin_)) {
-            ptr_outer_layer_neg->at(kZIndex) =
-                geo_info.k0ZIntExtendNegative_.at(i_level);
+        geo_extend = geo_info.GetZExtendNegative();
+        if ((geo_extend.size() > i_level) && (geo_extend.at(i_level) > k0IntExtendMin_)) {
+            ptr_outer_layer_neg->at(kZIndex) = geo_extend.at(i_level);
         } else {
             ptr_outer_layer_neg->at(kZIndex) = k0IntExtendMin_;
         }
-        if ((geo_info.k0ZIntExtendPositive_.size() > i_level)
-            && (geo_info.k0ZIntExtendPositive_.at(i_level) >
+        geo_extend = geo_info.GetZExtendPositive();
+        if ((geo_extend.size() > i_level) && (geo_extend.at(i_level) >
                 k0IntExtendMin_)) {
-            ptr_outer_layer_pos->at(kZIndex) =
-                geo_info.k0ZIntExtendPositive_.at(i_level);
+            ptr_outer_layer_pos->at(kZIndex) = geo_extend.at(i_level);
         } else {
             ptr_outer_layer_pos->at(kZIndex) = k0IntExtendMin_;
         }

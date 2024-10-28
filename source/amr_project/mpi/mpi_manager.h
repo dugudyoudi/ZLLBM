@@ -332,10 +332,14 @@ class MpiManager{
         int num_chunks_ = 0;
         std::array<int, 2> array_buffer_size_ = {0, 0};
     };
+    void SendNReceiveSFbitsetForInterpolation(const DefInt i_level, const SFBitsetAuxInterface& sfbitset_aux,
+        const DefMap<std::unique_ptr<GridNode>>& map_nodes_outer_layer,
+        std::vector<int>* const ptr_vec_num_recv, std::map<int, DefMap<DefInt>>* const ptr_node_inner_layers) const;
     int SendNReceiveRequestNodesSFbitset(const std::vector<int>& num_node_request_current,
         const std::vector<int>& num_node_request_others, const std::vector<DefMap<DefInt>> &requested_nodes,
-        std::map<int, DefMap<DefInt>>* const ptr_vec_map_nodes_need_send) const;
+        std::map<int, DefMap<DefInt>>* const ptr_map_nodes_need_send) const;
     int SendGhostNodeForInterpolation(const SFBitsetAuxInterface& sfbitset_aux,
+        const std::vector<DefInt>& vec_num_recv,
         const GridInfoInterface& grid_info_lower, GridInfoInterface* ptr_grid_info,
         std::vector<BufferSizeInfo>* const ptr_send_buffer_info,
         std::vector<BufferSizeInfo>* const ptr_receive_buffer_info,
@@ -356,9 +360,9 @@ class MpiManager{
         std::vector<BufferSizeInfo>* const ptr_receive_buffer_info) const;
     DefSizet CalculateBufferSizeForGridNode(
         const DefSizet num_nodes, const GridInfoInterface& grid_info) const;
-    int SendGridNodeInformation(const int i_rank, const BufferSizeInfo& send_buffer_info,
+    void SendGridNodeInformation(const int i_rank, const BufferSizeInfo& send_buffer_info,
         const std::map<int, DefMap<DefInt>>& nodes_to_send,
-        const std::function<int(const DefMap<DefInt>& , char* const)> func_copy_node_to_buffer,
+        const std::function<void(const DefMap<DefInt>& , char* const)> func_copy_node_to_buffer,
         GridInfoInterface* ptr_grid_info, char* const ptr_buffer_send,
         std::vector<MPI_Request>* const ptr_reqs_send) const;
     std::unique_ptr<char[]> ReceiveGridNodeInformation(const int rank_receive, const int node_info_size,
@@ -376,6 +380,9 @@ class MpiManager{
         const std::vector<std::unique_ptr<char[]>>& vec_ptr_buffer_receive,
         std::vector<std::vector<MPI_Request>>* const ptr_vec_vec_reqs_send,
         std::vector<std::vector<MPI_Request>>* const ptr_vec_vec_reqs_receive,
+        GridInfoInterface* const ptr_grid_info) const;
+    void MpiCommunicationForInterpolation(
+        const SFBitsetAuxInterface& sfbitset_aux, const GridInfoInterface& grid_info_lower,
         GridInfoInterface* const ptr_grid_info) const;
 
  private:

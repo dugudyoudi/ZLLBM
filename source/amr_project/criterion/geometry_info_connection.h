@@ -31,28 +31,28 @@ class  SFBitsetAux3D;
 * @brief structure to store surface connection information
 */
 struct GeometryConnectionSurface {
-    DefSizet parent_surface = ~0;
-    std::vector<DefSizet> child_surface;
-    std::vector<std::pair<DefInt, DefSizet>> vertex_connection;
+    DefSizet parent_surface_ = ~0;
+    std::vector<DefSizet> child_surface_;
+    std::vector<std::pair<DefInt, DefSizet>> vertex_connection_;
 };
 struct GeometryConnectionSurfaceLevel {
-    DefInt level_diff;
+    DefInt level_diff_;
     std::vector<GeometryConnectionSurface>
-        vec_surface_connection;
+        vec_surface_connection_;
 };
 /**
 * @struct GeometryConnectionEdge
 * @brief structure to store edge connection information
 */
 struct GeometryConnectionEdge {
-    std::set<DefSizet> set_index_surfaces;
+    std::set<DefSizet> set_index_surfaces_;
 };
 
 struct GeometryConnectionEdgeLevel {
-    DefInt level_diff;
+    DefInt level_diff_;
     // the first pair<DefInt, DefSizet> is the vertex whose index is larger
     std::map<std::pair<std::pair<DefInt, DefSizet>,
-        std::pair<DefInt, DefSizet>>, GeometryConnectionEdge> map_edge_connection;
+        std::pair<DefInt, DefSizet>>, GeometryConnectionEdge> map_edge_connection_;
 };
 /**
 * @struct GeometryVertex
@@ -60,17 +60,17 @@ struct GeometryConnectionEdgeLevel {
 */
 struct GeometryVertexConnection : public GeometryVertex {
  public:
-    std::map<DefInt, std::set<std::pair<DefInt, DefSizet>>> map_linked_vertices_level;
+    std::map<DefInt, std::set<std::pair<DefInt, DefSizet>>> map_linked_vertices_level_;
     ///< indices of vertices at current or different levels linked to this vertex
-    std::array<std::pair<DefInt, DefSizet>, 2> parent_vertices;
-    std::set<std::pair<DefInt, DefSizet>> child_vertices;
-    std::map<DefInt, DefSFBitset> map_bitset_ref;  ///< spacing filing code of vertices
-    DefInt highest_grid_level = 0;
+    std::array<std::pair<DefInt, DefSizet>, 2> parent_vertices_;
+    std::set<std::pair<DefInt, DefSizet>> child_vertices_;
+    std::map<DefInt, DefSFBitset> map_bitset_ref_;  ///< spacing filing code of vertices
+    DefInt highest_grid_level_ = 0;
     void SetValues(const DefInt level_in, const std::array<std::pair<DefInt, DefSizet>, 2>& parent_in,
         const std::array<DefReal, 3>& coordinate_in) {
-        highest_grid_level = level_in;
-        parent_vertices = parent_in;
-        coordinate = coordinate_in;
+        highest_grid_level_ = level_in;
+        parent_vertices_ = parent_in;
+        coordinate_ = coordinate_in;
     }
 };
 /**
@@ -78,7 +78,7 @@ struct GeometryVertexConnection : public GeometryVertex {
 * @brief structure to store all vertex formation for a given level
 */
 struct GeometryConnectionVertexLevel {
-    std::vector<std::unique_ptr<GeometryVertexConnection>> vec_vertex_coordinate;
+    std::vector<std::unique_ptr<GeometryVertexConnection>> vec_vertex_coordinate_;
 };
 /**
 * @class GeometryConnectionInterface
@@ -88,9 +88,6 @@ class GeometryConnectionInterface {
     // index of parameters in GeometryCoordinate::vec_real
     // k0 indicates those parameters are optional
  public:
-    bool bool_vec_velocities_ = true;
-    bool bool_vec_forces_ = true;
-
     // if true, the last and first elements in the connection relation
     // (connection_relation_) consist of an edge
     bool bool_periodic_connection_ = false;
@@ -115,12 +112,12 @@ class GeometryConnectionInterface {
     std::vector<std::set<std::pair<DefInt, DefSizet>>> connection_vertex_given_level_{};
     ///<  vertices at the current and higher geometry levels exist simultaneously at the given level (the ith element)
 
-    virtual std::unique_ptr<GeometryVertexConnection> GeoConnectionVertexCreator() {
+    virtual std::unique_ptr<GeometryVertexConnection> GeoConnectionVertexCreator() const {
         return std::make_unique<GeometryVertexConnection>();
     }
-    virtual std::unique_ptr<GeometryVertexConnection> GeoConnectionVertexCreator(GeometryVertexConnection&) {
-        return std::make_unique<GeometryVertexConnection>();
-    }
+    // virtual std::unique_ptr<GeometryVertexConnection> GeoConnectionVertexCreator(GeometryVertexConnection&) {
+    //     return std::make_unique<GeometryVertexConnection>();
+    // }
 
     void InitialCoordinateGivenLevel(const std::vector<std::unique_ptr<GeometryVertex>>& vec_vertices,
         std::array<DefReal, 3>* const ptr_coordi_min, std::array<DefReal, 3>* const ptr_coordi_max);

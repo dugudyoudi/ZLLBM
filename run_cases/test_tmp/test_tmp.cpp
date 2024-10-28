@@ -7,7 +7,7 @@
 * @date  2022-5-12
 * @brief  test grid generation and related MPI functions
 */
-#include "amr_manager.h"
+#include "./amr_manager.h"
 #include "d2q9_model/lbm_d2q9.h"
 using namespace rootproject;
 using namespace rootproject::amrproject;
@@ -36,7 +36,7 @@ void SetTestDependentParameters(
         lbmproject::GridInfoLbmInteface& grid_ref
             = *dynamic_cast<lbmproject::GridInfoLbmInteface*>(iter_grid.get());
         lbmproject::SolverLbmInterface& solver_ref
-            = *dynamic_cast<lbmproject::SolverLbmInterface*>(grid_ref.GetPtrSolver());
+            = *dynamic_cast<lbmproject::SolverLbmInterface*>(grid_ref.GetPtrToSolver());
         solver_ref.SetDomainBoundaryCondition(lbmproject::ELbmBoundaryType::kBoundaryXMin,
             lbmproject::ELbmBoundaryConditionScheme::kPeriodic, &grid_ref.domain_boundary_condition_);
         solver_ref.SetDomainBoundaryCondition(lbmproject::ELbmBoundaryType::kBoundaryXMax,
@@ -65,7 +65,7 @@ void SetDomainBoundaryOtherThanPeriodic(
         lbmproject::GridInfoLbmInteface& grid_ref
             = *dynamic_cast<lbmproject::GridInfoLbmInteface*>(iter_grid.get());
         lbmproject::SolverLbmInterface& solver_ref
-            = *dynamic_cast<lbmproject::SolverLbmInterface*>(grid_ref.GetPtrSolver());
+            = *dynamic_cast<lbmproject::SolverLbmInterface*>(grid_ref.GetPtrToSolver());
         solver_ref.SetDomainBoundaryCondition(lbmproject::ELbmBoundaryType::kBoundaryYMin,
             boundary_condition_type, &grid_ref.domain_boundary_condition_);
         solver_ref.SetDomainBoundaryCondition(lbmproject::ELbmBoundaryType::kBoundaryYMax,
@@ -109,18 +109,18 @@ int main(int argc, char** argv) {
         dynamic_cast<amrproject::GeoShapeDefaultLine2D*>(ptr_geo_tmp->ptr_geo_shape_.get());
     ptr_line->start_point_ = { 0., 0};
     ptr_line->end_point_ = { max_domain_length_, 0};
-    ptr_geo_tmp->ptr_tracking_grid_info_creator_ =
-        ptr_amr_instance_->ptr_grid_manager_->vec_ptr_tracking_info_creator_.at(0).get();
-    ptr_geo_tmp->geometry_center_ = { max_domain_length_/2, max_domain_height_/2 };
-    ptr_geo_tmp->k0XIntExtendPositive_ = { 4, 4 };
-    ptr_geo_tmp->k0XIntExtendNegative_ = { 4, 4 };
-    ptr_geo_tmp->k0YIntExtendPositive_ = { 4, 4 };
-    ptr_geo_tmp->k0YIntExtendNegative_ = { 4, 4 };
-    ptr_geo_tmp->k0IntInnerExtend_ = { 2, 2 };
+    ptr_geo_tmp->SetPtrTrackingGridInfoCreatorInterface(
+        ptr_amr_instance_->ptr_grid_manager_->vec_ptr_tracking_info_creator_.at(0).get());
+    ptr_geo_tmp->SetGeometryCenter({ max_domain_length_/2, max_domain_height_/2 });
+    ptr_geo_tmp->SetXExtendPositive({ 4, 4 });
+    ptr_geo_tmp->SetXExtendNegative({ 4, 4 });
+    ptr_geo_tmp->SetYExtendPositive({ 4, 4 });
+    ptr_geo_tmp->SetYExtendNegative({ 4, 4 });
+    ptr_geo_tmp->SetInnerExtend({ 2, 2 });
     ///< number of extened layers
 
-    ptr_geo_tmp->grid_extend_type_ = amrproject::EGridExtendType::kInAndOut;
-    ptr_geo_tmp->i_level_ = max_refinement_level;
+    ptr_geo_tmp->SetGridExtendType(amrproject::EGridExtendType::kInAndOut);
+    ptr_geo_tmp->SetLevel(max_refinement_level);
     /* used for generating predefined geometries, number of input parameters
     is based on the type of geometry_shape_*/
     DefReal dx = dx_ / DefReal(std::pow(2, max_refinement_level));

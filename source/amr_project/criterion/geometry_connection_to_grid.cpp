@@ -43,11 +43,11 @@ void GeometryConnectionInterface::FindTrackingNodeBasedOnGeo(DefInt dims,
     DefSFBitset sfbitset_tmp;
     for (auto& iter : connection_vertex_given_level_.at(level_diff)) {
         std::array<DefReal, 3>& coordinate = vertex_given_level_.at(iter.first)
-            .vec_vertex_coordinate.at(iter.second)->coordinate;
+            .vec_vertex_coordinate_.at(iter.second)->coordinate_;
         sfbitset_tmp = sfbitset_aux.SFBitsetEncodingCoordi(grid_space,
             {coordinate[kXIndex], coordinate[kYIndex], coordinate[kZIndex]});
-        vertex_given_level_.at(iter.first).vec_vertex_coordinate
-            .at(iter.second)->map_bitset_ref.insert({i_level_grid, sfbitset_tmp});
+        vertex_given_level_.at(iter.first).vec_vertex_coordinate_
+            .at(iter.second)->map_bitset_ref_.insert({i_level_grid, sfbitset_tmp});
         if (ptr_grid_info->CheckIfNodeOutsideCubicDomain(dims, sfbitset_tmp, sfbitset_aux)
             >= GridInfoInterface::kFlagInsideDomain_) {
             if (ptr_tracking_node->find(sfbitset_tmp) == ptr_tracking_node->end()) {
@@ -57,7 +57,7 @@ void GeometryConnectionInterface::FindTrackingNodeBasedOnGeo(DefInt dims,
             }
         } else {
             std::array<DefReal, 3>& coordi = vertex_given_level_.at(iter.first)
-                .vec_vertex_coordinate.at(iter.second)->coordinate;
+                .vec_vertex_coordinate_.at(iter.second)->coordinate_;
             if (dims == 2) {
                 LogManager::LogError("coordinate (" + std::to_string(coordi[kXIndex]) + ", "
                 + std::to_string(coordi[kYIndex]) + ") is outside the computational domain in "

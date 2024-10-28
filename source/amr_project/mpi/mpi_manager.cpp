@@ -67,6 +67,23 @@ void MpiManager::IniBroadcastSFBitsetBounds(std::vector<DefSFBitset>* const ptr_
         MPI_Bcast(ptr_bitset_bounds->data(), bit_size, MPI_BYTE, 0, MPI_COMM_WORLD);
     }
 }
+/**
+ * @brief function to send and receive nodes for interpolation.
+ * @param[in] .
+ */
+void MpiManager::MpiCommunicationForInterpolation(
+    const SFBitsetAuxInterface& sfbitset_aux, const GridInfoInterface& grid_info_lower,
+    GridInfoInterface* const ptr_grid_info) const {
+    std::vector<BufferSizeInfo> send_buffer_info, receive_buffer_info;
+    std::vector<std::vector<MPI_Request>> vec_vec_reqs_send, vec_vec_reqs_receive;
+    std::vector<std::unique_ptr<char[]>> vec_ptr_buffer_receive, vec_ptr_buffer_send;
+    SendGhostNodeForInterpolation(sfbitset_aux, ptr_grid_info->vec_num_interp_nodes_receive_,
+        grid_info_lower, ptr_grid_info, &send_buffer_info, &receive_buffer_info, &vec_vec_reqs_send,
+        &vec_vec_reqs_receive, &vec_ptr_buffer_send, &vec_ptr_buffer_receive);
+
+    WaitAndReadGhostNodeForInterpolation(send_buffer_info, receive_buffer_info,
+        vec_ptr_buffer_receive, &vec_vec_reqs_send, &vec_vec_reqs_receive, ptr_grid_info);
+}
 }  // end namespace amrproject
 }  // end namespace rootproject
 #endif  // ENABLE_MPI

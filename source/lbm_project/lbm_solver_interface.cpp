@@ -108,39 +108,40 @@ void SolverLbmInterface::ResizeModelRelatedVectors() {
 }
 /**
  * @brief function to call domain boundary conditions.
+ * @param[in] time_scheme enum class to identify time stepping scheme used in computation.
+ * @param[in] time_step_level time step at current grid refinement level in one background step.
+ * @param[in] sfbitset_aux class to manage functions for space filling code computation.
+ * @param[out] ptr_grid_info pointer to class storing grid information.
  */
 void SolverLbmInterface::CallDomainBoundaryCondition(const amrproject::ETimeSteppingScheme time_scheme,
-    const DefInt time_step_current, const amrproject::SFBitsetAuxInterface& sfbitset_aux,
+    const DefInt time_step_level, const DefReal time_step_current,
+    const amrproject::SFBitsetAuxInterface& sfbitset_aux,
     amrproject::GridInfoInterface* const ptr_grid_info) {
     GridInfoLbmInteface* ptr_lbm_grid_nodes_info = dynamic_cast<GridInfoLbmInteface*>(ptr_grid_info);
     ptr_lbm_grid_nodes_info->ComputeDomainBoundaryCondition();
 }
 /**
  * @brief function for marching LBM time step at grid of a given refinement level.
- * @param[in] timing indicator for timing in one time step.
- * @param[in] time_scheme enum class to identify time stepping scheme used in computation.
- * @param[in] time_step_current time step at current grid refinement level in one background step.
+ * @param[in] time_step_level time step at current grid refinement level in one background step.
  * @param[in] sfbitset_aux class to manage functions for space filling code computation.
  * @param[out] ptr_grid_info pointer to class storing LBM grid information.
  * @return 0 run successfully, otherwise some error occurred in this function.
  */
-int SolverLbmInterface::InformationFromGridOfDifferentLevel(
-    const amrproject::ETimingInOneStep timing, const amrproject::ETimeSteppingScheme time_scheme,
-    const DefInt time_step_current, const amrproject::SFBitsetAuxInterface& sfbitset_aux,
+void SolverLbmInterface::InformationFromGridOfDifferentLevel(
+    const DefInt time_step_level, const amrproject::SFBitsetAuxInterface& sfbitset_aux,
     amrproject::GridInfoInterface* const ptr_grid_info) {
     const DefInt i_level = ptr_grid_info->GetGridLevel();
-    if (i_level > 0 && (time_step_current%2 == 0)) {
+    if (i_level > 0 && (time_step_level%2 == 0)) {
         GridInfoLbmInteface* ptr_lbm_grid_info = dynamic_cast<GridInfoLbmInteface*>(ptr_grid_info);
         GridInfoLbmInteface* ptr_lbm_grid_info_coarse = dynamic_cast<GridInfoLbmInteface*>(
             ptr_grid_manager_->vec_ptr_grid_info_.at(i_level - 1).get());
 
-        ptr_grid_info->TransferInfoFromCoarseGrid(*ptr_grid_manager_->GetSFBitsetAuxPtr(),
+        ptr_grid_info->TransferInfoFromCoarseGrid(*ptr_grid_manager_->GetPtrToSFBitsetAux(),
             amrproject::NodeBitStatus::kNodeStatusCoarse2FineGhost_, *ptr_lbm_grid_info_coarse);
 
-        ptr_grid_info->TransferInfoToCoarseGrid(*ptr_grid_manager_->GetSFBitsetAuxPtr(),
+        ptr_grid_info->TransferInfoToCoarseGrid(*ptr_grid_manager_->GetPtrToSFBitsetAux(),
             amrproject::NodeBitStatus::kNodeStatusCoarse2FineGhost_, ptr_lbm_grid_info_coarse);
     }
-    return 0;
 }
 /**
  * @brief function for marching LBM time step at grid of a given refinement level.
@@ -149,13 +150,13 @@ int SolverLbmInterface::InformationFromGridOfDifferentLevel(
  * @param[in] sfbitset_aux class to manage functions for space filling code computation.
  * @param[out] ptr_grid_info pointer to class storing grid information.
  */
-void SolverLbmInterface::RunSolverForNodesOnNormalGrid(const amrproject::ETimeSteppingScheme time_scheme,
-    const DefInt time_step_current, const amrproject::SFBitsetAuxInterface& sfbitset_aux,
-    amrproject::GridInfoInterface* const ptr_grid_info) {
+void SolverLbmInterface::RunSolverOnGivenGrid(const amrproject::ETimeSteppingScheme time_scheme,
+    const DefInt time_step_level, const DefReal time_step_current,
+    const amrproject::SFBitsetAuxInterface& sfbitset_aux, amrproject::GridInfoInterface* const ptr_grid_info) {
     const DefInt i_level = ptr_grid_info->GetGridLevel();
     GridInfoLbmInteface* ptr_lbm_grid_nodes_info = dynamic_cast<GridInfoLbmInteface*>(ptr_grid_info);
-    if (ptr_lbm_grid_nodes_info->GetPointerToLbmGrid() != nullptr) {
-        DefMap<std::unique_ptr<GridNodeLbm>>& grid_nodes = *ptr_lbm_grid_nodes_info->GetPointerToLbmGrid();
+    if (ptr_lbm_grid_nodes_info->GetPtrToLbmGrid() != nullptr) {
+        DefMap<std::unique_ptr<GridNodeLbm>>& grid_nodes = *ptr_lbm_grid_nodes_info->GetPtrToLbmGrid();
 
         Collision(ptr_lbm_grid_nodes_info->NodeFlagNotCollision_, ptr_lbm_grid_nodes_info);
 
@@ -177,10 +178,11 @@ void SolverLbmInterface::Collision(
     // choose function to compute macroscopic variables based on if the forces are considered
     std::function<void(const DefReal, const GridNodeLbm&, const std::vector<DefReal>&,
         DefReal* const, std::vector<DefReal>* const)> func_macro;
-    DefReal dt_lbm = ptr_lbm_grid_nodes_info->ptr_collision_operator_->dt_lbm_;
-    DefMap<std::unique_ptr<GridNodeLbm>>& grid_nodes = *ptr_lbm_grid_nodes_info->GetPointerToLbmGrid();
+    const LbmCollisionOptInterface& collision_opt = GetCollisionOperator(ptr_lbm_grid_nodes_info->GetGridLevel());
+    const DefReal dt_lbm = collision_opt.GetDtLbm();
+    DefMap<std::unique_ptr<GridNodeLbm>>& grid_nodes = *ptr_lbm_grid_nodes_info->GetPtrToLbmGrid();
 
-    if (ptr_lbm_grid_nodes_info->ptr_lbm_grid_nodes_ != nullptr) {
+    if (ptr_lbm_grid_nodes_info->GetPtrToLbmGrid() != nullptr) {
         if (bool_forces_) {
             if (grid_nodes.begin()->second->force_.size() != GetNumForces()) {
                 amrproject::LogManager::LogError("Size of forces should be "
@@ -200,8 +202,7 @@ void SolverLbmInterface::Collision(
                 const std::vector<DefReal>& force = GetAllForcesForANode(*iter_node.second.get());
                 func_macro(dt_lbm, *iter_node.second.get(), force,
                     &iter_node.second->rho_, &iter_node.second->velocity_);
-                ptr_lbm_grid_nodes_info->ptr_collision_operator_->CollisionOperator(
-                    *this, force, iter_node.second.get());
+                collision_opt.CollisionOperator(*this, force, iter_node.second.get());
             }
         }
     }

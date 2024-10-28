@@ -22,10 +22,10 @@ namespace lbmproject {
  */
 void BoundaryBounceBackD2Q9::CalBoundaryCondition(const ELbmBoundaryType boundary_type,
     const DefMap<DefInt>& boundary_nodes, GridInfoLbmInteface* const ptr_grid_info) const {
-    const SolverLbmD2Q9& lbm_solver = *(dynamic_cast<SolverLbmD2Q9*>(ptr_grid_info->GetPtrSolver()));
+    const SolverLbmD2Q9& lbm_solver = *(dynamic_cast<SolverLbmD2Q9*>(ptr_grid_info->GetPtrToSolver()));
     const DefReal rho0 = lbm_solver.GetDefaultDensity();
     const std::array<DefReal, 2>& velocity = boundary_velocity_;
-    DefMap<std::unique_ptr<GridNodeLbm>>& grid_node = *ptr_grid_info->ptr_lbm_grid_nodes_;
+    DefMap<std::unique_ptr<GridNodeLbm>>& grid_node = *ptr_grid_info->GetPtrToLbmGrid();
     switch (boundary_type) {
     case ELbmBoundaryType::kBoundaryXMin:
         for (const auto& iter_node : boundary_nodes) {

@@ -697,7 +697,7 @@ void VtkWriterManager::WriteGeometryPieces(
 
     // write cell connectivity
     DefSizet num_cell = 0;
-    switch (geo_info.geometry_cell_type_) {
+    switch (geo_info.GetCellType()) {
     case  EGeometryCellType::kPolyLine: {
             WriteGeometryCellConnectivityPolyLine(
                 fp, bool_binary, num_points, output_data_format);
@@ -719,7 +719,7 @@ void VtkWriterManager::WriteGeometryPieces(
 
     // write cell offsets
     WriteGeometryCellOffset(fp, bool_binary, num_cell,
-        geo_info.geometry_cell_type_, output_data_format);
+        geo_info.GetCellType(), output_data_format);
 
     fprintf_s(fp, "    </DataArray>\n");
     str_tmp.assign("    <DataArray type=\"UInt8\" Name=\"types\" "
@@ -728,7 +728,7 @@ void VtkWriterManager::WriteGeometryPieces(
 
     // write cell types
     WriteGeometryCellType(
-        fp, bool_binary, num_points, geo_info.geometry_cell_type_);
+        fp, bool_binary, num_points, geo_info.GetCellType());
 
     fprintf_s(fp, "    </DataArray>\n");
     fprintf_s(fp, "   </Cells>\n");
@@ -743,7 +743,7 @@ void VtkWriterManager::WriteGeometryPieces(
 DefSizet VtkWriterManager::CalculateNumOfGeometryCells(
     const GeometryInfoInterface& geo_info) const {
     DefSizet num_cell = 0;
-    switch (geo_info.geometry_cell_type_) {
+    switch (geo_info.GetCellType()) {
     case   EGeometryCellType::kPolyLine:
         num_cell = geo_info.GetNumOfGeometryPoints() - 1;
         break;
@@ -890,11 +890,11 @@ DefSizet VtkWriterManager::WriteGeometryCoordinates(FILE* const fp,
         std::vector<uint8_t> vec_uint8{}, vec_base64{};
         for (const auto& iter : geo_info.vec_vertices_) {
             base64_instance_.AddToVecChar(output_data_format.output_real_.CastType(
-                iter->coordinate.at(kXIndex) - grid_offset.at(kXIndex)), &vec_uint8);
+                iter->coordinate_.at(kXIndex) - grid_offset.at(kXIndex)), &vec_uint8);
             base64_instance_.AddToVecChar(output_data_format.output_real_.CastType(
-                iter->coordinate.at(kYIndex)- grid_offset.at(kYIndex)), &vec_uint8);
+                iter->coordinate_.at(kYIndex)- grid_offset.at(kYIndex)), &vec_uint8);
             base64_instance_.AddToVecChar(output_data_format.output_real_.CastType(
-                iter->coordinate.at(kZIndex)- grid_offset.at(kZIndex)), &vec_uint8);
+                iter->coordinate_.at(kZIndex)- grid_offset.at(kZIndex)), &vec_uint8);
         }
         base64_instance_.Encode(&vec_uint8, &vec_base64);
         for (const auto& iter : vec_base64) {
@@ -904,9 +904,9 @@ DefSizet VtkWriterManager::WriteGeometryCoordinates(FILE* const fp,
     } else {
         for (const auto& iter : geo_info.vec_vertices_) {
             fprintf_s(fp, str_format.c_str(),
-                iter->coordinate.at(kXIndex) - grid_offset.at(kXIndex),
-                iter->coordinate.at(kYIndex) - grid_offset.at(kYIndex),
-                iter->coordinate.at(kZIndex) - grid_offset.at(kZIndex));
+                iter->coordinate_.at(kXIndex) - grid_offset.at(kXIndex),
+                iter->coordinate_.at(kYIndex) - grid_offset.at(kYIndex),
+                iter->coordinate_.at(kZIndex) - grid_offset.at(kZIndex));
         }
     }
     return geo_info.vec_vertices_.size();

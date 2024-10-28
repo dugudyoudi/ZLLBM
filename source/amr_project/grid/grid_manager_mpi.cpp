@@ -301,7 +301,7 @@ void GridManagerInterface::InstantiateGridNodeAllLevelMpi(const int i_rank,
         sfbitset_aux.GetMinAtGivenLevel(i_level, indices_min, &domain_min_n_level);
         sfbitset_aux.GetMaxAtGivenLevel(i_level, indices_max, &domain_max_n_level);
 
-        if (grid_info.GetPtrSolver() == nullptr) {
+        if (grid_info.GetPtrToSolver() == nullptr) {
             LogManager::LogError("solver has not been assigned to grid info"
             " of refinement level " + std::to_string(i_level)
             + " in " + std::string(__FILE__) + " at line " + std::to_string(__LINE__));
@@ -469,7 +469,7 @@ void GridManagerInterface::InstantiateGridNodeAllLevelMpi(const int i_rank,
         if (bool_has_periodic_boundary) {
             for (const auto& iter_node : map_extra_expand_outer) {
                 flag_node = grid_info.CheckIfNodeOutsideCubicDomain(
-                    k0GridDims_, iter_node.first, *GetSFBitsetAuxPtr());
+                    k0GridDims_, iter_node.first, *GetPtrToSFBitsetAux());
                 FindNeighborsBasedOnDirection(num_partition_inner_layer, flag_node, iter_node.first, sfbitset_aux,
                     periodic_min, periodic_max, domain_min_n_level, domain_max_n_level, &bitset_neighbors);
                 for (const auto& iter_neighbor : bitset_neighbors) {

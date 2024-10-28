@@ -21,7 +21,7 @@ namespace lbmproject {
  */
 void BoundaryPeriodic2D::CalBoundaryCondition(const ELbmBoundaryType boundary_type,
     const DefMap<DefInt>& boundary_nodes, GridInfoLbmInteface* const ptr_grid_info) const {
-    const SolverLbmInterface& lbm_solver = *(dynamic_cast<SolverLbmInterface*>(ptr_grid_info->GetPtrSolver()));
+    const SolverLbmInterface& lbm_solver = *(dynamic_cast<SolverLbmInterface*>(ptr_grid_info->GetPtrToSolver()));
     DefSFBitset boundary_counterpart, set_coordinate;
     const amrproject::GridManager2D& grid_manager2d =
         *dynamic_cast<amrproject::GridManager2D*>(ptr_grid_info->GetPtrToParentGridManager());
@@ -47,7 +47,7 @@ void BoundaryPeriodic2D::CalBoundaryCondition(const ELbmBoundaryType boundary_ty
     default:
         break;
     }
-    DefMap<std::unique_ptr<GridNodeLbm>>& grid_node = *ptr_grid_info->ptr_lbm_grid_nodes_;
+    DefMap<std::unique_ptr<GridNodeLbm>>& grid_node = *ptr_grid_info->GetPtrToLbmGrid();
     std::vector<DefInt> indices, inverse_indices;
     GetBoundaryNInverseIndices(boundary_type, lbm_solver, &indices, &inverse_indices);
     DefSFBitset sfbitset_counterpart;
@@ -72,7 +72,7 @@ void BoundaryPeriodic2D::CalBoundaryCondition(const ELbmBoundaryType boundary_ty
 void BoundaryPeriodic3D::CalBoundaryCondition(const ELbmBoundaryType boundary_type,
     const DefMap<DefInt>& boundary_nodes,
     GridInfoLbmInteface* const ptr_grid_info) const {
-    const SolverLbmInterface& lbm_solver = *(dynamic_cast<SolverLbmInterface*>(ptr_grid_info->GetPtrSolver()));
+    const SolverLbmInterface& lbm_solver = *(dynamic_cast<SolverLbmInterface*>(ptr_grid_info->GetPtrToSolver()));
     DefSFBitset boundary_counterpart, set_coordinate;
     const amrproject::GridManager3D& grid_manager3d =
         *dynamic_cast<amrproject::GridManager3D*>(lbm_solver.GetPtrToParentGridManager());
@@ -106,7 +106,7 @@ void BoundaryPeriodic3D::CalBoundaryCondition(const ELbmBoundaryType boundary_ty
     default:
         break;
     }
-    DefMap<std::unique_ptr<GridNodeLbm>>& grid_node = *ptr_grid_info->ptr_lbm_grid_nodes_;
+    DefMap<std::unique_ptr<GridNodeLbm>>& grid_node = *ptr_grid_info->GetPtrToLbmGrid();
     std::vector<DefInt> indices, inverse_indices;
     GetBoundaryNInverseIndices(boundary_type, lbm_solver, &indices, &inverse_indices);
     DefSFBitset sfbitset_counterpart;
