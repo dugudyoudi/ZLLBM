@@ -187,17 +187,23 @@ class GridInfoLbmInteface : public amrproject::GridInfoInterface {
         amrproject::MpiManager* const ptr_mpi_manager,
         amrproject::CriterionManager* const ptr_criterion_manager) override;
 
-    // node related
-    void InitialNotComputeNodeFlag() override;
+    // pointer to boundary conditions adopted for domain boundary
+    std::map<ELbmBoundaryType, std::unique_ptr<BoundaryConditionLbmInterface>> domain_boundary_condition_;
+
+    // set and get functions
     std::unique_ptr<amrproject::GridNode> GridNodeCreator() const override;
     void SetNodeVariablesAsZeros(amrproject::GridNode* const ptr_node) override;
+    void InitialNotComputeNodeFlag() override;
+    DefInt GetNodeFlagNotStream() const { return NodeFlagNotStream_;}
+    DefInt GetNodeFlagNotCollision() const { return NodeFlagNotCollision_;}
+    int GetSizeOfGridNodeInfoForMpiCommunication() const override;
 
+
+ protected:
     void DebugWrite() override;
     void DebugWriteNode(const amrproject::GridNode& node) override;
 
     // domain boundaries
-    /**< pointer to boundary conditions adopted for domain boundary */
-    std::map<ELbmBoundaryType, std::unique_ptr<BoundaryConditionLbmInterface>> domain_boundary_condition_;
     bool CheckIfPeriodicDomainRequired(const DefInt dims,
         std::vector<bool>* const ptr_periodic_min, std::vector<bool>* const ptr_periodic_max) const override;
     void ComputeDomainBoundaryCondition();
@@ -205,6 +211,8 @@ class GridInfoLbmInteface : public amrproject::GridInfoInterface {
 
     // time marching related
     void SetUpGridAtBeginningOfTimeStep(const DefInt time_step) override;
+    void UpdateCriterion(const DefReal time_step_current,
+        const amrproject::MpiManager& ptr_mpi_manager, amrproject::CriterionManager*const ptr_criterion_manager);
 
     // communication between grid of different refinement levels
     int TransferInfoFromCoarseGrid(const amrproject::SFBitsetAuxInterface& sfbitset_aux,
@@ -233,7 +241,6 @@ class GridInfoLbmInteface : public amrproject::GridInfoInterface {
         const DefMap<DefSizet>& map_node_index) const;
 
     // mpi related
-    int SizeOfGridNodeInfoForMpiCommunication() const override;
     void ComputeInfoInMpiLayers(const std::map<int, DefMap<DefInt>>& map_inner_nodes,
         const DefMap<DefInt>& map_outer_nodes) override;
     virtual void ComputeNodeInfoBeforeMpiCommunication(const DefSFBitset sfbitset_in,
@@ -317,7 +324,8 @@ class SolverLbmInterface :public amrproject::SolverInterface {
     DefInt NumForces_ = 0;
     DefReal k0LbmViscosity_ = 0.;  // the lbm viscosity at background level, where dt_lbm is 1
     DefReal k0Rho_ = 1.;  // default density
-    std::vector<DefReal> k0Velocity_, k0Force_;  // default velocity and forces
+    std::vector<DefReal> k0Velocity_, k0Force_;  // velocity and forces for initialization
+    std::vector<DefReal> k0ConstForce_;
     std::map<DefInt, std::unique_ptr<LbmCollisionOptInterface>> collision_operators_;
 
  public:
@@ -326,10 +334,12 @@ class SolverLbmInterface :public amrproject::SolverInterface {
     void SetDefaultDensity(const DefReal rho_in) { k0Rho_ = rho_in;}
     void SetDefaultVelocity(const std::vector<DefReal>& velocity_in) { k0Velocity_ = velocity_in;}
     void SetDefaultForce(const std::vector<DefReal>& force_in) { k0Force_ = force_in;}
+    void SetConstantForce(const std::vector<DefReal>& force_in) { k0ConstForce_ = force_in;}
     DefReal GetDefaultViscosity() const { return k0LbmViscosity_;}
     DefReal GetDefaultDensity() const { return k0Rho_;}
     const std::vector<DefReal>& GetDefaultVelocity() const { return k0Velocity_;}
     const std::vector<DefReal>& GetDefaultForce() const { return k0Force_;}
+    const std::vector<DefReal>& GetConstantForce() const { return k0ConstForce_;}
     DefInt GetNumForces() const {
         if (bool_forces_) {
             return NumForces_;
@@ -362,9 +372,6 @@ class SolverLbmInterface :public amrproject::SolverInterface {
         const DefInt time_step_level, const DefReal time_step_current,
         const amrproject::SFBitsetAuxInterface& sfbitset_aux,
         amrproject::GridInfoInterface* const ptr_grid_info) override;
-    void CallDomainBoundaryCondition(const amrproject::ETimeSteppingScheme time_scheme,
-        const DefInt time_step_level, const DefReal time_step_current,
-        const amrproject::SFBitsetAuxInterface& sfbitset_aux, amrproject::GridInfoInterface* const ptr_grid_info);
     void InformationFromGridOfDifferentLevel(
         const DefInt time_step_level, const amrproject::SFBitsetAuxInterface& sfbitset_aux,
         amrproject::GridInfoInterface* const ptr_grid_info) override;
@@ -410,7 +417,7 @@ class SolverLbmInterface :public amrproject::SolverInterface {
         const std::vector<DefReal>& velocity, std::vector<DefReal>* const ptr_feq) const;
 
     // function to calculate the LBM forcing term
-    virtual const std::vector<DefReal>& GetAllForcesForANode(const GridNodeLbm& lbm_node) const;
+    virtual std::vector<DefReal> GetAllForcesForANode(const GridNodeLbm& lbm_node) const;
     DefReal (SolverLbmInterface::*ptr_func_cal_force_iq_)(
         const int iq, const GridNodeLbm& node, const std::vector<DefReal>& force) const = nullptr;
     DefReal CalForceIq2D(const int iq, const GridNodeLbm& node, const std::vector<DefReal>& force) const;
@@ -425,29 +432,29 @@ class SolverLbmInterface :public amrproject::SolverInterface {
 
     // pointer to function calculate macroscopic variables
     // declare with std::function rather than pointer to function is used for implementations in derived class
-    std::function<void(const GridNodeLbm& node,
-        DefReal* const ptr_rho, std::vector<DefReal>* const ptr_velocity)> func_macro_without_force_;
-    std::function<void(const DefReal dt_lbm, const GridNodeLbm& node, const std::vector<DefReal>& force,
-        DefReal* const ptr_rho, std::vector<DefReal>* const ptr_velocity)> func_macro_with_force_;
+    std::function<void(const std::vector<DefReal>&,
+        DefReal* const, std::vector<DefReal>* const)> func_macro_without_force_;
+    std::function<void(const DefReal dt_lbm, const std::vector<DefReal>&, const std::vector<DefReal>&,
+        DefReal* const, std::vector<DefReal>* const)> func_macro_with_force_;
 
     virtual ~SolverLbmInterface() {}
 
  protected:
-    void CalMacro2DCompressible(const GridNodeLbm& node,
+    void CalMacro2DCompressible(const std::vector<DefReal>& f,
         DefReal* const ptr_rho, std::vector<DefReal>* const ptr_velocity) const;
-    void CalMacro2DIncompressible(const GridNodeLbm& node,
+    void CalMacro2DIncompressible(const std::vector<DefReal>& f,
         DefReal* const ptr_rho, std::vector<DefReal>* const ptr_velocity) const;
-    void CalMacroForce2DCompressible(const DefReal dt_lbm, const GridNodeLbm& node,
+    void CalMacroForce2DCompressible(const DefReal dt_lbm, const std::vector<DefReal>& f,
         const std::vector<DefReal>& force, DefReal* const ptr_rho, std::vector<DefReal>* const ptr_velocity) const;
-    void CalMacroForce2DIncompressible(const DefReal dt_lbm, const GridNodeLbm& node,
+    void CalMacroForce2DIncompressible(const DefReal dt_lbm, const std::vector<DefReal>& f,
         const std::vector<DefReal>& force, DefReal* const ptr_rho, std::vector<DefReal>* const ptr_velocity) const;
-    void CalMacro3DCompressible(const GridNodeLbm& node,
+    void CalMacro3DCompressible(const std::vector<DefReal>& f,
         DefReal* const ptr_rho, std::vector<DefReal>* const ptr_velocity) const;
-    void CalMacro3DIncompressible(const GridNodeLbm& node,
+    void CalMacro3DIncompressible(const std::vector<DefReal>& f,
         DefReal* const ptr_rho, std::vector<DefReal>* const ptr_velocity) const;
-    void CalMacroForce3DCompressible(const DefReal dt_lbm, const GridNodeLbm& node,
+    void CalMacroForce3DCompressible(const DefReal dt_lbm, const std::vector<DefReal>& f,
         const std::vector<DefReal>& force, DefReal* const ptr_rho, std::vector<DefReal>* const ptr_velocity) const;
-    void CalMacroForce3DIncompressible(const DefReal dt_lbm, const GridNodeLbm& node,
+    void CalMacroForce3DIncompressible(const DefReal dt_lbm, const std::vector<DefReal>& f,
         const std::vector<DefReal>& force, DefReal* const ptr_rho, std::vector<DefReal>* const ptr_velocity) const;
 
     SolverLbmInterface();
@@ -487,15 +494,16 @@ void SolverLbmInterface::CollisionForGivenNodes(const DefInt i_level, const DefI
     const LbmCollisionOptInterface& collision_operator = *collision_operators_.at(i_level).get();
     const DefReal dt_lbm = collision_operator.GetDtLbm();
     DefMap<std::unique_ptr<GridNodeLbm>>& lbm_grid_nodes = *ptr_lbm_grid_nodes_info->GetPtrToLbmGrid();
-    std::function<void(const DefReal, const GridNodeLbm&,
+    std::function<void(const DefReal, const std::vector<DefReal>&,
         const std::vector<DefReal>&, DefReal* const, std::vector<DefReal>* const)> func_macro;
     if (ptr_lbm_grid_nodes_info->GetPtrToLbmGrid() != nullptr) {
         if (bool_forces_) {
             func_macro = func_macro_with_force_;
         } else {
-            func_macro = [this](const DefReal dt_lbm, const GridNodeLbm& node, const std::vector<DefReal>& /*force*/,
+            func_macro = [this](const DefReal dt_lbm, const std::vector<DefReal>& f,
+                const std::vector<DefReal>& /*force*/,
                 DefReal* const ptr_rho, std::vector<DefReal>* const ptr_velocity) {
-                func_macro_without_force_(node, ptr_rho, ptr_velocity);};
+                func_macro_without_force_(f, ptr_rho, ptr_velocity);};
         }
         std::vector<DefReal> force;
         for (auto& iter_node : node_for_computation) {
@@ -503,7 +511,7 @@ void SolverLbmInterface::CollisionForGivenNodes(const DefInt i_level, const DefI
                 GridNodeLbm& lbm_node = *lbm_grid_nodes.at(iter_node.first).get();
                 if (!(lbm_node.flag_status_ & flag_not_collide)) {
                     force = GetAllForcesForANode(lbm_node);
-                    func_macro(dt_lbm, lbm_node, force, &lbm_node.rho_, &lbm_node.velocity_);
+                    func_macro(dt_lbm, lbm_node.f_, force, &lbm_node.rho_, &lbm_node.velocity_);
                     collision_operator.CollisionOperator(*this, force, &lbm_node);
                 }
             }

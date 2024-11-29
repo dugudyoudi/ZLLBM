@@ -9,7 +9,7 @@
 */
 #include <string>
 #include <set>
-#include "auxiliary_inline_func.h"
+#include "./auxiliary_inline_func.h"
 #include "grid/grid_manager.h"
 #include "criterion/criterion_manager.h"
 #include "io/log_write.h"
@@ -27,7 +27,7 @@ DefReal MultiTimeSteppingC2F::GetCurrentTimeStep(const DefInt i_level,
 * @brief function to setup default grid related parameters.
 * @param[in]  max_level  maximum refinement level.
 */
-void GridManagerInterface::DefaultInitialization(const DefInt max_level) {
+void GridManagerInterface::StartupInitialization(const DefInt max_level) {
     k0MaxLevel_ = max_level;
 }
 /**
@@ -43,7 +43,7 @@ void GridManagerInterface::CreateTrackingGridInstanceForAGeo(const DefInt i_geo,
     if (vec_ptr_grid_info_.at(geo_level)->map_ptr_tracking_grid_info_.find(key_tracking_grid)
         == vec_ptr_grid_info_.at(geo_level)->map_ptr_tracking_grid_info_.end()) {
         vec_ptr_grid_info_.at(geo_level)->map_ptr_tracking_grid_info_.insert(
-            {key_tracking_grid, ptr_creator->CreateTrackingGridInfo() });
+            {key_tracking_grid, ptr_creator->CreateTrackingGridInfo()});
     }
 }
 /**
@@ -918,14 +918,14 @@ MultiTimeSteppingC2F::MultiTimeSteppingC2F(const DefInt max_level) {
             if (accumulate_t[i_level- 1] == accumulate_t[i_level]) {
                 --i_level;
             } else {
-                k0TimeSteppingOrder_.push_back(i_level);
+                k0TimeSteppingOrder_.emplace_back(i_level);
                 accumulate_t[i_level] += TwoPowerN(max_level - i_level);
                 if (i_level + 1 < max_level) {
                     ++i_level;
                 } else {
                     ++i_level;
-                    k0TimeSteppingOrder_.push_back(i_level);
-                    k0TimeSteppingOrder_.push_back(i_level);
+                    k0TimeSteppingOrder_.emplace_back(i_level);
+                    k0TimeSteppingOrder_.emplace_back(i_level);
                     accumulate_t[i_level] += TwoPowerN(max_level - i_level + 1);
                 }
             }

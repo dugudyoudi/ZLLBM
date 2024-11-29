@@ -363,7 +363,7 @@ int GridManagerInterface::FloodFillForInAndOut(
         std::vector<DefSFBitset> vec_sfbitset_stk, vec_bitset(k0NumNeighbors_);
         DefInt i = 0;
         DefSFBitset sfbitset_seed;
-        vec_sfbitset_stk.push_back(sfbitset_inside);
+        vec_sfbitset_stk.emplace_back(sfbitset_inside);
         while (!vec_sfbitset_stk.empty() && i < K0IMaxFloodFill_) {
             sfbitset_seed = vec_sfbitset_stk.back();
             vec_sfbitset_stk.pop_back();

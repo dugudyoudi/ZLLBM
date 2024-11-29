@@ -25,12 +25,14 @@ class GhostGridInfoCreatorInterface;
 class SFBitsetAuxInterface;
 class GridInfoInterface;
 class GeoShapeInterface;
+class MpiManager;
 /**
 * @struct GeometryVertex
 * @brief struct used to store information of a geometry vertex
 */
 struct GeometryVertex {
     std::array<DefReal, 3> coordinate_{};
+    virtual ~GeometryVertex() {}
 };
 /**
 * @class GeometryInfoInterface
@@ -39,6 +41,7 @@ struct GeometryVertex {
 class GeometryInfoInterface {
  protected:
     // information of geometry itself
+    DefInt k0GeoDim_ = 0;
     DefInt computational_cost_ = 1;
     DefInt i_level_ = 0;
     DefInt i_geo_ = ~0;
@@ -144,7 +147,7 @@ class GeometryInfoInterface {
     void SetNodeType(const std::string& node_type) {
         node_type_ = node_type;
     }
-    void SetPtrTrackingGridInfoCreatorInterface(
+    void SetPtrTrackingGridInfoCreator(
         TrackingGridInfoCreatorInterface* const ptr_tracking_grid_info_creator) {
         ptr_tracking_grid_info_creator_ = ptr_tracking_grid_info_creator;
     }
@@ -179,11 +182,14 @@ class GeometryInfoInterface {
         k0RealMin_ = array_offset;
     }
 
-    // information stored on each vertex
+
     std::vector<std::unique_ptr<GeometryVertex>> vec_vertices_{};
+    // only vertex information on current rank will be stored,
+    // vertex coordinates on other ranks can be found in vec_vertices_
+    std::unordered_map<DefSizet, std::unique_ptr<GeometryVertex>> map_vertices_info_{};
     std::unique_ptr<GeoShapeInterface> ptr_geo_shape_;
-    virtual int InitialGeometry(const DefReal dx);
-    virtual int UpdateGeometry(const DefReal sum_t);
+    virtual void InitialGeometry(const DefReal dx);
+    virtual void UpdateGeometry(const DefReal sum_t);
     virtual void FindTrackingNodeBasedOnGeo(
         const SFBitsetAuxInterface& sfbitset_aux, GridInfoInterface* const ptr_grid_info) = 0;
 
@@ -194,18 +200,23 @@ class GeometryInfoInterface {
             return {flood_fill_origin_[kXIndex], flood_fill_origin_[kYIndex], flood_fill_origin_[kZIndex]};
         }
     }
-    virtual std::unique_ptr<GeometryVertex> GeoVertexCreator() const {
+    virtual std::unique_ptr<GeometryVertex> GeoIndexVertexCreator() const {
+        return std::make_unique<GeometryVertex>();
+    }
+    virtual std::unique_ptr<GeometryVertex> GeoInfoVertexCreator() const {
         return std::make_unique<GeometryVertex>();
     }
 
-    explicit GeometryInfoInterface(const DefInt dims) : k0GeoDim_(dims) {
+    void InstantiateGeometryVertexInfo(
+        const DefSFCodeToUint code_min, const DefSFCodeToUint code_max, const SFBitsetAuxInterface& sfbitset_aux);
+    virtual void SetupGeometryInfo(const DefReal time,
+        const MpiManager& mpi_manager, const GridInfoInterface& grid_info);
+
+        explicit GeometryInfoInterface(const DefInt dims) : k0GeoDim_(dims) {
         this->node_type_ = "GeometryInfoInterface";
         this->geometry_cell_type_ = EGeometryCellType::kPolyLine;
     }
     virtual ~GeometryInfoInterface() {}
-
- protected:
-    DefInt k0GeoDim_ = 0;
 
  private:
     GeometryInfoInterface();

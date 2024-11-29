@@ -46,7 +46,7 @@ class AmrManager {
 
     void LoadModules(DefInt dims);
 
-    void DefaultInitialization(DefInt dim, DefInt level);
+    void StartupInitialization(DefInt dim, DefInt level);
     void SetupParameters();
     void InitializeMesh();
     void SetupSolverForGrids();

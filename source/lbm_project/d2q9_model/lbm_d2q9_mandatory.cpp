@@ -29,9 +29,9 @@ void SolverLbmD2Q9::InitialModelDependencies() {
              + " in "+ std::string(__FILE__) + " at line " + std::to_string(__LINE__));
     }
     if (!k0BoolCompressible_) {
-        this->func_macro_without_force_ = [this](const GridNodeLbm& node,
+        this->func_macro_without_force_ = [this](const std::vector<DefReal>& f,
             DefReal* const ptr_rho, std::vector<DefReal>* const ptr_velocity) {
-            this->CalMacroD2Q9Incompressible(node, ptr_rho, ptr_velocity);
+            this->CalMacroD2Q9Incompressible(f, ptr_rho, ptr_velocity);
         };
     }
 }

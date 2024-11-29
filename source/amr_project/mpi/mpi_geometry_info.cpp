@@ -65,7 +65,7 @@ void MpiManager::DeserializeCoordiOrigin(const std::unique_ptr<char[]>& buffer,
     DefSizet size_pre = ptr_vec_vertices->size();
     ptr_vec_vertices->resize(size_pre + num_points);
     for (int i_node = 0; i_node < num_points; ++i_node) {
-        ptr_vec_vertices->at(size_pre + i_node) = ptr_geo_info->GeoVertexCreator();
+        ptr_vec_vertices->at(size_pre + i_node) = ptr_geo_info->GeoIndexVertexCreator();
         std::memcpy(&(ptr_vec_vertices->at(size_pre + i_node)->coordinate_.at(kXIndex)),
             ptr_buffer + position, real_size);
         position += real_size;

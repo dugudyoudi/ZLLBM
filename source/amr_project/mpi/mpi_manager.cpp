@@ -69,7 +69,9 @@ void MpiManager::IniBroadcastSFBitsetBounds(std::vector<DefSFBitset>* const ptr_
 }
 /**
  * @brief function to send and receive nodes for interpolation.
- * @param[in] .
+ * @param[in] sfbitset_aux   class manage space filling curves.
+ * @param[in] grid_info_lower class storting grid node information at one lower level on current rank.
+ * @param[in, out] ptr_grid_info pointer to class storting grid node information on current rank
  */
 void MpiManager::MpiCommunicationForInterpolation(
     const SFBitsetAuxInterface& sfbitset_aux, const GridInfoInterface& grid_info_lower,

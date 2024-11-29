@@ -15,23 +15,19 @@ namespace amrproject {
  * @brief function to initialize geometry.
  * @param dx reference spatial step.
  */
-int GeometryInfoInterface::InitialGeometry(const DefReal dx) {
+void GeometryInfoInterface::InitialGeometry(const DefReal dx) {
     ptr_geo_shape_->ptr_geo_info_ = this;
     ptr_geo_shape_->InitialShape(dx);
-    return 0;
 }
 /**
  * @brief function to update geometry.
  * @param sum_t time step at current level.
  * @return 0 the geometry is updated, 1 the geometry is not updated
  */
-int GeometryInfoInterface::UpdateGeometry(const DefReal sum_t) {
+void GeometryInfoInterface::UpdateGeometry(const DefReal sum_t) {
     if (geometry_status_ == EGeometryStatus::kMoving) {
         ptr_geo_shape_->UpdateShape(sum_t);
-    } else {
-        return -1;
     }
-    return 0;
 }
 }  // end namespace amrproject
 }  // end namespace rootproject

@@ -83,19 +83,18 @@ void SolverLbmD2Q9::Stream(const DefInt flag_not_compute, const amrproject::SFBi
 
 /**
  * @brief function to calculate macroscopic variables based on distribution functions (without forcing term).
- * @param[in] node LBM node information.
+ * @param[in] f LBM distribution functions.
  * @param[out] ptr_rho pointer to fluid density.
  * @param[out] ptr_velocity pointer to fluid velocity.
  */
-void SolverLbmD2Q9::CalMacroD2Q9Incompressible(const GridNodeLbm& node,
+void SolverLbmD2Q9::CalMacroD2Q9Incompressible(const std::vector<DefReal>& f,
     DefReal* const ptr_rho, std::vector<DefReal>* const ptr_velocity) const {
-    (*ptr_rho) = node.f_[kFX0Y0Z0_] + node.f_[kFXnY0Z0_] + node.f_[kFXpY0Z0_] + node.f_[kFX0YnZ0_]
-        + node.f_[kFX0YpZ0_] + node.f_[kFXnYnZ0_] + node.f_[kFXnYpZ0_]
-        + node.f_[kFXpYnZ0_] + node.f_[kFXpYpZ0_];
-    ptr_velocity->at(kXIndex) = (node.f_[kFXpY0Z0_] - node.f_[kFXnY0Z0_]
-        + node.f_[kFXpYpZ0_] - node.f_[kFXnYpZ0_] - node.f_[kFXnYnZ0_] + node.f_[kFXpYnZ0_]);
-    ptr_velocity->at(kYIndex) = (node.f_[kFX0YpZ0_] - node.f_[kFX0YnZ0_]
-        + node.f_[kFXpYpZ0_] + node.f_[kFXnYpZ0_] - node.f_[kFXnYnZ0_] - node.f_[kFXpYnZ0_]);
+    (*ptr_rho) = f[kFX0Y0Z0_] + f[kFXnY0Z0_] + f[kFXpY0Z0_] + f[kFX0YnZ0_]
+        + f[kFX0YpZ0_] + f[kFXnYnZ0_] + f[kFXnYpZ0_] + f[kFXpYnZ0_] + f[kFXpYpZ0_];
+    ptr_velocity->at(kXIndex) = (f[kFXpY0Z0_] - f[kFXnY0Z0_]
+        + f[kFXpYpZ0_] - f[kFXnYpZ0_] - f[kFXnYnZ0_] + f[kFXpYnZ0_]);
+    ptr_velocity->at(kYIndex) = (f[kFX0YpZ0_] - f[kFX0YnZ0_]
+        + f[kFXpYpZ0_] + f[kFXnYpZ0_] - f[kFXnYnZ0_] - f[kFXpYnZ0_]);
 }
 }  // end namespace lbmproject
 }  // end namespace rootproject

@@ -31,8 +31,13 @@ void MpiManager::CheckMpiNodesCorrespondence(const GridInfoInterface& grid_info)
     std::vector<std::unique_ptr<char[]>> vec_ptr_buffer_send, vec_ptr_buffer_receive(num_of_ranks_);
     int node_info_size = 0;
     int node_buffer_size = static_cast<int>(sizeof(DefSFBitset));
-    SendNReceiveGridNodeBufferSize(i_level, node_info_size,
-        vec_receive_ranks, &send_buffer_info, &receive_buffer_info);
+    if (mpi_communication_inner_layers_.size() > i_level) {
+        SendNReceiveGridNodeBufferSize(node_info_size, i_level, mpi_communication_inner_layers_.at(i_level),
+            &send_buffer_info, &receive_buffer_info);
+    } else {
+        LogManager::LogError("number of mpi inner layers is less the given grid level on" + std::to_string(rank_id_));
+    }
+
     // receive node in mpi outer layer via mpi communication
     for (int i_rank = 0; i_rank < num_of_ranks_; ++i_rank) {
         if (receive_buffer_info.at(i_rank).bool_exist_) {
@@ -64,7 +69,7 @@ void MpiManager::CheckMpiNodesCorrespondence(const GridInfoInterface& grid_info)
                 const int& num_chunks = send_buffer_info.at(i_rank).num_chunks_;
                 vec_vec_reqs_send.back().resize(num_chunks);
                 int size_tmp;
-                vec_ptr_buffer_send.push_back(SerializeNodeSFBitset(
+                vec_ptr_buffer_send.emplace_back(SerializeNodeSFBitset(
                     mpi_communication_inner_layers_.at(i_level).at(i_rank), &size_tmp));
                 const int& buffer_size_send = send_buffer_info.at(i_rank).array_buffer_size_.at(0);
                 for (int i_chunk = 0; i_chunk < num_chunks - 1; ++i_chunk) {

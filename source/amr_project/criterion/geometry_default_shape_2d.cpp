@@ -31,7 +31,7 @@ void GeoShapeDefaultCircle2D::InitialShape(const DefReal dx_background) {
     ptr_geo_info_->vec_vertices_.resize(num_points);
     DefReal i_real;
     for (DefSizet i = 0; i < num_points; ++i) {
-        ptr_geo_info_->vec_vertices_.at(i) = ptr_geo_info_->GeoVertexCreator();
+        ptr_geo_info_->vec_vertices_.at(i) = ptr_geo_info_->GeoIndexVertexCreator();
         i_real = (static_cast<DefReal>(i) / static_cast<DefReal>(num_points));
         ptr_geo_info_->vec_vertices_.at(i)->coordinate_[kXIndex] =
             radius_ * cos(2.f * kPi * i_real)
@@ -63,7 +63,7 @@ void GeoShapeDefaultLine2D::InitialShape(const DefReal dx) {
         sin_theta = (end_point_.at(kYIndex) - start_point_.at(kYIndex)) / length,
         cos_theta = (end_point_.at(kXIndex) - start_point_.at(kXIndex)) / length;
     for (DefSizet i = 0; i < num_points; ++i) {
-        ptr_geo_info_->vec_vertices_.at(i) = ptr_geo_info_->GeoVertexCreator();
+        ptr_geo_info_->vec_vertices_.at(i) = ptr_geo_info_->GeoIndexVertexCreator();
         ptr_geo_info_->vec_vertices_.at(i)->coordinate_[kXIndex] =
             start_point_.at(kXIndex) + (i + 0.5) * cos_theta * arc + offset[kXIndex];
         ptr_geo_info_->vec_vertices_.at(i)->coordinate_[kYIndex] =

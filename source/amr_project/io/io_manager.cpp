@@ -18,7 +18,7 @@ namespace amrproject{
 /**
 * @brief function to setup default io related parameters.
 */
-void IoManager::DefaultInitialization() {
+void IoManager::StartupInitialization() {
     // set format for writing output data
     if (typeid(k0OutputDataFormat_.output_real_.CastType(1.))
         == typeid(float)) {

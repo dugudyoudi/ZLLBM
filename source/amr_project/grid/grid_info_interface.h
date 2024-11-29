@@ -90,7 +90,7 @@ struct OutputNodeVariableInfoInterface {
 */
 struct DomainInfo {
  public:
-    std::vector<DefReal> grid_space_;
+    std::vector<DefReal> grid_space_;  ///< grid space at current grid level
     std::vector<bool> periodic_min_, periodic_max_;
     std::vector<DefSFBitset> domain_min_n_level_, domain_max_n_level_;
 };
@@ -351,7 +351,7 @@ class GridInfoInterface {
         ptr_periodic_max->assign(dims, false);
         return false;
     }
-    virtual int SizeOfGridNodeInfoForMpiCommunication() const {return 0;}
+    virtual int GetSizeOfGridNodeInfoForMpiCommunication() const {return 0;}
     virtual void CopyNodeInfoToBuffer(
         const std::function<void(const GridNode& node_ref, char* const)>& func_copy_buffer,
         const DefMap<DefInt>& map_nodes, char* const ptr_buffer) const;

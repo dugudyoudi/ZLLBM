@@ -394,7 +394,7 @@ bool GridManager3D::NodesBelongToOneSurfAtHigherLevel(const DefSFBitset sfbitset
         if (map_node_exist.find(sfbitset_in) == map_node_exist.end()) {
             return false;
         }
-        ptr_sfbitset->push_back(SFBitsetToOneHigherLevel(sfbitset_in));
+        ptr_sfbitset->emplace_back(SFBitsetToOneHigherLevel(sfbitset_in));
         // (0, +y, 0)
         sfbitset_tmp1 = FindYPos(sfbitset_in);
 
@@ -402,8 +402,8 @@ bool GridManager3D::NodesBelongToOneSurfAtHigherLevel(const DefSFBitset sfbitset
             bool_vertex1 =  false;
         } else {
             bool_vertex1 = true;
-            ptr_sfbitset->push_back(FindYPos(ptr_sfbitset->at(0)));
-            ptr_sfbitset->push_back(SFBitsetToOneHigherLevel(sfbitset_tmp1));
+            ptr_sfbitset->emplace_back(FindYPos(ptr_sfbitset->at(0)));
+            ptr_sfbitset->emplace_back(SFBitsetToOneHigherLevel(sfbitset_tmp1));
         }
         // (0, 0, +z)
         sfbitset_tmp2 = FindZPos(sfbitset_in);
@@ -411,9 +411,9 @@ bool GridManager3D::NodesBelongToOneSurfAtHigherLevel(const DefSFBitset sfbitset
             bool_vertex2 =  false;
         } else {
             bool_vertex2 = true;
-            ptr_sfbitset->push_back(FindZPos(ptr_sfbitset->at(0)));
+            ptr_sfbitset->emplace_back(FindZPos(ptr_sfbitset->at(0)));
             sfbitset_mid2 = SFBitsetToOneHigherLevel(sfbitset_tmp2);
-            ptr_sfbitset->push_back(sfbitset_mid2);
+            ptr_sfbitset->emplace_back(sfbitset_mid2);
         }
         // (0, +y, +z)
         sfbitset_tmp3 = FindZPos(sfbitset_tmp1);
@@ -422,15 +422,15 @@ bool GridManager3D::NodesBelongToOneSurfAtHigherLevel(const DefSFBitset sfbitset
         } else {
             bool_vertex3 = true;
             if (bool_vertex1) {
-                ptr_sfbitset->push_back(FindZPos(ptr_sfbitset->at(2)));
+                ptr_sfbitset->emplace_back(FindZPos(ptr_sfbitset->at(2)));
             }
             if (bool_vertex2) {
-                ptr_sfbitset->push_back(FindYPos(sfbitset_mid2));
+                ptr_sfbitset->emplace_back(FindYPos(sfbitset_mid2));
             }
             if (bool_vertex1&&bool_vertex2) {
-                ptr_sfbitset->push_back(FindZPos(ptr_sfbitset->at(1)));
+                ptr_sfbitset->emplace_back(FindZPos(ptr_sfbitset->at(1)));
             }
-            ptr_sfbitset->push_back(SFBitsetToOneHigherLevel(sfbitset_tmp3));
+            ptr_sfbitset->emplace_back(SFBitsetToOneHigherLevel(sfbitset_tmp3));
         }
         if (bool_vertex1&&bool_vertex2&&bool_vertex3) {
             return true;
@@ -442,15 +442,15 @@ bool GridManager3D::NodesBelongToOneSurfAtHigherLevel(const DefSFBitset sfbitset
         if (map_node_exist.find(sfbitset_in) == map_node_exist.end()) {
             return false;
         }
-        ptr_sfbitset->push_back(SFBitsetToOneHigherLevel(sfbitset_in));
+        ptr_sfbitset->emplace_back(SFBitsetToOneHigherLevel(sfbitset_in));
         // (+x, 0, 0)
         sfbitset_tmp1 = FindXPos(sfbitset_in);
         if (map_node_exist.find(sfbitset_tmp1) == map_node_exist.end()) {
             bool_vertex1 =  false;
         } else {
             bool_vertex1 = true;
-            ptr_sfbitset->push_back(FindXPos(ptr_sfbitset->at(0)));
-            ptr_sfbitset->push_back(SFBitsetToOneHigherLevel(sfbitset_tmp1));
+            ptr_sfbitset->emplace_back(FindXPos(ptr_sfbitset->at(0)));
+            ptr_sfbitset->emplace_back(SFBitsetToOneHigherLevel(sfbitset_tmp1));
         }
         // (0, 0, +z)
         sfbitset_tmp2 = FindZPos(sfbitset_in);
@@ -458,9 +458,9 @@ bool GridManager3D::NodesBelongToOneSurfAtHigherLevel(const DefSFBitset sfbitset
             bool_vertex2 =  false;
         } else {
             bool_vertex2 = true;
-            ptr_sfbitset->push_back(FindZPos(ptr_sfbitset->at(0)));
+            ptr_sfbitset->emplace_back(FindZPos(ptr_sfbitset->at(0)));
             sfbitset_mid2 = SFBitsetToOneHigherLevel(sfbitset_tmp2);
-            ptr_sfbitset->push_back(sfbitset_mid2);
+            ptr_sfbitset->emplace_back(sfbitset_mid2);
         }
         // (+x, 0, +z)
         sfbitset_tmp3 = FindZPos(sfbitset_tmp1);
@@ -469,15 +469,15 @@ bool GridManager3D::NodesBelongToOneSurfAtHigherLevel(const DefSFBitset sfbitset
         } else {
             bool_vertex3 = true;
             if (bool_vertex1) {
-                ptr_sfbitset->push_back(FindZPos(ptr_sfbitset->at(2)));
+                ptr_sfbitset->emplace_back(FindZPos(ptr_sfbitset->at(2)));
             }
             if (bool_vertex2) {
-                ptr_sfbitset->push_back(FindXPos(sfbitset_mid2));
+                ptr_sfbitset->emplace_back(FindXPos(sfbitset_mid2));
             }
             if (bool_vertex1&&bool_vertex2) {
-                ptr_sfbitset->push_back(FindZPos(ptr_sfbitset->at(1)));
+                ptr_sfbitset->emplace_back(FindZPos(ptr_sfbitset->at(1)));
             }
-            ptr_sfbitset->push_back(SFBitsetToOneHigherLevel(sfbitset_tmp3));
+            ptr_sfbitset->emplace_back(SFBitsetToOneHigherLevel(sfbitset_tmp3));
         }
         if (bool_vertex1&&bool_vertex2&&bool_vertex3) {
             return true;
@@ -489,15 +489,15 @@ bool GridManager3D::NodesBelongToOneSurfAtHigherLevel(const DefSFBitset sfbitset
         if (map_node_exist.find(sfbitset_in) == map_node_exist.end()) {
             return false;
         }
-        ptr_sfbitset->push_back(SFBitsetToOneHigherLevel(sfbitset_in));
+        ptr_sfbitset->emplace_back(SFBitsetToOneHigherLevel(sfbitset_in));
         // (+x, 0, 0)
         sfbitset_tmp1 = FindXPos(sfbitset_in);
         if (map_node_exist.find(sfbitset_tmp1) == map_node_exist.end()) {
             bool_vertex1 =  false;
         } else {
             bool_vertex1 = true;
-            ptr_sfbitset->push_back(FindXPos(ptr_sfbitset->at(0)));
-            ptr_sfbitset->push_back(SFBitsetToOneHigherLevel(sfbitset_tmp1));
+            ptr_sfbitset->emplace_back(FindXPos(ptr_sfbitset->at(0)));
+            ptr_sfbitset->emplace_back(SFBitsetToOneHigherLevel(sfbitset_tmp1));
         }
         // (0, +y, 0)
         sfbitset_tmp2 = FindYPos(sfbitset_in);
@@ -505,9 +505,9 @@ bool GridManager3D::NodesBelongToOneSurfAtHigherLevel(const DefSFBitset sfbitset
             bool_vertex2 =  false;
         } else {
             bool_vertex2 = true;
-            ptr_sfbitset->push_back(FindYPos(ptr_sfbitset->at(0)));
+            ptr_sfbitset->emplace_back(FindYPos(ptr_sfbitset->at(0)));
             sfbitset_mid2 = SFBitsetToOneHigherLevel(sfbitset_tmp2);
-            ptr_sfbitset->push_back(sfbitset_mid2);
+            ptr_sfbitset->emplace_back(sfbitset_mid2);
         }
         // (+x, +y, 0)
         sfbitset_tmp3 = FindYPos(sfbitset_tmp1);
@@ -516,15 +516,15 @@ bool GridManager3D::NodesBelongToOneSurfAtHigherLevel(const DefSFBitset sfbitset
         } else {
             bool_vertex3 = true;
             if (bool_vertex1) {
-                ptr_sfbitset->push_back(FindYPos(ptr_sfbitset->at(2)));
+                ptr_sfbitset->emplace_back(FindYPos(ptr_sfbitset->at(2)));
             }
             if (bool_vertex2) {
-                ptr_sfbitset->push_back(FindXPos(sfbitset_mid2));
+                ptr_sfbitset->emplace_back(FindXPos(sfbitset_mid2));
             }
             if (bool_vertex1&&bool_vertex2) {
-                ptr_sfbitset->push_back(FindYPos(ptr_sfbitset->at(1)));
+                ptr_sfbitset->emplace_back(FindYPos(ptr_sfbitset->at(1)));
             }
-            ptr_sfbitset->push_back(SFBitsetToOneHigherLevel(sfbitset_tmp3));
+            ptr_sfbitset->emplace_back(SFBitsetToOneHigherLevel(sfbitset_tmp3));
         }
         if (bool_vertex1&&bool_vertex2&&bool_vertex3) {
             return true;

@@ -12,6 +12,7 @@
 #include "io/vtk_writer.h"
 #include "criterion/criterion_manager.h"
 #include "mpi/mpi_manager.h"
+#include "immersed_boundary/immersed_boundary.h"
 namespace rootproject {
 namespace lbmproject {
 /**
@@ -47,7 +48,39 @@ void GridInfoLbmInteface::SetNodeVariablesAsZeros(amrproject::GridNode* const pt
 }
 /**
  * @brief function to advancing simulation at current time step.
- * @param[in] ptr_node pointer to a node.
+ * @param[in] time_step_current total time step at current grid refinement level.
+ * @param[in] mpi_manager class managing MPI communication.
+ * @param[out] ptr_criterion_manager pointer to managing criterion for refinement.
+ */
+void GridInfoLbmInteface::UpdateCriterion(const DefReal time_step_current,
+    const amrproject::MpiManager& mpi_manager, amrproject::CriterionManager* const ptr_criterion_manager) {
+    bool first_ib = true;
+    std::vector<FsiImmersedBoundary*> vec_ib_geo;
+    for (auto& iter_geo : ptr_criterion_manager->vec_ptr_geometries_) {
+        if (iter_geo->GetStatus() == amrproject::EGeometryStatus::kMoving) {
+            iter_geo->UpdateGeometry(time_step_current);
+        }
+        if (auto derived_ptr = dynamic_cast<FsiImmersedBoundary*>(iter_geo.get())) {
+            if (first_ib) {
+                derived_ptr->ClearNodesRecordForIB();
+                first_ib = false;
+            }
+            derived_ptr->CalculateBodyForce(*this, &(iter_geo->map_vertices_info_), GetPtrToLbmGrid());
+            vec_ib_geo.emplace_back(dynamic_cast<FsiImmersedBoundary*>(iter_geo.get()));
+        }
+    }
+#ifdef ENABLE_MPI
+    if (!first_ib) {
+        DefInt dim = ptr_parent_grid_manager_->k0GridDims_;
+        for (auto& iter_geo : vec_ib_geo) {
+            iter_geo->SendNReceiveNodesForImmersedBoundary(dim,
+                i_level_, mpi_manager, ptr_lbm_grid_nodes_);
+        }
+    }
+#endif  //  ENABLE_MPI
+}
+/**
+ * @brief function to advancing simulation at current time step.
  * @param[in] time_scheme enum class to identify time stepping scheme used in computation.
  * @param[in] time_step_level time step at current grid refinement level in one background step.
  * @param[in] time_step_current total time step at current grid refinement level.
@@ -59,32 +92,39 @@ void GridInfoLbmInteface::AdvancingAtCurrentTime(const amrproject::ETimeStepping
     amrproject::MpiManager* const ptr_mpi_manager,
     amrproject::CriterionManager* const ptr_criterion_manager) {
     const DefInt i_level = i_level_;
+
+    UpdateCriterion(time_step_current, *ptr_mpi_manager, ptr_criterion_manager);
+
 #ifdef ENABLE_MPI
     std::vector<amrproject::MpiManager::BufferSizeInfo> send_buffer_info, receive_buffer_info;
     std::vector<std::vector<MPI_Request>> vec_vec_reqs_send, vec_vec_reqs_receive;
-    std::vector<std::unique_ptr<char[]>> vec_ptr_buffer_receive, vec_ptr_buffer_send;
-    ptr_mpi_manager->SendNReceiveGridNodes(&send_buffer_info, &receive_buffer_info,
+    std::vector<std::unique_ptr<char[]>> vec_ptr_buffer_send, vec_ptr_buffer_receive;
+    ptr_mpi_manager->SendAndReceiveGridNodesOnAllMpiLayers(&send_buffer_info, &receive_buffer_info,
         &vec_vec_reqs_send, &vec_vec_reqs_receive, &vec_ptr_buffer_send, &vec_ptr_buffer_receive, this);
 #endif  //  ENABLE_MPI
 
     ptr_solver_->RunSolverOnGivenGrid(time_scheme, time_step_level, time_step_current, *ptr_sfbitset_aux_, this);
 
 #ifdef ENABLE_MPI
+    std::function<void(const char*,  amrproject::GridNode* const)> func_read_a_node_from_buffer =
+        [](const char* const ptr_node_buffer, amrproject::GridNode* const ptr_node) {
+        ptr_node->ReadANodeFromBufferForMpi(ptr_node_buffer);
+    };
     ptr_mpi_manager->WaitAndReadGridNodesFromBuffer(send_buffer_info,
-        receive_buffer_info, vec_ptr_buffer_receive,
+        receive_buffer_info, vec_ptr_buffer_receive, func_read_a_node_from_buffer,
         &vec_vec_reqs_send, &vec_vec_reqs_receive, this);
 
     if (i_level > 0) {
         ptr_mpi_manager->MpiCommunicationForInterpolation(*ptr_sfbitset_aux_,
             *GetPtrToParentGridManager()->vec_ptr_grid_info_.at(i_level - 1).get(), this);
     }
+    MPI_Barrier(MPI_COMM_WORLD);
 #endif  //  ENABLE_MPI
 
-    SolverLbmInterface* ptr_lbm_solver = std::dynamic_pointer_cast<SolverLbmInterface>(ptr_solver_).get();
-    ptr_lbm_solver->CallDomainBoundaryCondition(time_scheme,
-        time_step_level, time_step_current, *ptr_sfbitset_aux_, this);
+    ComputeDomainBoundaryCondition();
 
     // use information in current time step
+    SolverLbmInterface* ptr_lbm_solver = std::dynamic_pointer_cast<SolverLbmInterface>(ptr_solver_).get();
     ptr_solver_->InformationFromGridOfDifferentLevel(time_step_level, *ptr_sfbitset_aux_, this);
 }
 /**
@@ -504,7 +544,7 @@ void GridInfoLbmInteface::NodeInfoCoarse2fine(const amrproject::GridNode& coarse
     //         feq, coarse_node.f_collide_, &ptr_fine_node->f_collide_);
     // }
 
-    lbm_solver.func_macro_without_force_(coarse_node, &ptr_fine_node->rho_, &ptr_fine_node->velocity_);
+    lbm_solver.func_macro_without_force_(coarse_node.f_, &ptr_fine_node->rho_, &ptr_fine_node->velocity_);
     lbm_solver.func_cal_feq_(ptr_fine_node->rho_, ptr_fine_node->velocity_, &feq);
     lbm_solver.GetCollisionOperator(i_level_).PostStreamCoarse2Fine(feq, coarse_node.f_, &ptr_fine_node->f_);
 }
@@ -527,7 +567,7 @@ void GridInfoLbmInteface::NodeInfoFine2Coarse(const amrproject::GridNode& fine_b
     //     ptr_collision_operator_->PostCollisionFine2Coarse(ptr_collision_operator_->dt_lbm_,
     //         feq, fine_node,  ptr_coarse_node);
     // }
-    lbm_solver.GetCollisionOperator(i_level_).PostStreamFine2Coarse(feq, fine_node,  ptr_coarse_node);
+    lbm_solver.GetCollisionOperator(i_level_).PostStreamFine2Coarse(feq, fine_node, ptr_coarse_node);
 }
 /**
  * @brief function to setup output infomation on variables of LBM node.
@@ -535,19 +575,19 @@ void GridInfoLbmInteface::NodeInfoFine2Coarse(const amrproject::GridNode& fine_b
 void GridInfoLbmInteface::SetupOutputVariables() {
     SolverLbmInterface* ptr_lbm_solver = std::dynamic_pointer_cast<SolverLbmInterface>(ptr_solver_).get();
     DefReal dt = ptr_lbm_solver->GetCollisionOperator(i_level_).GetDtLbm();
-    std::function<void(const DefReal dt_lbm, const GridNodeLbm& node, const std::vector<DefReal>& force,
+    std::function<void(const DefReal dt_lbm, const std::vector<DefReal>& f, const std::vector<DefReal>& force,
         DefReal* const ptr_rho, std::vector<DefReal>* const ptr_velocity)> func_macro;
     if (ptr_lbm_solver->bool_forces_) {
         func_macro = ptr_lbm_solver->func_macro_with_force_;
     } else {
-        func_macro = [ptr_lbm_solver](const DefReal dt_lbm, const GridNodeLbm& node,
+        func_macro = [ptr_lbm_solver](const DefReal dt_lbm, const std::vector<DefReal>& f,
             const std::vector<DefReal>& /*force*/, DefReal* const ptr_rho, std::vector<DefReal>* const ptr_velocity) {
-            ptr_lbm_solver->func_macro_without_force_(node, ptr_rho, ptr_velocity);
+            ptr_lbm_solver->func_macro_without_force_(f, ptr_rho, ptr_velocity);
         };
     }
     for (const auto& iter_str : output_variable_name_) {
         if (iter_str == "rho") {
-            output_variables_.push_back(std::make_unique<OutputLBMNodeVariableInfo>());
+            output_variables_.emplace_back(std::make_unique<OutputLBMNodeVariableInfo>());
             OutputLBMNodeVariableInfo& output_info_tmp =
                 *dynamic_cast<OutputLBMNodeVariableInfo*>(output_variables_.back().get());
             output_info_tmp.variable_dims_ = 1;
@@ -556,15 +596,14 @@ void GridInfoLbmInteface::SetupOutputVariables() {
             };
             output_info_tmp.output_name_ = "rho";
         } else if (iter_str == "velocity") {
-            output_variables_.push_back(std::make_unique<OutputLBMNodeVariableInfo>());
+            output_variables_.emplace_back(std::make_unique<OutputLBMNodeVariableInfo>());
             OutputLBMNodeVariableInfo& output_info_tmp =
                 *dynamic_cast<OutputLBMNodeVariableInfo*>(output_variables_.back().get());
             output_info_tmp.variable_dims_ = ptr_solver_->GetSolverDim();
             output_info_tmp.func_get_var_ = [ptr_lbm_solver, dt, func_macro]
                 (GridNodeLbm* const ptr_node)->std::vector<DefReal> {
-                const std::vector<DefReal>& force =
-                    ptr_lbm_solver->GetAllForcesForANode(*ptr_node);
-                func_macro(dt, *ptr_node, force, &ptr_node->rho_, &ptr_node->velocity_);
+                std::vector<DefReal> force(ptr_lbm_solver->GetAllForcesForANode(*ptr_node));
+                func_macro(dt, ptr_node->f_, force, &ptr_node->rho_, &ptr_node->velocity_);
                 return ptr_node->velocity_;
             };
             output_info_tmp.output_name_ = "velocity";

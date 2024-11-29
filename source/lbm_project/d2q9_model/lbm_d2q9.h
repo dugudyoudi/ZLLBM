@@ -78,7 +78,7 @@ class SolverLbmD2Q9 :public SolverLbmInterface {
     }
 
  protected:
-    void CalMacroD2Q9Incompressible(const GridNodeLbm& node,
+    void CalMacroD2Q9Incompressible(const std::vector<DefReal>& f,
         DefReal* const ptr_rho, std::vector<DefReal>* const ptr_velocity) const;
 };
 class SolverCreatorLbmD2Q9 final :public amrproject::SolverCreatorInterface {

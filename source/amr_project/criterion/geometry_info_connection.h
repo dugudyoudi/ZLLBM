@@ -168,7 +168,7 @@ class GeometryConnectionInterface {
 class GeometryInfoConnection : public GeometryInfoInterface, public GeometryConnectionInterface {
  public:
     // virtual functions for GeometryInfo2DInterface
-    int InitialGeometry(const DefReal dx) override;
+    void InitialGeometry(const DefReal dx) override;
     void FindTrackingNodeBasedOnGeo(const SFBitsetAuxInterface& sfbitset_aux,
         GridInfoInterface* const ptr_grid_info) override {
         GeometryConnectionInterface::FindTrackingNodeBasedOnGeo(k0GeoDim_, i_geo_, i_level_,

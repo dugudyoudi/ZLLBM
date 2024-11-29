@@ -2,9 +2,9 @@
 //  All rights reserved
 
 /**
-* @file geometry_info_connection.cpp
+* @file geometry_connection_to_grid.cpp
 * @author Zhengliang Liu
-* @brief functions for geometries with connection relations, e.g. stl files
+* @brief functions for grid generation based on geometries with connection relations
 * @date  2022-10-20
 */
 #include <algorithm>

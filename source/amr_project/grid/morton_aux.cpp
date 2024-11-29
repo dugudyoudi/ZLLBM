@@ -202,16 +202,16 @@ void SFBitsetAux2D::FindNeighboringCoarseFromFine(const DefSFBitset& sfbitset_fi
     bool bool_y = sfbitset_fine.test(1);
     if (bool_x || bool_y) {
         DefSFBitset sfbitset_coarse = SFBitsetToOneLowerLevel(sfbitset_fine);
-        ptr_vec_coarse->push_back(sfbitset_coarse);
+        ptr_vec_coarse->emplace_back(sfbitset_coarse);
         if (bool_x) {
             DefSFBitset sfbitset_coarse_tmp = FindXPos(sfbitset_coarse);
-            ptr_vec_coarse->push_back(sfbitset_coarse_tmp);
+            ptr_vec_coarse->emplace_back(sfbitset_coarse_tmp);
             if (bool_y) {
-                ptr_vec_coarse->push_back(FindYPos(sfbitset_coarse_tmp));
+                ptr_vec_coarse->emplace_back(FindYPos(sfbitset_coarse_tmp));
             }
         }
         if (bool_y) {
-            ptr_vec_coarse->push_back(FindYPos(sfbitset_coarse));
+            ptr_vec_coarse->emplace_back(FindYPos(sfbitset_coarse));
         }
     }
 }
@@ -462,27 +462,27 @@ void SFBitsetAux3D::FindNeighboringCoarseFromFine(const DefSFBitset& sfbitset_fi
     bool bool_z = sfbitset_fine.test(2);
     if (bool_x || bool_y || bool_z) {
         DefSFBitset sfbitset_coarse = SFBitsetToOneLowerLevel(sfbitset_fine);
-        ptr_vec_coarse->push_back(sfbitset_coarse);
+        ptr_vec_coarse->emplace_back(sfbitset_coarse);
         if (bool_x) {
             DefSFBitset sfbitset_coarse_tmp = FindXPos(sfbitset_coarse);
-            ptr_vec_coarse->push_back(sfbitset_coarse_tmp);
+            ptr_vec_coarse->emplace_back(sfbitset_coarse_tmp);
             if (bool_y) {
                 DefSFBitset sfbitset_coarse_tmp1 = FindYPos(sfbitset_coarse_tmp);
-                ptr_vec_coarse->push_back(sfbitset_coarse_tmp1);
+                ptr_vec_coarse->emplace_back(sfbitset_coarse_tmp1);
                 if (bool_z) {
-                    ptr_vec_coarse->push_back(FindZPos(sfbitset_coarse_tmp1));
+                    ptr_vec_coarse->emplace_back(FindZPos(sfbitset_coarse_tmp1));
                 }
             }
         }
         if (bool_y) {
             DefSFBitset sfbitset_coarse_tmp = FindYPos(sfbitset_coarse);
-            ptr_vec_coarse->push_back(FindYPos(sfbitset_coarse));
+            ptr_vec_coarse->emplace_back(FindYPos(sfbitset_coarse));
             if (bool_z) {
-                ptr_vec_coarse->push_back(FindZPos(sfbitset_coarse_tmp));
+                ptr_vec_coarse->emplace_back(FindZPos(sfbitset_coarse_tmp));
             }
         }
         if (bool_z) {
-            ptr_vec_coarse->push_back(FindZPos(sfbitset_coarse));
+            ptr_vec_coarse->emplace_back(FindZPos(sfbitset_coarse));
         }
     }
 }

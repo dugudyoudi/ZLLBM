@@ -309,27 +309,27 @@ bool GridManager2D::NodesBelongToOneSurfAtHigherLevel(const DefSFBitset sfbitset
         if (map_node_exist.find(sfbitset_in) == map_node_exist.end()) {
             return false;
         }
-        ptr_sfbitset->push_back(SFBitsetToOneHigherLevel(sfbitset_in));
+        ptr_sfbitset->emplace_back(SFBitsetToOneHigherLevel(sfbitset_in));
         // (+y, 0)
         sfbitset_tmp = FindYPos(sfbitset_in);
         if (map_node_exist.find(sfbitset_tmp) == map_node_exist.end()) {
             return false;
         }
-        ptr_sfbitset->push_back(FindYPos(ptr_sfbitset->at(0)));
-        ptr_sfbitset->push_back(SFBitsetToOneHigherLevel(sfbitset_tmp));
+        ptr_sfbitset->emplace_back(FindYPos(ptr_sfbitset->at(0)));
+        ptr_sfbitset->emplace_back(SFBitsetToOneHigherLevel(sfbitset_tmp));
         break;
     case kYIndex:
         if (map_node_exist.find(sfbitset_in) == map_node_exist.end()) {
             return false;
         }
-        ptr_sfbitset->push_back(SFBitsetToOneHigherLevel(sfbitset_in));
+        ptr_sfbitset->emplace_back(SFBitsetToOneHigherLevel(sfbitset_in));
         // (+x, 0)
         sfbitset_tmp = FindXPos(sfbitset_in);
         if (map_node_exist.find(sfbitset_tmp) == map_node_exist.end()) {
             return false;
         }
-        ptr_sfbitset->push_back(FindXPos(ptr_sfbitset->at(0)));
-        ptr_sfbitset->push_back(SFBitsetToOneHigherLevel(sfbitset_tmp));
+        ptr_sfbitset->emplace_back(FindXPos(ptr_sfbitset->at(0)));
+        ptr_sfbitset->emplace_back(SFBitsetToOneHigherLevel(sfbitset_tmp));
         break;
     default:
         return false;

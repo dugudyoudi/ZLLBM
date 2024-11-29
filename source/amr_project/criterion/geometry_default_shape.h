@@ -28,12 +28,14 @@ class GeoShapeDefaultCircle2D : public GeoShapeInterface {
     DefReal radius_ = 0.5;
     void InitialShape(const DefReal dx) override;
     void UpdateShape(const DefReal sum_t) override;
+    virtual ~GeoShapeDefaultCircle2D() {}
 };
 class GeoShapeDefaultLine2D : public GeoShapeInterface {
  public:
     std::array<DefReal, 2> start_point_, end_point_;
     void InitialShape(const DefReal dx) override;
     void UpdateShape(const DefReal sum_t) override;
+    virtual ~GeoShapeDefaultLine2D() {}
 };
 #endif  // DEBUG_DISABLE_2D_FUNCTIONS
 #ifndef  DEBUG_DISABLE_3D_FUNCTIONS
@@ -42,12 +44,14 @@ class GeoShapeDefaultCubic3D : public GeoShapeInterface {
     DefReal length_ = 1.;
     void InitialShape(const DefReal dx) override;
     void UpdateShape(const DefReal sum_t) override;
+    virtual ~GeoShapeDefaultCubic3D() {}
 };
 class GeoShapeDefaultQuadrilateral3D : public GeoShapeInterface {
  public:
     std::array<DefReal, 3> start_point_, neighbor_point_, diagonal_point_;
     void InitialShape(const DefReal dx) override;
     void UpdateShape(const DefReal sum_t) override;
+    virtual ~GeoShapeDefaultQuadrilateral3D() {}
 };
 #endif  // DEBUG_DISABLE_3D_FUNCTIONS
 }  // end namespace amrproject

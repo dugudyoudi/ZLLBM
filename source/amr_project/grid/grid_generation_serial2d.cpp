@@ -333,28 +333,28 @@ DefInt GridManager2D::FindAllNeighborsWithSpecifiedDirection(
     DefSFBitset sfbitset_tmp, sfbitset_tmp1;
     if (bool_neg[kXIndex]) {  // (-x, 0)
         sfbitset_tmp = FindXNeg(bitset_in);
-        ptr_vec_neighbors->push_back(sfbitset_tmp);
+        ptr_vec_neighbors->emplace_back(sfbitset_tmp);
         if (bool_neg[kYIndex]) {  // (-x, -y)
             sfbitset_tmp1 = FindYNeg(sfbitset_tmp);
-            ptr_vec_neighbors->push_back(sfbitset_tmp1);
+            ptr_vec_neighbors->emplace_back(sfbitset_tmp1);
         }
         if (bool_pos[kYIndex]) {  // (-x, +y)
             sfbitset_tmp1 = FindYPos(sfbitset_tmp);
-            ptr_vec_neighbors->push_back(sfbitset_tmp1);
+            ptr_vec_neighbors->emplace_back(sfbitset_tmp1);
         }
     } else {
         flag_current_node |= kFlagCurrentNodeXNeg_;
     }
     if (bool_pos[kXIndex]) {  // (+x, 0)
         sfbitset_tmp = FindXPos(bitset_in);
-        ptr_vec_neighbors->push_back(sfbitset_tmp);
+        ptr_vec_neighbors->emplace_back(sfbitset_tmp);
         if (bool_neg[kYIndex]) {  // (+x, -y)
             sfbitset_tmp1 = FindYNeg(sfbitset_tmp);
-            ptr_vec_neighbors->push_back(sfbitset_tmp1);
+            ptr_vec_neighbors->emplace_back(sfbitset_tmp1);
         }
         if (bool_pos[kYIndex]) {  // (+x, +y)
             sfbitset_tmp1 = FindYPos(sfbitset_tmp);
-            ptr_vec_neighbors->push_back(sfbitset_tmp1);
+            ptr_vec_neighbors->emplace_back(sfbitset_tmp1);
         }
     } else {
         flag_current_node |= kFlagCurrentNodeXPos_;
@@ -362,13 +362,13 @@ DefInt GridManager2D::FindAllNeighborsWithSpecifiedDirection(
 
     if (bool_neg[kYIndex]) {  // (0, -y)
         sfbitset_tmp = FindYNeg(bitset_in);
-        ptr_vec_neighbors->push_back(sfbitset_tmp);
+        ptr_vec_neighbors->emplace_back(sfbitset_tmp);
     } else {
         flag_current_node |= kFlagCurrentNodeYNeg_;
     }
     if (bool_pos[kYIndex]) {  // (0, +y)
         sfbitset_tmp = FindYPos(bitset_in);
-        ptr_vec_neighbors->push_back(sfbitset_tmp);
+        ptr_vec_neighbors->emplace_back(sfbitset_tmp);
     } else {
         flag_current_node |= kFlagCurrentNodeYPos_;
     }

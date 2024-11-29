@@ -22,11 +22,10 @@ namespace amrproject {
 * @param[in] dx reference spatial step
 * @return  0 successful
 */
-int GeometryInfoConnection::InitialGeometry(const DefReal dx) {
+void GeometryInfoConnection::InitialGeometry(const DefReal dx) {
     int return_status = 0;
     this->SetupConnectionParameters(this->geometry_cell_type_);
-    return_status = this->InitialGeometry(dx);
-    return return_status;
+    this->InitialGeometry(dx);
 }
 /**
 * @brief function to setup geometry type related parameters.
@@ -157,7 +156,7 @@ void GeometryConnectionInterface::InitialConnection(const std::vector<std::uniqu
         edge_tmp.set_index_surfaces_.clear();
         edge_tmp.set_index_surfaces_.insert(i_surface);
         max_vertex = iter_connection.size() - 1;
-        connection_surface_given_level_.at(0).vec_surface_connection_.push_back(surface_tmp);
+        connection_surface_given_level_.at(0).vec_surface_connection_.emplace_back(surface_tmp);
         for (DefSizet i = 0; i <= max_vertex; ++i) {
             connection_surface_given_level_.at(0).vec_surface_connection_
                 .back().vertex_connection_.push_back(
@@ -242,7 +241,7 @@ void GeometryConnectionInterface::BisectEdgeOnce(
     DefSFBitset sfbitset_tmp;
     std::vector<DefReal> grid_space_background = sfbitset_aux.GetBackgroundGridSpacing();
     for (const auto iter : grid_space_background) {
-        grid_space.push_back(iter / grid_scale);
+        grid_space.emplace_back(iter / grid_scale);
     }
     std::array<DefReal, 3> coordinate;
     std::array<std::pair<DefInt, DefSizet>, 2> parent_vertices_tmp;
@@ -274,7 +273,7 @@ void GeometryConnectionInterface::BisectEdgeOnce(
                 vertex_given_level_.push_back({});
             }
             vertex_given_level_.at(vertex_index_tmp.first)
-                .vec_vertex_coordinate_.push_back(GeoConnectionVertexCreator());
+                .vec_vertex_coordinate_.emplace_back(GeoConnectionVertexCreator());
             vertex_given_level_.at(vertex_index_tmp.first).vec_vertex_coordinate_
                 .back()->SetValues(highest_grid_level, parent_vertices_tmp, coordinate);
             // sfbitset of at vertex at i_grid_level
@@ -328,15 +327,15 @@ void GeometryConnectionInterface::BisectEdgeOnce(
                     connection_surface_given_level_.at(i_input_level)
                     .vec_surface_connection_.at(iter_surface).vertex_connection_;
                 connection_surface_given_level_.at(i_input_level)
-                    .vec_surface_connection_.push_back(surface_tmp);
+                    .vec_surface_connection_.emplace_back(surface_tmp);
                 connection_surface_given_level_.at(i_input_level)
-                    .vec_surface_connection_.push_back(surface_tmp);
-                connection_surface_given_level_.at(i_input_level)
-                    .vec_surface_connection_.at(iter_surface)
-                    .child_surface_.push_back(num_surface);
+                    .vec_surface_connection_.emplace_back(surface_tmp);
                 connection_surface_given_level_.at(i_input_level)
                     .vec_surface_connection_.at(iter_surface)
-                    .child_surface_.push_back(num_surface + 1);
+                    .child_surface_.emplace_back(num_surface);
+                connection_surface_given_level_.at(i_input_level)
+                    .vec_surface_connection_.at(iter_surface)
+                    .child_surface_.emplace_back(num_surface + 1);
 
                 // update vertex connection
                 max_vertex = connection_surface_given_level_
@@ -760,7 +759,7 @@ void GeometryConnectionInterface::MergeEdgeOnce(const DefInt i_level,
     DefSFBitset sfbitset_tmp;
     std::vector<DefReal> grid_space_background = sfbitset_aux.GetBackgroundGridSpacing();
     for (const auto iter : grid_space_background) {
-        grid_space.push_back(iter / grid_scale);
+        grid_space.emplace_back(iter / grid_scale);
     }
     // remove coordinates from (vertex_given_level_)
     RemoveVertex(i_input_level, grid_space,
@@ -1141,7 +1140,7 @@ void GeometryConnectionInterface::ReconstructSurfaceBasedOnExistingVertex(
                 i_surface_out = surface_remain.front();
                 connection_surface_given_level_.at(i_input_level)
                     .vec_surface_connection_.at(i_surface)
-                    .child_surface_.push_back(i_surface_out);
+                    .child_surface_.emplace_back(i_surface_out);
                 connection_surface_given_level_.at(i_input_level)
                     .vec_surface_connection_.at(i_surface_out)
                     .parent_surface_ = i_surface;
@@ -1163,7 +1162,7 @@ void GeometryConnectionInterface::ReconstructSurfaceBasedOnExistingVertex(
                 i_surface_out = surface_remain.front();
                 connection_surface_given_level_.at(i_input_level)
                     .vec_surface_connection_.at(i_surface)
-                    .child_surface_.push_back(i_surface_out);
+                    .child_surface_.emplace_back(i_surface_out);
                 connection_surface_given_level_.at(i_input_level)
                     .vec_surface_connection_.at(i_surface_out)
                     .parent_surface_ = i_surface;

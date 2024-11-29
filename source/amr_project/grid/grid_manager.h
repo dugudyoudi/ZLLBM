@@ -118,7 +118,7 @@ class GridManagerInterface{
     std::vector<std::shared_ptr<GridInfoInterface>> vec_ptr_grid_info_;
 
     // manager related functions
-    void DefaultInitialization(const DefInt max_level);
+    void StartupInitialization(const DefInt max_level);
     virtual void PrintGridInfo(void) const = 0;
     virtual void SetGridParameters(void) = 0;
     template<GridInfoHasGetLevelAndGetNodeType GridInfo>

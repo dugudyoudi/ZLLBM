@@ -21,7 +21,7 @@ namespace rootproject {
 namespace amrproject {
 class GeometryInfoOrigin : public GeometryInfoInterface {
  public:
-    int InitialGeometry(const DefReal dx) override;
+    void InitialGeometry(const DefReal dx) override;
     void FindTrackingNodeBasedOnGeo(
         const SFBitsetAuxInterface& sfbitset_aux, GridInfoInterface* const ptr_grid_info) override;
 
@@ -32,6 +32,7 @@ class GeometryInfoOrigin : public GeometryInfoInterface {
     explicit GeometryInfoOrigin(const DefInt dims) : GeometryInfoInterface(dims) {
         this->node_type_ = "GeometryInfoOrigin";
     }
+    virtual ~GeometryInfoOrigin() {}
 };
 class GeometryInfoOriginCreator :public GeometryInfoCreatorInterface {
  public:

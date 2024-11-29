@@ -16,10 +16,9 @@
 #include "grid/grid_info_interface.h"
 namespace rootproject {
 namespace amrproject {
-int GeometryInfoOrigin::InitialGeometry(const DefReal dx) {
+void GeometryInfoOrigin::InitialGeometry(const DefReal dx) {
     int return_status = 0;
-    return_status = this->GeometryInfoInterface::InitialGeometry(dx);
-    return return_status;
+    this->GeometryInfoInterface::InitialGeometry(dx);
 }
 /**
 * @brief   function to find tracking nodes based on geometries.

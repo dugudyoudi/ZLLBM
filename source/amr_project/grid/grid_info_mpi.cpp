@@ -128,7 +128,7 @@ void GridInfoInterface::RemoveUnnecessaryF2CNodesOnMpiOuterLayer(const DefSFCode
                         }
                     }
                     if (bool_remove) {
-                        vec_node_to_remove.push_back(iter_node.first);
+                        vec_node_to_remove.emplace_back(iter_node.first);
                     }
                 }
             }
@@ -159,7 +159,7 @@ void GridInfoInterface::RemoveUnnecessaryF2CNodesOnMpiOuterLayer(const DefSFCode
                         }
                     }
                     if (bool_remove) {
-                        vec_node_to_remove.push_back(iter_node.first);
+                        vec_node_to_remove.emplace_back(iter_node.first);
                     }
                 }
                 for (const auto& iter_node : vec_node_to_remove) {
@@ -180,13 +180,12 @@ void GridInfoInterface::RemoveUnnecessaryF2CNodesOnMpiOuterLayer(const DefSFCode
  * @param[in] func_copy_buffer function to copy node specified information to the buffer.
  * @param[in] map_nodes container storing space filling codes of the nodes need to be copied.
  * @param[out] ptr_buffer pointer to the buffer storing node information.
- * @note this function is a non-constant function since some information on nodes will be calculated before sending.
  */
 void GridInfoInterface::CopyNodeInfoToBuffer(
     const std::function<void(const GridNode& node_ref, char* const)>& func_copy_buffer,
     const DefMap<DefInt>& map_nodes, char* const ptr_buffer) const {
     DefSizet position = 0;
-    int node_info_size = SizeOfGridNodeInfoForMpiCommunication();
+    int node_info_size = GetSizeOfGridNodeInfoForMpiCommunication();
     int key_size = sizeof(DefSFBitset);
     DefSizet buffer_size = (node_info_size + sizeof(DefSFBitset)) * map_nodes.size();
     for (const auto& iter : map_nodes) {
@@ -227,7 +226,7 @@ void GridInfoInterface::ReadNodeInfoFromBuffer(
     const DefSizet buffer_size, const std::unique_ptr<char[]>& buffer) {
     char* ptr_buffer = buffer.get();
     int key_size = sizeof(DefSFBitset);
-    int node_info_size = SizeOfGridNodeInfoForMpiCommunication();
+    int node_info_size = GetSizeOfGridNodeInfoForMpiCommunication();
     DefSizet num_nodes = buffer_size/(key_size + node_info_size);
     // deserialize data stored in buffer
     DefSizet position = 0;
@@ -256,7 +255,7 @@ void GridInfoInterface::ReadNodeInfoFromBuffer(
 void GridInfoInterface::CopyInterpolationNodeInfoToBuffer(
     const std::function<void(const GridNode& node_ref, char* const)>& func_copy_buffer,
     const GridInfoInterface& coarse_grid_info, const DefMap<DefInt>& map_nodes, char* const ptr_buffer) {
-    int node_info_size = SizeOfGridNodeInfoForMpiCommunication();
+    int node_info_size = GetSizeOfGridNodeInfoForMpiCommunication();
     int key_size = sizeof(DefSFBitset);
 
     std::unique_ptr<GridNode> ptr_node_coarse2fine = GridNodeCreator();
@@ -320,7 +319,7 @@ void GridInfoInterface::ReadInterpolationNodeInfoFromBuffer(
     const DefSizet buffer_size, const std::unique_ptr<char[]>& buffer) {
     char* ptr_buffer = buffer.get();
     int key_size = sizeof(DefSFBitset);
-    int node_info_size = SizeOfGridNodeInfoForMpiCommunication();
+    int node_info_size = GetSizeOfGridNodeInfoForMpiCommunication();
     DefSizet num_nodes = buffer_size/(key_size + node_info_size);
     // deserialize data stored in buffer
     DefSizet position = 0;

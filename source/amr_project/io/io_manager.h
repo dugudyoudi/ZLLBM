@@ -21,7 +21,7 @@ namespace amrproject {
 class IoManager {
  public:
 
-    void DefaultInitialization();
+    void StartupInitialization();
     void SetIoParameters();
 
     // write flow field options

@@ -12,8 +12,8 @@
 #include <filesystem>
 #include <vector>
 #include "io/log_write.h"
-#include "auxiliary_inline_func.h"
-#include "amr_manager.h"
+#include "./auxiliary_inline_func.h"
+#include "./amr_manager.h"
 #include "mpi/mpi_manager.h"
 namespace rootproject {
 namespace amrproject {
@@ -54,7 +54,7 @@ void AmrManager::LoadModules(DefInt dims) {
 * @param[in]  dims    dimension of the mesh.
 * @param[in]  max_level    maxim refinement level.
 */
-void AmrManager::DefaultInitialization(DefInt dims, DefInt max_level) {
+void AmrManager::StartupInitialization(DefInt dims, DefInt max_level) {
     LoadModules(dims);
 
     // mpi settings
@@ -64,9 +64,9 @@ void AmrManager::DefaultInitialization(DefInt dims, DefInt max_level) {
 
     LogManager::LogStartTime();
 
-    ptr_io_manager_->DefaultInitialization();
+    ptr_io_manager_->StartupInitialization();
 
-    ptr_grid_manager_->DefaultInitialization(max_level);
+    ptr_grid_manager_->StartupInitialization(max_level);
 }
 /**
 * @brief   function to set parameters according to inputs for all modules
@@ -118,7 +118,7 @@ void AmrManager::InitializeMesh() {
     // mpi partition sending and receiving nodes
     std::vector<DefInt> vec_cost;
     for (auto iter_grid : ptr_grid_manager_->vec_ptr_grid_info_) {
-        vec_cost.push_back(iter_grid->GetComputationalCost());
+        vec_cost.emplace_back(iter_grid->GetComputationalCost());
     }
     std::vector<DefMap<DefInt>> sfbitset_one_lower_level_current_rank(ptr_grid_manager_->k0MaxLevel_ + 1),
        sfbitset_ghost_one_lower_level_current_rank(ptr_grid_manager_->k0MaxLevel_ + 1);
@@ -214,10 +214,18 @@ void AmrManager::InitializeMesh() {
                 &grid_info.interp_nodes_inner_layer_);
         }
     }
+
 #else   // mesh on rank 0 is the only one when run serially
+    ptr_mpi_manager_->SetSFBitsetMinCurrentRank(sfbitset_bound_current.at(0),
+        sfbitset_bound_current.at(1));
     ptr_grid_manager_->InstantiateGridNodeAllLevel(
-     sfbitset_bound_current.at(0), sfbitset_bound_current.at(1), sfbitset_one_lower_level);
+        sfbitset_bound_current.at(0), sfbitset_bound_current.at(1), sfbitset_one_lower_level);
 #endif  // ENABLE_MPI
+
+    for (auto& iter_geo : ptr_criterion_manager_->vec_ptr_geometries_) {
+        iter_geo->SetupGeometryInfo(0., *ptr_mpi_manager_.get(),
+            *ptr_grid_manager_->vec_ptr_grid_info_.at(iter_geo->GetLevel()));
+    }
 
     InstantiateTimeSteppingScheme();
 }
@@ -273,7 +281,7 @@ void AmrManager::SetupSolverForGrids() {
 * @param[in]  ptr_solver_creator  pointer to class for instantiating a given solver.
 */
 void AmrManager::AddSolverToGridManager(const SolverCreatorInterface& solver_creator) {
-    ptr_grid_manager_->vec_ptr_solver_.push_back(solver_creator.CreateSolver());
+    ptr_grid_manager_->vec_ptr_solver_.emplace_back(solver_creator.CreateSolver());
     if (ptr_grid_manager_->k0GridDims_ != ptr_grid_manager_->vec_ptr_solver_.back()->GetSolverDim()) {
         LogManager::LogWarning("Grid dimension (" + std::to_string(ptr_grid_manager_->k0GridDims_)
             +") mismatches with solver dimension ("

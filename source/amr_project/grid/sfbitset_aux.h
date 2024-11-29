@@ -55,6 +55,13 @@ class SFBitsetAuxInterface {
         const std::vector<DefSFBitset>& domain_min_n_level,
         const std::vector<DefSFBitset>& domain_max_n_level,
         std::vector<DefSFBitset>* const ptr_sfbitset_node) const = 0;
+    virtual DefInt FindNodesInPeriodicRegionCornerOverlap(const DefSFBitset& sfbitset_in,
+        const DefInt region_length,
+        const std::vector<bool>& periodic_min, const std::vector<bool>& periodic_max,
+        const std::vector<DefSFBitset>& domain_min_n_level,
+        const std::vector<DefSFBitset>& domain_max_n_level,
+        std::vector<DefSFBitset>* const ptr_sfbitset_node,
+        std::vector<std::pair<DefAmrLUint, DefSFBitset>>* const ptr_sfbitset_node_overlap) const = 0;
     virtual DefInt FindNodesInPeriodicRegionCenter(const DefSFBitset& sfbitset_in,
         const DefInt region_length,
         const std::vector<bool>& periodic_min, const std::vector<bool>& periodic_max,
@@ -252,6 +259,13 @@ class  SFBitsetAux2D : public SFBitsetAuxInterface {
         const std::vector<DefSFBitset>& domain_min_n_level,
         const std::vector<DefSFBitset>& domain_max_n_level,
         std::vector<DefSFBitset>* const ptr_sfbitset_node) const final;
+    DefInt FindNodesInPeriodicRegionCornerOverlap(const DefSFBitset& sfbitset_in,
+        const DefInt region_length,
+        const std::vector<bool>& periodic_min, const std::vector<bool>& periodic_max,
+        const std::vector<DefSFBitset>& domain_min_n_level,
+        const std::vector<DefSFBitset>& domain_max_n_level,
+        std::vector<DefSFBitset>* const ptr_sfbitset_node,
+        std::vector<std::pair<DefAmrLUint, DefSFBitset>>* const ptr_sfbitset_node_overlap) const final;
     DefInt FindNodesInPeriodicRegionCenter(const DefSFBitset& sfbitset_in,
         const DefInt region_length,
         const std::vector<bool>& periodic_min, const std::vector<bool>& periodic_max,
@@ -486,6 +500,13 @@ class  SFBitsetAux3D : public SFBitsetAuxInterface {
         const std::vector<DefSFBitset>& domain_min_n_level,
         const std::vector<DefSFBitset>& domain_max_n_level,
         std::vector<DefSFBitset>* const ptr_sfbitset_node) const final;
+    DefInt FindNodesInPeriodicRegionCornerOverlap(const DefSFBitset& sfbitset_in,
+        const DefInt region_length,
+        const std::vector<bool>& periodic_min, const std::vector<bool>& periodic_max,
+        const std::vector<DefSFBitset>& domain_min_n_level,
+        const std::vector<DefSFBitset>& domain_max_n_level,
+        std::vector<DefSFBitset>* const ptr_sfbitset_node,
+        std::vector<std::pair<DefAmrLUint, DefSFBitset>>* const ptr_sfbitset_node_overlap) const final;
     DefInt FindNodesInPeriodicRegionCenter(const DefSFBitset& sfbitset_in,
         const DefInt region_length,
         const std::vector<bool>& periodic_min, const std::vector<bool>& periodic_max,

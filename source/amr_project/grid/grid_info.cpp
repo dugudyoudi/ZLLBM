@@ -160,38 +160,38 @@ void GridInfoInterface::CheckNodesOnCubicPeriodicBoundary(const DefInt dims, con
     // x min
     if (periodic_min.at(kXIndex)
         && ((bitset_in&take_xref[current_bit]) == k0VecBitsetDomainMin_[kXIndex])) {
-        ptr_nodes_periodic->push_back((bitset_in&take_xref[other_bit])
+        ptr_nodes_periodic->emplace_back((bitset_in&take_xref[other_bit])
             |k0VecBitsetDomainMax_[kXIndex]);
     }
     // x max
     if (periodic_max.at(kXIndex)
         && ((bitset_in&take_xref[current_bit]) == k0VecBitsetDomainMax_[kXIndex])) {
-        ptr_nodes_periodic->push_back((bitset_in&take_xref[other_bit])
+        ptr_nodes_periodic->emplace_back((bitset_in&take_xref[other_bit])
             |k0VecBitsetDomainMin_[kXIndex]);
     }
     // y min
     if (periodic_min.at(kYIndex)
         && ((bitset_in&take_yref[current_bit]) == k0VecBitsetDomainMin_[kYIndex])) {
-        ptr_nodes_periodic->push_back((bitset_in&take_yref[other_bit])
+        ptr_nodes_periodic->emplace_back((bitset_in&take_yref[other_bit])
             |k0VecBitsetDomainMax_[kYIndex]);
     }
     // y max
     if (periodic_max.at(kYIndex)
         && ((bitset_in&take_yref[current_bit]) == k0VecBitsetDomainMax_[kYIndex])) {
-        ptr_nodes_periodic->push_back((bitset_in&take_yref[other_bit])
+        ptr_nodes_periodic->emplace_back((bitset_in&take_yref[other_bit])
             |k0VecBitsetDomainMin_[kYIndex]);
     }
     if (dims == 3) {
         // z min
         if (periodic_min.at(kZIndex)
             && ((bitset_in&take_zref[current_bit]) == k0VecBitsetDomainMin_[kZIndex])) {
-            ptr_nodes_periodic->push_back((bitset_in&take_zref[other_bit])
+            ptr_nodes_periodic->emplace_back((bitset_in&take_zref[other_bit])
                 |k0VecBitsetDomainMax_[kZIndex]);
         }
         // z max
         if (periodic_max.at(kZIndex)
             && ((bitset_in&take_zref[current_bit]) == k0VecBitsetDomainMax_[kZIndex])) {
-            ptr_nodes_periodic->push_back((bitset_in&take_zref[other_bit])
+            ptr_nodes_periodic->emplace_back((bitset_in&take_zref[other_bit])
                 |k0VecBitsetDomainMin_[kZIndex]);
         }
     }

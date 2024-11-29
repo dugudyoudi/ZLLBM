@@ -74,7 +74,7 @@ bool GridInfoLbmInteface::CheckIfPeriodicDomainRequired(const DefInt dims,
  * @brief function to calculate the size of the grid node information needed for MPI communication.
  * @return size of the grid node information for MPI communication.
  */
-int GridInfoLbmInteface::SizeOfGridNodeInfoForMpiCommunication() const {
+int GridInfoLbmInteface::GetSizeOfGridNodeInfoForMpiCommunication() const {
     SolverLbmInterface& lbm_solver = *std::dynamic_pointer_cast<SolverLbmInterface>(ptr_solver_).get();
     int size_info =  lbm_solver.k0NumQ_*sizeof(DefReal);
     if (lbm_solver.bool_forces_) {
@@ -102,16 +102,16 @@ void GridInfoLbmInteface::ComputeInfoInMpiLayers(const std::map<int, DefMap<DefI
     const LbmCollisionOptInterface& collision_operator = ptr_lbm_solver->GetCollisionOperator(i_level_);
     DefReal dt_lbm = collision_operator.GetDtLbm();
     DefInt dims = ptr_solver_->GetSolverDim();
-    std::function<void(const DefReal, const GridNodeLbm&, const std::vector<DefReal>&,
+    std::function<void(const DefReal, const std::vector<DefReal>&, const std::vector<DefReal>&,
         DefReal* const, std::vector<DefReal>* const)> func_macro;
 
     DefMap<std::unique_ptr<GridNodeLbm>>* ptr_lbm_grid_nodes = GetPtrToLbmGrid();
     if (ptr_lbm_solver->bool_forces_) {
         func_macro = ptr_lbm_solver->func_macro_with_force_;
     } else {
-        func_macro = [ptr_lbm_solver](const DefReal dt_lbm, const GridNodeLbm& node,
+        func_macro = [ptr_lbm_solver](const DefReal dt_lbm, const std::vector<DefReal>& f,
             const std::vector<DefReal>& force, DefReal* const ptr_rho, std::vector<DefReal>* const ptr_velocity) {
-            ptr_lbm_solver->func_macro_without_force_(node, ptr_rho, ptr_velocity);};
+            ptr_lbm_solver->func_macro_without_force_(f, ptr_rho, ptr_velocity);};
     }
 
     // collision for nodes in outer and inner MPI communication layers
@@ -123,9 +123,9 @@ void GridInfoLbmInteface::ComputeInfoInMpiLayers(const std::map<int, DefMap<DefI
     for (const auto& iter_layer : map_inner_nodes) {
         for (const auto& iter_node : iter_layer.second) {
             if (!(ptr_lbm_grid_nodes_->at(iter_node.first)->flag_status_&flag_not_collide)) {
-                const std::vector<DefReal>& force
-                    = ptr_lbm_solver->GetAllForcesForANode(*ptr_lbm_grid_nodes_->at(iter_node.first).get());
-                func_macro(dt_lbm, *ptr_lbm_grid_nodes_->at(iter_node.first).get(), force,
+                std::vector<DefReal> force(
+                    ptr_lbm_solver->GetAllForcesForANode(*ptr_lbm_grid_nodes_->at(iter_node.first).get()));
+                func_macro(dt_lbm, ptr_lbm_grid_nodes_->at(iter_node.first)->f_, force,
                     &ptr_lbm_grid_nodes_->at(iter_node.first)->rho_,
                     &ptr_lbm_grid_nodes_->at(iter_node.first)->velocity_);
                 collision_operator.CollisionOperator(*ptr_lbm_solver, force,

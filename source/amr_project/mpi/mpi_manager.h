@@ -47,20 +47,28 @@ class MpiManager{
     DefInt k0NumPartitionInnerLayers_ = k0NumPartitionOuterLayers_;
 
  public:
+    /**
+    * @class BufferSizeInfo
+    * @brief class used to store information of buffer size.
+    */  
+    struct BufferSizeInfo {
+        bool bool_exist_ = false;
+        int num_chunks_ = 0;
+        std::array<int, 2> array_buffer_size_ = {0, 0};
+    };
     // set and get protected members
     int GetNumOfRanks() const { return num_of_ranks_; }
     int GetRankId() const { return rank_id_; }
     DefSFBitset GetSFBitsetMinCurrentRank() const { return sfbitset_min_current_rank_; }
     DefSFBitset GetSFBitsetMaxCurrentRank() const { return sfbitset_max_current_rank_; }
-    const std::vector<DefSFCodeToUint>& GetSFCodeMinAllRanks() const { return vec_sfcode_min_all_ranks_; }
-    const std::vector<DefSFCodeToUint>& GetSFCodeMaxAllRanks() const { return vec_sfcode_max_all_ranks_; }
+    std::vector<DefSFCodeToUint> GetSFCodeMinAllRanks() const { return vec_sfcode_min_all_ranks_; }
+    std::vector<DefSFCodeToUint> GetSFCodeMaxAllRanks() const { return vec_sfcode_max_all_ranks_; }
     DefInt GetNumPartitionOuterLayers() const { return k0NumPartitionOuterLayers_; }
     DefInt GetNumPartitionInnerLayers() const { return k0NumPartitionInnerLayers_; }
     void SetSFBitsetMinCurrentRank(const DefSFBitset& sfbitset_min) { sfbitset_min_current_rank_ = sfbitset_min; }
     void SetSFBitsetMaxCurrentRank(const DefSFBitset& sfbitset_max) { sfbitset_max_current_rank_ = sfbitset_max; }
     void SetNumPartitionOuterLayers(const DefInt num_outer_layers) { k0NumPartitionOuterLayers_ = num_outer_layers; }
     void SetNumPartitionInnerLayers(const DefInt num_inner_layers) { k0NumPartitionInnerLayers_ = num_inner_layers; }
-
  
     std::vector<std::map<int, DefMap<DefInt>>> mpi_communication_inner_layers_;
     ///< inner layers (for sending) for mpi communication of all refinement levels
@@ -327,11 +335,6 @@ class MpiManager{
 
     // communicate between different partitioned blocks
  public:
-    struct BufferSizeInfo {
-        bool bool_exist_ = false;
-        int num_chunks_ = 0;
-        std::array<int, 2> array_buffer_size_ = {0, 0};
-    };
     void SendNReceiveSFbitsetForInterpolation(const DefInt i_level, const SFBitsetAuxInterface& sfbitset_aux,
         const DefMap<std::unique_ptr<GridNode>>& map_nodes_outer_layer,
         std::vector<int>* const ptr_vec_num_recv, std::map<int, DefMap<DefInt>>* const ptr_node_inner_layers) const;
@@ -354,8 +357,8 @@ class MpiManager{
         std::vector<std::vector<MPI_Request>>* const ptr_vec_vec_reqs_receive,
         GridInfoInterface* const ptr_grid_info) const;
     std::vector<bool> IdentifyRanksReceivingGridNode(const DefInt i_level) const;
-    void SendNReceiveGridNodeBufferSize(const DefInt i_level,
-        const int node_info_size, const std::vector<bool>& rank_id_sent,
+    void SendNReceiveGridNodeBufferSize(const int node_info_size, const DefInt i_level,
+        const std::map<int, DefMap<DefInt>>& map_send_nodes,
         std::vector<BufferSizeInfo>* const ptr_send_buffer_info,
         std::vector<BufferSizeInfo>* const ptr_receive_buffer_info) const;
     DefSizet CalculateBufferSizeForGridNode(
@@ -367,8 +370,17 @@ class MpiManager{
         std::vector<MPI_Request>* const ptr_reqs_send) const;
     std::unique_ptr<char[]> ReceiveGridNodeInformation(const int rank_receive, const int node_info_size,
         const BufferSizeInfo& receive_buffer_info, std::vector<MPI_Request>* const ptr_reqs_receive) const;
-    int SendNReceiveGridNodes(
-        std::vector<BufferSizeInfo>* const ptr_send_buffer_info,
+    void NonBlockingSendNReceiveGridNode(const int node_info_size,
+        const std::map<int, DefMap<DefInt>>& map_send_nodes,
+        const std::vector<BufferSizeInfo>& send_buffer_info,
+        const std::vector<BufferSizeInfo>& receive_buffer_info,
+        const std::function<void(const GridNode& node_ref, char* const)>& func_write_buffer,
+        std::vector<std::vector<MPI_Request>>* const ptr_vec_vec_reqs_send,
+        std::vector<std::vector<MPI_Request>>* const ptr_vec_vec_reqs_receive,
+        std::vector<std::unique_ptr<char[]>>* const ptr_vec_ptr_buffer_send,
+        std::vector<std::unique_ptr<char[]>>* const ptr_vec_ptr_buffer_receive,
+        GridInfoInterface* const ptr_grid_info) const;
+    void SendAndReceiveGridNodesOnAllMpiLayers(std::vector<BufferSizeInfo>* const ptr_send_buffer_info,
         std::vector<BufferSizeInfo>* const ptr_receive_buffer_info,
         std::vector<std::vector<MPI_Request>>* const ptr_vec_vec_reqs_send,
         std::vector<std::vector<MPI_Request>>* const ptr_vec_vec_reqs_receive,
@@ -378,12 +390,35 @@ class MpiManager{
     void WaitAndReadGridNodesFromBuffer(const std::vector<BufferSizeInfo>& send_buffer_info,
         const std::vector<BufferSizeInfo>& receive_buffer_info,
         const std::vector<std::unique_ptr<char[]>>& vec_ptr_buffer_receive,
+        const std::function<void(const char*,  GridNode* const)>& func_read_a_node_from_buffer,
         std::vector<std::vector<MPI_Request>>* const ptr_vec_vec_reqs_send,
         std::vector<std::vector<MPI_Request>>* const ptr_vec_vec_reqs_receive,
         GridInfoInterface* const ptr_grid_info) const;
     void MpiCommunicationForInterpolation(
         const SFBitsetAuxInterface& sfbitset_aux, const GridInfoInterface& grid_info_lower,
         GridInfoInterface* const ptr_grid_info) const;
+    template <typename Node_T>
+    std::unique_ptr<char[]> BlockingSendNReceiveGridNode(const int i_rank_send,
+        const int i_rank_receive, const int node_info_size,
+        const std::map<int, DefMap<DefInt>>& map_send_nodes,
+        const std::vector<BufferSizeInfo>& send_buffer_info,
+        const std::vector<BufferSizeInfo>& receive_buffer_info,
+        const std::function<void(const Node_T& node_ref, char* const)>& func_write_buffer,
+        const DefMap<std::unique_ptr<Node_T>>& map_nodes_info,
+        std::vector<MPI_Request>* const ptr_vec_reqs_send,
+        std::vector<std::unique_ptr<char[]>>* const ptr_vec_buffer_send)
+        const requires std::is_base_of<GridNode, Node_T>::value;
+    template <typename Node_T>
+    void CopyNodeInfoToBuffer(const int node_info_size,
+        const std::function<void(const Node_T& node_ref, char* const)>& func_copy_buffer,
+        const DefMap<DefInt>& map_node_indices, const DefMap<std::unique_ptr<Node_T>>& map_nodes,
+        char* const ptr_buffer) const requires std::is_base_of<GridNode, Node_T>::value;
+    template <typename Node_T>
+    void ReadNodeInfoFromBuffer(const int node_info_size,
+        const std::function<void(const char*,  Node_T* const ptr_node)>& func_read_buffer,
+        const DefSizet buffer_size, const std::unique_ptr<char[]>& buffer,
+        DefMap<std::unique_ptr<Node_T>>* const ptr_map_nodes)
+        const requires std::is_base_of<GridNode, Node_T>::value;
 
  private:
     inline bool CheckBufferSizeNotExceedMax(DefSizet buffer_size) const {
@@ -447,14 +482,152 @@ class MpiManager{
         DefMap<DefInt>* const ptr_map_ghost_layer) const;
 #endif  // DEBUG_DISABLE_3D_FUNCTIONS
 
-#ifdef DEBUG_CHECK_GRID
     // functions for the purpose of debug
  public:
     void DebugMpiForAllGrids(const GridManagerInterface& grid_manager) const;
     void CheckMpiNodesCorrespondence(const GridInfoInterface& grid_info) const;
     void CheckMpiPeriodicCorrespondence(const GridInfoInterface& grid_info) const;
-#endif  // DEBUG_CHECK_GRID
 };
+/**
+ * @brief function to copy node information to a buffer.
+ * @param[in] node_info_size size of node information.
+ * @param[in] func_copy_buffer function to copy node specified information to the buffer.
+ * @param[in] map_node_indices container storing space filling codes of the nodes need to be copied.
+ * @param[in] map_nodes_info container storing node information at a refinement level.
+ * @param[out] ptr_buffer pointer to the buffer storing node information.
+ */
+template <typename Node_T>
+void MpiManager::CopyNodeInfoToBuffer(const int node_info_size,
+    const std::function<void(const Node_T& node_ref, char* const)>& func_copy_buffer,
+    const DefMap<DefInt>& map_node_indices, const DefMap<std::unique_ptr<Node_T>>& map_nodes_info,
+    char* const ptr_buffer) const requires std::is_base_of<GridNode, Node_T>::value {
+    DefSizet position = 0;
+    int key_size = sizeof(DefSFBitset);
+    DefSizet buffer_size = (node_info_size + sizeof(DefSFBitset)) * map_node_indices.size();
+    for (const auto& iter : map_node_indices) {
+        if (map_nodes_info.find(iter.first) != map_nodes_info.end()) {
+            std::memcpy(ptr_buffer + position, &(iter.first), key_size);
+            position+=sizeof(DefSFBitset);
+            func_copy_buffer(*map_nodes_info.at(iter.first), ptr_buffer + position);
+            position+=node_info_size;
+            if (position > buffer_size) {
+                LogManager::LogError("Buffer to store node information overflows (buffer size is "
+                    + std::to_string(buffer_size) + " ), please check"
+                    " size of node info for mpi communication");
+            }
+        } else {
+            LogManager::LogError("node with space filling code " + iter.first.to_string() + " does not exist");
+        }
+    }
+}
+/**
+ * @brief function to read node information from a buffer.
+ * @param[in] node_info_size size of node information.
+ * @param[in] func_read_buffer function to read node specified information to the buffer.
+ * @param[in] buffer_size total size of the buffer.
+ * @param[in] buffer  pointer to the buffer storing node information.
+ * @param[out] ptr_map_nodes pointer to container storing node information at a refinement level.
+ */
+template <typename Node_T>
+void MpiManager::ReadNodeInfoFromBuffer(const int node_info_size,
+    const std::function<void(const char*,  Node_T* const ptr_node)>& func_read_buffer,
+    const DefSizet buffer_size, const std::unique_ptr<char[]>& buffer,
+    DefMap<std::unique_ptr<Node_T>>* const ptr_map_nodes)
+    const requires std::is_base_of<GridNode, Node_T>::value {
+    const DefSizet key_size = sizeof(DefSFBitset);
+    const DefSizet num_nodes = buffer_size/(sizeof(DefSFBitset) + node_info_size);
+    DefSizet position = 0;
+    DefSFBitset key_code;
+    const char* ptr_buffer = buffer.get();
+    for (DefSizet i_node = 0; i_node < num_nodes; ++i_node) {
+        std::memcpy(&key_code, ptr_buffer + position, key_size);
+        position += key_size;
+        if (ptr_map_nodes->find(key_code) != ptr_map_nodes->end()) {
+            func_read_buffer(ptr_buffer + position, ptr_map_nodes->at(key_code).get());
+        }   // may receive nodes that do not exist in current rank on c2f interface
+        position += node_info_size;
+        if (position > buffer_size) {
+            LogManager::LogError("Buffer to store node information overflows, please check"
+                " size of node info for mpi communication");
+        }
+    }
+}
+/**
+ * @brief function to send and receive grid nodes via blocking mpi communication.
+ * @param[in] node_info_size size of each node information will be sent.
+ * @param[in] map_send_nodes  spacing filling codes of nodes will be sent.
+ * @param[in] send_buffer_info buffer size information of sending.
+ * @param[in] receive_buffer_info buffer size information of receiving.
+ * @param[in] func_write_buffer function to write grid node infomation to buffer.
+ * @param[in] map_nodes_info container storing node information at a refinement level.
+ * @param[out] ptr_vec_reqs_send  pointer to vector storing mpi requests information of sending.
+ * @param[out] ptr_vec_buffer_send pointer to buffer storing grid node information for sending.
+ */
+template <typename Node_T>
+std::unique_ptr<char[]> MpiManager::BlockingSendNReceiveGridNode(const int i_rank_send,
+    const int i_rank_receive, const int node_info_size,
+    const std::map<int, DefMap<DefInt>>& map_send_nodes,
+    const std::vector<BufferSizeInfo>& send_buffer_info,
+    const std::vector<BufferSizeInfo>& receive_buffer_info,
+    const std::function<void(const Node_T&, char* const)>& func_write_buffer,
+    const DefMap<std::unique_ptr<Node_T>>& map_nodes_info,
+    std::vector<MPI_Request>* const ptr_vec_reqs_send,
+    std::vector<std::unique_ptr<char[]>>* const ptr_vec_buffer_send) const
+    requires std::is_base_of<GridNode, Node_T>::value {
+    // send node information
+    std::function<void(const DefMap<DefInt>& , char* const)> func_copy_node_to_buffer =
+        [this, node_info_size, func_write_buffer, &map_nodes_info](
+        const DefMap<DefInt>& map_send, char* const ptr_buffer) {
+        CopyNodeInfoToBuffer<Node_T>(node_info_size, func_write_buffer, map_send, map_nodes_info, ptr_buffer);
+    };
+
+    int node_buffer_size = sizeof(DefSFBitset) + node_info_size;;
+    if (send_buffer_info.at(i_rank_send).bool_exist_) {
+        // copy grid node information to buffer
+        ptr_vec_buffer_send->emplace_back(std::make_unique<char[]>(
+            node_buffer_size*map_send_nodes.at(i_rank_send).size()));
+        CopyNodeInfoToBuffer<Node_T>(node_info_size, func_write_buffer,
+            map_send_nodes.at(i_rank_send), map_nodes_info, ptr_vec_buffer_send->back().get());
+
+        // send grid node information chunk by chunk via non-blocking communication
+        const int& buffer_size_send = send_buffer_info.at(i_rank_send).array_buffer_size_.at(0);
+        const int& num_chunks = send_buffer_info.at(i_rank_send).num_chunks_;
+        if (num_chunks > 1) {
+            LogManager::LogWarning("buffer is not enough to send all grid node information at once on rank "
+                + std::to_string(i_rank_send) + ", considering non-blocking communication.");
+        }
+        ptr_vec_reqs_send->resize(num_chunks);
+        for (int i_chunk = 0; i_chunk < num_chunks - 1; ++i_chunk) {
+            MPI_Isend(ptr_vec_buffer_send->back().get()+i_chunk*buffer_size_send,
+                send_buffer_info.at(i_rank_send).array_buffer_size_.at(0),
+                MPI_BYTE, i_rank_send, i_chunk, MPI_COMM_WORLD, &ptr_vec_reqs_send->at(i_chunk));
+        }
+        int i_chunk_last = num_chunks - 1;
+        MPI_Isend(ptr_vec_buffer_send->back().get()+i_chunk_last*buffer_size_send,
+            send_buffer_info.at(i_rank_send).array_buffer_size_.at(1), MPI_BYTE, i_rank_send, i_chunk_last,
+            MPI_COMM_WORLD, &ptr_vec_reqs_send->at(i_chunk_last));
+    }
+
+    if (receive_buffer_info.at(i_rank_receive).bool_exist_) {
+        const int& num_chunks = receive_buffer_info.at(i_rank_receive).num_chunks_;
+        const int& buffer_size_rest = receive_buffer_info.at(i_rank_receive).array_buffer_size_.at(0);
+        DefSizet buffer_size_total = (num_chunks - 1)*buffer_size_rest
+            + receive_buffer_info.at(i_rank_receive).array_buffer_size_.at(1);
+        std::unique_ptr<char[]> buffer_receive = std::make_unique<char[]>(buffer_size_total);
+        int position = 0;
+        for (int i_chunk = 0; i_chunk < num_chunks - 1; ++i_chunk) {
+            MPI_Recv(buffer_receive.get()+i_chunk*buffer_size_rest, buffer_size_rest, MPI_BYTE, i_rank_receive,
+                i_chunk, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+        }
+        int i_chunk_last = num_chunks - 1;
+        MPI_Recv(buffer_receive.get()+ (num_chunks - 1)*buffer_size_rest,
+            receive_buffer_info.at(i_rank_receive).array_buffer_size_.at(1), MPI_BYTE, i_rank_receive,
+            i_chunk_last, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+        return buffer_receive;
+    } else {
+        return nullptr;
+    }
+}
 }  //  end namespace amrproject
 }  //  end namespace rootproject
 #else  //  not define  ENABLE_MPI
@@ -467,6 +640,14 @@ namespace amrproject {
 class MpiManager {
     // this is an empty class when mpi is not enabled.
     // used for argument passing in some functions.
+ private:
+    DefSFBitset sfbitset_min_current_rank_, sfbitset_max_current_rank_;
+
+ public:
+    DefSFBitset GetSFBitsetMinCurrentRank() const { return sfbitset_min_current_rank_; }
+    DefSFBitset GetSFBitsetMaxCurrentRank() const { return sfbitset_max_current_rank_; }
+    void SetSFBitsetMinCurrentRank(const DefSFBitset& sfbitset_min) { sfbitset_min_current_rank_ = sfbitset_min; }
+    void SetSFBitsetMaxCurrentRank(const DefSFBitset& sfbitset_max) { sfbitset_max_current_rank_ = sfbitset_max; }
 };
 }  //  end namespace amrproject
 }  //  end namespace rootproject

@@ -133,7 +133,7 @@ void MpiManager::IniSendNReceiveTracking(const DefInt dims, const DefInt i_level
     if (rank_id == 0) {
         // save tracking indices stored in unordered_map to vector
         for (const auto& iter_tracking : *ptr_map_tracking_info) {
-            vec_tracking_indices.push_back(iter_tracking.first);
+            vec_tracking_indices.emplace_back(iter_tracking.first);
         }
     }
 
@@ -440,7 +440,7 @@ void MpiManager::IniSendNReceiveCoarse2Fine0Interface(const DefInt dims,
     if (rank_id == 0) {
         // save interface indices stored in unordered_map to vector
         for (const auto& iter_interface : *ptr_map_interface_info) {
-            vec_interface_indices.push_back(iter_interface.first);
+            vec_interface_indices.emplace_back(iter_interface.first);
         }
     }
     CriterionIndexForMpi interface_index_tmp;

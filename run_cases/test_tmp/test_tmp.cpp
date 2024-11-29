@@ -93,13 +93,13 @@ int main(int argc, char** argv) {
     ptr_amr_instance_ = amrproject::AmrManager::GetInstance();
     DefInt dims = 2;   // dimension
     DefInt max_refinement_level = 1;  // maximum refinement level
-    ptr_amr_instance_->DefaultInitialization(dims, max_refinement_level);
+    ptr_amr_instance_->StartupInitialization(dims, max_refinement_level);
 
     // geometry related parameters //
-    ptr_amr_instance_->ptr_grid_manager_->vec_ptr_tracking_info_creator_.push_back(
+    ptr_amr_instance_->ptr_grid_manager_->vec_ptr_tracking_info_creator_.emplace_back(
         std::make_unique<amrproject::TrackingGridInfoCreatorInterface>());
     amrproject::GeometryInfoOriginCreator geo_creator;
-    ptr_amr_instance_->ptr_criterion_manager_->vec_ptr_geometries_.push_back(
+    ptr_amr_instance_->ptr_criterion_manager_->vec_ptr_geometries_.emplace_back(
         geo_creator.CreateGeometryInfo(dims));
     amrproject::GeometryInfoOrigin* ptr_geo_tmp =
         dynamic_cast<amrproject::GeometryInfoOrigin*>(ptr_amr_instance_->
@@ -109,7 +109,7 @@ int main(int argc, char** argv) {
         dynamic_cast<amrproject::GeoShapeDefaultLine2D*>(ptr_geo_tmp->ptr_geo_shape_.get());
     ptr_line->start_point_ = { 0., 0};
     ptr_line->end_point_ = { max_domain_length_, 0};
-    ptr_geo_tmp->SetPtrTrackingGridInfoCreatorInterface(
+    ptr_geo_tmp->SetPtrTrackingGridInfoCreator(
         ptr_amr_instance_->ptr_grid_manager_->vec_ptr_tracking_info_creator_.at(0).get());
     ptr_geo_tmp->SetGeometryCenter({ max_domain_length_/2, max_domain_height_/2 });
     ptr_geo_tmp->SetXExtendPositive({ 4, 4 });

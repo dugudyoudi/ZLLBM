@@ -409,117 +409,117 @@ DefInt GridManager3D::FindAllNeighborsWithSpecifiedDirection(
     DefSFBitset sfbitset_tmp, sfbitset_tmp1, sfbitset_tmp2;
     if (bool_neg[kXIndex]) {  // (-x, 0, 0)
         sfbitset_tmp = FindXNeg(bitset_in);
-        ptr_vec_neighbors->push_back(sfbitset_tmp);
+        ptr_vec_neighbors->emplace_back(sfbitset_tmp);
         if (bool_neg[kYIndex]) {  // (-x, -y, 0)
             sfbitset_tmp1 = FindYNeg(sfbitset_tmp);
-            ptr_vec_neighbors->push_back(sfbitset_tmp1);
+            ptr_vec_neighbors->emplace_back(sfbitset_tmp1);
             if (bool_neg[kZIndex]) {  // (-x, -y, -z)
                 sfbitset_tmp2 = FindZNeg(sfbitset_tmp1);
-                ptr_vec_neighbors->push_back(sfbitset_tmp2);
+                ptr_vec_neighbors->emplace_back(sfbitset_tmp2);
             }
             if (bool_pos[kZIndex]) {  // (-x, -y, +z)
                 sfbitset_tmp2 = FindZPos(sfbitset_tmp1);
-                ptr_vec_neighbors->push_back(sfbitset_tmp2);
+                ptr_vec_neighbors->emplace_back(sfbitset_tmp2);
             }
         }
         if (bool_pos[kYIndex]) {  // (-x, +y, 0)
             sfbitset_tmp1 = FindYPos(sfbitset_tmp);
-            ptr_vec_neighbors->push_back(sfbitset_tmp1);
+            ptr_vec_neighbors->emplace_back(sfbitset_tmp1);
             if (bool_neg[kZIndex]) {  // (-x, +y, -z)
                 sfbitset_tmp2 = FindZNeg(sfbitset_tmp1);
-                ptr_vec_neighbors->push_back(sfbitset_tmp2);
+                ptr_vec_neighbors->emplace_back(sfbitset_tmp2);
             }
             if (bool_pos[kZIndex]) {  // (-x, +y, +z)
                 sfbitset_tmp2 = FindZPos(sfbitset_tmp1);
-                ptr_vec_neighbors->push_back(sfbitset_tmp2);
+                ptr_vec_neighbors->emplace_back(sfbitset_tmp2);
             }
         }
         if (bool_neg[kZIndex]) {  // (-x, 0, -z)
             sfbitset_tmp1 = FindZNeg(sfbitset_tmp);
-            ptr_vec_neighbors->push_back(sfbitset_tmp1);
+            ptr_vec_neighbors->emplace_back(sfbitset_tmp1);
         }
         if (bool_pos[kZIndex]) {  // (-x, 0, +z)
             sfbitset_tmp1 = FindZPos(sfbitset_tmp);
-            ptr_vec_neighbors->push_back(sfbitset_tmp1);
+            ptr_vec_neighbors->emplace_back(sfbitset_tmp1);
         }
     } else {
         flag_current_node |= kFlagCurrentNodeXNeg_;
     }
     if (bool_pos[kXIndex]) {  // (+x, 0, 0)
         sfbitset_tmp = FindXPos(bitset_in);
-        ptr_vec_neighbors->push_back(sfbitset_tmp);
+        ptr_vec_neighbors->emplace_back(sfbitset_tmp);
         if (bool_neg[kYIndex]) {  // (+x, -y, 0)
             sfbitset_tmp1 = FindYNeg(sfbitset_tmp);
-            ptr_vec_neighbors->push_back(sfbitset_tmp1);
+            ptr_vec_neighbors->emplace_back(sfbitset_tmp1);
             if (bool_neg[kZIndex]) {  // (+x, -y, -z)
                 sfbitset_tmp2 = FindZNeg(sfbitset_tmp1);
-                ptr_vec_neighbors->push_back(sfbitset_tmp2);
+                ptr_vec_neighbors->emplace_back(sfbitset_tmp2);
             }
             if (bool_pos[kZIndex]) {  // (+x, -y, +z)
                 sfbitset_tmp2 = FindZPos(sfbitset_tmp1);
-                ptr_vec_neighbors->push_back(sfbitset_tmp2);
+                ptr_vec_neighbors->emplace_back(sfbitset_tmp2);
             }
         }
         if (bool_pos[kYIndex]) {  // (+x, +y, 0)
             sfbitset_tmp1 = FindYPos(sfbitset_tmp);
-            ptr_vec_neighbors->push_back(sfbitset_tmp1);
+            ptr_vec_neighbors->emplace_back(sfbitset_tmp1);
             if (bool_neg[kZIndex]) {  // (+x, +y, -z)
                 sfbitset_tmp2 = FindZNeg(sfbitset_tmp1);
-                ptr_vec_neighbors->push_back(sfbitset_tmp2);
+                ptr_vec_neighbors->emplace_back(sfbitset_tmp2);
             }
             if (bool_pos[kZIndex]) {  // (+x, +y, +z)
                 sfbitset_tmp2 = FindZPos(sfbitset_tmp1);
-                ptr_vec_neighbors->push_back(sfbitset_tmp2);
+                ptr_vec_neighbors->emplace_back(sfbitset_tmp2);
             }
         }
         if (bool_neg[kZIndex]) {  // (+x, 0, -z)
             sfbitset_tmp1 = FindZNeg(sfbitset_tmp);
-            ptr_vec_neighbors->push_back(sfbitset_tmp1);
+            ptr_vec_neighbors->emplace_back(sfbitset_tmp1);
         }
         if (bool_pos[kZIndex]) {  // (+x, 0, +z)
             sfbitset_tmp1 = FindZPos(sfbitset_tmp);
-            ptr_vec_neighbors->push_back(sfbitset_tmp1);
+            ptr_vec_neighbors->emplace_back(sfbitset_tmp1);
         }
     } else {
         flag_current_node |= kFlagCurrentNodeXPos_;
     }
     if (bool_neg[kYIndex]) {  // (0, -y, 0)
         sfbitset_tmp = FindYNeg(bitset_in);
-        ptr_vec_neighbors->push_back(sfbitset_tmp);
+        ptr_vec_neighbors->emplace_back(sfbitset_tmp);
         if (bool_neg[kZIndex]) {  // (0, -y, -z)
             sfbitset_tmp1 = FindZNeg(sfbitset_tmp);
-            ptr_vec_neighbors->push_back(sfbitset_tmp1);
+            ptr_vec_neighbors->emplace_back(sfbitset_tmp1);
         }
         if (bool_pos[kZIndex]) {  // (0, -y, +z)
             sfbitset_tmp1 = FindZPos(sfbitset_tmp);
-            ptr_vec_neighbors->push_back(sfbitset_tmp1);
+            ptr_vec_neighbors->emplace_back(sfbitset_tmp1);
         }
     } else {
         flag_current_node |= kFlagCurrentNodeYNeg_;
     }
     if (bool_pos[kYIndex]) {  // (0, +y, 0)
         sfbitset_tmp = FindYPos(bitset_in);
-        ptr_vec_neighbors->push_back(sfbitset_tmp);
+        ptr_vec_neighbors->emplace_back(sfbitset_tmp);
         if (bool_neg[kZIndex]) {  // (0, +y, -z)
             sfbitset_tmp1 = FindZNeg(sfbitset_tmp);
-            ptr_vec_neighbors->push_back(sfbitset_tmp1);
+            ptr_vec_neighbors->emplace_back(sfbitset_tmp1);
         }
         if (bool_pos[kZIndex]) {  // (0, +y, +z)
             sfbitset_tmp1 = FindZPos(sfbitset_tmp);
-            ptr_vec_neighbors->push_back(sfbitset_tmp1);
+            ptr_vec_neighbors->emplace_back(sfbitset_tmp1);
         }
     } else {
         flag_current_node |= kFlagCurrentNodeYPos_;
     }
     if (bool_neg[kZIndex]) {  // (0, 0, -z)
         sfbitset_tmp = FindZNeg(bitset_in);
-        ptr_vec_neighbors->push_back(sfbitset_tmp);
+        ptr_vec_neighbors->emplace_back(sfbitset_tmp);
     } else {
         flag_current_node |= kFlagCurrentNodeZNeg_;
     }
     if (bool_pos[kZIndex]) {  // (0, 0, +z)
         sfbitset_tmp = FindZPos(bitset_in);
-        ptr_vec_neighbors->push_back(sfbitset_tmp);
+        ptr_vec_neighbors->emplace_back(sfbitset_tmp);
     } else {
         flag_current_node |= kFlagCurrentNodeZPos_;
     }
