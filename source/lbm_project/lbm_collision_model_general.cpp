@@ -64,13 +64,13 @@ void LbmCollisionOptInterface::CalRelaxationTimeRatio() {
  */
 void LbmCollisionOptInterface::PostCollisionCoarse2Fine(const std::vector<DefReal>& feq,
     const std::vector<DefReal>& f_collide_coarse, std::vector<DefReal>* const ptr_f_collide_fine) const {
-    DefSizet num_q = feq.size();
+    DefInt num_q = static_cast<DefInt>(feq.size());
     ptr_f_collide_fine->resize(num_q);
     //  DefReal relax_tau_f = viscosity_lbm_ * SolverLbmInterface::kCs_Sq_Reciprocal_ / dt_lbm * 2. + 0.5;
     //  DefReal relax_tau_c = viscosity_lbm_ * SolverLbmInterface::kCs_Sq_Reciprocal_ / dt_lbm + 0.5;
     //  DefReal tau_ratio = 0.5 * (relax_tau_f - 1)/ (relax_tau_c - 1);
 
-    for (int iq = 0; iq < num_q; ++iq) {
+    for (DefInt iq = 0; iq < num_q; ++iq) {
         ptr_f_collide_fine->at(iq) = feq.at(iq) + tau_collision_c2f_ * (f_collide_coarse[iq] - feq.at(iq));
     }
 }
@@ -85,13 +85,13 @@ void LbmCollisionOptInterface::PostCollisionFine2Coarse(const std::vector<DefRea
     const GridNodeLbm& node_fine, GridNodeLbm* const ptr_node_coarse) const {
     ptr_node_coarse->rho_ = node_fine.rho_;
     ptr_node_coarse->velocity_ = node_fine.velocity_;
-    DefSizet num_q = feq.size();
+    DefInt num_q = static_cast<DefInt>(feq.size());
     ptr_node_coarse->f_collide_.resize(num_q);
     // DefReal relax_tau_f = viscosity_lbm_ * SolverLbmInterface::kCs_Sq_Reciprocal_ / dt_lbm + 0.5;
     // DefReal relax_tau_c = viscosity_lbm_ * SolverLbmInterface::kCs_Sq_Reciprocal_ / dt_lbm / 2 + 0.5;
     //  DefReal tau_ratio = 2 * (relax_tau_c - 1)/ (relax_tau_f - 1);
 
-    for (int iq = 0; iq < num_q; ++iq) {
+    for (DefInt iq = 0; iq < num_q; ++iq) {
         ptr_node_coarse->f_collide_[iq] = feq.at(iq) + tau_collision_f2c_ * (node_fine.f_collide_[iq] - feq.at(iq));
     }
 }
@@ -109,9 +109,9 @@ void LbmCollisionOptInterface::PostCollisionCoarse2FineForce(const std::vector<D
     DefReal (SolverLbmInterface::*ptr_func_cal_force_iq)(const int, const GridNodeLbm&) const,
     const GridNodeLbm& node_coarse, std::vector<DefReal>* const ptr_f_collide_fine) const {
     DefReal force_tmp;
-    DefSizet num_q = feq.size();
+    DefInt num_q = static_cast<DefInt>(feq.size());
     ptr_f_collide_fine->resize(num_q);
-    for (int iq = 0; iq <num_q; ++iq) {
+    for (DefInt iq = 0; iq <num_q; ++iq) {
         ptr_f_collide_fine->at(iq) = feq.at(iq) + tau_collision_c2f_ * (node_coarse.f_collide_[iq] - feq.at(iq));
         force_tmp = (lbm_solver.*ptr_func_cal_force_iq)(iq, node_coarse);
         ptr_f_collide_fine->at(iq) +=  dt_lbm_ * force_tmp / 4. - tau_collision_c2f_ *force_tmp * dt_lbm_ / 2.;
@@ -131,11 +131,11 @@ void LbmCollisionOptInterface::PostCollisionFine2CoarseForce(const std::vector<D
     DefReal (SolverLbmInterface::*ptr_func_cal_force_iq)(const int, const GridNodeLbm&) const,
     const GridNodeLbm& node_fine, GridNodeLbm* const ptr_node_coarse) const {
     DefReal force_tmp;
-    DefSizet num_q = feq.size();
+    DefInt num_q = static_cast<DefInt>(feq.size());
     ptr_node_coarse->rho_ = node_fine.rho_;
     ptr_node_coarse->velocity_ = node_fine.velocity_;
     bool bool_forces_coarse = (node_fine.force_.size() != 0);
-    for (int iq = 0; iq < num_q; ++iq) {
+    for (DefInt iq = 0; iq < num_q; ++iq) {
         ptr_node_coarse->f_collide_[iq] = feq.at(iq) + tau_collision_f2c_ * (node_fine.f_collide_[iq] - feq.at(iq));
         force_tmp = (lbm_solver.*ptr_func_cal_force_iq)(iq, node_fine);
         ptr_node_coarse->f_collide_[iq] +=  dt_lbm_ * force_tmp - tau_collision_f2c_ * force_tmp * dt_lbm_ / 2.;
@@ -150,9 +150,9 @@ void LbmCollisionOptInterface::PostCollisionFine2CoarseForce(const std::vector<D
  */
 void LbmCollisionOptInterface::PostStreamCoarse2Fine(const std::vector<DefReal>& feq,
     const std::vector<DefReal>& f_coarse, std::vector<DefReal>* const ptr_f_fine) const {
-    DefSizet num_q = feq.size();
+    DefInt num_q = static_cast<DefInt>(feq.size());
     ptr_f_fine->resize(num_q);
-    for (int iq = 0; iq < num_q; ++iq) {
+    for (DefInt iq = 0; iq < num_q; ++iq) {
         ptr_f_fine->at(iq) = feq.at(iq) + tau_stream_c2f_ * (f_coarse[iq] - feq.at(iq));
     }
 }
@@ -167,8 +167,8 @@ void LbmCollisionOptInterface::PostStreamFine2Coarse(const std::vector<DefReal>&
     const GridNodeLbm& node_fine, GridNodeLbm* const ptr_node_coarse) const {
     ptr_node_coarse->rho_ = node_fine.rho_;
     ptr_node_coarse->velocity_ = node_fine.velocity_;
-    DefSizet num_q = feq.size();
-    for (int iq = 0; iq < num_q; ++iq) {
+    DefInt num_q = static_cast<DefInt>(feq.size());
+    for (DefInt iq = 0; iq < num_q; ++iq) {
         ptr_node_coarse->f_[iq] = feq.at(iq) + tau_stream_f2c_ * (node_fine.f_[iq] - feq.at(iq));
     }
 }

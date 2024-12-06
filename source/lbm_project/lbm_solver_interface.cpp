@@ -33,7 +33,7 @@ std::vector<DefReal> SolverLbmInterface::GetAllForcesForANode(
     const GridNodeLbm& node) const {
     std::vector<DefReal> force(k0ConstForce_);
     force.resize(k0SolverDims_);
-    for (DefInt i = 0; i< node.force_.size()/k0SolverDims_; ++i) {
+    for (DefInt i = 0; i< static_cast<DefInt>(node.force_.size())/k0SolverDims_; ++i) {
         force.at(kXIndex) += node.force_.at(i*k0SolverDims_);
         force.at(kYIndex) += node.force_.at(i*k0SolverDims_ + 1);
         if (k0SolverDims_ == 3) {

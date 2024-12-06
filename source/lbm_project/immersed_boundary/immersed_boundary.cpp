@@ -137,7 +137,7 @@ void FsiImmersedBoundary::DirectForcingScheme2D(const DefReal dt_lbm,
             if (sfbitset_tmp!= amrproject::SFBitsetAuxInterface::kInvalidSFbitset) {
                 if (ptr_map_grid_nodes->find(sfbitset_tmp) !=  ptr_map_grid_nodes->end()) {
                     if (map_ib_node_for_reset_.find(sfbitset_tmp) == map_ib_node_for_reset_.end()) {
-                        if (ptr_map_grid_nodes->at(sfbitset_tmp)->force_.size() > k0IndexForceY_) {
+                        if (static_cast<DefInt>(ptr_map_grid_nodes->at(sfbitset_tmp)->force_.size()) > k0IndexForceY_) {
                             // compute macro variables and reset immersed boundary force on grid nodes as zeros
                             func_compute_macro(dt_lbm, ptr_map_grid_nodes->at(sfbitset_tmp).get(),
                                 &ptr_map_grid_nodes->at(sfbitset_tmp)->rho_,
@@ -248,7 +248,7 @@ void FsiImmersedBoundary::DirectForcingScheme3D(const DefReal dt_lbm,
                 if (sfbitset_tmp!= amrproject::SFBitsetAuxInterface::kInvalidSFbitset) {
                     if (ptr_map_grid_nodes->find(sfbitset_tmp) !=  ptr_map_grid_nodes->end()) {
                         if (map_ib_node_for_reset_.find(sfbitset_tmp) == map_ib_node_for_reset_.end()) {
-                            if (ptr_map_grid_nodes->at(sfbitset_tmp)->force_.size() <= k0IndexForceZ_) {
+                            if (static_cast<DefInt>(ptr_map_grid_nodes->at(sfbitset_tmp)->force_.size()) <= k0IndexForceZ_) {
                                 amrproject::LogManager::LogError("size of forces stored in LBM node"
                                     " is less than indices for immersed boundary forces");
                             } else {
@@ -329,7 +329,7 @@ DefReal FsiImmersedBoundary::StencilDisTwo(DefReal dist) const {
  * @param[out] ptr_node_buffer pointer to the buffer for a node.
  */
 void FsiImmersedBoundary::CopyIBNodeToBuffer2D(const GridNodeLbm& node_lbm, char* const ptr_node_buffer) const {
-    if (node_lbm.force_.size() > k0IndexForceY_) {
+    if (static_cast<DefInt>(node_lbm.force_.size()) > k0IndexForceY_) {
         constexpr DefSizet force_size = sizeof(DefReal);
         std::memcpy(ptr_node_buffer, &node_lbm.force_.at(k0IndexForceX_), force_size);
         std::memcpy(ptr_node_buffer + force_size, &node_lbm.force_.at(k0IndexForceY_), force_size);
@@ -343,7 +343,7 @@ void FsiImmersedBoundary::CopyIBNodeToBuffer2D(const GridNodeLbm& node_lbm, char
  * @param[out] ptr_node_buffer pointer to the buffer for a node.
  */
 void FsiImmersedBoundary::CopyIBNodeToBuffer3D(const GridNodeLbm& node_lbm, char* const ptr_node_buffer) const {
-    if (node_lbm.force_.size() > k0IndexForceZ_) {
+    if (DefInt(node_lbm.force_.size()) > k0IndexForceZ_) {
         constexpr DefSizet force_size = sizeof(DefReal);
         std::memcpy(ptr_node_buffer, &node_lbm.force_.at(k0IndexForceX_), force_size);
         std::memcpy(ptr_node_buffer + force_size, &node_lbm.force_.at(k0IndexForceY_), force_size);

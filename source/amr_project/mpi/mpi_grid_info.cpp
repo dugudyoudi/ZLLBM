@@ -53,7 +53,8 @@ std::unique_ptr<char[]> MpiManager::IniSerializeTrackingNode(
     const std::set<DefSFCodeToUint>& set_nodes, int* const ptr_buffer_size) const {
     int key_size = sizeof(DefSFBitset);
     int num_nodes = 0;
-    if  (sizeof(int) + set_nodes.size() *key_size > (std::numeric_limits<int>::max)()) {
+    if (sizeof(int) + set_nodes.size() *key_size
+        > static_cast<DefSizet>((std::numeric_limits<int>::max)())) {
         LogManager::LogError("size of the buffer is greater than"
          " the maximum of int in MpiManager::IniSerializeTrackingNode in "
          + std::string(__FILE__) + " at line " + std::to_string(__LINE__));
@@ -295,7 +296,8 @@ std::unique_ptr<char[]> MpiManager::IniSerializeRefinementInterfaceNode(
     const DefMap<DefInt>& interface_nodes, int* const ptr_buffer_size) const {
     int key_size = sizeof(DefSFBitset);
     int num_nodes = 0;
-    if  (sizeof(int) + interface_nodes.size() *key_size > (std::numeric_limits<int>::max)()) {
+    if  (sizeof(int) + interface_nodes.size() *key_size
+            > static_cast<DefSizet>((std::numeric_limits<int>::max)())) {
         LogManager::LogError("size of the buffer is greater than"
          " the maximum of int in GridInfoInterface::SerializeTrackingNode in "
          + std::string(__FILE__) + " at line " + std::to_string(__LINE__));

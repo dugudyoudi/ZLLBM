@@ -31,7 +31,7 @@ void MpiManager::CheckMpiNodesCorrespondence(const GridInfoInterface& grid_info)
     std::vector<std::unique_ptr<char[]>> vec_ptr_buffer_send, vec_ptr_buffer_receive(num_of_ranks_);
     int node_info_size = 0;
     int node_buffer_size = static_cast<int>(sizeof(DefSFBitset));
-    if (mpi_communication_inner_layers_.size() > i_level) {
+    if (static_cast<DefInt>(mpi_communication_inner_layers_.size()) > i_level) {
         SendNReceiveGridNodeBufferSize(node_info_size, i_level, mpi_communication_inner_layers_.at(i_level),
             &send_buffer_info, &receive_buffer_info);
     } else {

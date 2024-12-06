@@ -63,7 +63,7 @@ int GridInfoInterface::AddGhostNodesForInterpolation(const std::vector<bool>& bo
     const DefMap<DefInt>& refinement_interface, const DefMap<std::unique_ptr<GridNode>>& map_nodes_lower) {
     DefSFBitset sfbitset_lower, sfbitset_current;
     std::vector<DefSFBitset> vec_in_region;
-    size_t dims = k0VecBitsetDomainMin_.size();
+    DefInt dims = static_cast<DefInt>(k0VecBitsetDomainMin_.size());
     std::vector<DefSFBitset> domain_min(dims), domain_max(dims);
     for (DefInt i_dims = 0; i_dims < dims; ++i_dims) {
         domain_min.at(i_dims) = sfbitset_aux.SFBitsetToNLowerLevelVir(1, k0VecBitsetDomainMin_.at(i_dims));

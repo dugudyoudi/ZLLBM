@@ -2575,46 +2575,48 @@ DefInt SFBitsetAux3D::FindNodesInPeriodicRegionCornerOverlap(const DefSFBitset& 
     ptr_sfbitset_node_overlap->clear();
     DefSFBitset sfbitset_tmp_z = sfbitset_in, sfbitset_tmp_y, sfbitset_tmp_x;
     DefAmrLUint vec_index_x, vec_index_y, vec_index_z;
-    DefSFBitset sfbitset_overlap_yx = kInvalidSFbitset, sfbitset_overlap_zx = kInvalidSFbitset,
+    DefSFBitset sfbitset_overlap_yx = kInvalidSFbitset, sfbitset_overlap_zx_y = kInvalidSFbitset,
+        sfbitset_overlap_zx = kInvalidSFbitset,
         sfbitset_overlap_zyx = kInvalidSFbitset, sfbitset_overlap_z = kInvalidSFbitset,
-        sfbitset_overlap_x = kInvalidSFbitset, sfbitset_overlap_y = kInvalidSFbitset,
-        sfbitset_overlap_zy = kInvalidSFbitset;
-    DefAmrLUint vec_index_overlap_z, vec_index_overlap_y;
+        sfbitset_overlap_y = kInvalidSFbitset, sfbitset_overlap_zy = kInvalidSFbitset;
+    DefAmrLUint vec_index_overlap_z, vec_index_overlap_zny, vec_index_overlap_zy, vec_index_overlap_y;
     DefInt index_min = region_length;
     bool bool_not_x_max, bool_not_y_max, bool_not_z_max;
-    bool periodic_z = false, periodic_y = false;;
+    bool periodic_z = false, periodic_y = false;
     // negative z direction
     for (DefInt iz = 0; iz < region_length; ++iz) {
         sfbitset_tmp_y = sfbitset_tmp_z;
         vec_index_z = (region_length - iz - 1) * total_length  + region_length;
         if (periodic_z) {
-            sfbitset_overlap_zx = sfbitset_overlap_z;
             sfbitset_overlap_zy = sfbitset_overlap_z;
+            sfbitset_overlap_zx_y = sfbitset_overlap_z;
         } else {
-            sfbitset_overlap_zx = kInvalidSFbitset;
             sfbitset_overlap_zy = kInvalidSFbitset;
+            sfbitset_overlap_zx_y = kInvalidSFbitset;
         }
         for (DefInt iy = 0; iy < region_length; ++iy) {
             sfbitset_tmp_x = sfbitset_tmp_y;
             vec_index_y = (vec_index_z - iy - 1) * total_length + region_length;
             if (periodic_z) {
-                vec_index_overlap_y = (vec_index_overlap_z - iy - 1) * total_length + region_length;
-            } else {
-                vec_index_overlap_y = vec_index_y;
+                vec_index_overlap_zy = (vec_index_overlap_z - iy - 1) * total_length + region_length;
             }
             sfbitset_overlap_yx = sfbitset_overlap_y;
-            sfbitset_overlap_zx = sfbitset_overlap_z;
+            sfbitset_overlap_zx = sfbitset_overlap_zx_y;
             sfbitset_overlap_zyx = sfbitset_overlap_zy;
             for (DefInt ix = 0; ix < region_length; ++ix) {
                 vec_index_x = vec_index_y - ix - 1;
                 ptr_sfbitset_nodes->at(vec_index_x) = sfbitset_tmp_x;
-                if (sfbitset_overlap_x != kInvalidSFbitset) {
-                    ptr_sfbitset_node_overlap->emplace_back(
-                        std::make_pair(vec_index_overlap_y - ix - 1, sfbitset_overlap_x));
-                }
                 if (periodic_z) {
                     ptr_sfbitset_node_overlap->emplace_back(
-                        std::make_pair(vec_index_overlap_y - ix - 1, sfbitset_overlap_zx));
+                        std::make_pair(vec_index_overlap_zy - ix - 1, sfbitset_overlap_zx));
+                }
+                if (periodic_y) {
+                    ptr_sfbitset_node_overlap->emplace_back(
+                        std::make_pair(vec_index_overlap_y - ix - 1, sfbitset_overlap_yx));
+                }
+                if (periodic_z && periodic_y) {
+                    ptr_sfbitset_node_overlap->emplace_back(
+                        std::make_pair(vec_index_overlap_zny - ix - 1, sfbitset_overlap_zyx));
                 }
                 if ((sfbitset_tmp_x&k0SFBitsetTakeXRef_.at(kRefCurrent_))
                     == domain_min_n_level.at(kXIndex)) {
@@ -2622,11 +2624,23 @@ DefInt SFBitsetAux3D::FindNodesInPeriodicRegionCornerOverlap(const DefSFBitset& 
                         sfbitset_tmp_x = (sfbitset_tmp_x&k0SFBitsetTakeXRef_.at(kRefOthers_))
                             |domain_max_n_level.at(kXIndex);
                         ptr_sfbitset_node_overlap->emplace_back(std::make_pair(vec_index_x, sfbitset_tmp_x));
-                        if (sfbitset_overlap_x != kInvalidSFbitset) {  // same as periodic_z | periodic_y
-                            sfbitset_overlap_x = (sfbitset_overlap_x&k0SFBitsetTakeXRef_.at(kRefOthers_))
+                        if (periodic_z) {
+                            sfbitset_overlap_zx = (sfbitset_overlap_zx&k0SFBitsetTakeXRef_.at(kRefOthers_))
                                 |domain_max_n_level.at(kXIndex);
                             ptr_sfbitset_node_overlap->emplace_back(
-                                std::make_pair(vec_index_overlap_y - ix - 1, sfbitset_overlap_x));
+                                std::make_pair(vec_index_overlap_zy - ix - 1, sfbitset_overlap_zx));
+                        }
+                        if (periodic_y) {
+                            sfbitset_overlap_yx = (sfbitset_overlap_yx&k0SFBitsetTakeXRef_.at(kRefOthers_))
+                                |domain_max_n_level.at(kXIndex);
+                            ptr_sfbitset_node_overlap->emplace_back(
+                                std::make_pair(vec_index_overlap_y - ix - 1, sfbitset_overlap_yx));
+                        }
+                        if (periodic_z&&periodic_y) {
+                            sfbitset_overlap_zyx = (sfbitset_overlap_zyx&k0SFBitsetTakeXRef_.at(kRefOthers_))
+                                |domain_max_n_level.at(kXIndex);
+                            ptr_sfbitset_node_overlap->emplace_back(
+                                std::make_pair(vec_index_overlap_zny - ix - 1, sfbitset_overlap_zyx));
                         }
                     } else {
                         if (index_min > (ix + 1)) {
@@ -2636,13 +2650,24 @@ DefInt SFBitsetAux3D::FindNodesInPeriodicRegionCornerOverlap(const DefSFBitset& 
                     }
                 }
                 sfbitset_tmp_x = FindXNeg(sfbitset_tmp_x);
-                if (sfbitset_overlap_x != kInvalidSFbitset) {
-                    sfbitset_overlap_x = FindXNeg(sfbitset_overlap_x);
+                if (periodic_z) {
+                    sfbitset_overlap_zx = FindXNeg(sfbitset_overlap_zx);
+                }
+                if (periodic_y) {
+                    sfbitset_overlap_yx = FindXNeg(sfbitset_overlap_yx);
+                }
+                if (periodic_z&&periodic_y) {
+                    sfbitset_overlap_zyx = FindXNeg(sfbitset_overlap_zyx);
                 }
             }
             sfbitset_tmp_x = sfbitset_tmp_y;
-            sfbitset_overlap_x = sfbitset_overlap_y;
+            sfbitset_overlap_yx = sfbitset_overlap_y;
+            sfbitset_overlap_zx = sfbitset_overlap_zx_y;
+            sfbitset_overlap_zyx = sfbitset_overlap_zy;
             vec_index_y = (vec_index_z - iy - 1) * total_length + region_length;
+            if (periodic_z) {
+                vec_index_overlap_zy = (vec_index_overlap_z - iy - 1) * total_length + region_length;
+            }
             bool_not_x_max = true;
             if ((sfbitset_tmp_x&k0SFBitsetTakeXRef_.at(kRefCurrent_))
                 == domain_max_n_level.at(kXIndex)) {  // if the start node at max x boundary
@@ -2650,11 +2675,23 @@ DefInt SFBitsetAux3D::FindNodesInPeriodicRegionCornerOverlap(const DefSFBitset& 
                     sfbitset_tmp_x = (sfbitset_tmp_x&k0SFBitsetTakeXRef_.at(kRefOthers_))
                         |domain_min_n_level.at(kXIndex);
                     ptr_sfbitset_node_overlap->emplace_back(std::make_pair(vec_index_y, sfbitset_tmp_x));
-                    if (sfbitset_overlap_x != kInvalidSFbitset) {
-                        sfbitset_overlap_x = (sfbitset_overlap_x&k0SFBitsetTakeXRef_.at(kRefOthers_))
+                    if (periodic_z) {
+                        sfbitset_overlap_zx = (sfbitset_overlap_zx&k0SFBitsetTakeXRef_.at(kRefOthers_))
                             |domain_min_n_level.at(kXIndex);
                         ptr_sfbitset_node_overlap->emplace_back(
-                            std::make_pair(vec_index_overlap_y + region_length - 1, sfbitset_overlap_x));
+                            std::make_pair(vec_index_overlap_zy + region_length - 1, sfbitset_overlap_zx));
+                    }
+                    if (periodic_y) {
+                        sfbitset_overlap_yx = (sfbitset_overlap_yx&k0SFBitsetTakeXRef_.at(kRefOthers_))
+                            |domain_min_n_level.at(kXIndex);
+                        ptr_sfbitset_node_overlap->emplace_back(
+                            std::make_pair(vec_index_overlap_y + region_length - 1, sfbitset_overlap_yx));
+                    }
+                    if (periodic_z&&periodic_y) {
+                        sfbitset_overlap_zyx = (sfbitset_overlap_zyx&k0SFBitsetTakeXRef_.at(kRefOthers_))
+                            |domain_min_n_level.at(kXIndex);
+                        ptr_sfbitset_node_overlap->emplace_back(
+                            std::make_pair(vec_index_overlap_zny + region_length - 1, sfbitset_overlap_zyx));
                     }
                 } else {
                     index_min = 0;
@@ -2666,10 +2703,20 @@ DefInt SFBitsetAux3D::FindNodesInPeriodicRegionCornerOverlap(const DefSFBitset& 
                     sfbitset_tmp_x = FindXPos(sfbitset_tmp_x);
                     vec_index_x = vec_index_y + ix;
                     ptr_sfbitset_nodes->at(vec_index_x) = sfbitset_tmp_x;
-                    if (sfbitset_overlap_x != kInvalidSFbitset) {
-                        sfbitset_overlap_x = FindXPos(sfbitset_overlap_x);
+                    if (periodic_z) {
+                        sfbitset_overlap_zx = FindXPos(sfbitset_overlap_zx);
                         ptr_sfbitset_node_overlap->emplace_back(
-                            std::make_pair(vec_index_overlap_y + ix, sfbitset_overlap_x));
+                            std::make_pair(vec_index_overlap_zy + ix, sfbitset_overlap_zx));
+                    }
+                    if (periodic_y) {
+                        sfbitset_overlap_yx = FindXPos(sfbitset_overlap_yx);
+                        ptr_sfbitset_node_overlap->emplace_back(
+                            std::make_pair(vec_index_overlap_y + ix, sfbitset_overlap_yx));
+                    }
+                    if (periodic_z&&periodic_y) {
+                        sfbitset_overlap_zyx = FindXPos(sfbitset_overlap_zyx);
+                        ptr_sfbitset_node_overlap->emplace_back(
+                            std::make_pair(vec_index_overlap_zny + ix, sfbitset_overlap_zyx));
                     }
                     if ((sfbitset_tmp_x&k0SFBitsetTakeXRef_.at(kRefCurrent_))
                         == domain_max_n_level.at(kXIndex)) {
@@ -2677,11 +2724,23 @@ DefInt SFBitsetAux3D::FindNodesInPeriodicRegionCornerOverlap(const DefSFBitset& 
                             sfbitset_tmp_x = (sfbitset_tmp_x&k0SFBitsetTakeXRef_.at(kRefOthers_))
                                 |domain_min_n_level.at(kXIndex);
                             ptr_sfbitset_node_overlap->emplace_back(std::make_pair(vec_index_x, sfbitset_tmp_x));
-                            if (sfbitset_overlap_x != kInvalidSFbitset) {
-                                sfbitset_overlap_x = (sfbitset_overlap_x&k0SFBitsetTakeXRef_.at(kRefOthers_))
+                            if (periodic_z) {
+                                sfbitset_overlap_zx = (sfbitset_overlap_zx&k0SFBitsetTakeXRef_.at(kRefOthers_))
                                     |domain_min_n_level.at(kXIndex);
                                 ptr_sfbitset_node_overlap->emplace_back(
-                                    std::make_pair(vec_index_overlap_y + ix, sfbitset_overlap_x));
+                                    std::make_pair(vec_index_overlap_zy + ix, sfbitset_overlap_zx));
+                            }
+                            if (periodic_y) {
+                                sfbitset_overlap_yx = (sfbitset_overlap_yx&k0SFBitsetTakeXRef_.at(kRefOthers_))
+                                    |domain_min_n_level.at(kXIndex);
+                                ptr_sfbitset_node_overlap->emplace_back(
+                                    std::make_pair(vec_index_overlap_y + ix, sfbitset_overlap_yx));
+                            }
+                            if (periodic_z&&periodic_y) {
+                                sfbitset_overlap_zyx = (sfbitset_overlap_zyx&k0SFBitsetTakeXRef_.at(kRefOthers_))
+                                    |domain_min_n_level.at(kXIndex);
+                                ptr_sfbitset_node_overlap->emplace_back(
+                                    std::make_pair(vec_index_overlap_zny + ix, sfbitset_overlap_zyx));
                             }
                         } else {
                             if (index_min > (ix + 1)) {
@@ -2697,35 +2756,39 @@ DefInt SFBitsetAux3D::FindNodesInPeriodicRegionCornerOverlap(const DefSFBitset& 
                 if (periodic_min.at(kYIndex)) {
                     sfbitset_tmp_y = (sfbitset_tmp_y&k0SFBitsetTakeYRef_.at(kRefOthers_))
                         |domain_max_n_level.at(kYIndex);
-                    if (periodic_z) {
-                        sfbitset_overlap_y = (sfbitset_overlap_y&k0SFBitsetTakeYRef_.at(kRefOthers_))
-                            |domain_max_n_level.at(kYIndex);
-                    } else {
-                        sfbitset_overlap_y = sfbitset_tmp_y;
-                    }
-                    if (periodic_z) {
-                        vec_index_overlap_y = (vec_index_overlap_z - iy - 1) * total_length + region_length;
-                    } else {
-                        vec_index_overlap_y = vec_index_y;
-                    }
+                    sfbitset_overlap_zy = (sfbitset_overlap_zy&k0SFBitsetTakeYRef_.at(kRefOthers_))
+                        |domain_max_n_level.at(kYIndex);
+                    sfbitset_overlap_zx_y = (sfbitset_overlap_zx_y&k0SFBitsetTakeYRef_.at(kRefOthers_))
+                        |domain_max_n_level.at(kYIndex);
+                    periodic_y = true;
+                    sfbitset_overlap_y = sfbitset_tmp_y;
+                    vec_index_overlap_y = vec_index_y;
+                    vec_index_overlap_zny = (vec_index_overlap_z - iy - 1) * total_length + region_length;
                 } else {
                     if (index_min > (iy + 1)) {
                         index_min = iy + 1;
                     }
                     break;
                 }
-            } else if (periodic_z) {
-                vec_index_overlap_y = (vec_index_overlap_z - iy - 1) * total_length + region_length;
-                sfbitset_overlap_y = FindYNeg(sfbitset_overlap_y);
+            } else {
+                periodic_y = false;
+                sfbitset_overlap_y = kInvalidSFbitset;
+                sfbitset_overlap_zy = sfbitset_overlap_zy|(k0SFBitsetTakeYRef_.at(kRefCurrent_)
+                    &kInvalidSFbitset);
             }
             sfbitset_tmp_y = FindYNeg(sfbitset_tmp_y);
+            if (periodic_z) {
+                sfbitset_overlap_zx_y = FindYNeg(sfbitset_overlap_zx_y);
+            }
         }
         // positive y direction
         sfbitset_tmp_y = sfbitset_tmp_z;
         if (periodic_z) {
-            sfbitset_overlap_y = sfbitset_overlap_z;
+            sfbitset_overlap_zy = sfbitset_overlap_z;
+            sfbitset_overlap_zx_y = sfbitset_overlap_z;
         } else {
-            sfbitset_overlap_y = kInvalidSFbitset;
+            sfbitset_overlap_zy = kInvalidSFbitset;
+            sfbitset_overlap_zx_y = kInvalidSFbitset;
         }
         bool_not_y_max = true;
         if ((sfbitset_tmp_y&k0SFBitsetTakeYRef_.at(kRefCurrent_))
@@ -2733,39 +2796,52 @@ DefInt SFBitsetAux3D::FindNodesInPeriodicRegionCornerOverlap(const DefSFBitset& 
             if (periodic_max.at(kYIndex)) {
                 sfbitset_tmp_y = (sfbitset_tmp_y&k0SFBitsetTakeYRef_.at(kRefOthers_))
                     |domain_min_n_level.at(kYIndex);
-                if (sfbitset_overlap_y != kInvalidSFbitset) {
-                    sfbitset_overlap_y = (sfbitset_overlap_y&k0SFBitsetTakeYRef_.at(kRefOthers_))
-                        |domain_min_n_level.at(kYIndex);
-                } else {
-                    sfbitset_overlap_y = sfbitset_tmp_y;
-                }
-                if (periodic_z) {
-                    vec_index_overlap_y = (vec_index_overlap_z) * total_length + region_length;
-                } else {
-                    vec_index_overlap_y = vec_index_z * total_length + region_length;
-                }
+                sfbitset_overlap_zy = (sfbitset_overlap_zy&k0SFBitsetTakeYRef_.at(kRefOthers_))
+                    |domain_min_n_level.at(kYIndex);
+                sfbitset_overlap_zx_y = (sfbitset_overlap_zx_y&k0SFBitsetTakeYRef_.at(kRefOthers_))
+                    |domain_min_n_level.at(kYIndex);
+                periodic_y = true;
+                sfbitset_overlap_y = sfbitset_tmp_y;
+                vec_index_overlap_y = vec_index_z * total_length + region_length;
+                vec_index_overlap_zny = (vec_index_overlap_z) * total_length + region_length;
             } else {
                 index_min = 0;
                 bool_not_y_max = false;
             }
-        } else if (periodic_z) {
-            vec_index_overlap_y = (vec_index_overlap_z) * total_length + region_length;
+        } else {
+            periodic_y = false;
+            sfbitset_overlap_y = kInvalidSFbitset;
+            sfbitset_overlap_zy = sfbitset_overlap_zy|(k0SFBitsetTakeYRef_.at(kRefCurrent_)
+                &kInvalidSFbitset);
         }
         if (bool_not_y_max) {
             for (DefInt iy = 0; iy < region_length; ++iy) {
                 sfbitset_tmp_y = FindYPos(sfbitset_tmp_y);
-                if (sfbitset_overlap_y != kInvalidSFbitset) {
-                    sfbitset_overlap_y = FindYPos(sfbitset_overlap_y);
+                if (periodic_z) {
+                    sfbitset_overlap_zx_y = FindYPos(sfbitset_overlap_zx_y);
                 }
-                sfbitset_overlap_x = sfbitset_overlap_y;
-                sfbitset_tmp_x = sfbitset_tmp_y;
                 vec_index_y = (vec_index_z + iy) * total_length + region_length;
+                if (periodic_z) {
+                    vec_index_overlap_zy = (vec_index_overlap_z + iy) * total_length + region_length;
+                }
+                sfbitset_tmp_x = sfbitset_tmp_y;
+                sfbitset_overlap_yx = sfbitset_overlap_y;
+                sfbitset_overlap_zx = sfbitset_overlap_zx_y;
+                sfbitset_overlap_zyx = sfbitset_overlap_zy;
                 for (DefInt ix = 0; ix < region_length; ++ix) {
                     vec_index_x = vec_index_y - ix - 1;
                     ptr_sfbitset_nodes->at(vec_index_x) = sfbitset_tmp_x;
-                    if (sfbitset_overlap_x != kInvalidSFbitset) {
+                    if (periodic_z) {
                         ptr_sfbitset_node_overlap->emplace_back(
-                            std::make_pair(vec_index_overlap_y - ix - 1, sfbitset_overlap_x));
+                            std::make_pair(vec_index_overlap_zy - ix - 1, sfbitset_overlap_zx));
+                    }
+                    if (periodic_y) {
+                        ptr_sfbitset_node_overlap->emplace_back(
+                            std::make_pair(vec_index_overlap_y - ix - 1, sfbitset_overlap_yx));
+                    }
+                    if (periodic_z&&periodic_y) {
+                        ptr_sfbitset_node_overlap->emplace_back(
+                            std::make_pair(vec_index_overlap_zny - ix - 1, sfbitset_overlap_zyx));
                     }
                     if ((sfbitset_tmp_x&k0SFBitsetTakeXRef_.at(kRefCurrent_))
                         == domain_min_n_level.at(kXIndex)) {
@@ -2773,11 +2849,23 @@ DefInt SFBitsetAux3D::FindNodesInPeriodicRegionCornerOverlap(const DefSFBitset& 
                             sfbitset_tmp_x = (sfbitset_tmp_x&k0SFBitsetTakeXRef_.at(kRefOthers_))
                                 |domain_max_n_level.at(kXIndex);
                             ptr_sfbitset_node_overlap->emplace_back(std::make_pair(vec_index_x, sfbitset_tmp_x));
-                            if (sfbitset_overlap_x != kInvalidSFbitset) {  // same as periodic_z | periodic_y
-                                sfbitset_overlap_x = (sfbitset_overlap_x&k0SFBitsetTakeXRef_.at(kRefOthers_))
+                            if (periodic_z) {
+                                sfbitset_overlap_zx = (sfbitset_overlap_zx&k0SFBitsetTakeXRef_.at(kRefOthers_))
                                     |domain_max_n_level.at(kXIndex);
                                 ptr_sfbitset_node_overlap->emplace_back(
-                                    std::make_pair(vec_index_overlap_y - ix - 1, sfbitset_overlap_x));
+                                    std::make_pair(vec_index_overlap_zy - ix - 1, sfbitset_overlap_zx));
+                            }
+                            if (periodic_y) {
+                                sfbitset_overlap_yx = (sfbitset_overlap_yx&k0SFBitsetTakeXRef_.at(kRefOthers_))
+                                    |domain_max_n_level.at(kXIndex);
+                                ptr_sfbitset_node_overlap->emplace_back(
+                                    std::make_pair(vec_index_overlap_y - ix - 1, sfbitset_overlap_yx));
+                            }
+                            if (periodic_z&&periodic_y) {
+                                sfbitset_overlap_zyx = (sfbitset_overlap_zyx&k0SFBitsetTakeXRef_.at(kRefOthers_))
+                                    |domain_max_n_level.at(kXIndex);
+                                ptr_sfbitset_node_overlap->emplace_back(
+                                    std::make_pair(vec_index_overlap_zny - ix - 1, sfbitset_overlap_zyx));
                             }
                         } else {
                             if (index_min > (ix + 1)) {
@@ -2787,13 +2875,24 @@ DefInt SFBitsetAux3D::FindNodesInPeriodicRegionCornerOverlap(const DefSFBitset& 
                         }
                     }
                     sfbitset_tmp_x = FindXNeg(sfbitset_tmp_x);
-                    if (sfbitset_overlap_x != kInvalidSFbitset) {
-                        sfbitset_overlap_x = FindXNeg(sfbitset_overlap_x);
+                    if (periodic_z) {
+                        sfbitset_overlap_zx = FindXNeg(sfbitset_overlap_zx);
+                    }
+                    if (periodic_y) {
+                        sfbitset_overlap_yx = FindXNeg(sfbitset_overlap_yx);
+                    }
+                    if (periodic_z&&periodic_y) {
+                        sfbitset_overlap_zyx = FindXNeg(sfbitset_overlap_zyx);
                     }
                 }
                 sfbitset_tmp_x = sfbitset_tmp_y;
-                sfbitset_overlap_x = sfbitset_overlap_y;
+                sfbitset_overlap_yx = sfbitset_overlap_y;
+                sfbitset_overlap_zx = sfbitset_overlap_zx_y;
+                sfbitset_overlap_zyx = sfbitset_overlap_zy;
                 vec_index_y = (vec_index_z + iy) * total_length + region_length;
+                if (periodic_z) {
+                    vec_index_overlap_zy = (vec_index_overlap_z + iy) * total_length + region_length;
+                }
                 bool_not_x_max = true;
                 if ((sfbitset_tmp_x&k0SFBitsetTakeXRef_.at(kRefCurrent_))
                     == domain_max_n_level.at(kXIndex)) {  // if the start node at max x boundary
@@ -2801,11 +2900,23 @@ DefInt SFBitsetAux3D::FindNodesInPeriodicRegionCornerOverlap(const DefSFBitset& 
                         sfbitset_tmp_x = (sfbitset_tmp_x&k0SFBitsetTakeXRef_.at(kRefOthers_))
                             |domain_min_n_level.at(kXIndex);
                         ptr_sfbitset_node_overlap->emplace_back(std::make_pair(vec_index_y, sfbitset_tmp_x));
-                        if (sfbitset_overlap_x != kInvalidSFbitset) {
-                            sfbitset_overlap_x = (sfbitset_overlap_x&k0SFBitsetTakeXRef_.at(kRefOthers_))
+                        if (periodic_z) {
+                            sfbitset_overlap_zx = (sfbitset_overlap_zx&k0SFBitsetTakeXRef_.at(kRefOthers_))
                                 |domain_min_n_level.at(kXIndex);
                             ptr_sfbitset_node_overlap->emplace_back(
-                                std::make_pair(vec_index_overlap_y + region_length - 1, sfbitset_overlap_x));
+                                std::make_pair(vec_index_overlap_zy + region_length - 1, sfbitset_overlap_zx));
+                        }
+                        if (periodic_y) {
+                            sfbitset_overlap_yx = (sfbitset_overlap_yx&k0SFBitsetTakeXRef_.at(kRefOthers_))
+                                |domain_min_n_level.at(kXIndex);
+                            ptr_sfbitset_node_overlap->emplace_back(
+                                std::make_pair(vec_index_overlap_y + region_length - 1, sfbitset_overlap_yx));
+                        }
+                        if (periodic_z&&periodic_y) {
+                            sfbitset_overlap_zyx = (sfbitset_overlap_zyx&k0SFBitsetTakeXRef_.at(kRefOthers_))
+                                |domain_min_n_level.at(kXIndex);
+                            ptr_sfbitset_node_overlap->emplace_back(
+                                std::make_pair(vec_index_overlap_zny + region_length - 1, sfbitset_overlap_zyx));
                         }
                     } else {
                         index_min = 0;
@@ -2817,10 +2928,20 @@ DefInt SFBitsetAux3D::FindNodesInPeriodicRegionCornerOverlap(const DefSFBitset& 
                         sfbitset_tmp_x = FindXPos(sfbitset_tmp_x);
                         vec_index_x = vec_index_y + ix;
                         ptr_sfbitset_nodes->at(vec_index_x) = sfbitset_tmp_x;
-                        if (sfbitset_overlap_x != kInvalidSFbitset) {
-                            sfbitset_overlap_x = FindXPos(sfbitset_overlap_x);
+                        if (periodic_z) {
+                            sfbitset_overlap_zx = FindXPos(sfbitset_overlap_zx);
                             ptr_sfbitset_node_overlap->emplace_back(
-                                std::make_pair(vec_index_overlap_y + ix, sfbitset_overlap_x));
+                                std::make_pair(vec_index_overlap_zy + ix, sfbitset_overlap_zx));
+                        }
+                        if (periodic_y) {
+                            sfbitset_overlap_yx = FindXPos(sfbitset_overlap_yx);
+                            ptr_sfbitset_node_overlap->emplace_back(
+                                std::make_pair(vec_index_overlap_y + ix, sfbitset_overlap_yx));
+                        }
+                        if (periodic_z&&periodic_y) {
+                            sfbitset_overlap_zyx = FindXPos(sfbitset_overlap_zyx);
+                            ptr_sfbitset_node_overlap->emplace_back(
+                                std::make_pair(vec_index_overlap_zny + ix, sfbitset_overlap_zyx));
                         }
                         if ((sfbitset_tmp_x&k0SFBitsetTakeXRef_.at(kRefCurrent_))
                             == domain_max_n_level.at(kXIndex)) {
@@ -2828,11 +2949,23 @@ DefInt SFBitsetAux3D::FindNodesInPeriodicRegionCornerOverlap(const DefSFBitset& 
                                 sfbitset_tmp_x = (sfbitset_tmp_x&k0SFBitsetTakeXRef_.at(kRefOthers_))
                                     |domain_min_n_level.at(kXIndex);
                                 ptr_sfbitset_node_overlap->emplace_back(std::make_pair(vec_index_x, sfbitset_tmp_x));
-                                if (sfbitset_overlap_x != kInvalidSFbitset) {
-                                    sfbitset_overlap_x = (sfbitset_overlap_x&k0SFBitsetTakeXRef_.at(kRefOthers_))
+                                if (periodic_z) {
+                                    sfbitset_overlap_zx = (sfbitset_overlap_zx&k0SFBitsetTakeXRef_.at(kRefOthers_))
                                         |domain_min_n_level.at(kXIndex);
                                     ptr_sfbitset_node_overlap->emplace_back(
-                                        std::make_pair(vec_index_overlap_y + ix, sfbitset_overlap_x));
+                                        std::make_pair(vec_index_overlap_zy + ix, sfbitset_overlap_zx));
+                                }
+                                if (periodic_y) {
+                                    sfbitset_overlap_yx = (sfbitset_overlap_yx&k0SFBitsetTakeXRef_.at(kRefOthers_))
+                                        |domain_min_n_level.at(kXIndex);
+                                    ptr_sfbitset_node_overlap->emplace_back(
+                                        std::make_pair(vec_index_overlap_y + ix, sfbitset_overlap_yx));
+                                }
+                                if (periodic_z&&periodic_y) {
+                                    sfbitset_overlap_zyx = (sfbitset_overlap_zyx&k0SFBitsetTakeXRef_.at(kRefOthers_))
+                                        |domain_min_n_level.at(kXIndex);
+                                    ptr_sfbitset_node_overlap->emplace_back(
+                                        std::make_pair(vec_index_overlap_zny + ix, sfbitset_overlap_zyx));
                                 }
                             } else {
                                 if (index_min > (ix + 1)) {
@@ -2848,25 +2981,25 @@ DefInt SFBitsetAux3D::FindNodesInPeriodicRegionCornerOverlap(const DefSFBitset& 
                     if (periodic_max.at(kYIndex)) {
                         sfbitset_tmp_y = (sfbitset_tmp_y&k0SFBitsetTakeYRef_.at(kRefOthers_))
                             |domain_min_n_level.at(kYIndex);
-                        if (sfbitset_overlap_y != kInvalidSFbitset) {
-                            sfbitset_overlap_y = (sfbitset_overlap_y&k0SFBitsetTakeYRef_.at(kRefOthers_))
-                                |domain_min_n_level.at(kYIndex);
-                        } else {
-                            sfbitset_overlap_y = sfbitset_tmp_y;
-                        }
-                        if (periodic_z) {
-                            vec_index_overlap_y = (vec_index_overlap_z + iy + 1) * total_length + region_length;
-                        } else {
-                            vec_index_overlap_y = (vec_index_z + iy + 1) * total_length + region_length;
-                        }
+                        sfbitset_overlap_zy = (sfbitset_overlap_zy&k0SFBitsetTakeYRef_.at(kRefOthers_))
+                            |domain_min_n_level.at(kYIndex);
+                        sfbitset_overlap_zx_y = (sfbitset_overlap_zx_y&k0SFBitsetTakeYRef_.at(kRefOthers_))
+                            |domain_min_n_level.at(kYIndex);
+                        periodic_y = true;
+                        sfbitset_overlap_y = sfbitset_tmp_y;
+                        vec_index_overlap_y = vec_index_y;
+                        vec_index_overlap_zny =  (vec_index_overlap_z + iy + 1) * total_length + region_length;
                     } else {
                         if (index_min > (iy + 1)) {
                             index_min = iy + 1;
                         }
                         break;
                     }
-                } else if (periodic_z) {
-                    vec_index_overlap_y = (vec_index_overlap_z + iy + 1) * total_length + region_length;
+                }  else {
+                    periodic_y = false;
+                    sfbitset_overlap_y = kInvalidSFbitset;
+                    sfbitset_overlap_zy = sfbitset_overlap_zy|(k0SFBitsetTakeYRef_.at(kRefCurrent_)
+                        &kInvalidSFbitset);
                 }
             }
         }
@@ -2913,10 +3046,10 @@ DefInt SFBitsetAux3D::FindNodesInPeriodicRegionCornerOverlap(const DefSFBitset& 
     if (bool_not_z_max) {
         for (DefInt iz = 0; iz < region_length; ++iz) {
             sfbitset_tmp_z = FindZPos(sfbitset_tmp_z);
-            if (sfbitset_overlap_z != kInvalidSFbitset) {
-                sfbitset_overlap_y = sfbitset_overlap_z;
+            if (periodic_z) {
+                sfbitset_overlap_zy = sfbitset_overlap_z;
             } else {
-                sfbitset_overlap_y = kInvalidSFbitset;
+                sfbitset_overlap_zy = kInvalidSFbitset;
             }
             sfbitset_tmp_y = sfbitset_tmp_z;
             vec_index_z = (region_length + iz) * total_length + region_length;
@@ -2924,22 +3057,25 @@ DefInt SFBitsetAux3D::FindNodesInPeriodicRegionCornerOverlap(const DefSFBitset& 
                 sfbitset_tmp_x = sfbitset_tmp_y;
                 vec_index_y = (vec_index_z - iy - 1) * total_length + region_length;
                 if (periodic_z) {
-                    vec_index_overlap_y = (vec_index_overlap_z - iy - 1) * total_length + region_length;
-                } else {
-                    vec_index_overlap_y = vec_index_y;
+                    vec_index_overlap_zy = (vec_index_overlap_z - iy - 1) * total_length + region_length;
                 }
-                // std::array<DefAmrLUint, 3> indices;
-                // SFBitsetComputeIndices(sfbitset_overlap_z, &indices);
-                // std::cout << indices[0] << " " << indices[1] << " " << indices[2] << std::endl;
-                //                 SFBitsetComputeIndices(sfbitset_overlap_y, &indices);
-                // std::cout << indices[0] << " " << indices[1] << " " << indices[2] << std::endl; 
-                sfbitset_overlap_x = sfbitset_overlap_y;
+                sfbitset_overlap_yx = sfbitset_overlap_y;
+                sfbitset_overlap_zx = sfbitset_overlap_zx_y;
+                sfbitset_overlap_zyx = sfbitset_overlap_zy;
                 for (DefInt ix = 0; ix < region_length; ++ix) {
                     vec_index_x = vec_index_y - ix - 1;
                     ptr_sfbitset_nodes->at(vec_index_x) = sfbitset_tmp_x;
-                    if (sfbitset_overlap_x != kInvalidSFbitset) {
+                    if (periodic_z) {
                         ptr_sfbitset_node_overlap->emplace_back(
-                            std::make_pair(vec_index_overlap_y - ix - 1, sfbitset_overlap_x));
+                            std::make_pair(vec_index_overlap_zy - ix - 1, sfbitset_overlap_zx));
+                    }
+                    if (periodic_y) {
+                        ptr_sfbitset_node_overlap->emplace_back(
+                            std::make_pair(vec_index_overlap_y - ix - 1, sfbitset_overlap_yx));
+                    }
+                    if (periodic_z && periodic_y) {
+                        ptr_sfbitset_node_overlap->emplace_back(
+                            std::make_pair(vec_index_overlap_zny - ix - 1, sfbitset_overlap_zyx));
                     }
                     if ((sfbitset_tmp_x&k0SFBitsetTakeXRef_.at(kRefCurrent_))
                         == domain_min_n_level.at(kXIndex)) {
@@ -2947,11 +3083,23 @@ DefInt SFBitsetAux3D::FindNodesInPeriodicRegionCornerOverlap(const DefSFBitset& 
                             sfbitset_tmp_x = (sfbitset_tmp_x&k0SFBitsetTakeXRef_.at(kRefOthers_))
                                 |domain_max_n_level.at(kXIndex);
                             ptr_sfbitset_node_overlap->emplace_back(std::make_pair(vec_index_x, sfbitset_tmp_x));
-                            if (sfbitset_overlap_x != kInvalidSFbitset) {  // same as periodic_z | periodic_y
-                                sfbitset_overlap_x = (sfbitset_overlap_x&k0SFBitsetTakeXRef_.at(kRefOthers_))
+                            if (periodic_z) {
+                                sfbitset_overlap_zx = (sfbitset_overlap_zx&k0SFBitsetTakeXRef_.at(kRefOthers_))
                                     |domain_max_n_level.at(kXIndex);
                                 ptr_sfbitset_node_overlap->emplace_back(
-                                    std::make_pair(vec_index_overlap_y - ix - 1, sfbitset_overlap_x));
+                                    std::make_pair(vec_index_overlap_zy - ix - 1, sfbitset_overlap_zx));
+                            }
+                            if (periodic_y) {
+                                sfbitset_overlap_yx = (sfbitset_overlap_yx&k0SFBitsetTakeXRef_.at(kRefOthers_))
+                                    |domain_max_n_level.at(kXIndex);
+                                ptr_sfbitset_node_overlap->emplace_back(
+                                    std::make_pair(vec_index_overlap_y - ix - 1, sfbitset_overlap_yx));
+                            }
+                            if (periodic_z&&periodic_y) {
+                                sfbitset_overlap_zyx = (sfbitset_overlap_zyx&k0SFBitsetTakeXRef_.at(kRefOthers_))
+                                    |domain_max_n_level.at(kXIndex);
+                                ptr_sfbitset_node_overlap->emplace_back(
+                                    std::make_pair(vec_index_overlap_zny - ix - 1, sfbitset_overlap_zyx));
                             }
                         } else {
                             if (index_min > (ix + 1)) {
@@ -2961,13 +3109,24 @@ DefInt SFBitsetAux3D::FindNodesInPeriodicRegionCornerOverlap(const DefSFBitset& 
                         }
                     }
                     sfbitset_tmp_x = FindXNeg(sfbitset_tmp_x);
-                    if (sfbitset_overlap_x != kInvalidSFbitset) {
-                        sfbitset_overlap_x = FindXNeg(sfbitset_overlap_x);
+                    if (periodic_z) {
+                        sfbitset_overlap_zx = FindXNeg(sfbitset_overlap_zx);
+                    }
+                    if (periodic_y) {
+                        sfbitset_overlap_yx = FindXNeg(sfbitset_overlap_yx);
+                    }
+                    if (periodic_z&&periodic_y) {
+                        sfbitset_overlap_zyx = FindXNeg(sfbitset_overlap_zyx);
                     }
                 }
                 sfbitset_tmp_x = sfbitset_tmp_y;
-                sfbitset_overlap_x = sfbitset_overlap_y;
+                sfbitset_overlap_yx = sfbitset_overlap_y;
+                sfbitset_overlap_zx = sfbitset_overlap_zx_y;
+                sfbitset_overlap_zyx = sfbitset_overlap_zy;
                 vec_index_y = (vec_index_z - iy - 1) * total_length + region_length;
+                if (periodic_z) {
+                    vec_index_overlap_zy = (vec_index_overlap_z - iy - 1) * total_length + region_length;
+                }
                 bool_not_x_max = true;
                 if ((sfbitset_tmp_x&k0SFBitsetTakeXRef_.at(kRefCurrent_))
                     == domain_max_n_level.at(kXIndex)) {  // if the start node at max x boundary
@@ -2975,11 +3134,23 @@ DefInt SFBitsetAux3D::FindNodesInPeriodicRegionCornerOverlap(const DefSFBitset& 
                         sfbitset_tmp_x = (sfbitset_tmp_x&k0SFBitsetTakeXRef_.at(kRefOthers_))
                             |domain_min_n_level.at(kXIndex);
                         ptr_sfbitset_node_overlap->emplace_back(std::make_pair(vec_index_y, sfbitset_tmp_x));
-                        if (sfbitset_overlap_x != kInvalidSFbitset) {
-                            sfbitset_overlap_x = (sfbitset_overlap_x&k0SFBitsetTakeXRef_.at(kRefOthers_))
+                        if (periodic_z) {
+                            sfbitset_overlap_zx = (sfbitset_overlap_zx&k0SFBitsetTakeXRef_.at(kRefOthers_))
                                 |domain_min_n_level.at(kXIndex);
                             ptr_sfbitset_node_overlap->emplace_back(
-                                std::make_pair(vec_index_overlap_y + region_length - 1, sfbitset_overlap_x));
+                                std::make_pair(vec_index_overlap_zy + region_length - 1, sfbitset_overlap_zx));
+                        }
+                        if (periodic_y) {
+                            sfbitset_overlap_yx = (sfbitset_overlap_yx&k0SFBitsetTakeXRef_.at(kRefOthers_))
+                                |domain_min_n_level.at(kXIndex);
+                            ptr_sfbitset_node_overlap->emplace_back(
+                                std::make_pair(vec_index_overlap_y + region_length - 1, sfbitset_overlap_yx));
+                        }
+                        if (periodic_z&&periodic_y) {
+                            sfbitset_overlap_zyx = (sfbitset_overlap_zyx&k0SFBitsetTakeXRef_.at(kRefOthers_))
+                                |domain_min_n_level.at(kXIndex);
+                            ptr_sfbitset_node_overlap->emplace_back(
+                                std::make_pair(vec_index_overlap_zny + region_length - 1, sfbitset_overlap_zyx));
                         }
                     } else {
                         index_min = 0;
@@ -2991,10 +3162,20 @@ DefInt SFBitsetAux3D::FindNodesInPeriodicRegionCornerOverlap(const DefSFBitset& 
                         sfbitset_tmp_x = FindXPos(sfbitset_tmp_x);
                         vec_index_x = vec_index_y + ix;
                         ptr_sfbitset_nodes->at(vec_index_x) = sfbitset_tmp_x;
-                        if (sfbitset_overlap_x != kInvalidSFbitset) {
-                            sfbitset_overlap_x = FindXPos(sfbitset_overlap_x);
+                        if (periodic_z) {
+                            sfbitset_overlap_zx = FindXPos(sfbitset_overlap_zx);
                             ptr_sfbitset_node_overlap->emplace_back(
-                                std::make_pair(vec_index_overlap_y + ix, sfbitset_overlap_x));
+                                std::make_pair(vec_index_overlap_zy + ix, sfbitset_overlap_zx));
+                        }
+                        if (periodic_y) {
+                            sfbitset_overlap_yx = FindXPos(sfbitset_overlap_yx);
+                            ptr_sfbitset_node_overlap->emplace_back(
+                                std::make_pair(vec_index_overlap_y + ix, sfbitset_overlap_yx));
+                        }
+                        if (periodic_z&&periodic_y) {
+                            sfbitset_overlap_zyx = FindXPos(sfbitset_overlap_zyx);
+                            ptr_sfbitset_node_overlap->emplace_back(
+                                std::make_pair(vec_index_overlap_zny + ix, sfbitset_overlap_zyx));
                         }
                         if ((sfbitset_tmp_x&k0SFBitsetTakeXRef_.at(kRefCurrent_))
                             == domain_max_n_level.at(kXIndex)) {
@@ -3002,11 +3183,23 @@ DefInt SFBitsetAux3D::FindNodesInPeriodicRegionCornerOverlap(const DefSFBitset& 
                                 sfbitset_tmp_x = (sfbitset_tmp_x&k0SFBitsetTakeXRef_.at(kRefOthers_))
                                     |domain_min_n_level.at(kXIndex);
                                 ptr_sfbitset_node_overlap->emplace_back(std::make_pair(vec_index_x, sfbitset_tmp_x));
-                                if (sfbitset_overlap_x != kInvalidSFbitset) {
-                                    sfbitset_overlap_x = (sfbitset_overlap_x&k0SFBitsetTakeXRef_.at(kRefOthers_))
+                                if (periodic_z) {
+                                    sfbitset_overlap_zx = (sfbitset_overlap_zx&k0SFBitsetTakeXRef_.at(kRefOthers_))
                                         |domain_min_n_level.at(kXIndex);
                                     ptr_sfbitset_node_overlap->emplace_back(
-                                        std::make_pair(vec_index_overlap_y + ix, sfbitset_overlap_x));
+                                        std::make_pair(vec_index_overlap_zy + ix, sfbitset_overlap_zx));
+                                }
+                                if (periodic_y) {
+                                    sfbitset_overlap_yx = (sfbitset_overlap_yx&k0SFBitsetTakeXRef_.at(kRefOthers_))
+                                        |domain_min_n_level.at(kXIndex);
+                                    ptr_sfbitset_node_overlap->emplace_back(
+                                        std::make_pair(vec_index_overlap_y + ix, sfbitset_overlap_yx));
+                                }
+                                if (periodic_z&&periodic_y) {
+                                    sfbitset_overlap_zyx = (sfbitset_overlap_zyx&k0SFBitsetTakeXRef_.at(kRefOthers_))
+                                        |domain_min_n_level.at(kXIndex);
+                                    ptr_sfbitset_node_overlap->emplace_back(
+                                        std::make_pair(vec_index_overlap_zny + ix, sfbitset_overlap_zyx));
                                 }
                             } else {
                                 if (index_min > (ix + 1)) {
@@ -3022,35 +3215,39 @@ DefInt SFBitsetAux3D::FindNodesInPeriodicRegionCornerOverlap(const DefSFBitset& 
                     if (periodic_min.at(kYIndex)) {
                         sfbitset_tmp_y = (sfbitset_tmp_y&k0SFBitsetTakeYRef_.at(kRefOthers_))
                             |domain_max_n_level.at(kYIndex);
-                        if (periodic_z) {
-                            sfbitset_overlap_y = (sfbitset_overlap_y&k0SFBitsetTakeYRef_.at(kRefOthers_))
-                                |domain_max_n_level.at(kYIndex);
-                        } else {
-                            sfbitset_overlap_y = sfbitset_tmp_y;
-                        }
-                        if (periodic_z) {
-                            vec_index_overlap_y = (vec_index_overlap_z - iy - 1) * total_length + region_length;
-                        } else {
-                            vec_index_overlap_y = vec_index_y;
-                        }
+                        sfbitset_overlap_zy = (sfbitset_overlap_zy&k0SFBitsetTakeYRef_.at(kRefOthers_))
+                            |domain_max_n_level.at(kYIndex);
+                        sfbitset_overlap_zx_y = (sfbitset_overlap_zx_y&k0SFBitsetTakeYRef_.at(kRefOthers_))
+                            |domain_max_n_level.at(kYIndex);
+                        periodic_y = true;
+                        sfbitset_overlap_y = sfbitset_tmp_y;
+                        vec_index_overlap_y = vec_index_y;
+                        vec_index_overlap_zny = (vec_index_overlap_z - iy - 1) * total_length + region_length;
                     } else {
                         if (index_min > (iy + 1)) {
                             index_min = iy + 1;
                         }
                         break;
                     }
-                } else if (periodic_z) {
-                    vec_index_overlap_y = (vec_index_overlap_z - iy - 1) * total_length + region_length;
-                    sfbitset_overlap_y = FindYNeg(sfbitset_overlap_y);
+                } else {
+                    periodic_y = false;
+                    sfbitset_overlap_y = kInvalidSFbitset;
+                    sfbitset_overlap_zy = sfbitset_overlap_zy|(k0SFBitsetTakeYRef_.at(kRefCurrent_)
+                        &kInvalidSFbitset);
                 }
                 sfbitset_tmp_y = FindYNeg(sfbitset_tmp_y);
+                if (periodic_z) {
+                    sfbitset_overlap_zx_y = FindYNeg(sfbitset_overlap_zx_y);
+                }
             }
             // positive y direction
             sfbitset_tmp_y = sfbitset_tmp_z;
             if (periodic_z) {
-                sfbitset_overlap_y = sfbitset_overlap_z;
+                sfbitset_overlap_zy = sfbitset_overlap_z;
+                sfbitset_overlap_zx_y = sfbitset_overlap_z;
             } else {
-                sfbitset_overlap_y = kInvalidSFbitset;
+                sfbitset_overlap_zy = kInvalidSFbitset;
+                sfbitset_overlap_zx_y = kInvalidSFbitset;
             }
             bool_not_y_max = true;
             if ((sfbitset_tmp_y&k0SFBitsetTakeYRef_.at(kRefCurrent_))
@@ -3058,39 +3255,52 @@ DefInt SFBitsetAux3D::FindNodesInPeriodicRegionCornerOverlap(const DefSFBitset& 
                 if (periodic_max.at(kYIndex)) {
                     sfbitset_tmp_y = (sfbitset_tmp_y&k0SFBitsetTakeYRef_.at(kRefOthers_))
                         |domain_min_n_level.at(kYIndex);
-                    if (sfbitset_overlap_y != kInvalidSFbitset) {
-                        sfbitset_overlap_y = (sfbitset_overlap_y&k0SFBitsetTakeYRef_.at(kRefOthers_))
-                            |domain_min_n_level.at(kYIndex);
-                    } else {
-                        sfbitset_overlap_y = sfbitset_tmp_y;
-                    }
-                    if (periodic_z) {
-                        vec_index_overlap_y = (vec_index_overlap_z) * total_length + region_length;
-                    } else {
-                        vec_index_overlap_y = vec_index_z * total_length + region_length;
-                    }
+                    sfbitset_overlap_zy = (sfbitset_overlap_zy&k0SFBitsetTakeYRef_.at(kRefOthers_))
+                        |domain_min_n_level.at(kYIndex);
+                    sfbitset_overlap_zx_y = (sfbitset_overlap_zx_y&k0SFBitsetTakeYRef_.at(kRefOthers_))
+                        |domain_min_n_level.at(kYIndex);
+                    periodic_y = true;
+                    sfbitset_overlap_y = sfbitset_tmp_y;
+                    vec_index_overlap_y = vec_index_z * total_length + region_length;
+                    vec_index_overlap_zny = (vec_index_overlap_z) * total_length + region_length;
                 } else {
                     index_min = 0;
                     bool_not_y_max = false;
                 }
-            } else if (periodic_z) {
-                vec_index_overlap_y = (vec_index_overlap_z) * total_length + region_length;
+            } else {
+                periodic_y = false;
+                sfbitset_overlap_y = kInvalidSFbitset;
+                sfbitset_overlap_zy = sfbitset_overlap_zy|(k0SFBitsetTakeYRef_.at(kRefCurrent_)
+                    &kInvalidSFbitset);
             }
             if (bool_not_y_max) {
                 for (DefInt iy = 0; iy < region_length; ++iy) {
                     sfbitset_tmp_y = FindYPos(sfbitset_tmp_y);
-                    if (sfbitset_overlap_y != kInvalidSFbitset) {
-                        sfbitset_overlap_y = FindYPos(sfbitset_overlap_y);
+                    if (periodic_z) {
+                        sfbitset_overlap_zx_y = FindYPos(sfbitset_overlap_zx_y);
                     }
-                    sfbitset_overlap_x = sfbitset_overlap_y;
-                    sfbitset_tmp_x = sfbitset_tmp_y;
                     vec_index_y = (vec_index_z + iy) * total_length + region_length;
+                    if (periodic_z) {
+                        vec_index_overlap_zy = (vec_index_overlap_z + iy) * total_length + region_length;
+                    }
+                    sfbitset_tmp_x = sfbitset_tmp_y;
+                    sfbitset_overlap_yx = sfbitset_overlap_y;
+                    sfbitset_overlap_zx = sfbitset_overlap_zx_y;
+                    sfbitset_overlap_zyx = sfbitset_overlap_zy;
                     for (DefInt ix = 0; ix < region_length; ++ix) {
                         vec_index_x = vec_index_y - ix - 1;
                         ptr_sfbitset_nodes->at(vec_index_x) = sfbitset_tmp_x;
-                        if (sfbitset_overlap_x != kInvalidSFbitset) {
+                        if (periodic_z) {
                             ptr_sfbitset_node_overlap->emplace_back(
-                                std::make_pair(vec_index_overlap_y - ix - 1, sfbitset_overlap_x));
+                                std::make_pair(vec_index_overlap_zy - ix - 1, sfbitset_overlap_zx));
+                        }
+                        if (periodic_y) {
+                            ptr_sfbitset_node_overlap->emplace_back(
+                                std::make_pair(vec_index_overlap_y - ix - 1, sfbitset_overlap_yx));
+                        }
+                        if (periodic_z&&periodic_y) {
+                            ptr_sfbitset_node_overlap->emplace_back(
+                                std::make_pair(vec_index_overlap_zny - ix - 1, sfbitset_overlap_zyx));
                         }
                         if ((sfbitset_tmp_x&k0SFBitsetTakeXRef_.at(kRefCurrent_))
                             == domain_min_n_level.at(kXIndex)) {
@@ -3098,11 +3308,23 @@ DefInt SFBitsetAux3D::FindNodesInPeriodicRegionCornerOverlap(const DefSFBitset& 
                                 sfbitset_tmp_x = (sfbitset_tmp_x&k0SFBitsetTakeXRef_.at(kRefOthers_))
                                     |domain_max_n_level.at(kXIndex);
                                 ptr_sfbitset_node_overlap->emplace_back(std::make_pair(vec_index_x, sfbitset_tmp_x));
-                                if (sfbitset_overlap_x != kInvalidSFbitset) {  // same as periodic_z | periodic_y
-                                    sfbitset_overlap_x = (sfbitset_overlap_x&k0SFBitsetTakeXRef_.at(kRefOthers_))
+                                if (periodic_z) {
+                                    sfbitset_overlap_zx = (sfbitset_overlap_zx&k0SFBitsetTakeXRef_.at(kRefOthers_))
                                         |domain_max_n_level.at(kXIndex);
                                     ptr_sfbitset_node_overlap->emplace_back(
-                                        std::make_pair(vec_index_overlap_y - ix - 1, sfbitset_overlap_x));
+                                        std::make_pair(vec_index_overlap_zy - ix - 1, sfbitset_overlap_zx));
+                                }
+                                if (periodic_y) {
+                                    sfbitset_overlap_yx = (sfbitset_overlap_yx&k0SFBitsetTakeXRef_.at(kRefOthers_))
+                                        |domain_max_n_level.at(kXIndex);
+                                    ptr_sfbitset_node_overlap->emplace_back(
+                                        std::make_pair(vec_index_overlap_y - ix - 1, sfbitset_overlap_yx));
+                                }
+                                if (periodic_z&&periodic_y) {
+                                    sfbitset_overlap_zyx = (sfbitset_overlap_zyx&k0SFBitsetTakeXRef_.at(kRefOthers_))
+                                        |domain_max_n_level.at(kXIndex);
+                                    ptr_sfbitset_node_overlap->emplace_back(
+                                        std::make_pair(vec_index_overlap_zny - ix - 1, sfbitset_overlap_zyx));
                                 }
                             } else {
                                 if (index_min > (ix + 1)) {
@@ -3112,13 +3334,24 @@ DefInt SFBitsetAux3D::FindNodesInPeriodicRegionCornerOverlap(const DefSFBitset& 
                             }
                         }
                         sfbitset_tmp_x = FindXNeg(sfbitset_tmp_x);
-                        if (sfbitset_overlap_x != kInvalidSFbitset) {
-                            sfbitset_overlap_x = FindXNeg(sfbitset_overlap_x);
+                        if (periodic_z) {
+                            sfbitset_overlap_zx = FindXNeg(sfbitset_overlap_zx);
+                        }
+                        if (periodic_y) {
+                            sfbitset_overlap_yx = FindXNeg(sfbitset_overlap_yx);
+                        }
+                        if (periodic_z&&periodic_y) {
+                            sfbitset_overlap_zyx = FindXNeg(sfbitset_overlap_zyx);
                         }
                     }
                     sfbitset_tmp_x = sfbitset_tmp_y;
-                    sfbitset_overlap_x = sfbitset_overlap_y;
+                    sfbitset_overlap_yx = sfbitset_overlap_y;
+                    sfbitset_overlap_zx = sfbitset_overlap_zx_y;
+                    sfbitset_overlap_zyx = sfbitset_overlap_zy;
                     vec_index_y = (vec_index_z + iy) * total_length + region_length;
+                    if (periodic_z) {
+                        vec_index_overlap_zy = (vec_index_overlap_z + iy) * total_length + region_length;
+                    }
                     bool_not_x_max = true;
                     if ((sfbitset_tmp_x&k0SFBitsetTakeXRef_.at(kRefCurrent_))
                         == domain_max_n_level.at(kXIndex)) {  // if the start node at max x boundary
@@ -3126,11 +3359,23 @@ DefInt SFBitsetAux3D::FindNodesInPeriodicRegionCornerOverlap(const DefSFBitset& 
                             sfbitset_tmp_x = (sfbitset_tmp_x&k0SFBitsetTakeXRef_.at(kRefOthers_))
                                 |domain_min_n_level.at(kXIndex);
                             ptr_sfbitset_node_overlap->emplace_back(std::make_pair(vec_index_y, sfbitset_tmp_x));
-                            if (sfbitset_overlap_x != kInvalidSFbitset) {
-                                sfbitset_overlap_x = (sfbitset_overlap_x&k0SFBitsetTakeXRef_.at(kRefOthers_))
+                            if (periodic_z) {
+                                sfbitset_overlap_zx = (sfbitset_overlap_zx&k0SFBitsetTakeXRef_.at(kRefOthers_))
                                     |domain_min_n_level.at(kXIndex);
                                 ptr_sfbitset_node_overlap->emplace_back(
-                                    std::make_pair(vec_index_overlap_y + region_length - 1, sfbitset_overlap_x));
+                                    std::make_pair(vec_index_overlap_zy + region_length - 1, sfbitset_overlap_zx));
+                            }
+                            if (periodic_y) {
+                                sfbitset_overlap_yx = (sfbitset_overlap_yx&k0SFBitsetTakeXRef_.at(kRefOthers_))
+                                    |domain_min_n_level.at(kXIndex);
+                                ptr_sfbitset_node_overlap->emplace_back(
+                                    std::make_pair(vec_index_overlap_y + region_length - 1, sfbitset_overlap_yx));
+                            }
+                            if (periodic_z&&periodic_y) {
+                                sfbitset_overlap_zyx = (sfbitset_overlap_zyx&k0SFBitsetTakeXRef_.at(kRefOthers_))
+                                    |domain_min_n_level.at(kXIndex);
+                                ptr_sfbitset_node_overlap->emplace_back(
+                                    std::make_pair(vec_index_overlap_zny + region_length - 1, sfbitset_overlap_zyx));
                             }
                         } else {
                             index_min = 0;
@@ -3142,23 +3387,45 @@ DefInt SFBitsetAux3D::FindNodesInPeriodicRegionCornerOverlap(const DefSFBitset& 
                             sfbitset_tmp_x = FindXPos(sfbitset_tmp_x);
                             vec_index_x = vec_index_y + ix;
                             ptr_sfbitset_nodes->at(vec_index_x) = sfbitset_tmp_x;
-                            if (sfbitset_overlap_x != kInvalidSFbitset) {
-                                sfbitset_overlap_x = FindXPos(sfbitset_overlap_x);
+                            if (periodic_z) {
+                                sfbitset_overlap_zx = FindXPos(sfbitset_overlap_zx);
                                 ptr_sfbitset_node_overlap->emplace_back(
-                                    std::make_pair(vec_index_overlap_y + ix, sfbitset_overlap_x));
+                                    std::make_pair(vec_index_overlap_zy + ix, sfbitset_overlap_zx));
+                            }
+                            if (periodic_y) {
+                                sfbitset_overlap_yx = FindXPos(sfbitset_overlap_yx);
+                                ptr_sfbitset_node_overlap->emplace_back(
+                                    std::make_pair(vec_index_overlap_y + ix, sfbitset_overlap_yx));
+                            }
+                            if (periodic_z&&periodic_y) {
+                                sfbitset_overlap_zyx = FindXPos(sfbitset_overlap_zyx);
+                                ptr_sfbitset_node_overlap->emplace_back(
+                                    std::make_pair(vec_index_overlap_zny + ix, sfbitset_overlap_zyx));
                             }
                             if ((sfbitset_tmp_x&k0SFBitsetTakeXRef_.at(kRefCurrent_))
                                 == domain_max_n_level.at(kXIndex)) {
                                 if (periodic_max.at(kXIndex)) {
                                     sfbitset_tmp_x = (sfbitset_tmp_x&k0SFBitsetTakeXRef_.at(kRefOthers_))
                                         |domain_min_n_level.at(kXIndex);
-                                    ptr_sfbitset_node_overlap->emplace_back(
-                                        std::make_pair(vec_index_x, sfbitset_tmp_x));
-                                    if (sfbitset_overlap_x != kInvalidSFbitset) {
-                                        sfbitset_overlap_x = (sfbitset_overlap_x&k0SFBitsetTakeXRef_.at(kRefOthers_))
+                                    ptr_sfbitset_node_overlap->emplace_back(std::make_pair(vec_index_x, sfbitset_tmp_x));
+                                    if (periodic_z) {
+                                        sfbitset_overlap_zx = (sfbitset_overlap_zx&k0SFBitsetTakeXRef_.at(kRefOthers_))
                                             |domain_min_n_level.at(kXIndex);
                                         ptr_sfbitset_node_overlap->emplace_back(
-                                            std::make_pair(vec_index_overlap_y + ix, sfbitset_overlap_x));
+                                            std::make_pair(vec_index_overlap_zy + ix, sfbitset_overlap_zx));
+                                    }
+                                    if (periodic_y) {
+                                        sfbitset_overlap_yx = (sfbitset_overlap_yx&k0SFBitsetTakeXRef_.at(kRefOthers_))
+                                            |domain_min_n_level.at(kXIndex);
+                                        ptr_sfbitset_node_overlap->emplace_back(
+                                            std::make_pair(vec_index_overlap_y + ix, sfbitset_overlap_yx));
+                                    }
+                                    if (periodic_z&&periodic_y) {
+                                        sfbitset_overlap_zyx = (sfbitset_overlap_zyx
+                                            &k0SFBitsetTakeXRef_.at(kRefOthers_))
+                                            |domain_min_n_level.at(kXIndex);
+                                        ptr_sfbitset_node_overlap->emplace_back(
+                                            std::make_pair(vec_index_overlap_zny + ix, sfbitset_overlap_zyx));
                                     }
                                 } else {
                                     if (index_min > (ix + 1)) {
@@ -3174,25 +3441,25 @@ DefInt SFBitsetAux3D::FindNodesInPeriodicRegionCornerOverlap(const DefSFBitset& 
                         if (periodic_max.at(kYIndex)) {
                             sfbitset_tmp_y = (sfbitset_tmp_y&k0SFBitsetTakeYRef_.at(kRefOthers_))
                                 |domain_min_n_level.at(kYIndex);
-                            if (sfbitset_overlap_y != kInvalidSFbitset) {
-                                sfbitset_overlap_y = (sfbitset_overlap_y&k0SFBitsetTakeYRef_.at(kRefOthers_))
-                                    |domain_min_n_level.at(kYIndex);
-                            } else {
-                                sfbitset_overlap_y = sfbitset_tmp_y;
-                            }
-                            if (periodic_z) {
-                                vec_index_overlap_y = (vec_index_overlap_z + iy + 1) * total_length + region_length;
-                            } else {
-                                vec_index_overlap_y = (vec_index_z + iy + 1) * total_length + region_length;
-                            }
+                            sfbitset_overlap_zy = (sfbitset_overlap_zy&k0SFBitsetTakeYRef_.at(kRefOthers_))
+                                |domain_min_n_level.at(kYIndex);
+                            sfbitset_overlap_zx_y = (sfbitset_overlap_zx_y&k0SFBitsetTakeYRef_.at(kRefOthers_))
+                                |domain_min_n_level.at(kYIndex);
+                            periodic_y = true;
+                            sfbitset_overlap_y = sfbitset_tmp_y;
+                            vec_index_overlap_y = vec_index_y;
+                            vec_index_overlap_zny =  (vec_index_overlap_z + iy + 1) * total_length + region_length;
                         } else {
                             if (index_min > (iy + 1)) {
                                 index_min = iy + 1;
                             }
                             break;
                         }
-                    } else if (periodic_z) {
-                        vec_index_overlap_y = (vec_index_overlap_z + iy + 1) * total_length + region_length;
+                    }  else {
+                        periodic_y = false;
+                        sfbitset_overlap_y = kInvalidSFbitset;
+                        sfbitset_overlap_zy = sfbitset_overlap_zy|(k0SFBitsetTakeYRef_.at(kRefCurrent_)
+                            &kInvalidSFbitset);
                     }
                 }
             }

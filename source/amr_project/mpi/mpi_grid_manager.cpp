@@ -24,7 +24,8 @@ std::unique_ptr<char[]> MpiManager::SerializeNodeStoreInt(const DefMap<DefInt>& 
     int* const ptr_buffer_size) const {
     int key_size = sizeof(DefSFBitset), node_size = sizeof(DefInt);
     int num_nodes = 1;
-    if  (sizeof(int) + map_nodes.size()*(key_size + node_size) > (std::numeric_limits<int>::max)()) {
+    if  (sizeof(int) + map_nodes.size()*(key_size + node_size)
+            > static_cast<DefSizet>((std::numeric_limits<int>::max)())) {
         LogManager::LogError("size of the buffer is greater"
          " than the maximum of int in MpiManager::SerializeData(DefMap<DefInt>)");
     } else {
@@ -88,7 +89,8 @@ std::unique_ptr<char[]> MpiManager::SerializeNodeSFBitset(
     const DefMap<DefInt>& map_nodes, int* const ptr_buffer_size) const {
     int key_size = sizeof(DefSFBitset);
     int num_nodes = 1;
-    if  (sizeof(int) + map_nodes.size() *(key_size) > (std::numeric_limits<int>::max)()) {
+    if  (sizeof(int) + map_nodes.size() *(key_size)
+        > static_cast<DefSizet>((std::numeric_limits<int>::max)())) {
         LogManager::LogError("size of the buffer is greater than the maximum of int");
     } else {
         num_nodes = static_cast<int>(map_nodes.size());

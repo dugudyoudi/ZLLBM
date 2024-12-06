@@ -422,7 +422,7 @@ class MpiManager{
 
  private:
     inline bool CheckBufferSizeNotExceedMax(DefSizet buffer_size) const {
-        if (buffer_size > (std::numeric_limits<int>::max)()) {
+        if (buffer_size > DefSizet((std::numeric_limits<int>::max)())) {
             return false;
         } else {
             return true;

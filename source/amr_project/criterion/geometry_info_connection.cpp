@@ -269,7 +269,7 @@ void GeometryConnectionInterface::BisectEdgeOnce(
             } else {
                 vertex_index_tmp.first = iter_edge.second.first + 1;
             }
-            if (vertex_given_level_.size() <= vertex_index_tmp.first) {
+            if (static_cast<DefInt>(vertex_given_level_.size()) <= vertex_index_tmp.first) {
                 vertex_given_level_.push_back({});
             }
             vertex_given_level_.at(vertex_index_tmp.first)
@@ -296,7 +296,7 @@ void GeometryConnectionInterface::BisectEdgeOnce(
             vertex_given_level_.at(iter_edge.second.first)
                 .vec_vertex_coordinate_.at(iter_edge.second.second)
                 ->child_vertices_.insert(vertex_index_tmp);
-            if (connection_vertex_given_level_.size() <= i_input_level) {
+            if (static_cast<DefInt>(connection_vertex_given_level_.size()) <= i_input_level) {
                 connection_vertex_given_level_.push_back({});
             }
             connection_vertex_given_level_.at(i_input_level)

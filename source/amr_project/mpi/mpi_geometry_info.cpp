@@ -22,7 +22,7 @@ std::unique_ptr<char[]> MpiManager::SerializeCoordiOrigin(
     const std::vector<std::unique_ptr<GeometryVertex>>& vec_vertices, int* const ptr_buffer_size) const {
     int num_points = 0;
     int real_size = sizeof(DefReal);
-    if  (vec_vertices.size() * real_size* 3 > (std::numeric_limits<int>::max)()) {
+    if  (vec_vertices.size() * real_size* 3 > static_cast<DefSizet>((std::numeric_limits<int>::max)())) {
         LogManager::LogError("size of the buffer is greater than the maximum of int"
             " in MpiManager::SerializeData(std::vector<GeometryCoordinate2D>) in "
             + std::string(__FILE__) + " at line " + std::to_string(__LINE__));

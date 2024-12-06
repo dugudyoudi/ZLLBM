@@ -280,7 +280,7 @@ void MpiManager::SendAndReceiveGridNodesOnAllMpiLayers(
         mpi_communication_outer_layers_.at(i_level));
     std::vector<bool> vec_receive_ranks(IdentifyRanksReceivingGridNode(i_level));
 
-    if (mpi_communication_inner_layers_.size() > i_level) {
+    if (static_cast<DefInt>(mpi_communication_inner_layers_.size()) > i_level) {
         SendNReceiveGridNodeBufferSize(ptr_grid_info->GetSizeOfGridNodeInfoForMpiCommunication(),
             i_level, mpi_communication_inner_layers_.at(i_level), ptr_send_buffer_info, ptr_receive_buffer_info);
     } else {
@@ -406,7 +406,7 @@ void MpiManager::SendNReceiveSFbitsetForInterpolation(const DefInt i_level,
     ptr_vec_num_recv->assign(num_of_ranks_, 0);
 
     for (int i_rank = 0; i_rank < num_of_ranks_; ++i_rank) {
-        if (requested_nodes.at(i_rank).size() > (std::numeric_limits<int>::max)()) {
+        if (requested_nodes.at(i_rank).size() > static_cast<DefSizet>((std::numeric_limits<int>::max)())) {
             LogManager::LogError("Number of requested nodes is lager max int value ("
                 + std::to_string((std::numeric_limits<int>::max)()) + ")");
         }

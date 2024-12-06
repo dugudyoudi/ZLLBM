@@ -51,7 +51,7 @@ void SetTestDependentParameters(
     DefSizet num_probes = static_cast<DefSizet>(max_domain_height_/dx_ + 1. + kEps);
     u_analytical_.resize(num_probes);
     u_analytical_sum_ = 0.;
-    for (auto i_probe = 0; i_probe < num_probes; ++i_probe) {
+    for (DefSizet i_probe = 0; i_probe < num_probes; ++i_probe) {
         u_analytical_.at(i_probe)  = u_max_* ((i_probe + 0.5)/lbm_height);
         u_analytical_sum_ += Square(u_analytical_.at(i_probe));
     }

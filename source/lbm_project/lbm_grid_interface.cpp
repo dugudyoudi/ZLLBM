@@ -188,7 +188,7 @@ DefMap<std::unique_ptr<GridNodeLbm>>* GridInfoLbmInteface::GetPtrToLbmGrid() {
  * @brief function to call assigned boundary conditions for each domain boundary.
  */
 void GridInfoLbmInteface::ComputeDomainBoundaryCondition() {
-    for (auto i =0; i < domain_boundary_min_.size(); ++i) {
+    for (DefInt i = 0; i < static_cast<DefInt>(domain_boundary_min_.size()); ++i) {
         switch (i) {
         case kXIndex: {
                 if (domain_boundary_condition_.find(ELbmBoundaryType::kBoundaryXMin)
@@ -229,7 +229,7 @@ void GridInfoLbmInteface::ComputeDomainBoundaryCondition() {
             break;
         }
     }
-    for (auto i =0; i < domain_boundary_max_.size(); ++i) {
+    for (DefInt i =0; i < static_cast<DefInt>(domain_boundary_max_.size()); ++i) {
         switch (i) {
         case kXIndex: {
                 if (domain_boundary_condition_.find(ELbmBoundaryType::kBoundaryXMax)
@@ -334,7 +334,7 @@ void GridInfoLbmInteface::SetUpGridAtBeginningOfTimeStep(const DefInt time_step)
         std::dynamic_pointer_cast<GridInfoLbmInteface>(
             ptr_grid_manager->vec_ptr_grid_info_.at(i_level_ - 1))->GetPtrToLbmGrid();
     }
-    if (i_level_  < ptr_grid_manager->vec_ptr_grid_info_.size() - 1) {
+    if (i_level_  < static_cast<DefInt>(ptr_grid_manager->vec_ptr_grid_info_.size()) - 1) {
         std::dynamic_pointer_cast<GridInfoLbmInteface>(
             ptr_grid_manager->vec_ptr_grid_info_.at(i_level_ + 1))->GetPtrToLbmGrid();
     }

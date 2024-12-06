@@ -232,7 +232,7 @@ void GridManagerInterface::SetNumberOfExtendLayerForGrid(const DefInt i_level,
     ptr_outer_layer_neg->assign(layer_min.begin(), layer_min.end());
     ptr_outer_layer_pos->assign(layer_min.begin(), layer_min.end());
     std::vector<DefInt> geo_extend = geo_info.GetInnerExtend();
-    if ((geo_extend.size() > i_level)
+    if ((static_cast<DefInt>(geo_extend.size()) > i_level)
         && (geo_extend.at(i_level) > k0IntExtendMin_)) {
         ptr_inner_layer_neg->at(kXIndex) = geo_extend.at(i_level);
         ptr_inner_layer_neg->at(kYIndex) = geo_extend.at(i_level);
@@ -253,38 +253,38 @@ void GridManagerInterface::SetNumberOfExtendLayerForGrid(const DefInt i_level,
         }
     }
     geo_extend = geo_info.GetXExtendNegative();
-    if ((geo_extend.size() > i_level) && (geo_extend.at(i_level) > k0IntExtendMin_)) {
+    if ((static_cast<DefInt>(geo_extend.size()) > i_level) && (geo_extend.at(i_level) > k0IntExtendMin_)) {
         ptr_outer_layer_neg->at(kXIndex) = geo_extend.at(i_level);
     } else {
         ptr_outer_layer_neg->at(kXIndex) = k0IntExtendMin_;
     }
     geo_extend = geo_info.GetXExtendPositive();
-    if ((geo_extend.size() > i_level) && (geo_extend.at(i_level) > k0IntExtendMin_)) {
+    if ((static_cast<DefInt>(geo_extend.size()) > i_level) && (geo_extend.at(i_level) > k0IntExtendMin_)) {
         ptr_outer_layer_pos->at(kXIndex) = geo_extend.at(i_level);
     } else {
         ptr_outer_layer_pos->at(kXIndex) = k0IntExtendMin_;
     }
     geo_extend = geo_info.GetYExtendNegative();
-    if ((geo_extend.size() > i_level) && (geo_extend.at(i_level) > k0IntExtendMin_)) {
+    if ((static_cast<DefInt>(geo_extend.size()) > i_level) && (geo_extend.at(i_level) > k0IntExtendMin_)) {
         ptr_outer_layer_neg->at(kYIndex) = geo_extend.at(i_level);
     } else {
         ptr_outer_layer_neg->at(kYIndex) = k0IntExtendMin_;
     }
     geo_extend = geo_info.GetYExtendPositive();
-    if ((geo_extend.size() > i_level) && (geo_extend.at(i_level) > k0IntExtendMin_)) {
+    if ((static_cast<DefInt>(geo_extend.size()) > i_level) && (geo_extend.at(i_level) > k0IntExtendMin_)) {
         ptr_outer_layer_pos->at(kYIndex) = geo_extend.at(i_level);
     } else {
         ptr_outer_layer_pos->at(kYIndex) = k0IntExtendMin_;
     }
     if (k0GridDims_ == 3) {
         geo_extend = geo_info.GetZExtendNegative();
-        if ((geo_extend.size() > i_level) && (geo_extend.at(i_level) > k0IntExtendMin_)) {
+        if ((static_cast<DefInt>(geo_extend.size()) > i_level) && (geo_extend.at(i_level) > k0IntExtendMin_)) {
             ptr_outer_layer_neg->at(kZIndex) = geo_extend.at(i_level);
         } else {
             ptr_outer_layer_neg->at(kZIndex) = k0IntExtendMin_;
         }
         geo_extend = geo_info.GetZExtendPositive();
-        if ((geo_extend.size() > i_level) && (geo_extend.at(i_level) >
+        if ((static_cast<DefInt>(geo_extend.size()) > i_level) && (geo_extend.at(i_level) >
                 k0IntExtendMin_)) {
             ptr_outer_layer_pos->at(kZIndex) = geo_extend.at(i_level);
         } else {
