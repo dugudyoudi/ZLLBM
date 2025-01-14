@@ -466,12 +466,7 @@ void GridInfoLbmInteface::DebugWrite() {
                 MPI_Comm_rank(MPI_COMM_WORLD, &rank_id);
                                 if (i_level_ == 1 && rank_id==0) {
                     amrproject::SFBitsetAux3D aux3d;
-                    //std::array<DefAmrLUint, 2> indices;
-                    
-                    //aux2d.SFBitsetComputeIndices(iter_node.first, &indices);
-                    //std::cout << indices[0] << " " << indices[1] << std::endl;
                     std::cout << "debug: " <<ptr_lbm_grid_nodes_->at(aux3d.SFBitsetEncoding({8, 8, 8}))->f_[0]<< std::endl;
-                    //std::cout  << "3: "<<ptr_lbm_grid_nodes_->at(aux3d.SFBitsetEncoding({6, 9}))->f_collide_[1] << " "<<ptr_lbm_grid_nodes_->at(aux2d.SFBitsetEncoding({6, 9}))->f_[1]<< std::endl;
                 }
 }
 void GridInfoLbmInteface::DebugWriteNode(const amrproject::GridNode& node) {

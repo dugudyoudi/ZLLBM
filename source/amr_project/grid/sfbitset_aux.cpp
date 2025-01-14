@@ -2988,7 +2988,7 @@ DefInt SFBitsetAux3D::FindNodesInPeriodicRegionCornerOverlap(const DefSFBitset& 
                         periodic_y = true;
                         sfbitset_overlap_y = sfbitset_tmp_y;
                         vec_index_overlap_y = vec_index_y;
-                        vec_index_overlap_zny =  (vec_index_overlap_z + iy + 1) * total_length + region_length;
+                        vec_index_overlap_zny =  (vec_index_overlap_z + iy) * total_length + region_length;
                     } else {
                         if (index_min > (iy + 1)) {
                             index_min = iy + 1;
@@ -3048,8 +3048,10 @@ DefInt SFBitsetAux3D::FindNodesInPeriodicRegionCornerOverlap(const DefSFBitset& 
             sfbitset_tmp_z = FindZPos(sfbitset_tmp_z);
             if (periodic_z) {
                 sfbitset_overlap_zy = sfbitset_overlap_z;
+                sfbitset_overlap_zx_y = sfbitset_overlap_z;
             } else {
                 sfbitset_overlap_zy = kInvalidSFbitset;
+                sfbitset_overlap_zx_y = kInvalidSFbitset;
             }
             sfbitset_tmp_y = sfbitset_tmp_z;
             vec_index_z = (region_length + iz) * total_length + region_length;
@@ -3407,7 +3409,8 @@ DefInt SFBitsetAux3D::FindNodesInPeriodicRegionCornerOverlap(const DefSFBitset& 
                                 if (periodic_max.at(kXIndex)) {
                                     sfbitset_tmp_x = (sfbitset_tmp_x&k0SFBitsetTakeXRef_.at(kRefOthers_))
                                         |domain_min_n_level.at(kXIndex);
-                                    ptr_sfbitset_node_overlap->emplace_back(std::make_pair(vec_index_x, sfbitset_tmp_x));
+                                    ptr_sfbitset_node_overlap->emplace_back(
+                                        std::make_pair(vec_index_x, sfbitset_tmp_x));
                                     if (periodic_z) {
                                         sfbitset_overlap_zx = (sfbitset_overlap_zx&k0SFBitsetTakeXRef_.at(kRefOthers_))
                                             |domain_min_n_level.at(kXIndex);
@@ -3448,7 +3451,7 @@ DefInt SFBitsetAux3D::FindNodesInPeriodicRegionCornerOverlap(const DefSFBitset& 
                             periodic_y = true;
                             sfbitset_overlap_y = sfbitset_tmp_y;
                             vec_index_overlap_y = vec_index_y;
-                            vec_index_overlap_zny =  (vec_index_overlap_z + iy + 1) * total_length + region_length;
+                            vec_index_overlap_zny =  (vec_index_overlap_z + iy) * total_length + region_length;
                         } else {
                             if (index_min > (iy + 1)) {
                                 index_min = iy + 1;
@@ -3493,7 +3496,7 @@ DefInt SFBitsetAux3D::FindNodesInPeriodicRegionCornerOverlap(const DefSFBitset& 
  * @param[in] periodic_max booleans indicating if the maximum domain boundaries are periodic.
  * @param[in] domain_min_n_level space filling codes representing the minimum domain at each level.
  * @param[in] domain_max_n_level space filling codes representing the maximum domain at each level.
- * @param[out[]] ptr_sfbitset_nodes pointer to found nodes.
+ * @param[out] ptr_sfbitset_nodes pointer to found nodes.
  * @return number of node in each direction within the region and domain range.
  * @note only indics within the return values are valid, otherwise may be undefined.
  */
