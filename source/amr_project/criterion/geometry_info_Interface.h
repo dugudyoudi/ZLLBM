@@ -49,6 +49,7 @@ class GeometryInfoInterface {
     EGridExtendType grid_extend_type_ = EGridExtendType::kSameInAllDirections;
     EGeometryStatus geometry_status_ = EGeometryStatus::kVirtual;
     std::string node_type_;
+    bool need_update_shape_ = false;
 
     TrackingGridInfoCreatorInterface* ptr_tracking_grid_info_creator_ = nullptr;
 
@@ -68,6 +69,9 @@ class GeometryInfoInterface {
 
  public:
     // get and set functions
+    bool GetNeedUpdateShape() const {
+        return need_update_shape_;
+    }
     DefInt GetComputationalCost() const {
         return computational_cost_;
     }
@@ -126,6 +130,9 @@ class GeometryInfoInterface {
         return vec_vertices_.size();
     }
 
+    void SetNeedUpdateShape(const bool need_update) {
+        need_update_shape_ = need_update;
+    }
     void SetComputationalCost(const DefInt computational_cost) {
         computational_cost_ = computational_cost;
     }

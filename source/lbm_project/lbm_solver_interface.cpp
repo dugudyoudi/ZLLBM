@@ -29,6 +29,20 @@ void SolverLbmInterface::SolverInitial() {
     }
     InitialModelDependencies();
 }
+/**
+ * @brief function to set default force for initializing node.
+ */
+void SolverLbmInterface::SetDefaultForce(const std::vector<DefReal>& force_in) {
+    bool_forces_ = true;
+    k0Force_ = force_in;
+}
+/**
+ * @brief function to set const force.
+ */
+void SolverLbmInterface::SetConstantForce(const std::vector<DefReal>& force_in) {
+    bool_forces_ = true;
+    k0ConstForce_ = force_in;
+}
 std::vector<DefReal> SolverLbmInterface::GetAllForcesForANode(
     const GridNodeLbm& node) const {
     std::vector<DefReal> force(k0ConstForce_);

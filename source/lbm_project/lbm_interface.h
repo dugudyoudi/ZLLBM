@@ -333,8 +333,8 @@ class SolverLbmInterface :public amrproject::SolverInterface {
     void SetDefaultViscosity(const DefReal viscosity_in) { k0LbmViscosity_ = viscosity_in;}
     void SetDefaultDensity(const DefReal rho_in) { k0Rho_ = rho_in;}
     void SetDefaultVelocity(const std::vector<DefReal>& velocity_in) { k0Velocity_ = velocity_in;}
-    void SetDefaultForce(const std::vector<DefReal>& force_in) { k0Force_ = force_in;}
-    void SetConstantForce(const std::vector<DefReal>& force_in) { k0ConstForce_ = force_in;}
+    void SetDefaultForce(const std::vector<DefReal>& force_in);
+    void SetConstantForce(const std::vector<DefReal>& force_in);
     DefReal GetDefaultViscosity() const { return k0LbmViscosity_;}
     DefReal GetDefaultDensity() const { return k0Rho_;}
     const std::vector<DefReal>& GetDefaultVelocity() const { return k0Velocity_;}

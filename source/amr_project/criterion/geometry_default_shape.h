@@ -52,6 +52,9 @@ class GeoShapeDefaultQuadrilateral3D : public GeoShapeInterface {
     void InitialShape(const DefReal dx) override;
     void UpdateShape(const DefReal sum_t) override;
     virtual ~GeoShapeDefaultQuadrilateral3D() {}
+
+ protected:
+    DefInt edge1_num_points_ = 0, edge2_num_points_ = 0;
 };
 #endif  // DEBUG_DISABLE_3D_FUNCTIONS
 }  // end namespace amrproject

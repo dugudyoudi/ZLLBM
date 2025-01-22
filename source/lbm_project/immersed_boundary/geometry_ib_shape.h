@@ -29,7 +29,7 @@ class GeoShapeIBCubic3D : public amrproject::GeoShapeDefaultCubic3D {
 };
 class GeoShapeIBQuadrilateral3D : public amrproject::GeoShapeDefaultQuadrilateral3D {
  public:
-
+    void UpdateShape(const DefReal sum_t) override;
 };
 #endif  // DEBUG_DISABLE_3D_FUNCTIONS
 }  // end namespace lbmproject

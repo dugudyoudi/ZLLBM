@@ -29,6 +29,7 @@ class FsiImmersedBoundary {
         std::unordered_map<DefSizet, std::unique_ptr<amrproject::GeometryVertex>>* const ptr_geo_vertices,
         DefMap<std::unique_ptr<GridNodeLbm>>* const ptr_map_grid_nodes);
     void ClearNodesRecordForIB();
+    void SetStencilDis(const DefInt stencil_dis) { stencil_dis_ = stencil_dis;}
 
  protected:
     DefInt stencil_dis_ = 2;
@@ -65,7 +66,6 @@ class FsiImmersedBoundary {
  protected:
     std::map<int, DefMap<DefInt>> map_ib_node_for_mpi_send_;
 };
-
 
 class GeometryInfoImmersedBoundary : public amrproject::GeometryInfoOrigin, public FsiImmersedBoundary {
  public:

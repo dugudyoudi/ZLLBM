@@ -87,18 +87,18 @@ void AmrManager::InitializeMesh() {
 #endif  // ENABLE_MPI
     std::array<DefSFBitset, 2> sfbitset_bound_current;
     std::vector<DefMap<DefInt>> sfbitset_one_lower_level(ptr_grid_manager_->k0MaxLevel_ + 1);
-    DefInt i_geo = 0;
-    if (rank_id == 0) {
-        std::array<DefReal, 3> real_offset{};
-        std::vector<DefReal> domain_dx = ptr_grid_manager_->GetDomainDxArrAsVec();
-        std::vector<DefAmrLUint> domain_min_index = ptr_grid_manager_->GetMinIndexOfBackgroundNodeArrAsVec();
-        for (DefInt i_dims = 0; i_dims < ptr_grid_manager_->k0GridDims_; ++i_dims) {
-            real_offset.at(i_dims) = domain_min_index[i_dims] * domain_dx[i_dims];
-        }
 
-        ptr_criterion_manager_->InitialAllGeometrySerial(ptr_grid_manager_->k0GridDims_,
-            domain_dx.at(kXIndex), real_offset);
+    // initial geometries
+    DefInt i_geo = 0;
+    std::array<DefReal, 3> real_offset{};
+    std::vector<DefReal> domain_dx = ptr_grid_manager_->GetDomainDxArrAsVec();
+    std::vector<DefAmrLUint> domain_min_index = ptr_grid_manager_->GetMinIndexOfBackgroundNodeArrAsVec();
+    for (DefInt i_dims = 0; i_dims < ptr_grid_manager_->k0GridDims_; ++i_dims) {
+        real_offset.at(i_dims) = domain_min_index[i_dims] * domain_dx[i_dims];
     }
+    ptr_criterion_manager_->InitialAllGeometrySerial(ptr_grid_manager_->k0GridDims_,
+        domain_dx.at(kXIndex), real_offset);
+
     for (const auto& iter_geo_info : ptr_criterion_manager_->vec_ptr_geometries_) {
         ptr_grid_manager_->CreateTrackingGridInstanceForAGeo(i_geo, *iter_geo_info);
         ++i_geo;
@@ -223,8 +223,12 @@ void AmrManager::InitializeMesh() {
 #endif  // ENABLE_MPI
 
     for (auto& iter_geo : ptr_criterion_manager_->vec_ptr_geometries_) {
+        // shape information need to be updated during initialization
+        bool bool_tmp = iter_geo->GetNeedUpdateShape();
+        iter_geo->SetNeedUpdateShape(true);
         iter_geo->SetupGeometryInfo(0., *ptr_mpi_manager_.get(),
             *ptr_grid_manager_->vec_ptr_grid_info_.at(iter_geo->GetLevel()));
+        iter_geo->SetNeedUpdateShape(bool_tmp);
     }
 
     InstantiateTimeSteppingScheme();

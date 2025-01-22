@@ -57,7 +57,7 @@ void GeoShapeDefaultLine2D::InitialShape(const DefReal dx) {
     ptr_geo_info_->SetFloodFillOrigin(geo_center);
     DefReal length = std::sqrt(Square(end_point_.at(kXIndex) - start_point_.at(kXIndex))
         + Square(end_point_.at(kYIndex) - start_point_.at(kYIndex)));
-    DefSizet num_points = DefSizet(length / dx + kEps) + 1;
+    DefSizet num_points = DefSizet(length / dx + kEps);
     ptr_geo_info_->vec_vertices_.resize(num_points);
     DefReal arc = length / num_points,
         sin_theta = (end_point_.at(kYIndex) - start_point_.at(kYIndex)) / length,

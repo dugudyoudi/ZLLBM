@@ -54,7 +54,7 @@ void FsiImmersedBoundary::CalculateBodyForce(const GridInfoLbmInteface& grid_inf
             ptr_node->force_.at(k0IndexForceX_) = 0.;
             ptr_node->force_.at(k0IndexForceY_) = 0.;
             const std::vector<DefReal> force(ptr_solver_lbm->GetAllForcesForANode(*ptr_node));
-            func_macro_with_force(dt_lbm, ptr_node->f_, ptr_node->force_, ptr_rho, ptr_velocity);
+            func_macro_with_force(dt_lbm, ptr_node->f_, force, ptr_rho, ptr_velocity);
         };
         func_ib_force = [this, dt_lbm, func_macro_without_ib_force](
             const amrproject::SFBitsetAuxInterface& sfbitset_aux,
@@ -72,7 +72,7 @@ void FsiImmersedBoundary::CalculateBodyForce(const GridInfoLbmInteface& grid_inf
             ptr_node->force_.at(k0IndexForceY_) = 0.;
             ptr_node->force_.at(k0IndexForceZ_) = 0.;
             const std::vector<DefReal> force(ptr_solver_lbm->GetAllForcesForANode(*ptr_node));
-            func_macro_with_force(dt_lbm, ptr_node->f_, ptr_node->force_, ptr_rho, ptr_velocity);
+            func_macro_with_force(dt_lbm, ptr_node->f_, force, ptr_rho, ptr_velocity);
         };
         func_ib_force = [this, dt_lbm, func_macro_without_ib_force] (
             const amrproject::SFBitsetAuxInterface& sfbitset_aux,
@@ -108,11 +108,20 @@ void FsiImmersedBoundary::DirectForcingScheme2D(const DefReal dt_lbm,
         static_cast<DefAmrLUint>(index_ref.at(kYIndex)+kEps)};
     std::array<DefReal, 2> dis_ref = {index_ref.at(kXIndex) - indices.at(kXIndex),
         index_ref.at(kYIndex) - indices.at(kYIndex)};
-    DefSFBitset sfbitset_ref = static_cast<const amrproject::SFBitsetAux2D&>(sfbitset_aux).SFBitsetEncoding(indices);
+    const amrproject::SFBitsetAux2D& sfbitset_aux2d = static_cast<const amrproject::SFBitsetAux2D&>(sfbitset_aux);
+    DefSFBitset sfbitset_ref = sfbitset_aux2d.SFBitsetEncoding(indices);
     std::vector<DefSFBitset> nodes_in_region;
-    DefInt valid_length = sfbitset_aux.FindNodesInPeriodicRegionCorner(sfbitset_ref, stencil_dis_,
-        domain_info.periodic_min_, domain_info.periodic_max_,
-        domain_info.domain_min_n_level_, domain_info.domain_max_n_level_, &nodes_in_region);
+    std::vector<std::pair<DefAmrLUint, DefSFBitset>> nodes_overlap;
+    DefInt valid_length = 0;
+    if (domain_info.bool_periodic_domain_) {
+        valid_length = sfbitset_aux2d.FindNodesInPeriodicRegionCornerOverlap(sfbitset_ref, stencil_dis_,
+            domain_info.periodic_min_, domain_info.periodic_max_,
+            domain_info.domain_min_n_level_, domain_info.domain_max_n_level_, &nodes_in_region, &nodes_overlap);
+    } else {
+        valid_length = sfbitset_aux2d.FindNodesInPeriodicRegionCorner(sfbitset_ref, stencil_dis_,
+            domain_info.periodic_min_, domain_info.periodic_max_,
+            domain_info.domain_min_n_level_, domain_info.domain_max_n_level_, &nodes_in_region);
+    }
     std::function<DefReal(const DefReal)> func_stencil = [this](const DefReal dis){
         return StencilDisOne(dis);
     };
@@ -124,15 +133,15 @@ void FsiImmersedBoundary::DirectForcingScheme2D(const DefReal dt_lbm,
     DefInt vec_index_x, vec_index_y;
     DefInt total_length = stencil_dis_*2;
     DefReal u_ref = 0, v_ref = 0;
-    std::vector<DefReal> vec_delta_x(valid_length*2), vec_delta_y(valid_length*2);
-    DefReal delta_total;
+    DefReal delta_x, delta_y;
+    std::vector<DefReal> vec_delta_total(4*valid_length*valid_length);
     // calculate Lagrangian force
     for (DefInt iy = -valid_length; iy < valid_length; iy++) {
         vec_index_y = (stencil_dis_ + iy) * total_length + stencil_dis_;
-        vec_delta_y.at(iy+valid_length) = func_stencil(std::fabs(dis_ref.at(kYIndex) - iy - 1));
+        delta_y = func_stencil(std::fabs(dis_ref.at(kYIndex) - iy - 1));
         for (DefInt ix = -valid_length; ix < valid_length; ix++) {
             vec_index_x = vec_index_y + ix;
-            vec_delta_x.at(ix+valid_length) = func_stencil(std::fabs(dis_ref.at(kXIndex) - ix - 1));
+            delta_x = func_stencil(std::fabs(dis_ref.at(kXIndex) - ix - 1));
             const DefSFBitset& sfbitset_tmp = nodes_in_region.at(vec_index_x);
             if (sfbitset_tmp!= amrproject::SFBitsetAuxInterface::kInvalidSFbitset) {
                 if (ptr_map_grid_nodes->find(sfbitset_tmp) !=  ptr_map_grid_nodes->end()) {
@@ -148,9 +157,9 @@ void FsiImmersedBoundary::DirectForcingScheme2D(const DefReal dt_lbm,
                         }
                         map_ib_node_for_reset_.insert({sfbitset_tmp, 0});
                     }
-                    delta_total = vec_delta_x.at(ix+valid_length)*vec_delta_y.at(iy+valid_length);
-                    u_ref+=ptr_map_grid_nodes->at(sfbitset_tmp)->velocity_.at(kXIndex)*delta_total;
-                    v_ref+=ptr_map_grid_nodes->at(sfbitset_tmp)->velocity_.at(kYIndex)*delta_total;
+                    vec_delta_total.at(vec_index_x) = delta_x*delta_y;
+                    u_ref+=ptr_map_grid_nodes->at(sfbitset_tmp)->velocity_.at(kXIndex)*vec_delta_total.at(vec_index_x);
+                    v_ref+=ptr_map_grid_nodes->at(sfbitset_tmp)->velocity_.at(kYIndex)*vec_delta_total.at(vec_index_x);
                 } else {
                     std::vector<DefReal> coordinates;
                     sfbitset_aux.SFBitsetComputeCoordinateVir(sfbitset_tmp, domain_info.grid_space_, &coordinates);
@@ -165,33 +174,39 @@ void FsiImmersedBoundary::DirectForcingScheme2D(const DefReal dt_lbm,
     ptr_geo_vertex->force_.at(kXIndex) = ib_stiffness_ * (ptr_geo_vertex->velocity_.at(kXIndex) - u_ref);
     ptr_geo_vertex->force_.at(kYIndex) = ib_stiffness_ * (ptr_geo_vertex->velocity_.at(kYIndex) - v_ref);
 
-
     // distribute Lagrangian force to Eulerian grid
-    const DefReal area = ptr_geo_vertex->area_ / dt_lbm / dt_lbm;
+    const DefReal area = ptr_geo_vertex->area_ / dt_lbm / domain_info.grid_space_[kXIndex];
     for (DefInt iy = -valid_length; iy < valid_length; iy++) {
         vec_index_y = (stencil_dis_ + iy) * total_length + stencil_dis_;
         for (DefInt ix = -valid_length; ix < valid_length; ix++) {
             vec_index_x = vec_index_y + ix;
             const DefSFBitset& sfbitset_tmp = nodes_in_region.at(vec_index_x);
-            delta_total = vec_delta_x.at(ix+valid_length)*vec_delta_y.at(iy+valid_length)*area;
+            const DefReal& delta_total = vec_delta_total.at(vec_index_x)*area;
             ptr_map_grid_nodes->at(sfbitset_tmp)->force_.at(k0IndexForceX_)+=
                 ptr_geo_vertex->force_.at(kXIndex)*delta_total;
             ptr_map_grid_nodes->at(sfbitset_tmp)->force_.at(k0IndexForceY_)+=
                 ptr_geo_vertex->force_.at(kYIndex)*delta_total;
-
-                                        amrproject::SFBitsetAux2D sfbitset_aux2d = dynamic_cast<const amrproject::SFBitsetAux2D&>(sfbitset_aux);
-                    std::array<DefAmrLUint, 2> indices_2d;
-                    sfbitset_aux2d.SFBitsetComputeIndices(sfbitset_tmp, &indices_2d);
-                    if ((indices.at(kXIndex) == 1 &&indices.at(kYIndex) == 9)) {
-                        std::cout << indices_2d.at(kXIndex) << " "  << indices_2d[1] << " " << ptr_geo_vertex->force_.at(kXIndex) << " "<< dis_ref.at(kXIndex) - ix - 1<< std::endl;
-                    }
-
-                    //                 amrproject::SFBitsetAux2D sfbitset_aux2d = dynamic_cast<const amrproject::SFBitsetAux2D&>(sfbitset_aux);
-                    // std::array<DefAmrLUint, 2> indices_2d;
-                    // sfbitset_aux2d.SFBitsetComputeIndices(sfbitset_tmp, &indices_2d);
-                    // if (indices_2d.at(kYIndex) == 8 && (indices_2d.at(kXIndex) == 8 || indices_2d.at(kXIndex) == 11)) {
-                    //     std::cout << indices_2d.at(kXIndex) << " " << indices[0] << " " << indices[1] << " " << ptr_geo_vertex->force_.at(kXIndex) << " "<< dis_ref.at(kXIndex) - ix - 1<< std::endl;
-                    // }
+        }
+    }
+    if (domain_info.bool_periodic_domain_) {
+        for (auto iter : nodes_overlap) {
+            if (map_ib_node_for_reset_.find(iter.second) == map_ib_node_for_reset_.end()) {
+                if (static_cast<DefInt>(ptr_map_grid_nodes->at(iter.second)->force_.size()) > k0IndexForceY_) {
+                    // compute macro variables and reset immersed boundary force on grid nodes as zeros
+                    func_compute_macro(dt_lbm, ptr_map_grid_nodes->at(iter.second).get(),
+                        &ptr_map_grid_nodes->at(iter.second)->rho_,
+                        &ptr_map_grid_nodes->at(iter.second)->velocity_);
+                } else {
+                    amrproject::LogManager::LogError("size of forces stored in LBM node"
+                        " is less than indices for immersed boundary forces");
+                }
+                map_ib_node_for_reset_.insert({iter.second, 0});
+            }
+            const DefReal& delta_total = vec_delta_total.at(iter.first)*area;
+            ptr_map_grid_nodes->at(iter.second)->force_.at(k0IndexForceX_) +=
+                ptr_geo_vertex->force_.at(kXIndex)*delta_total;
+            ptr_map_grid_nodes->at(iter.second)->force_.at(k0IndexForceY_) +=
+                ptr_geo_vertex->force_.at(kYIndex)*delta_total;
         }
     }
 }
@@ -202,7 +217,8 @@ void FsiImmersedBoundary::DirectForcingScheme2D(const DefReal dt_lbm,
  * @param[in] domain_info information of computational domain.
  * @param[in] func_compute_macro function to compute macroscopic variables.
  * @param[out] ptr_map_grid_nodes point to LBM grid nodes.
- * @param[out] ptr_geo_vertex point to an immersed boundary vertex.
+ * @param[out] ptr_map_grid_nodes point to LBM grid nodes.
+ * @param[in, out] ptr_geo_vertex point to an immersed boundary vertex.
  */
 void FsiImmersedBoundary::DirectForcingScheme3D(const DefReal dt_lbm,
     const amrproject::SFBitsetAuxInterface& sfbitset_aux, const amrproject::DomainInfo& domain_info,
@@ -217,11 +233,20 @@ void FsiImmersedBoundary::DirectForcingScheme3D(const DefReal dt_lbm,
         static_cast<DefAmrLUint>(index_ref.at(kYIndex)+kEps), static_cast<DefAmrLUint>(index_ref.at(kZIndex)+kEps)};
     std::array<DefReal, 3> dis_ref = {index_ref.at(kXIndex) - indices.at(kXIndex),
         index_ref.at(kYIndex) - indices.at(kYIndex), index_ref.at(kZIndex) - indices.at(kZIndex) };
-    DefSFBitset sfbitset_ref = static_cast<const amrproject::SFBitsetAux3D&>(sfbitset_aux).SFBitsetEncoding(indices);
+    const amrproject::SFBitsetAux3D& sfbitset_aux3d = static_cast<const amrproject::SFBitsetAux3D&>(sfbitset_aux);
+    DefSFBitset sfbitset_ref = sfbitset_aux3d.SFBitsetEncoding(indices);
     std::vector<DefSFBitset> nodes_in_region;
-    DefInt valid_length = sfbitset_aux.FindNodesInPeriodicRegionCorner(sfbitset_ref, stencil_dis_,
-        domain_info.periodic_min_, domain_info.periodic_max_,
-        domain_info.domain_min_n_level_, domain_info.domain_max_n_level_, &nodes_in_region);
+    std::vector<std::pair<DefAmrLUint, DefSFBitset>> nodes_overlap;
+    DefInt valid_length = 0;
+    if (domain_info.bool_periodic_domain_) {
+        valid_length = sfbitset_aux3d.FindNodesInPeriodicRegionCornerOverlap(sfbitset_ref, stencil_dis_,
+            domain_info.periodic_min_, domain_info.periodic_max_,
+            domain_info.domain_min_n_level_, domain_info.domain_max_n_level_, &nodes_in_region, &nodes_overlap);
+    } else {
+        valid_length = sfbitset_aux3d.FindNodesInPeriodicRegionCorner(sfbitset_ref, stencil_dis_,
+            domain_info.periodic_min_, domain_info.periodic_max_,
+            domain_info.domain_min_n_level_, domain_info.domain_max_n_level_, &nodes_in_region);
+    }
     std::function<DefReal(const DefReal)> func_stencil = [this](const DefReal dis){
         return StencilDisOne(dis);
     };
@@ -233,22 +258,23 @@ void FsiImmersedBoundary::DirectForcingScheme3D(const DefReal dt_lbm,
     DefInt vec_index_x, vec_index_y, vec_index_z;
     DefInt total_length = stencil_dis_*2;
     DefReal u_ref = 0, v_ref = 0, w_ref = 0;
-    std::vector<DefReal> vec_delta_x(valid_length*2), vec_delta_y(valid_length*2), vec_delta_z(valid_length*2);
-    DefReal delta_total;
+    DefReal delta_x, delta_y, delta_z;
+    std::vector<DefReal> vec_delta_total(8*valid_length*valid_length*valid_length);
     for (DefInt iz = -valid_length; iz < valid_length; iz++) {
         vec_index_z = (stencil_dis_ + iz) * total_length + stencil_dis_;
-        vec_delta_z.at(iz+valid_length) = func_stencil(std::fabs(dis_ref.at(kZIndex) - iz - 1));
+        delta_z = func_stencil(std::fabs(dis_ref.at(kZIndex) - iz - 1));
         for (DefInt iy = -valid_length; iy < valid_length; iy++) {
             vec_index_y = (vec_index_z + iy) * total_length + stencil_dis_;
-            vec_delta_y.at(iy+valid_length) = func_stencil(std::fabs(dis_ref.at(kYIndex) - iy - 1));
+            delta_y = func_stencil(std::fabs(dis_ref.at(kYIndex) - iy - 1));
             for (DefInt ix = -valid_length; ix < valid_length; ix++) {
                 vec_index_x = vec_index_y + ix;
-                vec_delta_x.at(ix+valid_length) = func_stencil(std::fabs(dis_ref.at(kXIndex) - ix - 1));
+                delta_x = func_stencil(std::fabs(dis_ref.at(kXIndex) - ix - 1));
                 const DefSFBitset& sfbitset_tmp = nodes_in_region.at(vec_index_x);
                 if (sfbitset_tmp!= amrproject::SFBitsetAuxInterface::kInvalidSFbitset) {
                     if (ptr_map_grid_nodes->find(sfbitset_tmp) !=  ptr_map_grid_nodes->end()) {
                         if (map_ib_node_for_reset_.find(sfbitset_tmp) == map_ib_node_for_reset_.end()) {
-                            if (static_cast<DefInt>(ptr_map_grid_nodes->at(sfbitset_tmp)->force_.size()) <= k0IndexForceZ_) {
+                            if (static_cast<DefInt>(ptr_map_grid_nodes->at(sfbitset_tmp)->force_.size())
+                                <= k0IndexForceZ_) {
                                 amrproject::LogManager::LogError("size of forces stored in LBM node"
                                     " is less than indices for immersed boundary forces");
                             } else {
@@ -259,11 +285,13 @@ void FsiImmersedBoundary::DirectForcingScheme3D(const DefReal dt_lbm,
                             }
                             map_ib_node_for_reset_.insert({sfbitset_tmp, 0});
                         }
-                        delta_total = vec_delta_x.at(ix+valid_length)
-                            *vec_delta_y.at(iy+valid_length)*vec_delta_z.at(iz+valid_length);
-                        u_ref+=ptr_map_grid_nodes->at(sfbitset_tmp)->velocity_.at(kXIndex)*delta_total;
-                        v_ref+=ptr_map_grid_nodes->at(sfbitset_tmp)->velocity_.at(kYIndex)*delta_total;
-                        w_ref+=ptr_map_grid_nodes->at(sfbitset_tmp)->velocity_.at(kZIndex)*delta_total;
+                        vec_delta_total.at(vec_index_x) = delta_x*delta_y*delta_z;
+                        u_ref+=
+                            ptr_map_grid_nodes->at(sfbitset_tmp)->velocity_.at(kXIndex)*vec_delta_total.at(vec_index_x);
+                        v_ref+=
+                            ptr_map_grid_nodes->at(sfbitset_tmp)->velocity_.at(kYIndex)*vec_delta_total.at(vec_index_x);
+                        w_ref+=
+                            ptr_map_grid_nodes->at(sfbitset_tmp)->velocity_.at(kZIndex)*vec_delta_total.at(vec_index_x);
                     } else {
                         std::vector<DefReal> coordinates;
                         sfbitset_aux.SFBitsetComputeCoordinateVir(sfbitset_tmp, domain_info.grid_space_, &coordinates);
@@ -282,17 +310,15 @@ void FsiImmersedBoundary::DirectForcingScheme3D(const DefReal dt_lbm,
     ptr_geo_vertex->force_.at(kYIndex) = ib_stiffness_ * (ptr_geo_vertex->velocity_.at(kYIndex) - v_ref);
     ptr_geo_vertex->force_.at(kZIndex) = ib_stiffness_ * (ptr_geo_vertex->velocity_.at(kZIndex) - w_ref);
 
-    const DefReal area = ptr_geo_vertex->area_ / dt_lbm / dt_lbm / dt_lbm;
+    const DefReal area = ptr_geo_vertex->area_/dt_lbm/domain_info.grid_space_[kXIndex]/domain_info.grid_space_[kXIndex];
     for (DefInt iz = -valid_length; iz < valid_length; iz++) {
         vec_index_z = (stencil_dis_ + iz) * total_length + stencil_dis_;
-        vec_delta_z.at(iz+valid_length) = func_stencil(std::fabs(dis_ref.at(kZIndex) - iz - 1));
         for (DefInt iy = -valid_length; iy < valid_length; iy++) {
             vec_index_y = (vec_index_z + iy) * total_length + stencil_dis_;
             for (DefInt ix = -valid_length; ix < valid_length; ix++) {
                 vec_index_x = vec_index_y + ix;
                 const DefSFBitset& sfbitset_tmp = nodes_in_region.at(vec_index_x);
-                delta_total = vec_delta_x.at(ix+valid_length)*vec_delta_y.at(iy+valid_length)
-                    *vec_delta_z.at(iz+valid_length)*area;
+                const DefReal& delta_total = vec_delta_total.at(vec_index_x)*area;
                 ptr_map_grid_nodes->at(sfbitset_tmp)->force_.at(k0IndexForceX_)+=
                     ptr_geo_vertex->force_.at(kXIndex)*delta_total;
                 ptr_map_grid_nodes->at(sfbitset_tmp)->force_.at(k0IndexForceY_)+=
@@ -300,6 +326,30 @@ void FsiImmersedBoundary::DirectForcingScheme3D(const DefReal dt_lbm,
                 ptr_map_grid_nodes->at(sfbitset_tmp)->force_.at(k0IndexForceZ_)+=
                     ptr_geo_vertex->force_.at(kZIndex)*delta_total;
             }
+        }
+    }
+
+    if (domain_info.bool_periodic_domain_) {
+        for (auto iter : nodes_overlap) {
+            if (map_ib_node_for_reset_.find(iter.second) == map_ib_node_for_reset_.end()) {
+                if (static_cast<DefInt>(ptr_map_grid_nodes->at(iter.second)->force_.size()) > k0IndexForceY_) {
+                    // compute macro variables and reset immersed boundary force on grid nodes as zeros
+                    func_compute_macro(dt_lbm, ptr_map_grid_nodes->at(iter.second).get(),
+                        &ptr_map_grid_nodes->at(iter.second)->rho_,
+                        &ptr_map_grid_nodes->at(iter.second)->velocity_);
+                } else {
+                    amrproject::LogManager::LogError("size of forces stored in LBM node"
+                        " is less than indices for immersed boundary forces");
+                }
+                map_ib_node_for_reset_.insert({iter.second, 0});
+            }
+            const DefReal& delta_total = vec_delta_total.at(iter.first)*area;
+            ptr_map_grid_nodes->at(iter.second)->force_.at(k0IndexForceX_) +=
+                ptr_geo_vertex->force_.at(kXIndex)*delta_total;
+            ptr_map_grid_nodes->at(iter.second)->force_.at(k0IndexForceY_) +=
+                ptr_geo_vertex->force_.at(kYIndex)*delta_total;
+            ptr_map_grid_nodes->at(iter.second)->force_.at(k0IndexForceZ_) +=
+                ptr_geo_vertex->force_.at(kZIndex)*delta_total;
         }
     }
 }
@@ -424,11 +474,10 @@ void FsiImmersedBoundary::SendNReceiveNodesForImmersedBoundary(const DefInt dim,
     for (int i = 1; i < num_ranks; ++i) {
         int i_rank_send = (rank_id + i) % num_ranks;
         int i_rank_receive = (rank_id - i + num_ranks)% num_ranks;
-        DefMap<std::unique_ptr<GridNodeLbm>>  map_tmp;
         std::unique_ptr<char[]> ptr_buffer_receive =
             mpi_manager.BlockingSendNReceiveGridNode<GridNodeLbm>(i_rank_send, i_rank_receive, ib_force_size,
             map_ib_node_for_mpi_send_, send_buffer_info, receive_buffer_info, func_copy_a_node_to_buffer,
-            map_tmp, &vec_vec_reqs_send.at(i_rank_send), &vec_ptr_buffer_send);
+            *ptr_map_grid_nodes, &vec_vec_reqs_send.at(i_rank_send), &vec_ptr_buffer_send);
         // decode buffer
         if (ptr_buffer_receive != nullptr) {
             DefSizet buffer_size = receive_buffer_info.at(i_rank_receive).array_buffer_size_.at(1)

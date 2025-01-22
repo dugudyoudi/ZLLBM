@@ -135,12 +135,12 @@ void GeoShapeDefaultQuadrilateral3D::InitialShape(const DefReal dx_background) {
     DefReal edge2_length = std::sqrt(Square(diagonal_point_.at(kXIndex) - neighbor_point_.at(kXIndex))
         + Square(diagonal_point_.at(kYIndex) - neighbor_point_.at(kYIndex))
         + Square(diagonal_point_.at(kZIndex) - neighbor_point_.at(kZIndex)));
-    DefSizet edge1_num_points = DefSizet(edge1_length / dx + kEps) + 1;
-    DefSizet edge2_num_points = DefSizet(edge2_length / dx + kEps) + 1;
-    DefSizet num_points = edge1_num_points * edge2_num_points;
+    edge1_num_points_ = DefInt(edge1_length / dx + kEps) + 1;
+    edge2_num_points_ = DefInt(edge2_length / dx + kEps) + 1;
+    DefInt num_points = edge1_num_points_ * edge2_num_points_;
     ptr_geo_info_->vec_vertices_.resize(num_points);
-    DefReal edge1_arc = edge1_length / edge1_num_points,
-        edge2_arc = edge2_length / edge2_num_points,
+    DefReal edge1_arc = edge1_length / edge1_num_points_,
+        edge2_arc = edge2_length / edge2_num_points_,
         edge1_dir_x = (start_point_.at(kXIndex) - neighbor_point_.at(kXIndex)) / edge1_length,
         edge1_dir_y = (start_point_.at(kYIndex) - neighbor_point_.at(kYIndex)) / edge1_length,
         edge1_dir_z = (start_point_.at(kZIndex) - neighbor_point_.at(kZIndex)) / edge1_length,
@@ -149,12 +149,12 @@ void GeoShapeDefaultQuadrilateral3D::InitialShape(const DefReal dx_background) {
         edge2_dir_z = (diagonal_point_.at(kZIndex) - neighbor_point_.at(kZIndex)) / edge2_length;
     DefReal mid_x, mid_y, mid_z;
     DefSizet node_index;
-    for (DefSizet i = 0; i < edge1_num_points; ++i) {
+    for (DefSizet i = 0; i < edge1_num_points_; ++i) {
         mid_x = neighbor_point_.at(kXIndex) + (i + 0.5) * edge1_dir_x * edge1_arc + offset[kXIndex];
         mid_y = neighbor_point_.at(kYIndex) + (i + 0.5) * edge1_dir_y * edge1_arc + offset[kYIndex];
         mid_z = neighbor_point_.at(kZIndex) + (i + 0.5) * edge1_dir_z * edge1_arc + offset[kZIndex];
-        for (DefSizet j = 0; j < edge2_num_points; ++j) {
-            node_index = i*edge1_num_points + j;
+        for (DefSizet j = 0; j < edge2_num_points_; ++j) {
+            node_index = i*edge1_num_points_ + j;
             ptr_geo_info_->vec_vertices_.at(node_index) = ptr_geo_info_->GeoIndexVertexCreator();
             ptr_geo_info_->vec_vertices_.at(node_index)->coordinate_[kXIndex] =
                 mid_x + (j + 0.5) * edge2_dir_x * edge2_arc;

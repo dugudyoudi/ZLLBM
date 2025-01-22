@@ -89,6 +89,27 @@ void MpiManager::CheckMpiNodesCorrespondence(const GridInfoInterface& grid_info)
         }
     }
 
+                if (rank_id_ == 1) {
+    std::ofstream file1("test.txt");
+    std::array<DefAmrLUint, 3> indicies;
+    SFBitsetAux3D sfbitset_aux;
+     for (const auto& iter :grid_info.map_grid_node_) {
+        if (mpi_communication_outer_layers_.at(i_level).find(iter.first) == mpi_communication_outer_layers_.at(i_level).end() ) {
+            sfbitset_aux.SFBitsetComputeIndices(iter.first, &indicies);
+        file1<< indicies[0] << "  "<< indicies[1] << " " << indicies[2] << std::endl;
+        }
+
+     }
+
+    // for (const auto& iter : mpi_communication_outer_layers_.at(i_level)) {
+    //     sfbitset_aux.SFBitsetComputeIndices(iter.first, &indicies);
+    //     file1<< indicies[0] << "  "<< indicies[1] << " " << indicies[2] << std::endl;
+    // }
+    file1.close();
+
+
+}
+
     int i_rev = 0;
     DefInt flag_receive_once = 1, flag_receive_more = 2;
     DefMap<DefInt> map_received;

@@ -50,7 +50,9 @@ void GeometryInfoInterface::SetupGeometryInfo(DefReal time,
     const MpiManager& mpi_manager, const GridInfoInterface& grid_info) {
     InstantiateGeometryVertexInfo(mpi_manager.GetSFBitsetMinCurrentRank().to_ullong(),
         mpi_manager.GetSFBitsetMaxCurrentRank().to_ullong(), *grid_info.GetPtrSFBitsetAux());
-    ptr_geo_shape_->UpdateShape(time);
+    if (need_update_shape_) {
+        ptr_geo_shape_->UpdateShape(time);
+    }
 }
 }  // end namespace amrproject
 }  // end namespace rootproject

@@ -575,12 +575,6 @@ std::unique_ptr<char[]> MpiManager::BlockingSendNReceiveGridNode(const int i_ran
     std::vector<std::unique_ptr<char[]>>* const ptr_vec_buffer_send) const
     requires std::is_base_of<GridNode, Node_T>::value {
     // send node information
-    std::function<void(const DefMap<DefInt>& , char* const)> func_copy_node_to_buffer =
-        [this, node_info_size, func_write_buffer, &map_nodes_info](
-        const DefMap<DefInt>& map_send, char* const ptr_buffer) {
-        CopyNodeInfoToBuffer<Node_T>(node_info_size, func_write_buffer, map_send, map_nodes_info, ptr_buffer);
-    };
-
     int node_buffer_size = sizeof(DefSFBitset) + node_info_size;;
     if (send_buffer_info.at(i_rank_send).bool_exist_) {
         // copy grid node information to buffer

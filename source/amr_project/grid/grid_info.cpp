@@ -69,7 +69,7 @@ DomainInfo GridInfoInterface::GetDomainInfo() const {
         indices_max = ptr_parent_grid_manager_->GetMaxIndexOfBackgroundNodeArrAsVec();
     ptr_sfbitset_aux_->GetMinAtGivenLevel(i_level_, indices_min, &domain_info.domain_min_n_level_);
     ptr_sfbitset_aux_->GetMaxAtGivenLevel(i_level_, indices_max, &domain_info.domain_max_n_level_);
-    CheckIfPeriodicDomainRequired(ptr_parent_grid_manager_->k0GridDims_,
+    domain_info.bool_periodic_domain_ = CheckIfPeriodicDomainRequired(ptr_parent_grid_manager_->k0GridDims_,
         &domain_info.periodic_min_, &domain_info.periodic_max_);
     domain_info.grid_space_ = GetGridSpace();
     return domain_info;

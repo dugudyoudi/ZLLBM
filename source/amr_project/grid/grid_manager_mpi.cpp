@@ -614,7 +614,6 @@ void GridManagerInterface::InstantiateGridNodeAllLevelMpi(const int i_rank,
         }
     }
 
-
     // find and instantiate nodes on outer communication layers layer by layer
     for (auto i_layer = 0; i_layer < num_partition_outer_layer; ++i_layer) {
         for (const auto& iter_interface : map_outmost_current) {

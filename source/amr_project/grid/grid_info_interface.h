@@ -91,6 +91,7 @@ struct OutputNodeVariableInfoInterface {
 struct DomainInfo {
  public:
     std::vector<DefReal> grid_space_;  ///< grid space at current grid level
+    bool bool_periodic_domain_ = false;
     std::vector<bool> periodic_min_, periodic_max_;
     std::vector<DefSFBitset> domain_min_n_level_, domain_max_n_level_;
 };

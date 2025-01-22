@@ -906,8 +906,6 @@ void SFBitsetAux3D::FindPartitionBlocksMin(const DefSFCodeToUint& code_in, const
     code_current = (code_in + 8 - code_remain)* block_length_cubic - 1;
     DefSFBitset bitset_tmp = static_cast<DefSFBitset>(code_current);
 
-    std::array<DefAmrLUint, 3> indices;
-    SFBitsetComputeIndices(bitset_tmp, &indices);
     switch (code_remain) {
     case 7:
         bitset_tmp = static_cast<DefSFBitset>(code_in * block_length_cubic);
@@ -3607,7 +3605,7 @@ void SFBitsetAux3D::FindPartition6BlocksMin(const DefSFBitset& bitset_max_corner
             }
             bitset_tmp2 = FindYPos(bitset_tmp2);
             ++index_y;
-            index_x = indices[kXIndex];
+            index_x = indices2[kXIndex];
         }
     }
 }
