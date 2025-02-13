@@ -9,15 +9,17 @@
 */
 #include <unordered_map>
 #include <utility>
+#include <cstdio>
+#include <string>
 #include "mpi/mpi_manager.h"
 #include "grid/grid_manager.h"
 #include "./lbm_interface.h"
 #include "immersed_boundary/immersed_boundary.h"
 #include "io/log_write.h"
+#include "io/input_parser.h"
 namespace rootproject {
 namespace lbmproject {
 DefMap<DefInt> FsiImmersedBoundary::map_ib_node_for_reset_ = {};
-
 void FsiImmersedBoundary::ClearNodesRecordForIB() {
     map_ib_node_for_reset_.clear();
 }
@@ -41,7 +43,12 @@ void FsiImmersedBoundary::CalculateBodyForce(const GridInfoLbmInteface& grid_inf
     std::function<void(const amrproject::SFBitsetAuxInterface&,
         const amrproject::DomainInfo&, DefMap<std::unique_ptr<GridNodeLbm>>* const,
         GeometryVertexImmersedBoundary* const)> func_ib_force;
-    const SolverLbmInterface* ptr_solver_lbm = dynamic_cast<SolverLbmInterface*>(grid_info.GetPtrToSolver());
+    SolverLbmInterface* ptr_solver_lbm = nullptr;
+    if (auto ptr = grid_info.GetPtrToSolver().lock()) {
+        ptr_solver_lbm = dynamic_cast<SolverLbmInterface*>(ptr.get());
+    } else {
+        amrproject::LogManager::LogError("LBM solver is not created.");
+    }
     const DefReal dt_lbm = ptr_solver_lbm->GetCollisionOperator(grid_info.GetGridLevel()).GetDtLbm();
     const std::function<void(const DefReal, const std::vector<DefReal>&, const std::vector<DefReal>&,
         DefReal* const, std::vector<DefReal>* const)> func_macro_with_force = ptr_solver_lbm->func_macro_with_force_;
@@ -533,8 +540,13 @@ void GeometryInfoImmersedBoundary::SetupGeometryInfo(const DefReal time,
     this->amrproject::GeometryInfoInterface::SetupGeometryInfo(time, mpi_manager, grid_info);
 #ifdef ENABLE_MPI
     // find nodes near immersed boundary and on mpi outer layers
-    const SolverLbmInterface& solver_lbm = *(dynamic_cast<SolverLbmInterface*>(grid_info.GetPtrToSolver()));
-    const DefReal dt_lbm = solver_lbm.GetCollisionOperator(grid_info.GetGridLevel()).GetDtLbm();
+    SolverLbmInterface* ptr_solver_lbm = nullptr;
+    if (auto ptr = grid_info.GetPtrToSolver().lock()) {
+        ptr_solver_lbm = dynamic_cast<SolverLbmInterface*>(ptr.get());
+    } else {
+        amrproject::LogManager::LogError("LBM solver is not created.");
+    }
+    const DefReal dt_lbm = ptr_solver_lbm->GetCollisionOperator(grid_info.GetGridLevel()).GetDtLbm();
     amrproject::DomainInfo domain_info = grid_info.GetDomainInfo();
     const amrproject::SFBitsetAuxInterface& sfbitset_aux = *grid_info.GetPtrSFBitsetAux();
     std::vector<DefReal> grid_space_background = sfbitset_aux.GetBackgroundGridSpacing();
@@ -568,6 +580,76 @@ void GeometryInfoImmersedBoundary::SetupGeometryInfo(const DefReal time,
         }
     }
 #endif  //  ENABLE_MPI
+}
+/**
+ * @brief function to read and set geometry parameters.
+ * @param[in] level default geometry level.
+ * @param[in] geo_parameters map storing geometry parameters.
+ */
+void GeometryInfoImmersedBoundary::ReadAndSetGeoParameters(const DefInt level,
+    const std::map<std::string, std::string>& geo_parameters) {
+    amrproject::InputParser input_parser;
+    input_parser.GetValue<bool>("ib.output_ib_force", geo_parameters, &write_ib_force_);
+    amrproject::GeometryInfoInterface::ReadAndSetGeoParameters(level, geo_parameters);
+}
+/**
+ * @brief function to write time history of Lagrangian force acting on the geometry.
+ * @param[in] time  current time.
+ */
+void GeometryInfoImmersedBoundary::WriteTimeHisLagrangianForce(const DefReal time, const DefReal dx_background) const {
+    if (!write_ib_force_) {
+        return;
+    }
+    int rank_id = 0;
+#ifdef ENABLE_MPI
+    MPI_Comm_rank(MPI_COMM_WORLD, &rank_id);
+#endif  // ENABLE_MPI
+    FILE* fp = nullptr;
+    std::string filename = "ib_force_for_geo" + std::to_string(i_geo_) + "_rank" +std::to_string(rank_id) + ".txt";
+
+    if (time < 1 + kEps) {
+        std::remove(filename.c_str());
+        fopen_s(&fp, filename.c_str(), "w");
+        if (fp) {
+            fprintf_s(fp, "%s %s %s %s\n", "time", "force_x", "force_y", "force_z");
+        } else {
+            amrproject::LogManager::LogError("Failed to open the file for writing IB forces.\n");
+        }
+    } else {
+        fopen_s(&fp, filename.c_str(), "a");
+    }
+    if (fp) {
+        DefReal fx = 0., fy = 0., fz = 0.;
+        DefReal scale = 1. / dx_background;
+        if (k0GeoDim_ == 3) {
+            scale/= dx_background;
+        }
+        for (const auto& iter_vertex : map_vertices_info_) {
+            GeometryVertexImmersedBoundary* ptr_vertex_info =
+                dynamic_cast<GeometryVertexImmersedBoundary*>(iter_vertex.second.get());
+            fx += ptr_vertex_info->force_.at(kXIndex) * ptr_vertex_info->area_ * scale;
+            fy += ptr_vertex_info->force_.at(kYIndex) * ptr_vertex_info->area_ * scale;
+            fz += ptr_vertex_info->force_.at(kZIndex) * ptr_vertex_info->area_ * scale;
+        }
+        fprintf_s(fp, "%f %f %f %f\n", time - 1., fx, fy, fz);
+        fclose(fp);
+    } else {
+        amrproject::LogManager::LogError("Failed to open the file for writing IB forces.\n");
+    }
+}
+/**
+ * @brief function to instantiate class of geometry information based on geometry type.
+ * @param[in] dims dimension of the geometry.
+ * @param[in] geo_type type of geometry.
+ * @return share pointer of geometry information
+ */
+std::shared_ptr<amrproject::GeometryInfoInterface> GeoIBTypeReader::ReadGeoType(
+    const DefInt dims, const std::string& geo_type) const {
+    if (geo_type == "origin_ib") {
+        return std::make_shared<GeometryInfoImmersedBoundary>(dims);
+    } else {
+        return amrproject::GeoTypeReader::ReadGeoType(dims, geo_type);
+    }
 }
 }  // end namespace lbmproject
 }  // end namespace rootproject

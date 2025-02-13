@@ -183,7 +183,7 @@ class GridInfoInterface {
     DefInt computational_cost_ = 1;
     std::string node_type_;
     std::vector<DefReal> grid_space_;
-    std::shared_ptr<SolverInterface> ptr_solver_ = nullptr;
+    std::weak_ptr<SolverInterface> ptr_solver_;
     SFBitsetAuxInterface* ptr_sfbitset_aux_ = nullptr;
 
     std::shared_ptr<GhostGridInfoInterface> ptr_ghost_grid_info_;
@@ -203,15 +203,16 @@ class GridInfoInterface {
     DefInt GetNumCoarse2FineLayer() const {return k0NumCoarse2FineLayer_;}
     DefInt GetNumFine2CoarseGhostLayer() const {return k0NumFine2CoarseGhostLayer_;}
     DefInt GetNumCoarse2FineGhostLayer() const {return k0NumCoarse2FineGhostLayer_;}
-    SolverInterface* GetPtrToSolver() const {return ptr_solver_.get();}
+    std::weak_ptr<SolverInterface> GetPtrToSolver() const {return ptr_solver_;}
     SFBitsetAuxInterface* GetPtrSFBitsetAux() const {return ptr_sfbitset_aux_;}
     const std::string& GetNodeType() const {return node_type_;}
+
 
     void SetGridLevel(const DefInt i_level);
     void SetComputationalCost(const DefInt computational_cost);
     void SetGridSpace(const std::vector<DefReal>& grid_space);
     void SetPtrSFBitsetAux(SFBitsetAuxInterface* const ptr_sfbitset_aux);
-    void SetPtrSolver(const std::shared_ptr<SolverInterface>& ptr_solver);
+    void SetPtrSolver(const std::weak_ptr<SolverInterface>& ptr_solver);
     void SetMemberVariable(const std::string& member_name, int value);
     void SetNodeType(const std::string& node_type);
     void SetNumFine2CoarseLayer(const DefInt num_fine2coarse_layer);

@@ -89,27 +89,6 @@ void MpiManager::CheckMpiNodesCorrespondence(const GridInfoInterface& grid_info)
         }
     }
 
-                if (rank_id_ == 1) {
-    std::ofstream file1("test.txt");
-    std::array<DefAmrLUint, 3> indicies;
-    SFBitsetAux3D sfbitset_aux;
-     for (const auto& iter :grid_info.map_grid_node_) {
-        if (mpi_communication_outer_layers_.at(i_level).find(iter.first) == mpi_communication_outer_layers_.at(i_level).end() ) {
-            sfbitset_aux.SFBitsetComputeIndices(iter.first, &indicies);
-        file1<< indicies[0] << "  "<< indicies[1] << " " << indicies[2] << std::endl;
-        }
-
-     }
-
-    // for (const auto& iter : mpi_communication_outer_layers_.at(i_level)) {
-    //     sfbitset_aux.SFBitsetComputeIndices(iter.first, &indicies);
-    //     file1<< indicies[0] << "  "<< indicies[1] << " " << indicies[2] << std::endl;
-    // }
-    file1.close();
-
-
-}
-
     int i_rev = 0;
     DefInt flag_receive_once = 1, flag_receive_more = 2;
     DefMap<DefInt> map_received;
@@ -163,7 +142,7 @@ void MpiManager::CheckMpiPeriodicCorrespondence(const GridInfoInterface& grid_in
     const DefInt i_level = grid_info.GetGridLevel();
     grid_info.GetPtrSFBitsetAux()->GetMinAtGivenLevel(i_level, indices_min, &domain_min_n_level);
     grid_info.GetPtrSFBitsetAux()->GetMaxAtGivenLevel(i_level, indices_max, &domain_max_n_level);
-    DefSFBitset sfbitset_max, sfbitset_min, sfbitset_tmp;
+    DefSFBitset sfbitset_max = ~0, sfbitset_min = ~0, sfbitset_tmp = ~0;
     std::vector<DefReal> coordinates(dims), coordinates2(dims);
     std::vector<DefSFBitset> vec_in_region;
     const std::array<DefSFBitset, 2>& take_xref = grid_info.GetPtrSFBitsetAux()->GetTakeXRef(),

@@ -69,7 +69,7 @@ class VtkWriterManager {
     std::string str_vtk_byte_order_;
     std::string k0StrVtkAsciiOrBinary_;
     EVtkWriterGhostCellOption vtk_ghost_cell_option_ =
-        EVtkWriterGhostCellOption::kOutputEntirety;
+        EVtkWriterGhostCellOption::kPartitionMultiBlock;
     Base64Utility base64_instance_;
 
     void OptionInitial(const bool bool_binary);

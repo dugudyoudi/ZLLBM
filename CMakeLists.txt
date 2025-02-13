@@ -8,16 +8,17 @@ include(${CMAKE_SOURCE_DIR}/cmake/build_functions.cmake)
 
 # settings
 option(BUILD_WITH_MPI                          "Enable MPI"                                                ON)
-option(BUILD_TEST_CASES                        "Build cases for test"                                      ON)
+option(BUILD_EXAMPLES                          "Build example cases"                                       ON)
 
-option(DEBUG_UNIT_TEST                         "Buil unit tests"                                           ON)
+option(DEBUG_BUILD_UNIT_TEST                   "Build unit tests"                                          ON)
+option(DEBUG_BUILD_INTEGRATE_TEST              "Build integrate tests"                                     ON)
 option(DEBUG_CHECK_GRID                        "Enable if clauses for checking grid"                       ON)
 option(DEBUG_BUILD_2D_ONLY                     "Disable 3D related functions"                              OFF)
 option(DEBUG_BUILD_3D_ONLY                     "Disable 2D related functions"                              OFF)
 option(DEBUG_TREAT_WARNING_AS_ERROR            "Treat warnings as errors"                                  ON)
 option(DEBUG_CHECK_MEMORY_LEAKS                "Using AddressSanitizer to check memory leaks"              OFF)
 
-set(CMAKE_BUILD_TYPE "Debug")
+#set(CMAKE_BUILD_TYPE "Debug")
 set(CMAKE_CXX_STANDARD 23)
 
 # config project
@@ -79,8 +80,8 @@ if(${CMAKE_CXX_COMPILER_ID} STREQUAL MSVC)
     endif()
     message(STATUS "Current Platform is ${CURRENT_SYSTEM} ${CURRENT_PLATFORM}")
     message("Compiler: MSVC")
-    set(CMAKE_CXX_FLAGS "/std:${CXX_STANDARD}")
-    set(CMAKE_CXX_FLAGS_RELEASE "/Ox /Ot /GS- /GL")
+    #set(CMAKE_CXX_FLAGS "/std:${CXX_STANDARD}")
+    set(CMAKE_CXX_FLAGS_RELEASE "/Ox /Ot /GS- /GL /LTCG")
     set(CMAKE_CXX_FLAGS_DEBUG "/W3 /Zi /EHsc")
     if (DEBUG_TREAT_WARNING_AS_ERROR)
         AppendFlag(CMAKE_CXX_FLAGS_DEBUG "/WX")
@@ -108,7 +109,6 @@ endif()
 
 if (DEBUG_CHECK_MEMORY_LEAKS)
     if (${CMAKE_CXX_COMPILER_ID} STREQUAL MSVC)
-        #AppendFlag(CMAKE_CXX_FLAGS_DEBUG "/fsanitize=address /fsanitize=fuzzer")
         add_compile_options(/fsanitize=address /fsanitize=fuzzer)
         add_link_options(/fsanitize=address /fsanitize=fuzzer)
     elseif (CMAKE_CXX_COMPILER_ID MATCHES ".*Clang")
@@ -146,25 +146,31 @@ add_subdirectory("./source/amr_project")
 # lbm project
 add_subdirectory("./source/lbm_project")
 
+# example cases
+if(BUILD_EXAMPLES)
+    message("Build examples")
+    add_subdirectory("examples/lbm")
+endif(BUILD_EXAMPLES)
+
+
 # test cases
-if(BUILD_TEST_CASES)
+if (DEBUG_BUILD_INTEGRATE_TEST OR DEBUG_BUILD_UNIT_TEST)
+    add_subdirectory("./googletest-main")
+endif()
+
+if(DEBUG_BUILD_INTEGRATE_TEST)
+    message("Build integrate tests")
     add_subdirectory("integrate_test/test_grid2d")
     add_subdirectory("integrate_test/test_grid3d")
     add_subdirectory("integrate_test/test_lbm")
-endif(BUILD_TEST_CASES)
-
-# run cases
-add_subdirectory("run_cases/test_tmp")
+endif(DEBUG_BUILD_INTEGRATE_TEST)
 
 
-# unit test
-if(DEBUG_UNIT_TEST)
-    # compile gtest
-    add_subdirectory("./googletest-main")
-    # compile test cases
+if(DEBUG_BUILD_UNIT_TEST)
+    message("Build unit tests")
     add_subdirectory("./unit_tests/test_amr")
     add_subdirectory("./unit_tests/test_lbm")
-endif(DEBUG_UNIT_TEST)
+endif(DEBUG_BUILD_UNIT_TEST)
 
 
 

@@ -17,7 +17,7 @@ namespace lbmproject {
 class GridInfoLbmInteface;
 class BoundaryBounceBackD2Q9 : public BoundaryBounceBack2D {
  public:
-    void CalBoundaryCondition(const ELbmBoundaryType boundary_type,
+    void CalBoundaryCondition(const amrproject::EDomainBoundaryDirection boundary_dir,
         const DefMap<DefInt>& boundary_nodes,
         GridInfoLbmInteface* const pr_grid_info) const override;
 };

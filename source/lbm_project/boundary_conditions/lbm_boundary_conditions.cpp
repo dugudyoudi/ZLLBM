@@ -11,7 +11,7 @@
 #include <string>
 #include "boundary_conditions/lbm_boundary_conditions.h"
 #include "io/log_write.h"
-#include "lbm_interface.h"
+#include "./lbm_interface.h"
 namespace rootproject {
 namespace lbmproject {
  /**
@@ -21,26 +21,34 @@ namespace lbmproject {
  * @param[out] ptr_boundary_condition pointer to boundary conditions.
  */   
 void SolverLbmInterface::SetDomainBoundaryCondition(
-    const ELbmBoundaryType which_boundary, const ELbmBoundaryConditionScheme which_boundary_condition,
-    std::map<ELbmBoundaryType, std::unique_ptr<BoundaryConditionLbmInterface>>* const ptr_boundary_condition) const {
+    const amrproject::EDomainBoundaryDirection which_boundary,
+    const ELbmBoundaryConditionScheme which_boundary_condition,
+    std::map<amrproject::EDomainBoundaryDirection, std::unique_ptr<BoundaryConditionLbmInterface>>* const
+    ptr_boundary_condition) const {
     switch (which_boundary_condition) {
     case ELbmBoundaryConditionScheme::kBounceBack: {
             if (ptr_boundary_condition->find(which_boundary) == ptr_boundary_condition->end()) {
                 ptr_boundary_condition->insert({which_boundary, BoundaryBounceBackCreator()});
-                ptr_boundary_condition->at(which_boundary)->boundary_scheme_ = ELbmBoundaryConditionScheme::kBounceBack;
             }
         }
         break;
     case ELbmBoundaryConditionScheme::kPeriodic: {
             if (ptr_boundary_condition->find(which_boundary) == ptr_boundary_condition->end()) {
                 ptr_boundary_condition->insert({which_boundary, BoundaryPeriodicCreator()});
-                ptr_boundary_condition->at(which_boundary)->boundary_scheme_ = ELbmBoundaryConditionScheme::kPeriodic;
+            }
+        }
+        break;
+    case ELbmBoundaryConditionScheme::kNonEqExtrapolation: {
+            if (ptr_boundary_condition->find(which_boundary) == ptr_boundary_condition->end()) {
+                ptr_boundary_condition->insert({which_boundary, BoundaryNonEqExtraCreator()});
             }
         }
         break;
     default:
+        amrproject::LogManager::LogError("Type of boundary condition is undefined");
         break;
     }
+    ptr_boundary_condition->at(which_boundary)->boundary_scheme_ = which_boundary_condition;
 }
 /**
  * @brief function to create instance for bounce back boundary condition.
@@ -52,8 +60,7 @@ std::unique_ptr<BoundaryConditionLbmInterface> SolverLbmInterface::BoundaryBounc
         return std::make_unique<BoundaryBounceBack3D>();
     } else {
         amrproject::LogManager::LogError("Dimension of the solver should be 2 or 3"
-            " for instantiating bounce back boundary condition in "
-            + std::string(__FILE__) + " at line " + std::to_string(__LINE__));
+            " for instantiating bounce back boundary condition.");
         return nullptr;
     }
 }
@@ -67,50 +74,63 @@ std::unique_ptr<BoundaryConditionLbmInterface> SolverLbmInterface::BoundaryPerio
         return std::make_unique<BoundaryPeriodic3D>();
     } else {
         amrproject::LogManager::LogError("Dimension of the solver should be 2 or 3"
-            " for instantiating periodic boundary condition in "
-            + std::string(__FILE__) + " at line " + std::to_string(__LINE__));
+            " for instantiating periodic boundary condition.");
+        return nullptr;
+    }
+}
+/**
+ * @brief function to create instance for non-equilibrium extrapolation boundary condition.
+ */
+std::unique_ptr<BoundaryConditionLbmInterface> SolverLbmInterface::BoundaryNonEqExtraCreator() const {
+    if (k0SolverDims_ == 2) {
+        return std::make_unique<BoundaryNonEqExtrapolation2D>();
+    } else if (k0SolverDims_ == 3) {
+        return std::make_unique<BoundaryNonEqExtrapolation3D>();
+    } else {
+        amrproject::LogManager::LogError("Dimension of the solver should be 2 or 3"
+            " for instantiating non-equilibrium extrapolation boundary condition.");
         return nullptr;
     }
 }
 /**
  * @brief function to get indices of distribution functions need to compute at the boundary and their inverses.
- * @param[in] boundary_type type of the boundary.
+ * @param[in] boundary_dir boundary direction.
  * @param[in] lbm_solver reference to LBM solver.
  * @param[out] ptr_indices indices of distribution functions need to compute.
  * @param[out] ptr_inverse_indices inverse indices.
  */
 void BoundaryConditionLbmInterface::GetBoundaryNInverseIndices(
-    const ELbmBoundaryType boundary_type,
+    const amrproject::EDomainBoundaryDirection boundary_dir,
     const SolverLbmInterface& lbm_solver,
     std::vector<DefInt>* const ptr_indices,
     std::vector<DefInt>* const ptr_inverse_indices) const {
-    switch (boundary_type) {
-        case ELbmBoundaryType::kBoundaryXMin:
+    switch (boundary_dir) {
+        case amrproject::EDomainBoundaryDirection::kBoundaryXMin:
             // nodes at negative x boundary need to compute distribution functions at positive x
             *ptr_indices = lbm_solver.k0QIndicesPos_.at(kXIndex);
             *ptr_inverse_indices = lbm_solver.k0QIndicesNeg_.at(kXIndex);
             ptr_indices->shrink_to_fit();
             ptr_inverse_indices->shrink_to_fit();
             break;
-        case ELbmBoundaryType::kBoundaryXMax:
+        case amrproject::EDomainBoundaryDirection::kBoundaryXMax:
             *ptr_indices = lbm_solver.k0QIndicesNeg_.at(kXIndex);
             *ptr_inverse_indices = lbm_solver.k0QIndicesPos_.at(kXIndex);
             ptr_indices->shrink_to_fit();
             ptr_inverse_indices->shrink_to_fit();
             break;
-        case ELbmBoundaryType::kBoundaryYMin:
+        case amrproject::EDomainBoundaryDirection::kBoundaryYMin:
             *ptr_indices = lbm_solver.k0QIndicesPos_.at(kYIndex);
             *ptr_inverse_indices = lbm_solver.k0QIndicesNeg_.at(kYIndex);
             ptr_indices->shrink_to_fit();
             ptr_inverse_indices->shrink_to_fit();
             break;
-        case ELbmBoundaryType::kBoundaryYMax:
+        case amrproject::EDomainBoundaryDirection::kBoundaryYMax:
             *ptr_indices = lbm_solver.k0QIndicesNeg_.at(kYIndex);
             *ptr_inverse_indices = lbm_solver.k0QIndicesPos_.at(kYIndex);
             ptr_indices->shrink_to_fit();
             ptr_inverse_indices->shrink_to_fit();
             break;
-        case ELbmBoundaryType::kBoundaryZMin:
+        case amrproject::EDomainBoundaryDirection::kBoundaryZMin:
             if (lbm_solver.GetSolverDim() == 2) {
                 amrproject::LogManager::LogError("Dimension for LBM solver is 2, does not support "
                     " boundary in z direction in "
@@ -119,7 +139,7 @@ void BoundaryConditionLbmInterface::GetBoundaryNInverseIndices(
             *ptr_indices = lbm_solver.k0QIndicesPos_.at(kZIndex);
             *ptr_inverse_indices = lbm_solver.k0QIndicesNeg_.at(kZIndex);
             break;
-        case ELbmBoundaryType::kBoundaryZMax:
+        case amrproject::EDomainBoundaryDirection::kBoundaryZMax:
             if (lbm_solver.GetSolverDim() == 2) {
                 amrproject::LogManager::LogError("Dimension for LBM solver is 2, does not support "
                     " boundary in z direction in "

@@ -185,7 +185,7 @@ class GeometryInfoConnection : public GeometryInfoInterface, public GeometryConn
 };
 class GeometryInfoConnectionCreator :public GeometryInfoCreatorInterface {
  public:
-    std::shared_ptr<GeometryInfoInterface> CreateGeometryInfo(const DefInt dims) override {
+    std::shared_ptr<GeometryInfoInterface> CreateGeometryInfo(const DefInt dims) const override {
         std::shared_ptr<GeometryInfoConnection> ptr_tmp = std::make_shared<GeometryInfoConnection>(dims);
         return ptr_tmp;
     };

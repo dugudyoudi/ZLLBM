@@ -7,6 +7,8 @@
 * @date  2022-8-14
 */
 #include <chrono>
+#include <filesystem>
+#include <stacktrace>
 #include "../defs_libs.h"
 #ifdef ENABLE_MPI
 #include <mpi.h>
@@ -43,8 +45,7 @@ void LogManager::LogStartTime() {
         if (rank_id == 0) {
             printf_s("number of MPI ranks is: %d\n", numprocs);
         }
-        fprintf_s(fp, "number of MPI ranks is: %d; current node is: %d \n",
-            numprocs, rank_id);
+        fprintf_s(fp, "number of MPI ranks is: %d; current node is: %d \n", numprocs, rank_id);
 #endif  // ENABLE_MPI
         fclose(fp);
     }
@@ -112,6 +113,11 @@ void LogManager::LogError(const std::string& msg) {
     FILE* fp = nullptr;
     errno_t err = fopen_s(&fp, (logfile_name_ + std::to_string(rank_id)).c_str(), "a");
     auto trace_msg = std::to_string(std::stacktrace::current());
+    size_t first_newline_pos = trace_msg.find('\n');
+    if (first_newline_pos != std::string::npos) {
+        trace_msg = trace_msg.substr(first_newline_pos + 1);
+    }
+    std::cout << "Current working directory: " << std::filesystem::current_path() << std::endl;
     if (!fp) {
         printf_s("The log file was not opened\n");
     } else {

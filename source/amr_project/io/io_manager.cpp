@@ -14,11 +14,11 @@
 #include "grid/grid_manager.h"
 #include "mpi/mpi_manager.h"
 namespace rootproject {
-namespace amrproject{
+namespace amrproject {
 /**
 * @brief function to setup default io related parameters.
 */
-void IoManager::StartupInitialization() {
+void IoManager::SetupOutputFormat() {
     // set format for writing output data
     if (typeid(k0OutputDataFormat_.output_real_.CastType(1.))
         == typeid(float)) {
@@ -87,7 +87,7 @@ void IoManager::StartupInitialization() {
 /**
 * @brief function to set io related parameters.
 */
-void IoManager::SetIoParameters() {
+void IoManager::SetupDependentIOParameters() {
     vtk_instance_.OptionInitial(bool_binary_);
 }
 /**
@@ -105,5 +105,5 @@ void IoManager::OutputFlowField(
             *ptr_grid_manager, *ptr_criterion_manager);
     }
 }
-}  // end amrproject
+}  // end namespace amrproject
 }  // end namespace rootproject

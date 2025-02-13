@@ -16,12 +16,6 @@
 #include "grid/grid_manager.h"
 namespace rootproject {
 namespace amrproject {
-// static members
-std::array<DefSFBitset, 2> SFBitsetAuxInterface::k0SFBitsetTakeXRef_, SFBitsetAuxInterface::k0SFBitsetTakeYRef_;
-#ifndef  DEBUG_DISABLE_3D_FUNCTION
-std::array<DefSFBitset, 2> SFBitsetAuxInterface::k0SFBitsetTakeZRef_;
-#endif  // DEBUG_DISABLE_3D_FUNCTIONS
-
 #ifndef  DEBUG_DISABLE_2D_FUNCTIONS
 void SFBitsetAux2D::SetSpaceBackground(const std::vector<DefReal>& space_background) {
     if (space_background.size() != 2) {

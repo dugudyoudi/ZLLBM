@@ -36,7 +36,7 @@ class AmrManager {
 
     // modules
 #ifdef ENABLE_MPI
-    int SetUpProgramFeature(int argc, char* argv[]);
+    int StartupAmrManager(int argc, char* argv[]);
 #endif  // ENABLE_MPI
     std::unique_ptr<MpiManager> ptr_mpi_manager_;  // when MPI is not enabled, this point to an empty class
 
@@ -46,10 +46,10 @@ class AmrManager {
 
     void LoadModules(DefInt dims);
 
-    void StartupInitialization(DefInt dim, DefInt level);
-    void SetupParameters();
+    void StartupInitialization(DefInt dim);
+    void SetupDependentParameters();
     void InitializeMesh();
-    void SetupSolverForGrids();
+    void InitializeAllSolvers();
     void FinalizeSimulation();
 
     // time stepping related
@@ -59,8 +59,7 @@ class AmrManager {
     void TimeMarching(const DefAmrLUint time_step);
 
     void AddSolverToGridManager(const SolverCreatorInterface& solver_creator);
-    void SetDependentInfoForAllLevelsTheSame(const std::shared_ptr<SolverInterface>& ptr_solver);
-
+    void SetSameSolverDependentInfoForAllGrids(const std::shared_ptr<SolverInterface>& ptr_solver);
 
  private:
     // mpi

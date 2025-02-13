@@ -27,7 +27,73 @@ void SolverLbmInterface::SolverInitial() {
     } else {
         SetDefault3DFunctions();
     }
+    if (this->bool_forces_) {
+        this->func_macro_ = [this](const DefReal dt_lbm, const GridNodeLbm& lbm_node,
+            DefReal* const ptr_rho, std::vector<DefReal>* const ptr_v) {
+            std::vector<DefReal> force(this->GetAllForcesForANode(lbm_node));
+            this->func_macro_with_force_(dt_lbm, lbm_node.f_, force, ptr_rho, ptr_v);
+        };
+    } else {
+        this->func_macro_ = [this](const DefReal dt_lbm, const GridNodeLbm& lbm_node,
+            DefReal* const ptr_rho, std::vector<DefReal>* const ptr_v) {
+            this->func_macro_without_force_(lbm_node.f_, ptr_rho, ptr_v);
+        };
+    }
     InitialModelDependencies();
+}
+void SolverLbmInterface::ReadAndSetupSolverParameters(const amrproject::InputParser& input_parser) {
+    std::string key_for_this_func =  "solver.lbm";
+    const auto input_map = input_parser.GetNestedMapInput();
+
+    if (input_map.find(key_for_this_func) != input_map.end()) {
+        if (input_map.at(key_for_this_func).find(solver_type_) == input_map.at(key_for_this_func).end()) {
+            amrproject::LogManager::LogError("key (" + solver_type_
+                + ") does not match any solver name in input file");
+        } else {
+            std::string values_str;
+            const auto& solver_parameters = input_map.at(key_for_this_func).at(solver_type_);
+            if (input_parser.GetValue<DefReal>("lbm.viscosity", solver_parameters, &k0LbmViscosity_)) {
+                if (input_parser.print_values_when_read_) {
+                    amrproject::LogManager::LogInfo("Read and set LBM viscosity: " + std::to_string(k0LbmViscosity_));
+                }
+            }
+            if (input_parser.GetValue<DefReal>("lbm.rho_ini", solver_parameters, &k0Rho_)) {
+                if (input_parser.print_values_when_read_) {
+                    amrproject::LogManager::LogInfo("Read and set initial density: " + std::to_string(k0Rho_));
+                }
+            }
+            if (input_parser.GetValue<DefReal>("lbm.velocity_ini", solver_parameters, &k0Velocity_)) {
+                if (input_parser.print_values_when_read_) {
+                    values_str = input_parser.ValuesToOutputStr<DefReal>(k0Velocity_);
+                    amrproject::LogManager::LogInfo("Read and set initial velocity: " + values_str);
+                }
+            }
+            std::vector<DefReal> force_in;
+            if (input_parser.GetValue<DefReal>("lbm.force_ini", solver_parameters, &force_in)) {
+                SetDefaultForce(force_in);
+                if (input_parser.print_values_when_read_) {
+                    values_str = input_parser.ValuesToOutputStr<DefReal>(force_in);
+                    amrproject::LogManager::LogInfo("Read and set initial force: " + values_str);
+                }
+            }
+            if (input_parser.GetValue<DefReal>("lbm.const_force", solver_parameters, &force_in)) {
+                SetConstantForce(force_in);
+                if (input_parser.print_values_when_read_) {
+                    values_str = input_parser.ValuesToOutputStr<DefReal>(force_in);
+                amrproject::LogManager::LogInfo("Read and set constant force: " + values_str);
+                }
+            }
+            DefInt num_force = 0;
+            if (input_parser.GetValue<DefInt>("lbm.force_size", solver_parameters, &num_force)) {
+                SetNumForces(num_force);
+                if (input_parser.print_values_when_read_) {
+                    amrproject::LogManager::LogInfo("Read and set number of forces : " +  std::to_string(num_force));
+                }
+            }
+        }
+    } else {
+        amrproject::LogManager::LogError("key (solver.lbm) is not found for the LBM solver in input file.");
+    }
 }
 /**
  * @brief function to set default force for initializing node.
@@ -51,7 +117,7 @@ std::vector<DefReal> SolverLbmInterface::GetAllForcesForANode(
         force.at(kXIndex) += node.force_.at(i*k0SolverDims_);
         force.at(kYIndex) += node.force_.at(i*k0SolverDims_ + 1);
         if (k0SolverDims_ == 3) {
-            force.at(kZIndex) += force.at(i*k0SolverDims_ + 2);
+            force.at(kZIndex) += node.force_.at(i*k0SolverDims_ + 2);
         }
     }
     return force;
@@ -193,7 +259,7 @@ void SolverLbmInterface::Collision(
 
     if (ptr_lbm_grid_nodes_info->GetPtrToLbmGrid() != nullptr) {
         if (bool_forces_) {
-            if (grid_nodes.begin()->second->force_.size() != GetNumForces()) {
+            if (grid_nodes.size() > 0 && grid_nodes.begin()->second->force_.size() != GetNumForces()) {
                 amrproject::LogManager::LogError("Size of forces should be "
                     + std::to_string(GetNumForces())
                     + " rather than " + std::to_string(grid_nodes.begin()->second->force_.size()) + " in "
@@ -212,6 +278,7 @@ void SolverLbmInterface::Collision(
                 const std::vector<DefReal> force(GetAllForcesForANode(*iter_node.second.get()));
                 func_macro(dt_lbm, iter_node.second->f_, force,
                     &iter_node.second->rho_, &iter_node.second->velocity_);
+
                 collision_opt.CollisionOperator(*this, force, iter_node.second.get());
             }
         }

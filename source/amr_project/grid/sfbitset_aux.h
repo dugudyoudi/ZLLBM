@@ -120,9 +120,9 @@ class SFBitsetAuxInterface {
 
     // set and get protected members
     virtual void SetSpaceBackground(const std::vector<DefReal>& space_background) = 0;
-    std::array<DefSFBitset, 2>& GetTakeXRef() const { return k0SFBitsetTakeXRef_; }
-    std::array<DefSFBitset, 2>& GetTakeYRef() const { return k0SFBitsetTakeYRef_; }
-    std::array<DefSFBitset, 2>& GetTakeZRef() const { return k0SFBitsetTakeZRef_; }
+    std::array<DefSFBitset, 2> GetTakeXRef() const { return k0SFBitsetTakeXRef_; }
+    std::array<DefSFBitset, 2> GetTakeYRef() const { return k0SFBitsetTakeYRef_; }
+    std::array<DefSFBitset, 2> GetTakeZRef() const { return k0SFBitsetTakeZRef_; }
 
     // mpi related
     virtual void GetNLevelCorrespondingOnes(const DefInt i_level,
@@ -130,7 +130,7 @@ class SFBitsetAuxInterface {
 
  protected:
     std::vector<DefReal> k0SpaceBackground_;
-    static std::array<DefSFBitset, 2> k0SFBitsetTakeXRef_, k0SFBitsetTakeYRef_, k0SFBitsetTakeZRef_;
+    std::array<DefSFBitset, 2> k0SFBitsetTakeXRef_, k0SFBitsetTakeYRef_, k0SFBitsetTakeZRef_;
     const DefInt max_reset_code_ = 1000;
     ///<  maximum iteration for reseting indices
 };

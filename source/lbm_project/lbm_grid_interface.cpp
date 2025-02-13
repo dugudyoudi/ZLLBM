@@ -7,6 +7,7 @@
 * @brief functions used for manage LBM grid interface.
 * @date  2023-9-30
 */
+#include <iomanip>
 #include "./lbm_interface.h"
 #include "io/log_write.h"
 #include "io/vtk_writer.h"
@@ -40,11 +41,14 @@ void GridNodeLbm::InterpolationAdditionAssignCoefficient(
  * @param[out] ptr_node pointer to a node.
  */
 void GridInfoLbmInteface::SetNodeVariablesAsZeros(amrproject::GridNode* const ptr_node) {
-    SolverLbmInterface* ptr_lbm_solver = std::dynamic_pointer_cast<SolverLbmInterface>(ptr_solver_).get();
-    GridNodeLbm* ptr_lbm_node = dynamic_cast<GridNodeLbm*>(ptr_node);
-    ptr_lbm_node->rho_ = 0.;
-    ptr_lbm_node->velocity_.assign(ptr_lbm_solver->GetSolverDim(), 0.);
-    ptr_lbm_node->f_.assign(ptr_lbm_solver->k0NumQ_, 0.);
+    if (auto ptr_lbm_solver = std::dynamic_pointer_cast<SolverLbmInterface>(ptr_solver_.lock())) {
+        GridNodeLbm* ptr_lbm_node = dynamic_cast<GridNodeLbm*>(ptr_node);
+        ptr_lbm_node->rho_ = 0.;
+        ptr_lbm_node->velocity_.assign(ptr_lbm_solver->GetSolverDim(), 0.);
+        ptr_lbm_node->f_.assign(ptr_lbm_solver->k0NumQ_, 0.);
+    } else {
+        amrproject::LogManager::LogError("Point to solver has been expired");
+    }
 }
 /**
  * @brief function to advancing simulation at current time step.
@@ -55,18 +59,26 @@ void GridInfoLbmInteface::SetNodeVariablesAsZeros(amrproject::GridNode* const pt
 void GridInfoLbmInteface::UpdateCriterion(const DefReal time_step_current,
     const amrproject::MpiManager& mpi_manager, amrproject::CriterionManager* const ptr_criterion_manager) {
     bool first_ib = true;
-    std::vector<FsiImmersedBoundary*> vec_ib_geo;
+    std::vector<GeometryInfoImmersedBoundary*> vec_ib_geo;
     for (auto& iter_geo : ptr_criterion_manager->vec_ptr_geometries_) {
-        if (iter_geo->GetStatus() == amrproject::EGeometryStatus::kMoving) {
-            iter_geo->UpdateGeometry(time_step_current);
-        }
-        if (auto derived_ptr = dynamic_cast<FsiImmersedBoundary*>(iter_geo.get())) {
-            if (first_ib) {
-                derived_ptr->ClearNodesRecordForIB();
-                first_ib = false;
+        // update when level of geometry and grid are the same
+        if (iter_geo->GetLevel() == i_level_) {
+            if (iter_geo->GetStatus() == amrproject::EGeometryStatus::kMoving) {
+                iter_geo->UpdateGeometry(time_step_current);
             }
-            derived_ptr->CalculateBodyForce(*this, &(iter_geo->map_vertices_info_), GetPtrToLbmGrid());
-            vec_ib_geo.emplace_back(dynamic_cast<FsiImmersedBoundary*>(iter_geo.get()));
+            if (auto derived_ptr = dynamic_cast<GeometryInfoImmersedBoundary*>(iter_geo.get())) {
+                if (first_ib) {
+                    derived_ptr->ClearNodesRecordForIB();
+                    first_ib = false;
+                }
+                derived_ptr->CalculateBodyForce(*this, &(iter_geo->map_vertices_info_), GetPtrToLbmGrid());
+                vec_ib_geo.emplace_back(dynamic_cast<GeometryInfoImmersedBoundary*>(iter_geo.get()));
+            }
+        }
+        if (i_level_ == 0) {
+            if (auto derived_ptr = dynamic_cast<GeometryInfoImmersedBoundary*>(iter_geo.get())) {
+                derived_ptr->WriteTimeHisLagrangianForce(time_step_current, grid_space_[kXIndex]);
+            }
         }
     }
 #ifdef ENABLE_MPI
@@ -103,7 +115,13 @@ void GridInfoLbmInteface::AdvancingAtCurrentTime(const amrproject::ETimeStepping
         &vec_vec_reqs_send, &vec_vec_reqs_receive, &vec_ptr_buffer_send, &vec_ptr_buffer_receive, this);
 #endif  //  ENABLE_MPI
 
-    ptr_solver_->RunSolverOnGivenGrid(time_scheme, time_step_level, time_step_current, *ptr_sfbitset_aux_, this);
+    SolverLbmInterface* ptr_lbm_solver = nullptr;
+    if (auto ptr_tmp = ptr_solver_.lock()) {
+        ptr_lbm_solver = dynamic_cast<SolverLbmInterface*>(ptr_tmp.get());
+    } else {
+        amrproject::LogManager::LogError("LBM solver is not created.");
+    }
+    ptr_lbm_solver->RunSolverOnGivenGrid(time_scheme, time_step_level, time_step_current, *ptr_sfbitset_aux_, this);
 
 #ifdef ENABLE_MPI
     std::function<void(const char*,  amrproject::GridNode* const)> func_read_a_node_from_buffer =
@@ -114,38 +132,49 @@ void GridInfoLbmInteface::AdvancingAtCurrentTime(const amrproject::ETimeStepping
         receive_buffer_info, vec_ptr_buffer_receive, func_read_a_node_from_buffer,
         &vec_vec_reqs_send, &vec_vec_reqs_receive, this);
 
-    if (i_level > 0) {
-        ptr_mpi_manager->MpiCommunicationForInterpolation(*ptr_sfbitset_aux_,
-            *GetPtrToParentGridManager()->vec_ptr_grid_info_.at(i_level - 1).get(), this);
-    }
     MPI_Barrier(MPI_COMM_WORLD);
 #endif  //  ENABLE_MPI
 
     ComputeDomainBoundaryCondition();
 
     // use information in current time step
-    SolverLbmInterface* ptr_lbm_solver = std::dynamic_pointer_cast<SolverLbmInterface>(ptr_solver_).get();
-    ptr_solver_->InformationFromGridOfDifferentLevel(time_step_level, *ptr_sfbitset_aux_, this);
+#ifdef ENABLE_MPI
+    if (i_level > 0) {
+        ptr_mpi_manager->MpiCommunicationForInterpolation(*ptr_sfbitset_aux_,
+            *GetPtrToParentGridManager()->vec_ptr_grid_info_.at(i_level - 1).get(), this);
+    }
+#endif  //  ENABLE_MPI
+    ptr_lbm_solver->InformationFromGridOfDifferentLevel(time_step_level, *ptr_sfbitset_aux_, this);
 }
 /**
  * @brief function to create grid node.
  */
 std::unique_ptr<amrproject::GridNode> GridInfoLbmInteface::GridNodeCreator() const {
-    const SolverLbmInterface& lbm_solver = *(std::dynamic_pointer_cast<SolverLbmInterface>(ptr_solver_));
-    if (!lbm_solver.bool_forces_) {
+    SolverLbmInterface* ptr_lbm_solver = nullptr;
+    if (auto ptr_tmp = ptr_solver_.lock()) {
+        ptr_lbm_solver = dynamic_cast<SolverLbmInterface*>(ptr_tmp.get());
+    } else {
+        amrproject::LogManager::LogError("LBM solver is not created.");
+    }
+    if (!ptr_lbm_solver->bool_forces_) {
         return std::make_unique<GridNodeLbm>(
-            lbm_solver.GetDefaultDensity(), lbm_solver.GetDefaultVelocity(), f_ini_, f_collide_ini_);
+            ptr_lbm_solver->GetDefaultDensity(), ptr_lbm_solver->GetDefaultVelocity(), f_ini_, f_collide_ini_);
     } else {
         return std::make_unique<GridNodeLbm>(
-            lbm_solver.GetDefaultDensity(), lbm_solver.GetDefaultVelocity(),
-            lbm_solver.GetDefaultForce(), f_ini_, f_collide_ini_);
+            ptr_lbm_solver->GetDefaultDensity(), ptr_lbm_solver->GetDefaultVelocity(),
+            ptr_lbm_solver->GetDefaultForce(), f_ini_, f_collide_ini_);
     }
 }
 /**
  * @brief function to initializes the grid information.
  */
 void GridInfoLbmInteface::InitialGridInfo(const DefInt dims) {
-    SolverLbmInterface* ptr_lbm_solver = std::dynamic_pointer_cast<SolverLbmInterface>(ptr_solver_).get();
+    SolverLbmInterface* ptr_lbm_solver = nullptr;
+    if (auto ptr_tmp = ptr_solver_.lock()) {
+        ptr_lbm_solver = dynamic_cast<SolverLbmInterface*>(ptr_tmp.get());
+    } else {
+        amrproject::LogManager::LogError("LBM solver is not created.");
+    }
     ptr_lbm_solver->SetInitialDisFuncBasedOnReferenceMacros(&f_ini_, &f_collide_ini_);
     ptr_lbm_solver->SetCollisionOperator(i_level_, collision_type_);
     ChooseInterpolationMethod(dims);
@@ -191,10 +220,11 @@ void GridInfoLbmInteface::ComputeDomainBoundaryCondition() {
     for (DefInt i = 0; i < static_cast<DefInt>(domain_boundary_min_.size()); ++i) {
         switch (i) {
         case kXIndex: {
-                if (domain_boundary_condition_.find(ELbmBoundaryType::kBoundaryXMin)
+                if (domain_boundary_condition_.find(amrproject::EDomainBoundaryDirection::kBoundaryXMin)
                     != domain_boundary_condition_.end()) {
-                    domain_boundary_condition_.at(ELbmBoundaryType::kBoundaryXMin)->CalBoundaryCondition(
-                        ELbmBoundaryType::kBoundaryXMin, domain_boundary_min_.at(i), this);
+                    domain_boundary_condition_.at(
+                        amrproject::EDomainBoundaryDirection::kBoundaryXMin)->CalBoundaryCondition(
+                        amrproject::EDomainBoundaryDirection::kBoundaryXMin, domain_boundary_min_.at(i), this);
                 } else {
                     amrproject::LogManager::LogError("Boundary condition for x minimum domain boundary not found "
                         + std::string(__FILE__) + " at line " + std::to_string(__LINE__));
@@ -202,10 +232,11 @@ void GridInfoLbmInteface::ComputeDomainBoundaryCondition() {
             }
             break;
         case kYIndex: {
-                if (domain_boundary_condition_.find(ELbmBoundaryType::kBoundaryYMin)
+                if (domain_boundary_condition_.find(amrproject::EDomainBoundaryDirection::kBoundaryYMin)
                     != domain_boundary_condition_.end()) {
-                    domain_boundary_condition_.at(ELbmBoundaryType::kBoundaryYMin)->CalBoundaryCondition(
-                        ELbmBoundaryType::kBoundaryYMin, domain_boundary_min_.at(i), this);
+                    domain_boundary_condition_.at(
+                        amrproject::EDomainBoundaryDirection::kBoundaryYMin)->CalBoundaryCondition(
+                        amrproject::EDomainBoundaryDirection::kBoundaryYMin, domain_boundary_min_.at(i), this);
                 } else {
                     amrproject::LogManager::LogError("Boundary condition for y minimum domain boundary not found "
                         + std::string(__FILE__) + " at line " + std::to_string(__LINE__));
@@ -213,10 +244,11 @@ void GridInfoLbmInteface::ComputeDomainBoundaryCondition() {
             }
             break;
         case kZIndex: {
-                if (domain_boundary_condition_.find(ELbmBoundaryType::kBoundaryZMin)
+                if (domain_boundary_condition_.find(amrproject::EDomainBoundaryDirection::kBoundaryZMin)
                     != domain_boundary_condition_.end()) {
-                    domain_boundary_condition_.at(ELbmBoundaryType::kBoundaryZMin)->CalBoundaryCondition(
-                        ELbmBoundaryType::kBoundaryZMin, domain_boundary_min_.at(i), this);
+                    domain_boundary_condition_.at(
+                        amrproject::EDomainBoundaryDirection::kBoundaryZMin)->CalBoundaryCondition(
+                        amrproject::EDomainBoundaryDirection::kBoundaryZMin, domain_boundary_min_.at(i), this);
                 } else {
                     amrproject::LogManager::LogError("Boundary condition for z minimum domain boundary not found "
                         + std::string(__FILE__) + " at line " + std::to_string(__LINE__));
@@ -232,10 +264,11 @@ void GridInfoLbmInteface::ComputeDomainBoundaryCondition() {
     for (DefInt i =0; i < static_cast<DefInt>(domain_boundary_max_.size()); ++i) {
         switch (i) {
         case kXIndex: {
-                if (domain_boundary_condition_.find(ELbmBoundaryType::kBoundaryXMax)
+                if (domain_boundary_condition_.find(amrproject::EDomainBoundaryDirection::kBoundaryXMax)
                     != domain_boundary_condition_.end()) {
-                    domain_boundary_condition_.at(ELbmBoundaryType::kBoundaryXMax)->CalBoundaryCondition(
-                        ELbmBoundaryType::kBoundaryXMax, domain_boundary_max_.at(i), this);
+                    domain_boundary_condition_.at(
+                        amrproject::EDomainBoundaryDirection::kBoundaryXMax)->CalBoundaryCondition(
+                        amrproject::EDomainBoundaryDirection::kBoundaryXMax, domain_boundary_max_.at(i), this);
                 } else {
                     amrproject::LogManager::LogError("Boundary condition for x maximum domain boundary not found "
                         + std::string(__FILE__) + " at line " + std::to_string(__LINE__));
@@ -243,10 +276,11 @@ void GridInfoLbmInteface::ComputeDomainBoundaryCondition() {
             }
             break;
         case kYIndex: {
-                if (domain_boundary_condition_.find(ELbmBoundaryType::kBoundaryYMax)
+                if (domain_boundary_condition_.find(amrproject::EDomainBoundaryDirection::kBoundaryYMax)
                     != domain_boundary_condition_.end()) {
-                    domain_boundary_condition_.at(ELbmBoundaryType::kBoundaryYMax)->CalBoundaryCondition(
-                        ELbmBoundaryType::kBoundaryYMax, domain_boundary_max_.at(i), this);
+                    domain_boundary_condition_.at(
+                        amrproject::EDomainBoundaryDirection::kBoundaryYMax)->CalBoundaryCondition(
+                        amrproject::EDomainBoundaryDirection::kBoundaryYMax, domain_boundary_max_.at(i), this);
                 } else {
                     amrproject::LogManager::LogError("Boundary condition for y maximum domain boundary not found "
                         + std::string(__FILE__) + " at line " + std::to_string(__LINE__));
@@ -254,10 +288,11 @@ void GridInfoLbmInteface::ComputeDomainBoundaryCondition() {
             }
             break;
         case kZIndex: {
-                if (domain_boundary_condition_.find(ELbmBoundaryType::kBoundaryZMax)
+                if (domain_boundary_condition_.find(amrproject::EDomainBoundaryDirection::kBoundaryZMax)
                     != domain_boundary_condition_.end()) {
-                    domain_boundary_condition_.at(ELbmBoundaryType::kBoundaryZMax)->CalBoundaryCondition(
-                        ELbmBoundaryType::kBoundaryZMax, domain_boundary_max_.at(i), this);
+                    domain_boundary_condition_.at(
+                        amrproject::EDomainBoundaryDirection::kBoundaryZMax)->CalBoundaryCondition(
+                        amrproject::EDomainBoundaryDirection::kBoundaryZMax, domain_boundary_max_.at(i), this);
                 } else {
                     amrproject::LogManager::LogError("Boundary condition for z maximum domain boundary not found "
                         + std::string(__FILE__) + " at line " + std::to_string(__LINE__));
@@ -280,45 +315,51 @@ void GridInfoLbmInteface:: ComputeDomainBoundaryConditionForANode(
     int flag_node_boundary, const DefSFBitset bitset_in) {
     if (flag_node_boundary > kFlagInsideDomain_) {
         if ((flag_node_boundary & kFlagXMinBoundary_) == kFlagXMinBoundary_) {
-            if (domain_boundary_condition_.find(ELbmBoundaryType::kBoundaryXMin)
+            if (domain_boundary_condition_.find(amrproject::EDomainBoundaryDirection::kBoundaryXMin)
                 != domain_boundary_condition_.end()) {
-                domain_boundary_condition_.at(ELbmBoundaryType::kBoundaryXMin)->CalBoundaryCondition(
-                    ELbmBoundaryType::kBoundaryXMin, {std::make_pair(bitset_in, 0)}, this);
+                domain_boundary_condition_.at(
+                    amrproject::EDomainBoundaryDirection::kBoundaryXMin)->CalBoundaryCondition(
+                    amrproject::EDomainBoundaryDirection::kBoundaryXMin, {std::make_pair(bitset_in, 0)}, this);
             }
         }
         if ((flag_node_boundary & kFlagXMaxBoundary_) == kFlagXMaxBoundary_) {
-            if (domain_boundary_condition_.find(ELbmBoundaryType::kBoundaryXMax)
+            if (domain_boundary_condition_.find(amrproject::EDomainBoundaryDirection::kBoundaryXMax)
                 != domain_boundary_condition_.end()) {
-                domain_boundary_condition_.at(ELbmBoundaryType::kBoundaryXMax)->CalBoundaryCondition(
-                    ELbmBoundaryType::kBoundaryXMax, {std::make_pair(bitset_in, 0)}, this);
+                domain_boundary_condition_.at(
+                    amrproject::EDomainBoundaryDirection::kBoundaryXMax)->CalBoundaryCondition(
+                    amrproject::EDomainBoundaryDirection::kBoundaryXMax, {std::make_pair(bitset_in, 0)}, this);
             }
         }
         if ((flag_node_boundary & kFlagYMinBoundary_) == kFlagYMinBoundary_) {
-            if (domain_boundary_condition_.find(ELbmBoundaryType::kBoundaryYMin)
+            if (domain_boundary_condition_.find(amrproject::EDomainBoundaryDirection::kBoundaryYMin)
                 != domain_boundary_condition_.end()) {
-                domain_boundary_condition_.at(ELbmBoundaryType::kBoundaryYMin)->CalBoundaryCondition(
-                    ELbmBoundaryType::kBoundaryYMin, {std::make_pair(bitset_in, 0)}, this);
+                domain_boundary_condition_.at(
+                    amrproject::EDomainBoundaryDirection::kBoundaryYMin)->CalBoundaryCondition(
+                    amrproject::EDomainBoundaryDirection::kBoundaryYMin, {std::make_pair(bitset_in, 0)}, this);
             }
         }
         if ((flag_node_boundary & kFlagYMaxBoundary_) == kFlagYMaxBoundary_) {
-            if (domain_boundary_condition_.find(ELbmBoundaryType::kBoundaryYMax)
+            if (domain_boundary_condition_.find(amrproject::EDomainBoundaryDirection::kBoundaryYMax)
                 != domain_boundary_condition_.end()) {
-                domain_boundary_condition_.at(ELbmBoundaryType::kBoundaryYMax)->CalBoundaryCondition(
-                    ELbmBoundaryType::kBoundaryYMax, {std::make_pair(bitset_in, 0)}, this);
+                domain_boundary_condition_.at(
+                    amrproject::EDomainBoundaryDirection::kBoundaryYMax)->CalBoundaryCondition(
+                    amrproject::EDomainBoundaryDirection::kBoundaryYMax, {std::make_pair(bitset_in, 0)}, this);
             }
         }
         if ((flag_node_boundary & kFlagZMinBoundary_)== kFlagZMinBoundary_) {
-            if (domain_boundary_condition_.find(ELbmBoundaryType::kBoundaryZMin)
+            if (domain_boundary_condition_.find(amrproject::EDomainBoundaryDirection::kBoundaryZMin)
                 != domain_boundary_condition_.end()) {
-                domain_boundary_condition_.at(ELbmBoundaryType::kBoundaryZMin)->CalBoundaryCondition(
-                    ELbmBoundaryType::kBoundaryZMin, {std::make_pair(bitset_in, 0)}, this);
+                domain_boundary_condition_.at(
+                    amrproject::EDomainBoundaryDirection::kBoundaryZMin)->CalBoundaryCondition(
+                    amrproject::EDomainBoundaryDirection::kBoundaryZMin, {std::make_pair(bitset_in, 0)}, this);
             }
         }
         if ((flag_node_boundary & kFlagZMaxBoundary_) == kFlagZMaxBoundary_) {
-            if (domain_boundary_condition_.find(ELbmBoundaryType::kBoundaryZMax)
+            if (domain_boundary_condition_.find(amrproject::EDomainBoundaryDirection::kBoundaryZMax)
                 != domain_boundary_condition_.end()) {
-                domain_boundary_condition_.at(ELbmBoundaryType::kBoundaryZMax)->CalBoundaryCondition(
-                    ELbmBoundaryType::kBoundaryZMax, {std::make_pair(bitset_in, 0)}, this);
+                domain_boundary_condition_.at(
+                    amrproject::EDomainBoundaryDirection::kBoundaryZMax)->CalBoundaryCondition(
+                    amrproject::EDomainBoundaryDirection::kBoundaryZMax, {std::make_pair(bitset_in, 0)}, this);
             }
         }
     }
@@ -359,7 +400,7 @@ void GridInfoLbmInteface::InitialNotComputeNodeFlag() {
  */
 int GridInfoLbmInteface::TransferInfoFromCoarseGrid(const amrproject::SFBitsetAuxInterface& sfbitset_aux,
     const DefInt node_flag_not_interp, const amrproject::GridInfoInterface& grid_info_coarse) {
-    const DefInt dims = ptr_solver_->GetSolverDim();
+    const DefInt dims = ptr_parent_grid_manager_->k0GridDims_;
     if (GetPtrToLbmGrid() == nullptr ||
         (dynamic_cast<const GridInfoLbmInteface&>(grid_info_coarse).ptr_lbm_grid_nodes_ == nullptr)) {
         amrproject::LogManager::LogError("pointer to LBM grid nodes is null");
@@ -367,44 +408,50 @@ int GridInfoLbmInteface::TransferInfoFromCoarseGrid(const amrproject::SFBitsetAu
     // identify periodic boundaries
     std::vector<bool> periodic_min(dims), periodic_max(dims);
     // CheckIfPeriodicDomainRequired(dims, &periodic_min, &periodic_max);
-    if (domain_boundary_condition_.find(ELbmBoundaryType::kBoundaryXMin) != domain_boundary_condition_.end()
-        && (domain_boundary_condition_.at(ELbmBoundaryType::kBoundaryXMin)->boundary_scheme_
+    if (domain_boundary_condition_.find(
+        amrproject::EDomainBoundaryDirection::kBoundaryXMin) != domain_boundary_condition_.end()
+        && (domain_boundary_condition_.at(amrproject::EDomainBoundaryDirection::kBoundaryXMin)->boundary_scheme_
         == ELbmBoundaryConditionScheme::kPeriodic)) {
         periodic_min.at(kXIndex) = true;
     } else {
         periodic_min.at(kXIndex) = false;
     }
-    if (domain_boundary_condition_.find(ELbmBoundaryType::kBoundaryYMin) != domain_boundary_condition_.end()
-        && (domain_boundary_condition_.at(ELbmBoundaryType::kBoundaryYMin)->boundary_scheme_
+    if (domain_boundary_condition_.find(
+        amrproject::EDomainBoundaryDirection::kBoundaryYMin) != domain_boundary_condition_.end()
+        && (domain_boundary_condition_.at(amrproject::EDomainBoundaryDirection::kBoundaryYMin)->boundary_scheme_
         == ELbmBoundaryConditionScheme::kPeriodic)) {
         periodic_min.at(kYIndex) = true;
     } else {
         periodic_min.at(kYIndex) = false;
     }
-    if (domain_boundary_condition_.find(ELbmBoundaryType::kBoundaryXMax) != domain_boundary_condition_.end()
-        && (domain_boundary_condition_.at(ELbmBoundaryType::kBoundaryXMax)->boundary_scheme_
+    if (domain_boundary_condition_.find(
+        amrproject::EDomainBoundaryDirection::kBoundaryXMax) != domain_boundary_condition_.end()
+        && (domain_boundary_condition_.at(amrproject::EDomainBoundaryDirection::kBoundaryXMax)->boundary_scheme_
         == ELbmBoundaryConditionScheme::kPeriodic)) {
         periodic_max.at(kXIndex) = true;
     } else {
         periodic_max.at(kXIndex) = false;
     }
-    if (domain_boundary_condition_.find(ELbmBoundaryType::kBoundaryYMax) != domain_boundary_condition_.end()
-        && (domain_boundary_condition_.at(ELbmBoundaryType::kBoundaryYMax)->boundary_scheme_
+    if (domain_boundary_condition_.find(
+        amrproject::EDomainBoundaryDirection::kBoundaryYMax) != domain_boundary_condition_.end()
+        && (domain_boundary_condition_.at(amrproject::EDomainBoundaryDirection::kBoundaryYMax)->boundary_scheme_
         == ELbmBoundaryConditionScheme::kPeriodic)) {
         periodic_max.at(kYIndex) = true;
     } else {
         periodic_max.at(kYIndex) = false;
     }
     if (dims == 3) {
-        if (domain_boundary_condition_.find(ELbmBoundaryType::kBoundaryZMin) != domain_boundary_condition_.end()
-            && (domain_boundary_condition_.at(ELbmBoundaryType::kBoundaryZMin)->boundary_scheme_
+        if (domain_boundary_condition_.find(
+            amrproject::EDomainBoundaryDirection::kBoundaryZMin) != domain_boundary_condition_.end()
+            && (domain_boundary_condition_.at(amrproject::EDomainBoundaryDirection::kBoundaryZMin)->boundary_scheme_
             == ELbmBoundaryConditionScheme::kPeriodic)) {
             periodic_min.at(kZIndex) = true;
         } else {
             periodic_min.at(kZIndex) = false;
         }
-        if (domain_boundary_condition_.find(ELbmBoundaryType::kBoundaryZMax) != domain_boundary_condition_.end()
-            && (domain_boundary_condition_.at(ELbmBoundaryType::kBoundaryZMax)->boundary_scheme_
+        if (domain_boundary_condition_.find(
+            amrproject::EDomainBoundaryDirection::kBoundaryZMax) != domain_boundary_condition_.end()
+            && (domain_boundary_condition_.at(amrproject::EDomainBoundaryDirection::kBoundaryZMax)->boundary_scheme_
             == ELbmBoundaryConditionScheme::kPeriodic)) {
             periodic_max.at(kZIndex) = true;
         } else {
@@ -471,7 +518,12 @@ void GridInfoLbmInteface::DebugWrite() {
 }
 void GridInfoLbmInteface::DebugWriteNode(const amrproject::GridNode& node) {
     const GridNodeLbm& node_lbm = dynamic_cast<const GridNodeLbm&>(node);
-    std::cout << "debug node: " << node_lbm.rho_ << std::endl;
+
+    std::cout <<std::setprecision(15) << node_lbm.velocity_[1] << " ";
+    for (int i = 0; i < 9; ++ i) {
+        std::cout << node_lbm.f_[i] << " ";
+    }
+    std::cout << std::endl;
 }
 /**
  * @brief function to transfer information on the interface from the fine grid to coarse grid.
@@ -523,9 +575,14 @@ void GridInfoLbmInteface::NodeInfoCoarse2fine(const amrproject::GridNode& coarse
     amrproject::GridNode* const ptr_base_fine_node) const {
     const GridNodeLbm& coarse_node = dynamic_cast<const GridNodeLbm&>(coarse_base_node);
     GridNodeLbm* ptr_fine_node = dynamic_cast<GridNodeLbm*>(ptr_base_fine_node);
-    const SolverLbmInterface& lbm_solver = *std::dynamic_pointer_cast<SolverLbmInterface>(ptr_solver_).get();
-    std::vector<DefReal> feq(lbm_solver.k0NumQ_);
-    ptr_fine_node->velocity_.resize(lbm_solver.GetSolverDim());
+    SolverLbmInterface* ptr_lbm_solver = nullptr;
+    if (auto ptr_tmp = ptr_solver_.lock()) {
+        ptr_lbm_solver = dynamic_cast<SolverLbmInterface*>(ptr_tmp.get());
+    } else {
+        amrproject::LogManager::LogError("LBM solver is not created.");
+    }
+    std::vector<DefReal> feq(ptr_lbm_solver->k0NumQ_);
+    ptr_fine_node->velocity_.resize(ptr_lbm_solver->GetSolverDim());
     // if (bool_forces_) {
     //     lbm_solver.func_macro_with_force_(ptr_collision_operator_->dt_lbm_, coarse_node,
     //         &ptr_fine_node->rho_, &ptr_fine_node->velocity_);
@@ -539,9 +596,9 @@ void GridInfoLbmInteface::NodeInfoCoarse2fine(const amrproject::GridNode& coarse
     //         feq, coarse_node.f_collide_, &ptr_fine_node->f_collide_);
     // }
 
-    lbm_solver.func_macro_without_force_(coarse_node.f_, &ptr_fine_node->rho_, &ptr_fine_node->velocity_);
-    lbm_solver.func_cal_feq_(ptr_fine_node->rho_, ptr_fine_node->velocity_, &feq);
-    lbm_solver.GetCollisionOperator(i_level_).PostStreamCoarse2Fine(feq, coarse_node.f_, &ptr_fine_node->f_);
+    ptr_lbm_solver->func_macro_without_force_(coarse_node.f_, &ptr_fine_node->rho_, &ptr_fine_node->velocity_);
+    ptr_lbm_solver->func_cal_feq_(ptr_fine_node->rho_, ptr_fine_node->velocity_, &feq);
+    ptr_lbm_solver->GetCollisionOperator(i_level_).PostStreamCoarse2Fine(feq, coarse_node.f_, &ptr_fine_node->f_);
 }
 /**
  * @brief function to transfer information stored in fine LBM node to coarse node.
@@ -553,8 +610,13 @@ void GridInfoLbmInteface::NodeInfoFine2Coarse(const amrproject::GridNode& fine_b
     const GridNodeLbm& fine_node = dynamic_cast<const GridNodeLbm&>(fine_base_node);
     GridNodeLbm* ptr_coarse_node = dynamic_cast<GridNodeLbm*>(ptr_base_coarse_node);
     std::vector<DefReal> feq;
-    const SolverLbmInterface& lbm_solver = *std::dynamic_pointer_cast<SolverLbmInterface>(ptr_solver_).get();
-    lbm_solver.func_cal_feq_(fine_node.rho_, fine_node.velocity_, &feq);
+    SolverLbmInterface* ptr_lbm_solver = nullptr;
+    if (auto ptr_tmp = ptr_solver_.lock()) {
+        ptr_lbm_solver = dynamic_cast<SolverLbmInterface*>(ptr_tmp.get());
+    } else {
+        amrproject::LogManager::LogError("LBM solver is not created.");
+    }
+    ptr_lbm_solver->func_cal_feq_(fine_node.rho_, fine_node.velocity_, &feq);
     // if (bool_forces_) {
     //     ptr_collision_operator_->PostCollisionFine2CoarseForce(ptr_collision_operator_->dt_lbm_,
     //         feq, lbm_solver, lbm_solver.ptr_func_cal_force_iq_, fine_node,  ptr_coarse_node);
@@ -562,13 +624,18 @@ void GridInfoLbmInteface::NodeInfoFine2Coarse(const amrproject::GridNode& fine_b
     //     ptr_collision_operator_->PostCollisionFine2Coarse(ptr_collision_operator_->dt_lbm_,
     //         feq, fine_node,  ptr_coarse_node);
     // }
-    lbm_solver.GetCollisionOperator(i_level_).PostStreamFine2Coarse(feq, fine_node, ptr_coarse_node);
+    ptr_lbm_solver->GetCollisionOperator(i_level_).PostStreamFine2Coarse(feq, fine_node, ptr_coarse_node);
 }
 /**
  * @brief function to setup output infomation on variables of LBM node.
  */
 void GridInfoLbmInteface::SetupOutputVariables() {
-    SolverLbmInterface* ptr_lbm_solver = std::dynamic_pointer_cast<SolverLbmInterface>(ptr_solver_).get();
+    SolverLbmInterface* ptr_lbm_solver = nullptr;
+    if (auto ptr_tmp = ptr_solver_.lock()) {
+        ptr_lbm_solver = dynamic_cast<SolverLbmInterface*>(ptr_tmp.get());
+    } else {
+        amrproject::LogManager::LogError("LBM solver is not created.");
+    }
     DefReal dt = ptr_lbm_solver->GetCollisionOperator(i_level_).GetDtLbm();
     std::function<void(const DefReal dt_lbm, const std::vector<DefReal>& f, const std::vector<DefReal>& force,
         DefReal* const ptr_rho, std::vector<DefReal>* const ptr_velocity)> func_macro;
@@ -594,7 +661,7 @@ void GridInfoLbmInteface::SetupOutputVariables() {
             output_variables_.emplace_back(std::make_unique<OutputLBMNodeVariableInfo>());
             OutputLBMNodeVariableInfo& output_info_tmp =
                 *dynamic_cast<OutputLBMNodeVariableInfo*>(output_variables_.back().get());
-            output_info_tmp.variable_dims_ = ptr_solver_->GetSolverDim();
+            output_info_tmp.variable_dims_ = ptr_lbm_solver->GetSolverDim();
             output_info_tmp.func_get_var_ = [ptr_lbm_solver, dt, func_macro]
                 (GridNodeLbm* const ptr_node)->std::vector<DefReal> {
                 std::vector<DefReal> force(ptr_lbm_solver->GetAllForcesForANode(*ptr_node));

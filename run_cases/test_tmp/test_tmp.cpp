@@ -1,4 +1,4 @@
-//    Copyright (c) 2022, Zhengliang Liu
+//    Copyright (c) 2021 - 2024, Zhengliang Liu
 //    All rights reserved
 
 /**
@@ -26,10 +26,10 @@ void SetTestDependentParameters(
     ptr_amr_instance_->ptr_grid_manager_->SetDomainGridSize({dx_});
     // end grid related parameters //
 
-    ptr_amr_instance_->SetupParameters();
+    ptr_amr_instance_->SetupDependentParameters();
     // set grid node type and solver at all levels the same
     ptr_amr_instance_->AddSolverToGridManager(solver_creator);
-    ptr_amr_instance_->SetDependentInfoForAllLevelsTheSame(
+    ptr_amr_instance_->SetSameSolverDependentInfoForAllGrids(
         ptr_amr_instance_->ptr_grid_manager_->vec_ptr_solver_.at(0));
 
     for (auto& iter_grid : ptr_amr_instance_->ptr_grid_manager_->vec_ptr_grid_info_) {
@@ -37,9 +37,9 @@ void SetTestDependentParameters(
             = *dynamic_cast<lbmproject::GridInfoLbmInteface*>(iter_grid.get());
         lbmproject::SolverLbmInterface& solver_ref
             = *dynamic_cast<lbmproject::SolverLbmInterface*>(grid_ref.GetPtrToSolver());
-        solver_ref.SetDomainBoundaryCondition(lbmproject::ELbmBoundaryType::kBoundaryXMin,
+        solver_ref.SetDomainBoundaryCondition(amrproject::EDomainBoundaryDirection::kBoundaryXMin,
             lbmproject::ELbmBoundaryConditionScheme::kPeriodic, &grid_ref.domain_boundary_condition_);
-        solver_ref.SetDomainBoundaryCondition(lbmproject::ELbmBoundaryType::kBoundaryXMax,
+        solver_ref.SetDomainBoundaryCondition(amrproject::EDomainBoundaryDirection::kBoundaryXMax,
             lbmproject::ELbmBoundaryConditionScheme::kPeriodic, &grid_ref.domain_boundary_condition_);
     }
 
@@ -56,7 +56,7 @@ void SetTestDependentParameters(
         u_analytical_sum_ += Square(u_analytical_.at(i_probe));
     }
 
-    ptr_amr_instance_->SetupSolverForGrids();
+    ptr_amr_instance_->InitializeAllSolvers();
     ptr_amr_instance_->InitializeMesh();
 }
 void SetDomainBoundaryOtherThanPeriodic(
@@ -66,12 +66,12 @@ void SetDomainBoundaryOtherThanPeriodic(
             = *dynamic_cast<lbmproject::GridInfoLbmInteface*>(iter_grid.get());
         lbmproject::SolverLbmInterface& solver_ref
             = *dynamic_cast<lbmproject::SolverLbmInterface*>(grid_ref.GetPtrToSolver());
-        solver_ref.SetDomainBoundaryCondition(lbmproject::ELbmBoundaryType::kBoundaryYMin,
+        solver_ref.SetDomainBoundaryCondition(amrproject::EDomainBoundaryDirection::kBoundaryYMin,
             boundary_condition_type, &grid_ref.domain_boundary_condition_);
-        solver_ref.SetDomainBoundaryCondition(lbmproject::ELbmBoundaryType::kBoundaryYMax,
+        solver_ref.SetDomainBoundaryCondition(amrproject::EDomainBoundaryDirection::kBoundaryYMax,
             boundary_condition_type, &grid_ref.domain_boundary_condition_);
         // set y boundary velocity to u_max
-        grid_ref.domain_boundary_condition_.at(lbmproject::ELbmBoundaryType::kBoundaryYMax)
+        grid_ref.domain_boundary_condition_.at(amrproject::EDomainBoundaryDirection::kBoundaryYMax)
             ->SetValues({u_max_, 0.});
     }
 }
@@ -94,6 +94,7 @@ int main(int argc, char** argv) {
     DefInt dims = 2;   // dimension
     DefInt max_refinement_level = 1;  // maximum refinement level
     ptr_amr_instance_->StartupInitialization(dims, max_refinement_level);
+    ptr_amr_instance_->ptr_grid_manager_->SetMaxLevel(max_refinement_level);
 
     // geometry related parameters //
     ptr_amr_instance_->ptr_grid_manager_->vec_ptr_tracking_info_creator_.emplace_back(
@@ -104,7 +105,7 @@ int main(int argc, char** argv) {
     amrproject::GeometryInfoOrigin* ptr_geo_tmp =
         dynamic_cast<amrproject::GeometryInfoOrigin*>(ptr_amr_instance_->
         ptr_criterion_manager_->vec_ptr_geometries_.at(0).get());
-    ptr_geo_tmp->ptr_geo_shape_ = std::make_unique<amrproject::GeoShapeDefaultLine2D>();
+    ptr_geo_tmp->ptr_geo_shape_ = std::make_unique<amrproject::GeoShapeDefaultLine2D>(*ptr_geo_tmp);
     amrproject::GeoShapeDefaultLine2D* ptr_line =
         dynamic_cast<amrproject::GeoShapeDefaultLine2D*>(ptr_geo_tmp->ptr_geo_shape_.get());
     ptr_line->start_point_ = { 0., 0};

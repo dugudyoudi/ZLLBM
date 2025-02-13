@@ -188,7 +188,8 @@ class GridInfoLbmInteface : public amrproject::GridInfoInterface {
         amrproject::CriterionManager* const ptr_criterion_manager) override;
 
     // pointer to boundary conditions adopted for domain boundary
-    std::map<ELbmBoundaryType, std::unique_ptr<BoundaryConditionLbmInterface>> domain_boundary_condition_;
+    std::map<amrproject::EDomainBoundaryDirection, std::unique_ptr<BoundaryConditionLbmInterface>>
+        domain_boundary_condition_;
 
     // set and get functions
     std::unique_ptr<amrproject::GridNode> GridNodeCreator() const override;
@@ -350,11 +351,11 @@ class SolverLbmInterface :public amrproject::SolverInterface {
     void SetNumForces(const DefInt num_forces) {
         bool_forces_ = true;
         NumForces_ = num_forces;
-        k0Force_.resize(num_forces, 0.);
+        k0Force_.resize(num_forces);
     }
 
     bool bool_forces_ = false;
-    const DefInt k0NumQ_ = 0;
+    const DefInt k0NumQ_;
     const std::vector<DefReal> k0Cx_, k0Cy_, k0Cz_;  ///< directions of particle velocity
     const std::vector<DefReal> k0Weights_;
     const DefInt k0NumQInOneDirection_ = 0;   ///< number of Q indices in each direction
@@ -375,6 +376,7 @@ class SolverLbmInterface :public amrproject::SolverInterface {
     void InformationFromGridOfDifferentLevel(
         const DefInt time_step_level, const amrproject::SFBitsetAuxInterface& sfbitset_aux,
         amrproject::GridInfoInterface* const ptr_grid_info) override;
+    void ReadAndSetupSolverParameters(const amrproject::InputParser& input_parser) override;
 
     virtual void InitialModelDependencies() = 0;
     template <typename Node>
@@ -424,11 +426,13 @@ class SolverLbmInterface :public amrproject::SolverInterface {
     DefReal CalForceIq3D(const int iq, const GridNodeLbm& node, const std::vector<DefReal>& force) const;
 
     // boundary conditions
-    void SetDomainBoundaryCondition(const ELbmBoundaryType which_boundary,
+    void SetDomainBoundaryCondition(const amrproject::EDomainBoundaryDirection which_boundary,
         const ELbmBoundaryConditionScheme which_boundary_condition,
-        std::map<ELbmBoundaryType, std::unique_ptr<BoundaryConditionLbmInterface>>* const ptr_boundary_condition) const;
+        std::map<amrproject::EDomainBoundaryDirection, std::unique_ptr<BoundaryConditionLbmInterface>>* const
+        ptr_boundary_condition) const;
     virtual std::unique_ptr<BoundaryConditionLbmInterface> BoundaryBounceBackCreator() const;
     virtual std::unique_ptr<BoundaryConditionLbmInterface> BoundaryPeriodicCreator() const;
+    virtual std::unique_ptr<BoundaryConditionLbmInterface> BoundaryNonEqExtraCreator() const;
 
     // pointer to function calculate macroscopic variables
     // declare with std::function rather than pointer to function is used for implementations in derived class
@@ -436,6 +440,8 @@ class SolverLbmInterface :public amrproject::SolverInterface {
         DefReal* const, std::vector<DefReal>* const)> func_macro_without_force_;
     std::function<void(const DefReal dt_lbm, const std::vector<DefReal>&, const std::vector<DefReal>&,
         DefReal* const, std::vector<DefReal>* const)> func_macro_with_force_;
+    std::function<void(const DefReal dt_lbm, const GridNodeLbm& lbm_node,
+        DefReal* const, std::vector<DefReal>* const)> func_macro_;
 
     virtual ~SolverLbmInterface() {}
 

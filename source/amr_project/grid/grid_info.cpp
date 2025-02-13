@@ -30,7 +30,7 @@ void GridInfoInterface::SetGridSpace(const std::vector<DefReal>& grid_space) {
 void GridInfoInterface::SetPtrSFBitsetAux(SFBitsetAuxInterface* const ptr_sfbitset_aux) {
     ptr_sfbitset_aux_ = ptr_sfbitset_aux;
 }
-void GridInfoInterface::SetPtrSolver(const std::shared_ptr<SolverInterface>& ptr_solver) {
+void GridInfoInterface::SetPtrSolver(const std::weak_ptr<SolverInterface>& ptr_solver) {
     ptr_solver_ = ptr_solver;
 }
 void GridInfoInterface::SetNumFine2CoarseLayer(DefInt num_fine2coarse_layer) {

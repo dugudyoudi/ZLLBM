@@ -181,7 +181,7 @@ void GridManager3D::IdentifyTypeOfLayerByFloodFill(
     count_sum += i_count;
     if (map_nodes_exist.find(sfbitset_origin_vertex) != map_nodes_exist.end()) {
         sfbitset_start_vertex = sfbitset_origin_vertex;
-        LogManager::LogInfo("input node for flood fill coincideS with existing nodes near geometry("
+        LogManager::LogInfo("input node for flood fill coincides with existing nodes near geometry("
          + std::to_string(i_geo) + "), may not distinguish inside and outside");
     }
 

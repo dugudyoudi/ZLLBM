@@ -2,9 +2,9 @@
 //  All rights reserved
 
 /**
-* @file obj_manager.cpp
+* @file amr_manager.cpp
 * @author Zhengliang Liu
-* @brief functions used to manage all processes.
+* @brief functions used to manage modules for amr project.
 * @date  2022-5-16
 * @note .
 */
@@ -18,11 +18,11 @@
 namespace rootproject {
 namespace amrproject {
 /**
-* @brief      function to set program features.
+* @brief      function to setup the amr program based on command line inputs.
 * @param[in]  argc    number of inputs from command line.
 * @param[in]  argv    inputs from command line.
 */
-int AmrManager::SetUpProgramFeature(int argc, char* argv[]) {
+int AmrManager::StartupAmrManager(int argc, char* argv[]) {
     //  name of the current executable
     std::filesystem::path file_name = std::filesystem::path(argv[0]).filename();
     file_name.replace_extension();
@@ -54,7 +54,7 @@ void AmrManager::LoadModules(DefInt dims) {
 * @param[in]  dims    dimension of the mesh.
 * @param[in]  max_level    maxim refinement level.
 */
-void AmrManager::StartupInitialization(DefInt dims, DefInt max_level) {
+void AmrManager::StartupInitialization(DefInt dims) {
     LoadModules(dims);
 
     // mpi settings
@@ -64,18 +64,16 @@ void AmrManager::StartupInitialization(DefInt dims, DefInt max_level) {
 
     LogManager::LogStartTime();
 
-    ptr_io_manager_->StartupInitialization();
-
-    ptr_grid_manager_->StartupInitialization(max_level);
+    ptr_io_manager_->SetupOutputFormat();
 }
 /**
-* @brief   function to set parameters according to inputs for all modules
+* @brief   function to set parameters dependent on input parameters for all modules
 */
-void AmrManager::SetupParameters() {
+void AmrManager::SetupDependentParameters() {
     // setup grid parameters
-    ptr_grid_manager_->SetGridParameters();
+    ptr_grid_manager_->SetupDependentGridParameters();
 
-    ptr_io_manager_->SetIoParameters();
+    ptr_io_manager_->SetupDependentIOParameters();
 }
 /**
 * @brief   function to initialize mesh.
@@ -86,7 +84,8 @@ void AmrManager::InitializeMesh() {
     rank_id = ptr_mpi_manager_->GetRankId();
 #endif  // ENABLE_MPI
     std::array<DefSFBitset, 2> sfbitset_bound_current;
-    std::vector<DefMap<DefInt>> sfbitset_one_lower_level(ptr_grid_manager_->k0MaxLevel_ + 1);
+    const DefInt max_level = ptr_grid_manager_->GetMaxLevel();
+    std::vector<DefMap<DefInt>> sfbitset_one_lower_level(max_level + 1);
 
     // initial geometries
     DefInt i_geo = 0;
@@ -96,8 +95,7 @@ void AmrManager::InitializeMesh() {
     for (DefInt i_dims = 0; i_dims < ptr_grid_manager_->k0GridDims_; ++i_dims) {
         real_offset.at(i_dims) = domain_min_index[i_dims] * domain_dx[i_dims];
     }
-    ptr_criterion_manager_->InitialAllGeometrySerial(ptr_grid_manager_->k0GridDims_,
-        domain_dx.at(kXIndex), real_offset);
+    ptr_criterion_manager_->InitialAllGeometrySerial(domain_dx.at(kXIndex), real_offset);
 
     for (const auto& iter_geo_info : ptr_criterion_manager_->vec_ptr_geometries_) {
         ptr_grid_manager_->CreateTrackingGridInstanceForAGeo(i_geo, *iter_geo_info);
@@ -106,7 +104,8 @@ void AmrManager::InitializeMesh() {
     if (rank_id == 0) {
         ptr_grid_manager_->GenerateGridFromHighToLowLevelSerial(
             ptr_criterion_manager_->vec_ptr_geometries_, &sfbitset_one_lower_level);
-        sfbitset_bound_current = {ptr_grid_manager_->k0SFBitsetDomainMin_, ptr_grid_manager_->k0SFBitsetDomainMax_};
+        sfbitset_bound_current = {ptr_grid_manager_->GetSFbitsetforDomainMin(),
+            ptr_grid_manager_->GetSFbitsetforDomainMax()};
     }
 
 #ifdef ENABLE_MPI
@@ -120,8 +119,8 @@ void AmrManager::InitializeMesh() {
     for (auto iter_grid : ptr_grid_manager_->vec_ptr_grid_info_) {
         vec_cost.emplace_back(iter_grid->GetComputationalCost());
     }
-    std::vector<DefMap<DefInt>> sfbitset_one_lower_level_current_rank(ptr_grid_manager_->k0MaxLevel_ + 1),
-       sfbitset_ghost_one_lower_level_current_rank(ptr_grid_manager_->k0MaxLevel_ + 1);
+    std::vector<DefMap<DefInt>> sfbitset_one_lower_level_current_rank(max_level + 1),
+       sfbitset_ghost_one_lower_level_current_rank(max_level + 1);
     ptr_mpi_manager_->SetSFBitsetMinCurrentRank(sfbitset_bound_current.at(0));
     ptr_mpi_manager_->SetSFBitsetMaxCurrentRank(sfbitset_bound_current.at(1));
     DefMap<DefInt> partition_interface_background;
@@ -130,8 +129,8 @@ void AmrManager::InitializeMesh() {
         GridManager2D* ptr_grid_manager_2d = dynamic_cast<GridManager2D*>(ptr_grid_manager_.get());
         ptr_mpi_manager_->IniSendNReceiveGridInfoAtAllLevels(ptr_grid_manager_->kFlagSize0_,
             NodeBitStatus::kNodeStatusCoarse2Fine0_,
-            ptr_grid_manager_->k0GridDims_, ptr_grid_manager_->k0MaxLevel_,
-            ptr_grid_manager_->k0SFBitsetDomainMin_, ptr_grid_manager_->k0SFBitsetDomainMax_,
+            ptr_grid_manager_->k0GridDims_, max_level,
+            ptr_grid_manager_->GetSFbitsetforDomainMin(), ptr_grid_manager_->GetSFbitsetforDomainMax(),
             {ptr_grid_manager_2d->k0MinIndexOfBackgroundNode_[kXIndex],
             ptr_grid_manager_2d->k0MinIndexOfBackgroundNode_[kYIndex]},
             {ptr_grid_manager_2d->k0MaxIndexOfBackgroundNode_[kXIndex],
@@ -161,8 +160,8 @@ void AmrManager::InitializeMesh() {
         GridManager3D* ptr_grid_manager_3d = dynamic_cast<GridManager3D*>(ptr_grid_manager_.get());
         ptr_mpi_manager_->IniSendNReceiveGridInfoAtAllLevels(ptr_grid_manager_->kFlagSize0_,
             NodeBitStatus::kNodeStatusCoarse2Fine0_,
-            ptr_grid_manager_->k0GridDims_, ptr_grid_manager_->k0MaxLevel_,
-            ptr_grid_manager_->k0SFBitsetDomainMin_, ptr_grid_manager_->k0SFBitsetDomainMax_,
+            ptr_grid_manager_->k0GridDims_, max_level,
+            ptr_grid_manager_->GetSFbitsetforDomainMin(), ptr_grid_manager_->GetSFbitsetforDomainMax(),
             {ptr_grid_manager_3d->k0MinIndexOfBackgroundNode_[kXIndex],
             ptr_grid_manager_3d->k0MinIndexOfBackgroundNode_[kYIndex],
             ptr_grid_manager_3d->k0MinIndexOfBackgroundNode_[kZIndex]},
@@ -192,7 +191,7 @@ void AmrManager::InitializeMesh() {
 #endif  // DEBUG_DISABLE_3D_FUNCTIONS
     }
     const DefInt flag0 = ptr_grid_manager_->kFlagSize0_;
-    for (DefInt i_level = 0; i_level < ptr_grid_manager_->k0MaxLevel_; ++i_level) {
+    for (DefInt i_level = 0; i_level < max_level; ++i_level) {
         // add nodes on both the refinement and partition interfaces
         // which are only stored in coarse to fine refinement interfaces
         for (const auto & iter_interfaces :
@@ -207,7 +206,7 @@ void AmrManager::InitializeMesh() {
                 }
             }
         }
-        if (ptr_grid_manager_->k0MaxLevel_ > 0) {
+        if (max_level > 0) {
             GridInfoInterface& grid_info = *ptr_grid_manager_->vec_ptr_grid_info_.at(i_level + 1);
             ptr_mpi_manager_->SendNReceiveSFbitsetForInterpolation(i_level + 1, *grid_info.GetPtrSFBitsetAux(),
                 grid_info.interp_nodes_outer_layer_, &grid_info.vec_num_interp_nodes_receive_,
@@ -241,7 +240,7 @@ void AmrManager::InstantiateTimeSteppingScheme() {
     switch (k0TimeSteppingType_) {
     case ETimeSteppingScheme::kMultiSteppingC2F:
         ptr_time_stepping_scheme_ = std::make_unique<MultiTimeSteppingC2F>(
-            ptr_grid_manager_->k0MaxLevel_);
+            ptr_grid_manager_->GetMaxLevel());
         break;
     default:
         LogManager::LogError("undefined time stepping type in "
@@ -256,7 +255,7 @@ void AmrManager::InstantiateTimeSteppingScheme() {
 */
 void AmrManager::TimeMarching(const DefAmrLUint time_step_background) {
     // record number of time step at i_level
-    std::vector<DefInt> time_step_level(ptr_grid_manager_->k0MaxLevel_ + 1, 0);
+    std::vector<DefInt> time_step_level(ptr_grid_manager_->GetMaxLevel() + 1, 0);
     DefInt i_level;
     DefReal time_step_current;
     for (auto iter_level = ptr_time_stepping_scheme_->k0TimeSteppingOrder_.begin();
@@ -275,7 +274,7 @@ void AmrManager::TimeMarching(const DefAmrLUint time_step_background) {
 /**
 * @brief   function to initialize solvers.
 */
-void AmrManager::SetupSolverForGrids() {
+void AmrManager::InitializeAllSolvers() {
     for (auto& iter_solver : ptr_grid_manager_->vec_ptr_solver_) {
         iter_solver->SolverInitial();
     }
@@ -297,7 +296,7 @@ void AmrManager::AddSolverToGridManager(const SolverCreatorInterface& solver_cre
 * @brief   function to set solver dependent information as the same.
 * @param[in]  ptr_solver  pointer to a solver.
 */
-void AmrManager::SetDependentInfoForAllLevelsTheSame(const std::shared_ptr<SolverInterface>& ptr_solver) {
+void AmrManager::SetSameSolverDependentInfoForAllGrids(const std::shared_ptr<SolverInterface>& ptr_solver) {
     ptr_grid_manager_->CreateSameGridInstanceForAllLevel(
         ptr_solver, *ptr_solver->ptr_grid_info_creator_.get());
 }

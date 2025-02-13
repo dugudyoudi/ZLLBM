@@ -36,7 +36,7 @@ class GeometryInfoOrigin : public GeometryInfoInterface {
 };
 class GeometryInfoOriginCreator :public GeometryInfoCreatorInterface {
  public:
-    std::shared_ptr<GeometryInfoInterface> CreateGeometryInfo(const DefInt dims) override {
+    std::shared_ptr<GeometryInfoInterface> CreateGeometryInfo(const DefInt dims) const override {
         std::shared_ptr<GeometryInfoOrigin> ptr_tmp = std::make_shared<GeometryInfoOrigin>(dims);
         return ptr_tmp;
     };

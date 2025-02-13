@@ -24,11 +24,9 @@
 #include "grid/grid_info_interface.h"
 #include "grid/sfbitset_aux.h"
 #include "criterion/geometry_info_interface.h"
+#include "io/input_parser.h"
 namespace rootproject {
 namespace amrproject {
-enum class EDomainBoundaryType{
-    kCubic = 0,
-};
 template<typename GridInfo>
 concept GridInfoHasGetLevelAndGetNodeType = requires(
     GridInfo grid_info) {
@@ -85,9 +83,13 @@ class GridManagerInterface{
     const DefInt  k0GridDims_ = 0;  ///< dimension
     // 9 for 2D, 27 for 3D
     const DefInt  k0NumNeighbors_ = 0;  ///< number of neighboring nodes
+
+    // grid status
+    const DefInt kFlagSize0_ = 0;  // flag initialize size as 0
+
+ protected:
     // 0 refers to uniform mesh
     DefInt  k0MaxLevel_ = 0;  ///< maximum levels of refinement
-
     /* this setup is used to avoid issues caused by rapid change of
     refinement level in a small region. Number of layers is counted
     at the lower refinement level.*/
@@ -97,8 +99,6 @@ class GridManagerInterface{
     /* number of nodes extended from position of given criterion,
     e.g. solid boundary and free surface*/
 
-    // grid status
-    const DefInt kFlagSize0_ = 0;  // flag initialize size as 0
 
     //  o     o     o     o  // coarse grid
     //
@@ -111,6 +111,27 @@ class GridManagerInterface{
     DefSFBitset k0SFBitsetDomainMin_ = 0;
     DefSFBitset k0SFBitsetDomainMax_ = ~0;
 
+ public:
+    // set and get functions
+    void SetMaxLevel(const DefInt max_level) { k0MaxLevel_ = max_level; }
+    DefInt GetMaxLevel() const { return k0MaxLevel_; }
+    void SetExtendMin(const DefInt num_extend_min) { k0IntExtendMin_ = num_extend_min; }
+    DefInt GetExtendMin() const { return k0IntExtendMin_; }
+    void SetExtendRemoved(const DefInt num_extend_removed) { k0IntExtendRemoved_ = num_extend_removed; }
+    DefInt GetExtendRemoved() const { return k0IntExtendRemoved_; }
+    void SetSFbitsetforDomainMin(const DefSFBitset sfbitset_min) { k0SFBitsetDomainMin_ = sfbitset_min; }
+    DefSFBitset GetSFbitsetforDomainMin() const { return k0SFBitsetDomainMin_; }
+    void SetSFbitsetforDomainMax(const DefSFBitset sfbitset_max) { k0SFBitsetDomainMax_ = sfbitset_max; }
+    DefSFBitset GetSFbitsetforDomainMax() const { return k0SFBitsetDomainMax_; }
+    virtual void SetDomainSize(const std::vector<DefReal>& domain_size) = 0;
+    std::vector<DefReal> GetDomainSize() const { return GetDomainDxArrAsVec(); }
+    virtual void SetDomainGridSize(const std::vector<DefReal>& domain_grid_size) = 0;
+    std::vector<DefReal> GetDomainGridSize() const { return GetDomainDxArrAsVec(); }
+
+    // settings
+    void ReadAndSetupGridParameters(const InputParser& input_parser);
+    void PrintGridSetting() const;
+
     // creators to instantiate classes
     std::vector<std::unique_ptr<TrackingGridInfoCreatorInterface>> vec_ptr_tracking_info_creator_;
 
@@ -118,12 +139,10 @@ class GridManagerInterface{
     std::vector<std::shared_ptr<GridInfoInterface>> vec_ptr_grid_info_;
 
     // manager related functions
-    void StartupInitialization(const DefInt max_level);
     virtual void PrintGridInfo(void) const = 0;
-    virtual void SetGridParameters(void) = 0;
+    virtual void SetupDependentGridParameters(void) = 0;
     template<GridInfoHasGetLevelAndGetNodeType GridInfo>
-    DefSizet CheckExistenceOfTypeAtGivenLevel(
-        const DefInt i_level, const std::string& type,
+    DefSizet CheckExistenceOfTypeAtGivenLevel(const DefInt i_level, const std::string& type,
         const std::vector<std::shared_ptr<GridInfo>>& vec_ptr_interface) const;
 
     // get mesh parameters for 2D and 3D
@@ -135,8 +154,6 @@ class GridManagerInterface{
         std::vector<DefSFBitset>* const ptr_domain_min, std::vector<DefSFBitset>* const ptr_domain_max) const = 0;
 
     // setup dimension related members
-    virtual void SetDomainSize(const std::vector<DefReal>& domain_size) = 0;
-    virtual void SetDomainGridSize(const std::vector<DefReal>& domain_grid_size) = 0;
 
     // function to check nodes should be on domain boundaries
     void (GridManagerInterface::*ptr_func_insert_domain_boundary_)(const int flag_node,
@@ -186,7 +203,7 @@ class GridManagerInterface{
     // generate grid (initialization)
     /*the method is used to create grid instance for all refinement levels.
       Give different methods for each grid is possible by using other functions*/
-    void CreateSameGridInstanceForAllLevel(const std::shared_ptr<SolverInterface>& ptr_solver,
+    void CreateSameGridInstanceForAllLevel(const std::weak_ptr<SolverInterface>& ptr_solver,
         const GridInfoCreatorInterface& grid_creator);
     void CreateTrackingGridInstanceForAGeo(const DefInt i_geo, const GeometryInfoInterface& geo_info);
     void SetNumberOfExtendLayerForGrid(const DefInt i_level,
@@ -424,7 +441,7 @@ class GridManagerInterface{
 class GridManager2D :public  GridManagerInterface, public SFBitsetAux2D {
  public:
     void PrintGridInfo(void) const override;
-    void SetGridParameters(void) override;
+    void SetupDependentGridParameters(void) override;
     SFBitsetAuxInterface* GetPtrToSFBitsetAux() override {
         return dynamic_cast<SFBitsetAuxInterface*>(this);
     }
@@ -559,7 +576,7 @@ class GridManager2D :public  GridManagerInterface, public SFBitsetAux2D {
 class GridManager3D :public  GridManagerInterface, public SFBitsetAux3D {
  public:
     void PrintGridInfo(void) const override;
-    void SetGridParameters(void) override;
+    void SetupDependentGridParameters(void) override;
 
     SFBitsetAuxInterface* GetPtrToSFBitsetAux() override {
         return dynamic_cast<SFBitsetAuxInterface*>(this);

@@ -19,6 +19,7 @@ namespace lbmproject {
  */
 std::shared_ptr<amrproject::SolverInterface> SolverCreatorLbmD3Q19::CreateSolver() const {
     std::shared_ptr<SolverLbmD3Q19> ptr_tmp = std::make_shared<SolverLbmD3Q19>();
+    ptr_tmp->SetSolverDims(3);
     ptr_tmp->SetSolverType("LbmD3Q19");
     ptr_tmp->ResizeModelRelatedVectors();
     return ptr_tmp;
@@ -41,7 +42,7 @@ void SolverLbmD3Q19::StreamOutForAGivenNode(const DefSFBitset sfbitset_in,
     DefMap<std::unique_ptr<GridNodeLbm>>* const ptr_map_grid_nodes) const {
     const amrproject::SFBitsetAux3D sfbitset_aux3d = dynamic_cast<const amrproject::SFBitsetAux3D&>(sfbitset_aux);
     DefSFBitset sfbitset_tmp, sfbitset_tmp1;
-    // f(-x, 0, 0)
+    // f(0, 0, 0)
     ptr_map_grid_nodes->at(sfbitset_in)->f_.at(kFX0Y0Z0_) =
         ptr_map_grid_nodes->at(sfbitset_in)->f_collide_.at(kFX0Y0Z0_);
     // f(-x, 0, 0)

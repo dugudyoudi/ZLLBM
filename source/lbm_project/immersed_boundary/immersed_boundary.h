@@ -13,6 +13,7 @@
 #include <memory>
 #include <vector>
 #include <map>
+#include <string>
 #include "criterion/geometry_info_origin.h"
 #include "./lbm_interface.h"
 namespace rootproject {
@@ -30,8 +31,10 @@ class FsiImmersedBoundary {
         DefMap<std::unique_ptr<GridNodeLbm>>* const ptr_map_grid_nodes);
     void ClearNodesRecordForIB();
     void SetStencilDis(const DefInt stencil_dis) { stencil_dis_ = stencil_dis;}
+    void SetWriteIBForce(const bool write_ib_force) { write_ib_force_ = write_ib_force;}
 
  protected:
+    bool write_ib_force_ = false;
     DefInt stencil_dis_ = 2;
     DefReal ib_stiffness_ = 2.;
     DefInt k0IndexForceX_ = 0, k0IndexForceY_ = k0IndexForceX_ + 1, k0IndexForceZ_ = k0IndexForceY_ + 1;
@@ -74,16 +77,24 @@ class GeometryInfoImmersedBoundary : public amrproject::GeometryInfoOrigin, publ
     }
     void SetupGeometryInfo(const DefReal time, const amrproject::MpiManager& mpi_manager,
         const amrproject::GridInfoInterface& sfbitset_aux) override;
+    void ReadAndSetGeoParameters(const DefInt level,
+        const std::map<std::string, std::string>& geo_parameters) override;
+    void WriteTimeHisLagrangianForce(const DefReal time, const DefReal dx_background) const;
     explicit GeometryInfoImmersedBoundary(const DefInt dims) : amrproject::GeometryInfoOrigin(dims) {
         this->node_type_ = "GeometryInfoImmersedBoundary";
     }
 };
 class GeometryInfoImmersedBoundaryCreator :public amrproject::GeometryInfoOriginCreator {
  public:
-    std::shared_ptr<amrproject::GeometryInfoInterface> CreateGeometryInfo(const DefInt dims) override {
+    std::shared_ptr<amrproject::GeometryInfoInterface> CreateGeometryInfo(const DefInt dims) const override {
         std::shared_ptr<GeometryInfoImmersedBoundary> ptr_tmp = std::make_shared<GeometryInfoImmersedBoundary>(dims);
         return ptr_tmp;
     };
+};
+class GeoIBTypeReader : public amrproject::GeoTypeReader {
+ public:
+    std::shared_ptr<amrproject::GeometryInfoInterface> ReadGeoType(
+        const DefInt dims, const std::string& geo_type = "origin") const override;
 };
 }  // end namespace lbmproject
 }  // end namespace rootproject

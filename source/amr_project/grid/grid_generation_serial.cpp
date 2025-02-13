@@ -31,7 +31,6 @@ void GridManagerInterface::GenerateGridFromHighToLowLevelSerial(
     // generate tracking and ghost nodes based on geometries
     DefInt i_geo = 0;
     for (auto& iter : vec_geo_info) {
-        iter->SetGeoIndex(i_geo);
         iter->FindTrackingNodeBasedOnGeo(*ptr_sfbitset_aux, vec_ptr_grid_info_.at(iter->GetLevel()).get());
         ++i_geo;
     }

@@ -12,29 +12,18 @@
 #include <vector>
 #include <array>
 #include <map>
-#include "../../defs_libs.h"
+#include "grid/grid_enumerates.h"
 namespace rootproject {
 namespace lbmproject {
 class SolverLbmInterface;
-/**
-* @brief enumerate boundary types
-*/
-enum class ELbmBoundaryType {
-    kUndefined = 0,
-    kBoundaryXMin = 1,
-    kBoundaryXMax = 2,
-    kBoundaryYMin = 3,
-    kBoundaryYMax = 4,
-    kBoundaryZMin = 5,
-    kBoundaryZMax = 6
-};
 /**
 * @brief enumerate boundary conditions
 */
 enum class ELbmBoundaryConditionScheme {
     kUndefined = 0,
     kBounceBack = 1,
-    kPeriodic = 2
+    kPeriodic = 2,
+    kNonEqExtrapolation = 3
 };
 class GridInfoLbmInteface;
 /**
@@ -43,11 +32,11 @@ class GridInfoLbmInteface;
 class BoundaryConditionLbmInterface {
  public:
     ELbmBoundaryConditionScheme boundary_scheme_ = ELbmBoundaryConditionScheme::kUndefined;
-    void GetBoundaryNInverseIndices(const ELbmBoundaryType boundary_type,
+    void GetBoundaryNInverseIndices(const amrproject::EDomainBoundaryDirection boundary_dir,
         const SolverLbmInterface& lbm_solver,
         std::vector<DefInt>* const ptr_indices,
         std::vector<DefInt>* const ptr_inverse_indices) const;
-    virtual void CalBoundaryCondition(const ELbmBoundaryType boundary_type,
+    virtual void CalBoundaryCondition(const amrproject::EDomainBoundaryDirection boundary_dir,
         const DefMap<DefInt>& boundary_nodes,
         GridInfoLbmInteface* const pr_grid_info) const = 0;
     virtual void SetValues(const std::vector<DefReal> values) = 0;
@@ -58,7 +47,7 @@ class BoundaryConditionLbmInterface {
 */
 class BoundaryBounceBack2D : public BoundaryConditionLbmInterface {
  public:
-    void CalBoundaryCondition(const ELbmBoundaryType boundary_type,
+    void CalBoundaryCondition(const amrproject::EDomainBoundaryDirection boundary_dir,
         const DefMap<DefInt>& boundary_nodes,
         GridInfoLbmInteface* const ptr_grid_info) const override;
     void SetValues(const std::vector<DefReal> values) override;
@@ -71,7 +60,7 @@ class BoundaryBounceBack2D : public BoundaryConditionLbmInterface {
 */
 class BoundaryBounceBack3D : public BoundaryConditionLbmInterface {
  public:
-    void CalBoundaryCondition(const ELbmBoundaryType boundary_type,
+    void CalBoundaryCondition(const amrproject::EDomainBoundaryDirection boundary_dir,
         const DefMap<DefInt>& boundary_nodes,
         GridInfoLbmInteface* const ptr_grid_info) const override;
     void SetValues(const std::vector<DefReal> values) override;
@@ -84,7 +73,7 @@ class BoundaryBounceBack3D : public BoundaryConditionLbmInterface {
 */
 class BoundaryPeriodic2D : public BoundaryConditionLbmInterface {
  public:
-    void CalBoundaryCondition(const ELbmBoundaryType boundary_type,
+    void CalBoundaryCondition(const amrproject::EDomainBoundaryDirection boundary_dir,
         const DefMap<DefInt>& boundary_nodes,
         GridInfoLbmInteface* const ptr_grid_info) const override;
     void SetValues(const std::vector<DefReal> values) override {}
@@ -94,10 +83,36 @@ class BoundaryPeriodic2D : public BoundaryConditionLbmInterface {
 */
 class BoundaryPeriodic3D : public BoundaryConditionLbmInterface {
  public:
-    void CalBoundaryCondition(const ELbmBoundaryType boundary_type,
+    void CalBoundaryCondition(const amrproject::EDomainBoundaryDirection boundary_dir,
         const DefMap<DefInt>& boundary_nodes,
         GridInfoLbmInteface* const ptr_grid_info) const override;
     void SetValues(const std::vector<DefReal> values) override {}
+};
+/**
+* @brief  class to manage 2D non-equilibrium extrapolation boundary conditions 
+*/
+class BoundaryNonEqExtrapolation2D : public BoundaryConditionLbmInterface {
+ public:
+    void CalBoundaryCondition(const amrproject::EDomainBoundaryDirection boundary_dir,
+        const DefMap<DefInt>& boundary_nodes,
+        GridInfoLbmInteface* const ptr_grid_info) const override;
+    void SetValues(const std::vector<DefReal> values) override;
+
+ protected:
+    std::array<DefReal, 2> boundary_velocity_ = {0., 0.};
+};
+/**
+* @brief  class to manage 3D non-equilibrium extrapolation boundary conditions 
+*/
+class BoundaryNonEqExtrapolation3D : public BoundaryConditionLbmInterface {
+ public:
+    void CalBoundaryCondition(const amrproject::EDomainBoundaryDirection boundary_dir,
+        const DefMap<DefInt>& boundary_nodes,
+        GridInfoLbmInteface* const ptr_grid_info) const override;
+    void SetValues(const std::vector<DefReal> values) override;
+
+protected:
+    std::array<DefReal, 3> boundary_velocity_ = {0., 0., 0.};
 };
 }  // end namespace lbmproject
 }  // end namespace rootproject

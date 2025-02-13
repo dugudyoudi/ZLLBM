@@ -301,10 +301,10 @@ void GridManagerInterface::InstantiateGridNodeAllLevelMpi(const int i_rank,
         sfbitset_aux.GetMinAtGivenLevel(i_level, indices_min, &domain_min_n_level);
         sfbitset_aux.GetMaxAtGivenLevel(i_level, indices_max, &domain_max_n_level);
 
-        if (grid_info.GetPtrToSolver() == nullptr) {
+        if (grid_info.GetPtrToSolver().expired()) {
             LogManager::LogError("solver has not been assigned to grid info"
-            " of refinement level " + std::to_string(i_level)
-            + " in " + std::string(__FILE__) + " at line " + std::to_string(__LINE__));
+                " of refinement level " + std::to_string(i_level)
+                + " in " + std::string(__FILE__) + " at line " + std::to_string(__LINE__));
         }
 
         // instantiate nodes on outer mpi communication layer and refinement interface

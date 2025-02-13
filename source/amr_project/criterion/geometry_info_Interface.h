@@ -14,6 +14,7 @@
 #include <array>
 #include <memory>
 #include <unordered_map>
+#include <map>
 #include <string>
 #include "../defs_libs.h"
 #include "criterion/criterion_numerates.h"
@@ -48,7 +49,7 @@ class GeometryInfoInterface {
     EGeometryCellType geometry_cell_type_ = EGeometryCellType::kUndefined;
     EGridExtendType grid_extend_type_ = EGridExtendType::kSameInAllDirections;
     EGeometryStatus geometry_status_ = EGeometryStatus::kVirtual;
-    std::string node_type_;
+    std::string name_, node_type_;
     bool need_update_shape_ = false;
 
     TrackingGridInfoCreatorInterface* ptr_tracking_grid_info_creator_ = nullptr;
@@ -90,8 +91,8 @@ class GeometryInfoInterface {
     EGeometryStatus GetStatus() const {
         return geometry_status_;
     }
-    std::string GetNodeType() const {
-        return node_type_;
+    std::string GetName() const {
+        return name_;
     }
     TrackingGridInfoCreatorInterface* GetPtrTrackingGridInfoCreatorInterface() const {
         return ptr_tracking_grid_info_creator_;
@@ -151,8 +152,8 @@ class GeometryInfoInterface {
     void SetStatus(const EGeometryStatus geometry_status) {
         geometry_status_ = geometry_status;
     }
-    void SetNodeType(const std::string& node_type) {
-        node_type_ = node_type;
+    void SetName(const std::string& geo_name) {
+        name_ = geo_name;
     }
     void SetPtrTrackingGridInfoCreator(
         TrackingGridInfoCreatorInterface* const ptr_tracking_grid_info_creator) {
@@ -189,6 +190,9 @@ class GeometryInfoInterface {
         k0RealMin_ = array_offset;
     }
 
+    void ChooseGridExtendType(const std::string type_string);
+    virtual void ReadAndSetGeoParameters(const DefInt level,
+        const std::map<std::string, std::string>& geo_parameters);
 
     std::vector<std::unique_ptr<GeometryVertex>> vec_vertices_{};
     // only vertex information on current rank will be stored,
@@ -234,9 +238,15 @@ class GeometryInfoInterface {
 */
 class GeometryInfoCreatorInterface {
  public:
-    virtual std::shared_ptr<GeometryInfoInterface> CreateGeometryInfo(const DefInt dims) = 0;
+    virtual std::shared_ptr<GeometryInfoInterface> CreateGeometryInfo(const DefInt dims) const = 0;
+    virtual ~GeometryInfoCreatorInterface() {}
 };
-
+class GeoTypeReader {
+ public:
+    virtual std::shared_ptr<GeometryInfoInterface> ReadGeoType(
+        const DefInt dims, const std::string& geo_type = "origin") const;
+    virtual ~GeoTypeReader() {}
+};
 }  // end namespace amrproject
 }  // end namespace rootproject
 #endif  // SOURCE_AMR_PROJECT_CRITERION_GEOMETRY_INFO_INTERFACE_H_

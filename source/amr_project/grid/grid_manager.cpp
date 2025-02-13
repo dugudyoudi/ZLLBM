@@ -13,6 +13,7 @@
 #include "grid/grid_manager.h"
 #include "criterion/criterion_manager.h"
 #include "io/log_write.h"
+#include "io/input_parser.h"
 namespace rootproject {
 namespace amrproject {
 /**
@@ -24,11 +25,66 @@ DefReal MultiTimeSteppingC2F::GetCurrentTimeStep(const DefInt i_level,
         + static_cast<DefReal>(time_step_level) / static_cast<DefReal>(TwoPowerN(i_level));
 }
 /**
-* @brief function to setup default grid related parameters.
-* @param[in]  max_level  maximum refinement level.
+* @brief      function to read grid related parameters.
+* @param[in]  input_parser    class for parsing input.
 */
-void GridManagerInterface::StartupInitialization(const DefInt max_level) {
-    k0MaxLevel_ = max_level;
+void GridManagerInterface::ReadAndSetupGridParameters(const InputParser& input_parser) {
+    // parameters could be read
+    std::vector<DefReal> grid_size;   // compulsory
+    std::vector<DefReal> domain_size;   // compulsory
+    DefInt max_level = 0;  // optional
+
+    if (input_parser.GetValue<DefInt>("grid.max_level", &max_level)
+        && input_parser.print_values_when_read_) {
+        LogManager::LogInfo("Read and set max refinement level: " + std::to_string(max_level));
+    }
+    SetMaxLevel(max_level);
+
+    std::string values_str;
+    if (input_parser.GetValue<DefReal>("grid.domain_size", &domain_size)) {
+        SetDomainSize(domain_size);
+        if (input_parser.print_values_when_read_) {
+            values_str = input_parser.ValuesToOutputStr<DefReal>(domain_size);
+            LogManager::LogInfo("Read and set computational domain size: " + values_str);
+        }
+    } else {
+        LogManager::LogError("Domain size is not given.");
+    }
+    
+    if (input_parser.GetValue<DefReal>("grid.grid_size", &grid_size)) {
+        SetDomainGridSize(grid_size);
+        if (input_parser.print_values_when_read_) {
+            values_str = input_parser.ValuesToOutputStr<DefReal>(grid_size);
+            LogManager::LogInfo("Read and set grid size of background level: " + values_str);
+        }
+    } else {
+        LogManager::LogError("Grid size (grid.grid_size) is not given");
+    }
+    
+}
+/**
+* @brief      function to print grid related parameters.
+*/
+void GridManagerInterface::PrintGridSetting() const {
+    printf_s("Max refinement level: %d \n", GetMaxLevel());
+
+    std::vector<DefReal> vec_tmp;
+
+    vec_tmp.clear();
+    vec_tmp = GetDomainSize();
+    printf_s("Size of computational domain:");
+    for (const auto& iter : vec_tmp) {
+        printf_s(" %f", iter);
+    }
+    printf_s("\n");
+
+    vec_tmp.clear();
+    vec_tmp = GetDomainGridSize();
+    printf_s("Grid size at background level:");
+    for (const auto& iter : vec_tmp) {
+        printf_s(" %f", iter);
+    }
+    printf_s("\n");
 }
 /**
 * @brief   function tp create a tracking grid instance for a given geometry.
@@ -51,9 +107,14 @@ void GridManagerInterface::CreateTrackingGridInstanceForAGeo(const DefInt i_geo,
 * @param[in] ptr_solver pointer to the solver.
 * @param[in] grid_creator instance for creating grid infomation.
 */
-void GridManagerInterface::CreateSameGridInstanceForAllLevel(const std::shared_ptr<SolverInterface>& ptr_solver,
+void GridManagerInterface::CreateSameGridInstanceForAllLevel(const std::weak_ptr<SolverInterface>& ptr_solver,
     const GridInfoCreatorInterface& grid_creator) {
-    ptr_solver->SetPtrToGridManager(this);
+    if (auto ptr_tmp = ptr_solver.lock()) {
+        ptr_tmp->SetPtrToGridManager(this);
+    } else {
+        LogManager::LogError("Solver is not created.");
+        return;
+    }
     for (DefInt i_level = 0; i_level < k0MaxLevel_ + 1; ++i_level) {
         vec_ptr_grid_info_.emplace_back(grid_creator.CreateGridInfo());
         GridInfoInterface& grid_ref = *(vec_ptr_grid_info_).back();

@@ -24,45 +24,45 @@ bool GridInfoLbmInteface::CheckIfPeriodicDomainRequired(const DefInt dims,
     ptr_periodic_min->assign(dims, false);
     ptr_periodic_max->assign(dims, false);
     bool bool_has_periodic = false;
-    if (domain_boundary_condition_.find(ELbmBoundaryType::kBoundaryXMin)
+    if (domain_boundary_condition_.find(amrproject::EDomainBoundaryDirection::kBoundaryXMin)
         != domain_boundary_condition_.end()
-        && domain_boundary_condition_.at(ELbmBoundaryType::kBoundaryXMin)->boundary_scheme_
+        && domain_boundary_condition_.at(amrproject::EDomainBoundaryDirection::kBoundaryXMin)->boundary_scheme_
         == ELbmBoundaryConditionScheme::kPeriodic) {
         ptr_periodic_min->at(kXIndex) = true;
         bool_has_periodic = true;
     }
-    if (domain_boundary_condition_.find(ELbmBoundaryType::kBoundaryYMin)
+    if (domain_boundary_condition_.find(amrproject::EDomainBoundaryDirection::kBoundaryYMin)
         != domain_boundary_condition_.end()
-        && domain_boundary_condition_.at(ELbmBoundaryType::kBoundaryYMin)->boundary_scheme_
+        && domain_boundary_condition_.at(amrproject::EDomainBoundaryDirection::kBoundaryYMin)->boundary_scheme_
         == ELbmBoundaryConditionScheme::kPeriodic) {
         ptr_periodic_min->at(kYIndex) = true;
         bool_has_periodic = true;
     }
-    if (domain_boundary_condition_.find(ELbmBoundaryType::kBoundaryXMax)
+    if (domain_boundary_condition_.find(amrproject::EDomainBoundaryDirection::kBoundaryXMax)
         != domain_boundary_condition_.end()
-        && domain_boundary_condition_.at(ELbmBoundaryType::kBoundaryXMax)->boundary_scheme_
+        && domain_boundary_condition_.at(amrproject::EDomainBoundaryDirection::kBoundaryXMax)->boundary_scheme_
         == ELbmBoundaryConditionScheme::kPeriodic) {
         ptr_periodic_max->at(kXIndex) = true;
         bool_has_periodic = true;
     }
-    if (domain_boundary_condition_.find(ELbmBoundaryType::kBoundaryYMax)
+    if (domain_boundary_condition_.find(amrproject::EDomainBoundaryDirection::kBoundaryYMax)
         != domain_boundary_condition_.end()
-        && domain_boundary_condition_.at(ELbmBoundaryType::kBoundaryYMax)->boundary_scheme_
+        && domain_boundary_condition_.at(amrproject::EDomainBoundaryDirection::kBoundaryYMax)->boundary_scheme_
         == ELbmBoundaryConditionScheme::kPeriodic) {
         ptr_periodic_max->at(kYIndex) = true;
         bool_has_periodic = true;
     }
     if (dims == 3) {
-        if (domain_boundary_condition_.find(ELbmBoundaryType::kBoundaryZMin)
+        if (domain_boundary_condition_.find(amrproject::EDomainBoundaryDirection::kBoundaryZMin)
             != domain_boundary_condition_.end()
-            && domain_boundary_condition_.at(ELbmBoundaryType::kBoundaryZMin)->boundary_scheme_
+            && domain_boundary_condition_.at(amrproject::EDomainBoundaryDirection::kBoundaryZMin)->boundary_scheme_
             == ELbmBoundaryConditionScheme::kPeriodic) {
             ptr_periodic_min->at(kZIndex) = true;
             bool_has_periodic = true;
         }
-        if (domain_boundary_condition_.find(ELbmBoundaryType::kBoundaryZMax)
+        if (domain_boundary_condition_.find(amrproject::EDomainBoundaryDirection::kBoundaryZMax)
             != domain_boundary_condition_.end()
-            && domain_boundary_condition_.at(ELbmBoundaryType::kBoundaryZMax)->boundary_scheme_
+            && domain_boundary_condition_.at(amrproject::EDomainBoundaryDirection::kBoundaryZMax)->boundary_scheme_
             == ELbmBoundaryConditionScheme::kPeriodic) {
             ptr_periodic_max->at(kZIndex) = true;
             bool_has_periodic = true;
@@ -75,10 +75,15 @@ bool GridInfoLbmInteface::CheckIfPeriodicDomainRequired(const DefInt dims,
  * @return size of the grid node information for MPI communication.
  */
 int GridInfoLbmInteface::GetSizeOfGridNodeInfoForMpiCommunication() const {
-    SolverLbmInterface& lbm_solver = *std::dynamic_pointer_cast<SolverLbmInterface>(ptr_solver_).get();
-    int size_info =  lbm_solver.k0NumQ_*sizeof(DefReal);
-    if (lbm_solver.bool_forces_) {
-        size_info += lbm_solver.GetNumForces()*sizeof(DefReal);
+    SolverLbmInterface* ptr_lbm_solver = nullptr;
+    if (auto ptr_tmp = ptr_solver_.lock()) {
+        ptr_lbm_solver = dynamic_cast<SolverLbmInterface*>(ptr_tmp.get());
+    } else {
+        amrproject::LogManager::LogError("LBM solver is not created.");
+    }
+    int size_info =  ptr_lbm_solver->k0NumQ_*sizeof(DefReal);
+    if (ptr_lbm_solver->bool_forces_) {
+        size_info += ptr_lbm_solver->GetNumForces()*sizeof(DefReal);
     }
     return size_info;
 }
@@ -98,10 +103,15 @@ void GridInfoLbmInteface::ComputeNodeInfoBeforeMpiCommunication(
  */
 void GridInfoLbmInteface::ComputeInfoInMpiLayers(const std::map<int, DefMap<DefInt>>& map_inner_nodes,
     const DefMap<DefInt>& map_outer_nodes) {
-    SolverLbmInterface* ptr_lbm_solver = std::dynamic_pointer_cast<SolverLbmInterface>(ptr_solver_).get();
+    SolverLbmInterface* ptr_lbm_solver = nullptr;
+    if (auto ptr_tmp = ptr_solver_.lock()) {
+        ptr_lbm_solver = dynamic_cast<SolverLbmInterface*>(ptr_tmp.get());
+    } else {
+        amrproject::LogManager::LogError("LBM solver is not created.");
+    }
     const LbmCollisionOptInterface& collision_operator = ptr_lbm_solver->GetCollisionOperator(i_level_);
     DefReal dt_lbm = collision_operator.GetDtLbm();
-    DefInt dims = ptr_solver_->GetSolverDim();
+    DefInt dims = ptr_lbm_solver->GetSolverDim();
     std::function<void(const DefReal, const std::vector<DefReal>&, const std::vector<DefReal>&,
         DefReal* const, std::vector<DefReal>* const)> func_macro;
 

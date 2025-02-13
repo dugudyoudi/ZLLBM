@@ -12,16 +12,12 @@
 #include "immersed_boundary/immersed_boundary.h"
 namespace rootproject {
 namespace lbmproject {
-#ifndef  DEBUG_DISABLE_2D_FUNCTIONS
+#ifndef  DEBUG_DISABLE_3D_FUNCTIONS
 /**
-* @brief   function to generate a 2d circle
-* @param[in] dx reference spatial step
+* @brief   function to update vertices information (area) a 3D quadrilateral
+* @param[in] sum_t current time
 */
 void GeoShapeIBQuadrilateral3D::UpdateShape(const DefReal sum_t) {
-    if (ptr_geo_info_ == nullptr) {
-        amrproject::LogManager::LogError("pointer to geometry infomation instance is nullptr in "
-            + std::string(__FILE__) + " at line " + std::to_string(__LINE__));
-    }
     DefReal edge1_length = std::sqrt(Square(start_point_.at(kXIndex) - neighbor_point_.at(kXIndex))
         + Square(start_point_.at(kYIndex) - neighbor_point_.at(kYIndex))
         + Square(start_point_.at(kZIndex) - neighbor_point_.at(kZIndex)));
@@ -31,13 +27,37 @@ void GeoShapeIBQuadrilateral3D::UpdateShape(const DefReal sum_t) {
 
     DefReal edge1_arc = edge1_length / edge1_num_points_,
         edge2_arc = edge2_length / edge2_num_points_;
-    GeometryInfoImmersedBoundary* ptr_ib_geo_info = dynamic_cast<GeometryInfoImmersedBoundary*>(ptr_geo_info_);
+    GeometryInfoImmersedBoundary* ptr_ib_geo_info = nullptr;
+    if (auto ptr = ptr_geo_info_.lock()) {
+        ptr_ib_geo_info = dynamic_cast<GeometryInfoImmersedBoundary*>(ptr.get());
+    } else {
+        amrproject::LogManager::LogError("point to geometry information is not found for 2d circle");
+    }
     for (auto& iter_vertex : ptr_ib_geo_info->map_vertices_info_) {
         GeometryVertexImmersedBoundary& vertex_ib =
             dynamic_cast<GeometryVertexImmersedBoundary&>(*iter_vertex.second.get());
         vertex_ib.area_ = edge1_arc*edge2_arc;
     }
 }
-#endif  // DEBUG_DISABLE_2D_FUNCTIONS
+/**
+* @brief   function to update vertices information (area) a 3D sphere
+* @param[in] sum_t current time
+*/
+void GeoShapeIBSphere3D::UpdateShape(const DefReal sum_t) {
+    // it is assumed the vertices are evenly distributed on the sphere
+    GeometryInfoImmersedBoundary* ptr_ib_geo_info = nullptr;
+    if (auto ptr = ptr_geo_info_.lock()) {
+        ptr_ib_geo_info = dynamic_cast<GeometryInfoImmersedBoundary*>(ptr.get());
+    } else {
+        amrproject::LogManager::LogError("point to geometry information is not found for 2d circle");
+    }
+    DefReal area = 4.*kPi*Square(radius_)/ptr_ib_geo_info->vec_vertices_.size();
+    for (auto& iter_vertex : ptr_ib_geo_info->map_vertices_info_) {
+        GeometryVertexImmersedBoundary& vertex_ib =
+            dynamic_cast<GeometryVertexImmersedBoundary&>(*iter_vertex.second.get());
+        vertex_ib.area_ = area;
+    }
+}
+#endif  // DEBUG_DISABLE_3D_FUNCTIONS
 }  // end namespace lbmproject
 }  // end namespace rootproject

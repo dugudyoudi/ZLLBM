@@ -20,9 +20,8 @@ namespace amrproject {
 */
 class IoManager {
  public:
-
-    void StartupInitialization();
-    void SetIoParameters();
+    void SetupOutputFormat();
+    void SetupDependentIOParameters();
 
     // write flow field options
     bool bool_binary_ = true;

@@ -13,6 +13,7 @@
 #include <memory>
 #include <vector>
 #include "grid/grid_enumerates.h"
+#include "io/input_parser.h"
 namespace rootproject {
 namespace amrproject {
 class GridInfoCreatorInterface;
@@ -31,6 +32,16 @@ class SolverInterface {
     GridManagerInterface* ptr_grid_manager_ = nullptr;
 
  public:
+    // set and get functions
+    void SetSolverDims(const DefInt k0SolverDims) {k0SolverDims_ = k0SolverDims;}
+    void SetSolverType(const std::string& solver_type) {solver_type_ = solver_type;}
+    void SetPtrToGridManager(GridManagerInterface* const ptr_grid_manager) {
+        ptr_grid_manager_ = ptr_grid_manager;
+    }
+    DefInt GetSolverDim() const {return k0SolverDims_;}
+    std::string GetSolverType() const {return solver_type_;}
+    GridManagerInterface* GetPtrToParentGridManager() const {return ptr_grid_manager_;}
+
     std::unique_ptr<GridInfoCreatorInterface> ptr_grid_info_creator_;
     virtual std::string GetSolverMethod() = 0;
     virtual void SolverInitial() = 0;
@@ -40,17 +51,7 @@ class SolverInterface {
     virtual void InformationFromGridOfDifferentLevel(
         const DefInt time_step_current, const amrproject::SFBitsetAuxInterface& sfbitset_aux,
         amrproject::GridInfoInterface* const ptr_grid_info) {}
-
-    // set and get functions
-    void SetSolverDims(const DefInt k0SolverDims) {k0SolverDims_ = k0SolverDims;}
-    void SetSolverType(const std::string& solver_type) {solver_type_ = solver_type;}
-    void SetPtrToGridManager(GridManagerInterface* const ptr_grid_manager) {
-        ptr_grid_manager_ = ptr_grid_manager;
-    }
-
-    DefInt GetSolverDim() const {return k0SolverDims_;}
-    std::string GetSolverType() const {return solver_type_;}
-    GridManagerInterface* GetPtrToParentGridManager() const {return ptr_grid_manager_;}
+    virtual void ReadAndSetupSolverParameters(const InputParser& input_parser) {}
 
     virtual ~SolverInterface() = default;
 };

@@ -18,6 +18,7 @@ namespace lbmproject {
  */
 std::shared_ptr<amrproject::SolverInterface> SolverCreatorLbmD2Q9::CreateSolver() const {
     std::shared_ptr<SolverLbmD2Q9> ptr_tmp = std::make_shared<SolverLbmD2Q9>();
+    ptr_tmp->SetSolverDims(2);
     ptr_tmp->SetSolverType("LbmD2Q9");
     ptr_tmp->ResizeModelRelatedVectors();
     return ptr_tmp;

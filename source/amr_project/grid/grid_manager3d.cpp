@@ -53,7 +53,7 @@ void GridManager3D::SetDomainGridSize(const std::vector<DefReal>& domain_grid_si
 /**
 * @brief function to setup and check grid related parameters.
 */
-void GridManager3D::SetGridParameters() {
+void GridManager3D::SetupDependentGridParameters() {
     // check if length of computational domain is given
     if (k0DomainSize_.at(kXIndex) < kEps) {
         LogManager::LogError("Domain length in x direction (k0DomainSize_[0])"

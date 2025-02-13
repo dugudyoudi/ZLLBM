@@ -13,10 +13,7 @@ namespace rootproject {
 namespace amrproject {
 void AmrManager::CheckMeshAfterInitialization() const {
 #ifdef ENABLE_MPI
-    for (const auto& iter : ptr_grid_manager_->vec_ptr_grid_info_) {
-        ptr_mpi_manager_->CheckMpiNodesCorrespondence(*iter.get());
-        ptr_mpi_manager_->CheckMpiPeriodicCorrespondence(*iter.get());
-    }
+    ptr_mpi_manager_->DebugMpiForAllGrids(*ptr_grid_manager_.get());
 #endif  // ENABLE_MPI
 }
 }  // end namespace amrproject

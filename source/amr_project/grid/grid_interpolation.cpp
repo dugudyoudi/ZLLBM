@@ -184,6 +184,7 @@ int GridInfoInterface::InterpolationLinear2D(const DefAmrLUint region_length,
                         if (interp_nodes_outer_layer_.find(sfbitset_fine) != interp_nodes_outer_layer_.end()) {
                             ptr_node->InterpolationAdditionAssignCoefficient(
                                 *interp_nodes_outer_layer_.at(sfbitset_fine).get(), (coeffi_x[ix] * coeffi_y[iy]));
+
                         } else if (nodes_fine.find(sfbitset_fine) != nodes_fine.end()) {
                             ptr_node->InterpolationAdditionAssignCoefficient(
                                 *nodes_fine.at(sfbitset_fine).get(), (coeffi_x[ix] * coeffi_y[iy]));
@@ -266,6 +267,10 @@ int GridInfoInterface::InterpolationLagrangian2D(const DefAmrLUint interpolation
                 + region_length - interpolation_length;
             for (DefAmrLUint ix = 0; ix < num_coeff; ++ix) {
                 index_x = index_y + ix;
+
+                int i_rank;
+                MPI_Comm_rank(MPI_COMM_WORLD, &i_rank);
+
                 if (std::fabs(coeffi_x[ix] * coeffi_y[iy]) > kEps) {
                     if (nodes_coarse.find(sfbitset_coarse_region.at(index_x)) != nodes_coarse.end()
                         &&!(nodes_coarse.at(sfbitset_coarse_region.at(index_x))->flag_status_
@@ -292,6 +297,7 @@ int GridInfoInterface::InterpolationLagrangian2D(const DefAmrLUint interpolation
                             return -1;
                         }
                     }
+
                 }
             }
         }
