@@ -4,6 +4,8 @@
 /**
 * @file input_parser.h
 * @author Zhengliang Liu
+* @brief define the class used to read input parameters.
+* @date  2025-2-1
 */
 #ifndef SOURCE_AMR_PROJECT_IO_INPUT_PARSER_H_
 #define SOURCE_AMR_PROJECT_IO_INPUT_PARSER_H_

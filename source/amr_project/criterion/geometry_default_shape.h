@@ -36,8 +36,7 @@ class GeoShapeInterface {
 class GeoShapeReader {
  public:
     virtual std::unique_ptr<GeoShapeInterface> ReadAndCreateGeoShape(
-        const DefInt dims, const std::string& shape_id, const std::weak_ptr<GeometryInfoInterface>& ptr_geo,
-        const std::string& shape_type = "default") const;
+        const DefInt dims, const std::string& shape_id, const std::weak_ptr<GeometryInfoInterface>& ptr_geo) const;
     virtual ~GeoShapeReader() {}
 };
 #ifndef  DEBUG_DISABLE_2D_FUNCTIONS

@@ -41,13 +41,16 @@ void SolverLbmInterface::SolverInitial() {
     }
     InitialModelDependencies();
 }
+/**
+ * @brief function to input parameters for LBM solver.
+ */
 void SolverLbmInterface::ReadAndSetupSolverParameters(const amrproject::InputParser& input_parser) {
     std::string key_for_this_func =  "solver.lbm";
     const auto input_map = input_parser.GetNestedMapInput();
 
     if (input_map.find(key_for_this_func) != input_map.end()) {
-        if (input_map.at(key_for_this_func).find(solver_type_) == input_map.at(key_for_this_func).end()) {
-            amrproject::LogManager::LogError("key (" + solver_type_
+        if (input_map.at(key_for_this_func).find(name_) == input_map.at(key_for_this_func).end()) {
+            amrproject::LogManager::LogError("key (" + name_
                 + ") does not match any solver name in input file");
         } else {
             std::string values_str;

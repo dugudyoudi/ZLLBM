@@ -605,7 +605,13 @@ void GeometryInfoImmersedBoundary::WriteTimeHisLagrangianForce(const DefReal tim
     MPI_Comm_rank(MPI_COMM_WORLD, &rank_id);
 #endif  // ENABLE_MPI
     FILE* fp = nullptr;
-    std::string filename = "ib_force_for_geo" + std::to_string(i_geo_) + "_rank" +std::to_string(rank_id) + ".txt";
+
+    std::string filename;
+    if (GetName().empty()) {
+        filename = "ib_force_for_geo_" + std::to_string(i_geo_) + "_rank" +std::to_string(rank_id) + ".txt";
+    } else {
+        filename = "ib_force_for_geo_" + GetName() + "_rank" +std::to_string(rank_id) + ".txt";
+    }
 
     if (time < 1 + kEps) {
         std::remove(filename.c_str());
@@ -645,6 +651,7 @@ void GeometryInfoImmersedBoundary::WriteTimeHisLagrangianForce(const DefReal tim
  */
 std::shared_ptr<amrproject::GeometryInfoInterface> GeoIBTypeReader::ReadGeoType(
     const DefInt dims, const std::string& geo_type) const {
+
     if (geo_type == "origin_ib") {
         return std::make_shared<GeometryInfoImmersedBoundary>(dims);
     } else {

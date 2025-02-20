@@ -40,24 +40,22 @@ void CriterionManager::InitialAllGeometrySerial(
 * @param[in]  shape_reader reference of shape reader.
 */
 void CriterionManager::ReadAndSetGeoParametersBasedOnShape(const DefInt dims, const DefInt default_level,
-    const InputParser& input_parser, const GeoTypeReader& geo_reader, const GeoShapeReader& shape_reader) {
+    const InputParser& input_parser, const GeoTypeReader& geo_reader) {
     std::string key_for_this_func =  "geo.shape";
-    std::string geo_type = "origin", shape_type = "default", shape_id;
+    std::string geo_type = "origin", shape_id;
     const auto input_map = input_parser.GetNestedMapInput();
     if (input_map.find(key_for_this_func) != input_map.end()) {
         for (const auto iter_name : input_map.at(key_for_this_func)) {
             if (iter_name.second.find("geo.type") != iter_name.second.end()) {
                 geo_type = iter_name.second.at("geo.type");
             }
-            if (iter_name.second.find("shape.type") != iter_name.second.end()) {
-                shape_type = iter_name.second.at("shape.type");
-            }
             if (iter_name.second.find("shape.id") != iter_name.second.end()) {
                 shape_id = iter_name.second.at("shape.id");
             } else {
                 LogManager::LogError("shape.id is not found for geometry: " + iter_name.first);
             }
-            PushbackAGeometryBasedOnShape(dims, geo_type, shape_id, shape_type, geo_reader, shape_reader);
+            PushbackAGeometryBasedOnShape(dims, geo_type, shape_id,
+                geo_reader, *geo_reader.CreateShapeReader().get());
             std::weak_ptr<GeometryInfoInterface> ptr_geo_tmp = vec_ptr_geometries_.back();
             if (auto ptr_geo = ptr_geo_tmp.lock()) {
                 ptr_geo->SetName(iter_name.first);
@@ -74,19 +72,17 @@ void CriterionManager::ReadAndSetGeoParametersBasedOnShape(const DefInt dims, co
 * @param[in]  dims dimension of geometries.
 * @param[in]  geo_type type of geometry.
 * @param[in]  shape_id predefined id for shapes.
-* @param[in]  shape_type shape type.
 * @param[in]  geo_reader reference of geometry reader.
 * @param[in]  shape_reader reference of shape reader.
 */
 void CriterionManager::PushbackAGeometryBasedOnShape(const DefInt dims, const std::string& geo_type,
-    const std::string& shape_id, const std::string& shape_type,
-    const GeoTypeReader& geo_reader, const GeoShapeReader& shape_reader) {
+    const std::string& shape_id, const GeoTypeReader& geo_reader, const GeoShapeReader& shape_reader) {
     vec_ptr_geometries_.push_back(geo_reader.ReadGeoType(dims, geo_type));
     if (vec_ptr_geometries_.back() == nullptr) {
         LogManager::LogError("Geometry type " + geo_type + " is not supported.");
     } else {
         vec_ptr_geometries_.back()->ptr_geo_shape_ = shape_reader.ReadAndCreateGeoShape(
-            dims, shape_id, vec_ptr_geometries_.back(), shape_type);
+            dims, shape_id, vec_ptr_geometries_.back());
     }
 }
 }  // end namespace amrproject

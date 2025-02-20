@@ -28,18 +28,19 @@ class MpiManager;
 class SolverInterface {
  protected:
     DefInt k0SolverDims_ = 0;  ///< dimension
-    std::string solver_type_;
+    std::string solver_type_, name_;  // name_ must be unique for each solver instance when using inputparser
     GridManagerInterface* ptr_grid_manager_ = nullptr;
 
  public:
     // set and get functions
     void SetSolverDims(const DefInt k0SolverDims) {k0SolverDims_ = k0SolverDims;}
-    void SetSolverType(const std::string& solver_type) {solver_type_ = solver_type;}
+    void SetName(const std::string& name) {name_ = name;}
     void SetPtrToGridManager(GridManagerInterface* const ptr_grid_manager) {
         ptr_grid_manager_ = ptr_grid_manager;
     }
     DefInt GetSolverDim() const {return k0SolverDims_;}
     std::string GetSolverType() const {return solver_type_;}
+    std::string GetName() const {return name_;}
     GridManagerInterface* GetPtrToParentGridManager() const {return ptr_grid_manager_;}
 
     std::unique_ptr<GridInfoCreatorInterface> ptr_grid_info_creator_;

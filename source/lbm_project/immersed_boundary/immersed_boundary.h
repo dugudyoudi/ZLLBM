@@ -16,8 +16,10 @@
 #include <string>
 #include "criterion/geometry_info_origin.h"
 #include "./lbm_interface.h"
+#include "immersed_boundary/geometry_ib_shape.h"
 namespace rootproject {
 namespace lbmproject {
+class GeoIBShapeReader;
 class GeometryVertexImmersedBoundary : public amrproject::GeometryVertex {
  public:
     std::array<DefReal, 3> velocity_{};
@@ -95,6 +97,9 @@ class GeoIBTypeReader : public amrproject::GeoTypeReader {
  public:
     std::shared_ptr<amrproject::GeometryInfoInterface> ReadGeoType(
         const DefInt dims, const std::string& geo_type = "origin") const override;
+    std::unique_ptr<amrproject::GeoShapeReader> CreateShapeReader() const override {
+        return std::make_unique<GeoIBShapeReader>();
+    }
 };
 }  // end namespace lbmproject
 }  // end namespace rootproject

@@ -11,6 +11,11 @@
 #include "io/log_write.h"
 namespace rootproject {
 namespace lbmproject {
+/**
+ * @brief function to instantiate collision operator based on input type.
+ * @param[in] i_level input level.
+ * @param[in] collision_operator_type predefine type of collision operator.
+ */
 void SolverLbmInterface::SetCollisionOperator(const DefInt i_level,
     const ELbmCollisionOperatorType collision_operator_type) {
     if (collision_operators_.find(i_level) != collision_operators_.end()) {
@@ -19,22 +24,35 @@ void SolverLbmInterface::SetCollisionOperator(const DefInt i_level,
     switch (collision_operator_type) {
         case ELbmCollisionOperatorType::kLbmSrt: {
             if (bool_forces_) {
-                collision_operators_.insert({i_level, LbmSrtForceCollisionOptCreator(i_level)});
+                collision_operators_.insert({i_level, std::make_unique<LbmStrForceCollisionOpt>(i_level, *this)});
             } else {
-                collision_operators_.insert({i_level, LbmSrtCollisionOptCreator(i_level)});
+                collision_operators_.insert({i_level, std::make_unique<LbmStrCollisionOpt>(i_level, *this)});
             }
-            break;
         }
+        break;
+        case ELbmCollisionOperatorType::kLbmMrt: {
+            if (bool_forces_) {
+                collision_operators_.insert({i_level, std::make_unique<LbmMrtForceCollisionOpt>(i_level, *this)});
+            } else {
+                collision_operators_.insert({i_level, std::make_unique<LbmMrtCollisionOpt>(i_level, *this)});
+            }
+        }
+        break;
         default:
-            amrproject::LogManager::LogError("Collision operator is not defined");
+        amrproject::LogManager::LogError("Collision operator at level " + std::to_string(i_level) + " is not defined");
             break;
     }
 }
+/**
+ * @brief function to get collision operator at a given level.
+ * @param[in] i_level input level.
+ */
 const LbmCollisionOptInterface& SolverLbmInterface::GetCollisionOperator(DefInt i_level) const {
     if (collision_operators_.find(i_level) != collision_operators_.end()) {
         return *collision_operators_.at(i_level).get();
     } else {
-        amrproject::LogManager::LogError("Collision operator is not defined");
+        amrproject::LogManager::LogError("Collision operator at level "
+            + std::to_string(i_level) + " is not instantiated");
     }
     return *collision_operators_.at(0).get();
 }
@@ -43,9 +61,26 @@ LbmCollisionOptInterface::LbmCollisionOptInterface(const DefInt i_level, const S
     dt_lbm_ = 1./ static_cast<DefReal>(TwoPowerN(i_level));
 }
 /**
- * @brief function to calculate relaxation time ratio between coarse and fine grid.
+ * @brief function to calculate relaxation time and matrix.
+ * @param[in] lbm_solver reference to LBM solver.
  */
-void LbmCollisionOptInterface::CalRelaxationTimeRatio() {
+void LbmCollisionOptInterface::CalRelaxationTime(const SolverLbmInterface& lbm_solver) {
+    tau_ = viscosity_lbm_ * lbm_solver.kCs_Sq_Reciprocal_ / dt_lbm_ + 0.5;
+}
+/**
+ * @brief function to calculate relaxation time and matrix based on node information.
+ * @param[in] node reference to LBM node information
+ * @param[in] lbm_solver reference to LBM solver.
+ */
+void LbmCollisionOptInterface::CalRelaxationTimeNode(
+    const GridNodeLbm& node, const SolverLbmInterface& lbm_solver) {
+    tau_ = viscosity_lbm_ * lbm_solver.kCs_Sq_Reciprocal_ / dt_lbm_ + 0.5;
+}
+/**
+ * @brief function to calculate relaxation time ratio between coarse and fine grid.
+ * @param[in] lbm_solver reference to LBM solver
+ */
+void LbmCollisionOptInterface::CalRelaxationTimeRatio(const SolverLbmInterface& lbm_solver) {
     DefReal relax_tau_f = viscosity_lbm_ * SolverLbmInterface::kCs_Sq_Reciprocal_ / dt_lbm_ * 2. + 0.5;
     DefReal relax_tau_c = viscosity_lbm_ * SolverLbmInterface::kCs_Sq_Reciprocal_ / dt_lbm_ + 0.5;
     tau_collision_c2f_ = 0.5 * (relax_tau_f - 1)/(relax_tau_c - 1);

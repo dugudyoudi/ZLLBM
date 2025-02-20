@@ -4,6 +4,7 @@
 /**
 * @file io_manager.h
 * @author Zhengliang Liu
+* @brief define the class used to manage IO processes for grids.
 * @date  2022-5-18
 */
 #ifndef SOURCE_AMR_PROJECT_IO_IO_MANAGER_H_

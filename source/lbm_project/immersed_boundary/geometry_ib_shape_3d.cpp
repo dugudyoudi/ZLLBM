@@ -52,6 +52,7 @@ void GeoShapeIBSphere3D::UpdateShape(const DefReal sum_t) {
         amrproject::LogManager::LogError("point to geometry information is not found for 2d circle");
     }
     DefReal area = 4.*kPi*Square(radius_)/ptr_ib_geo_info->vec_vertices_.size();
+
     for (auto& iter_vertex : ptr_ib_geo_info->map_vertices_info_) {
         GeometryVertexImmersedBoundary& vertex_ib =
             dynamic_cast<GeometryVertexImmersedBoundary&>(*iter_vertex.second.get());

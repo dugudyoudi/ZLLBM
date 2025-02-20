@@ -4,22 +4,23 @@
 /**
 * @file log_write.cpp
 * @author Zhengliang Liu
+* @brief functions used to write log files.
 * @date  2022-8-14
 */
-#include <chrono>
-#include <filesystem>
-#include <stacktrace>
-#include "../defs_libs.h"
 #ifdef ENABLE_MPI
 #include <mpi.h>
 #endif  // ENABLE_MPI
+#include <chrono>
+#include <stacktrace>
+#include <filesystem>
+#include "../defs_libs.h"
 #include "io/log_write.h"
 namespace rootproject {
 namespace amrproject {
 // static member
 void LogManager::LogStartTime() {
-    auto current_time = std::chrono::system_clock::to_time_t
-    (std::chrono::system_clock::now());
+    auto current_time = std::chrono::system_clock::to_time_t(
+        std::chrono::system_clock::now());
 
     char time_char[26];
     ctime_s(time_char, sizeof time_char, &current_time);
@@ -47,6 +48,31 @@ void LogManager::LogStartTime() {
         }
         fprintf_s(fp, "number of MPI ranks is: %d; current node is: %d \n", numprocs, rank_id);
 #endif  // ENABLE_MPI
+        fclose(fp);
+    }
+}
+void LogManager::LogEndTime() {
+    auto current_time = std::chrono::system_clock::to_time_t(
+        std::chrono::system_clock::now());
+
+    char time_char[26];
+    ctime_s(time_char, sizeof time_char, &current_time);
+
+    int rank_id = 0;
+#ifdef ENABLE_MPI
+    MPI_Comm_rank(MPI_COMM_WORLD, &rank_id);
+#endif  // ENABLE_MPI
+
+    FILE* fp = nullptr;
+    errno_t err = fopen_s(&fp,
+        (logfile_name_ + std::to_string(rank_id)).c_str(), "w");
+    if (!fp) {
+        printf_s("The file was not opened for writing log\n");
+    } else {
+        fprintf_s(fp, "project end on: %s", time_char);
+        if (rank_id == 0) {
+            printf("project end on: %s", time_char);
+        }
         fclose(fp);
     }
 }
@@ -117,7 +143,6 @@ void LogManager::LogError(const std::string& msg) {
     if (first_newline_pos != std::string::npos) {
         trace_msg = trace_msg.substr(first_newline_pos + 1);
     }
-    std::cout << "Current working directory: " << std::filesystem::current_path() << std::endl;
     if (!fp) {
         printf_s("The log file was not opened\n");
     } else {

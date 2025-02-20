@@ -26,6 +26,7 @@ class GhostGridInfoCreatorInterface;
 class SFBitsetAuxInterface;
 class GridInfoInterface;
 class GeoShapeInterface;
+class GeoShapeReader;
 class MpiManager;
 /**
 * @struct GeometryVertex
@@ -245,6 +246,7 @@ class GeoTypeReader {
  public:
     virtual std::shared_ptr<GeometryInfoInterface> ReadGeoType(
         const DefInt dims, const std::string& geo_type = "origin") const;
+    virtual std::unique_ptr<GeoShapeReader> CreateShapeReader() const {return std::make_unique<GeoShapeReader>();}
     virtual ~GeoTypeReader() {}
 };
 }  // end namespace amrproject

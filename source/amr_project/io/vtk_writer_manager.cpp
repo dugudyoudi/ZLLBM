@@ -184,7 +184,12 @@ void VtkWriterManager::WriteVtuAll(const std::string& folder_name,
     bool_overlap = false;
     for (DefInt i = 0; i < static_cast<DefInt>(criterion_manager.vec_ptr_geometries_.size()); ++i) {
         std::vector<DefInt> output_geos = {i};
-        std::string geo_file_name = proj_and_rank + "geo_" + criterion_manager.vec_ptr_geometries_.at(i)->GetName();
+        std::string geo_file_name;
+        if (criterion_manager.vec_ptr_geometries_.at(i)->GetName().empty()) {
+            geo_file_name = proj_and_rank + "geo_" + std::to_string(i);
+        } else {
+            geo_file_name = proj_and_rank + "geo_" + criterion_manager.vec_ptr_geometries_.at(i)->GetName();
+        }
         WriteVtuGeo(geo_file_name, bool_binary, bool_overlap, overlap_flag,
             grid_manager.k0GridDims_, output_geos, grid_offset,
             output_data_format, criterion_manager);

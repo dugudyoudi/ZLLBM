@@ -12,9 +12,17 @@
 #define  SOURCE_LBM_PROJECT_IMMERSED_BOUNDARY_GEOMETRY_IB_SHAPE_H_
 #include <array>
 #include <memory>
+#include <string>
 #include "criterion/geometry_default_shape.h"
 namespace rootproject {
 namespace lbmproject {
+class GeoIBShapeReader : public amrproject::GeoShapeReader {
+ public:
+    std::unique_ptr<amrproject::GeoShapeInterface> ReadAndCreateGeoShape(
+        const DefInt dims, const std::string& shape_id,
+        const std::weak_ptr<amrproject::GeometryInfoInterface>& ptr_geo) const override;
+    virtual ~GeoIBShapeReader() {}
+};
 #ifndef  DEBUG_DISABLE_2D_FUNCTIONS
 class GeoShapeIBCircle2D : public amrproject::GeoShapeDefaultCircle2D {
  public:

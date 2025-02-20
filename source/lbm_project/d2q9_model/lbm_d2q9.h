@@ -22,6 +22,51 @@ class SolverLbmD2Q9 :public SolverLbmInterface {
     static constexpr DefInt kFX0Y0Z0_ = 0, kFXnY0Z0_ = 3, kFXpY0Z0_ = 1, kFX0YnZ0_ = 4, kFX0YpZ0_ = 2,
         kFXnYnZ0_ = 7, kFXnYpZ0_ = 6, kFXpYnZ0_ = 8, kFXpYpZ0_ = 5;
         /**< indices of distribution functions*/
+
+    void InitialModelDependencies() final;
+    void Stream(const DefInt flag_not_compute, const amrproject::SFBitsetAuxInterface& sfbitset_aux,
+         DefMap<std::unique_ptr<GridNodeLbm>>* const ptr_map_grid_nodes) const final;
+    void StreamOutForAGivenNode(const DefSFBitset sfbitset_in, const amrproject::SFBitsetAuxInterface& sfbitset_aux,
+        DefMap<std::unique_ptr<GridNodeLbm>>* const ptr_map_grid_nodes) const final;
+    void StreamInForAGivenNode(const DefSFBitset sfbitset_in, const amrproject::SFBitsetAuxInterface& sfbitset_aux,
+        DefMap<std::unique_ptr<GridNodeLbm>>* const ptr_map_grid_nodes) const final;
+
+    // std::unique_ptr<BoundaryConditionLbmInterface> BoundaryBounceBackCreator() const override {
+    //     return std::make_unique<BoundaryBounceBackD2Q9>();
+    // }
+
+    SolverLbmD2Q9() : SolverLbmInterface(9, 3, InitCx(), InitCy(), {}, InitWeights(), IniIndexNeg(), IniIndexPos()) {
+        k0SolverDims_ = 2;
+        name_ = "LbmD2Q9";
+        solver_type_ = "LbmD2Q9";
+    }
+
+    // for MRT
+    std::vector<std::vector<DefReal>> GetMrtMMatrix() const final;
+    std::vector<std::vector<DefReal>> GetMrtImMatrix() const final;
+    std::vector<std::vector<DefReal>> InitialMrtSMatrix(const DefReal tau) const final;
+    void UpdateMrtSMatrix(const DefReal tau, std::vector<std::vector<DefReal>>* const ptr_diag_s) const final;
+    std::vector<std::vector<DefReal>> InitialMrtDMatrix(const DefReal tau) const final;
+    void UpdateMrtDMatrix(const DefReal tau, std::vector<std::vector<DefReal>>* const ptr_diag_d) const final;
+
+ private:
+    static std::vector<DefReal> InitCx() {
+        return { 0., 1., 0., -1., 0., 1., -1., -1., 1. };
+    }
+    static std::vector<DefReal> InitCy() {
+        return { 0., 0., 1., 0., -1., 1., 1., -1., -1. };
+    }
+    static std::vector<DefReal> InitWeights() {
+        return { 4. / 9., 1. / 9., 1. / 9., 1. / 9., 1. / 9., 1. / 36., 1. / 36., 1. / 36., 1. / 36. };
+    }
+    static std::vector<std::vector<DefInt>> IniIndexNeg() {
+        return {{ kFXnY0Z0_, kFXnYnZ0_, kFXnYpZ0_ }, {kFX0YnZ0_, kFXnYnZ0_, kFXpYnZ0_}};
+    }
+    static std::vector<std::vector<DefInt>> IniIndexPos() {
+        return {{ kFXpY0Z0_, kFXpYnZ0_, kFXpYpZ0_ }, {kFX0YpZ0_, kFXpYpZ0_, kFXnYpZ0_}};
+    }
+
+    // for Mrt
     static constexpr std::array<std::array<DefReal, 9>, 9> kMatrixMMrt_ = {{
         {  1.,  1.,  1.,  1.,  1., 1.,  1.,  1.,  1. },
         { -4., -1., -1., -1., -1., 2.,  2.,  2.,  2. },
@@ -44,38 +89,7 @@ class SolverLbmD2Q9 :public SolverLbmInterface {
         { 1. / 9.,  1. / 18.,  1. / 36., -1. / 6., -1. / 12., -1. / 6., -1. / 12.,  0.     ,  1. / 4. },
         { 1. / 9.,  1. / 18.,  1. / 36.,  1. / 6.,  1. / 12., -1. / 6., -1. / 12.,  0.     , -1. / 4. }
         }};
-    void InitialModelDependencies() final;
-    void Stream(const DefInt flag_not_compute, const amrproject::SFBitsetAuxInterface& sfbitset_aux,
-         DefMap<std::unique_ptr<GridNodeLbm>>* const ptr_map_grid_nodes) const final;
-    void StreamOutForAGivenNode(const DefSFBitset sfbitset_in, const amrproject::SFBitsetAuxInterface& sfbitset_aux,
-        DefMap<std::unique_ptr<GridNodeLbm>>* const ptr_map_grid_nodes) const final;
-    void StreamInForAGivenNode(const DefSFBitset sfbitset_in, const amrproject::SFBitsetAuxInterface& sfbitset_aux,
-        DefMap<std::unique_ptr<GridNodeLbm>>* const ptr_map_grid_nodes) const final;
-
-    // std::unique_ptr<BoundaryConditionLbmInterface> BoundaryBounceBackCreator() const override {
-    //     return std::make_unique<BoundaryBounceBackD2Q9>();
-    // }
-
-    SolverLbmD2Q9() : SolverLbmInterface(9, 3, InitCx(), InitCy(), {}, InitWeights(), IniIndexNeg(), IniIndexPos()) {
-        k0SolverDims_ = 2;
-    }
-
- private:
-    static std::vector<DefReal> InitCx() {
-        return { 0., 1., 0., -1., 0., 1., -1., -1., 1. };
-    }
-    static std::vector<DefReal> InitCy() {
-        return { 0., 0., 1., 0., -1., 1., 1., -1., -1. };
-    }
-    static std::vector<DefReal> InitWeights() {
-        return { 4. / 9., 1. / 9., 1. / 9., 1. / 9., 1. / 9., 1. / 36., 1. / 36., 1. / 36., 1. / 36. };
-    }
-    static std::vector<std::vector<DefInt>> IniIndexNeg() {
-        return {{ kFXnY0Z0_, kFXnYnZ0_, kFXnYpZ0_ }, {kFX0YnZ0_, kFXnYnZ0_, kFXpYnZ0_}};
-    }
-    static std::vector<std::vector<DefInt>> IniIndexPos() {
-        return {{ kFXpY0Z0_, kFXpYnZ0_, kFXpYpZ0_ }, {kFX0YpZ0_, kFXpYpZ0_, kFXnYpZ0_}};
-    }
+    std::array<DefReal, 9> k0VectorSMrt_ = { 0., 1.4, 1.4, 0., 1.2, 0., 1.2, 0., 0. };
 
  protected:
     void CalMacroD2Q9Incompressible(const std::vector<DefReal>& f,

@@ -305,6 +305,7 @@ void AmrManager::SetSameSolverDependentInfoForAllGrids(const std::shared_ptr<Sol
 */
 void AmrManager::FinalizeSimulation() {
     ptr_io_manager_->OutputFlowField(program_name_, ptr_grid_manager_.get(), ptr_criterion_manager_.get());
+    LogManager::LogEndTime();
 #ifdef ENABLE_MPI
     ptr_mpi_manager_->FinalizeMpi();
 #endif  // ENABLE_MPI

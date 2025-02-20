@@ -4,7 +4,7 @@
 /**
 * @file io_manager.cpp
 * @author Zhengliang Liu
-* @brief functions used to manage io processes.
+* @brief functions used to manage IO processes for grids.
 * @date  2022-8-6
 */
 #include <string>
