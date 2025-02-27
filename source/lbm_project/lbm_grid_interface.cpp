@@ -176,11 +176,12 @@ void GridInfoLbmInteface::InitialGridInfo(const DefInt dims) {
         amrproject::LogManager::LogError("LBM solver is not created.");
     }
     ptr_lbm_solver->SetInitialDisFuncBasedOnReferenceMacros(&f_ini_, &f_collide_ini_);
-    ptr_lbm_solver->SetCollisionOperator(i_level_, collision_type_);
+    ptr_lbm_solver->InstantiateCollisionOperator(i_level_);
     ChooseInterpolationMethod(dims);
     if (ptr_lbm_solver->GetNumForces() != ptr_lbm_solver->GetDefaultForce().size()) {
-        amrproject::LogManager::LogWarning("Dimension of forces of grid info is not equal to"
-            " the dimension of default forces in the solver.");
+        amrproject::LogManager::LogWarning("Dimension of forces (k0NumForces_) is not equal to"
+            " the dimension of default forces (k0Force_) in the solver for"
+            " initialization in GridInfoLbmInteface::InitialGridInfo.");
     }
 }
 /**
@@ -507,24 +508,6 @@ int GridInfoLbmInteface::TransferInfoFromCoarseGrid(const amrproject::SFBitsetAu
 
     return 0;
 }
-void GridInfoLbmInteface::DebugWrite() {
-    
-                int rank_id = 0;
-                MPI_Comm_rank(MPI_COMM_WORLD, &rank_id);
-                                if (i_level_ == 1 && rank_id==0) {
-                    amrproject::SFBitsetAux3D aux3d;
-                    std::cout << "debug: " <<ptr_lbm_grid_nodes_->at(aux3d.SFBitsetEncoding({8, 8, 8}))->f_[0]<< std::endl;
-                }
-}
-void GridInfoLbmInteface::DebugWriteNode(const amrproject::GridNode& node) {
-    const GridNodeLbm& node_lbm = dynamic_cast<const GridNodeLbm&>(node);
-
-    std::cout <<std::setprecision(15) << node_lbm.velocity_[1] << " ";
-    for (int i = 0; i < 9; ++ i) {
-        std::cout << node_lbm.f_[i] << " ";
-    }
-    std::cout << std::endl;
-}
 /**
  * @brief function to transfer information on the interface from the fine grid to coarse grid.
  * @param[in] sfbitset_aux class to manage functions for space filling code computation.
@@ -583,18 +566,6 @@ void GridInfoLbmInteface::NodeInfoCoarse2fine(const amrproject::GridNode& coarse
     }
     std::vector<DefReal> feq(ptr_lbm_solver->k0NumQ_);
     ptr_fine_node->velocity_.resize(ptr_lbm_solver->GetSolverDim());
-    // if (bool_forces_) {
-    //     lbm_solver.func_macro_with_force_(ptr_collision_operator_->dt_lbm_, coarse_node,
-    //         &ptr_fine_node->rho_, &ptr_fine_node->velocity_);
-    //     lbm_solver.func_cal_feq_(ptr_fine_node->rho_, ptr_fine_node->velocity_, &feq);
-    //     ptr_collision_operator_->PostCollisionCoarse2FineForce(ptr_collision_operator_->dt_lbm_, feq, lbm_solver,
-    //         lbm_solver.ptr_func_cal_force_iq_, coarse_node, &ptr_fine_node->f_collide_);
-    // } else {
-    //     lbm_solver.func_macro_without_force_(coarse_node, &ptr_fine_node->rho_, &ptr_fine_node->velocity_);
-    //     lbm_solver.func_cal_feq_(ptr_fine_node->rho_, ptr_fine_node->velocity_, &feq);
-    //     ptr_collision_operator_->PostCollisionCoarse2Fine(ptr_collision_operator_->dt_lbm_,
-    //         feq, coarse_node.f_collide_, &ptr_fine_node->f_collide_);
-    // }
 
     ptr_lbm_solver->func_macro_without_force_(coarse_node.f_, &ptr_fine_node->rho_, &ptr_fine_node->velocity_);
     ptr_lbm_solver->func_cal_feq_(ptr_fine_node->rho_, ptr_fine_node->velocity_, &feq);
@@ -617,13 +588,6 @@ void GridInfoLbmInteface::NodeInfoFine2Coarse(const amrproject::GridNode& fine_b
         amrproject::LogManager::LogError("LBM solver is not created.");
     }
     ptr_lbm_solver->func_cal_feq_(fine_node.rho_, fine_node.velocity_, &feq);
-    // if (bool_forces_) {
-    //     ptr_collision_operator_->PostCollisionFine2CoarseForce(ptr_collision_operator_->dt_lbm_,
-    //         feq, lbm_solver, lbm_solver.ptr_func_cal_force_iq_, fine_node,  ptr_coarse_node);
-    // } else {
-    //     ptr_collision_operator_->PostCollisionFine2Coarse(ptr_collision_operator_->dt_lbm_,
-    //         feq, fine_node,  ptr_coarse_node);
-    // }
     ptr_lbm_solver->GetCollisionOperator(i_level_).PostStreamFine2Coarse(feq, fine_node, ptr_coarse_node);
 }
 /**

@@ -23,11 +23,16 @@ namespace rootproject {
 namespace amrproject {
 template <typename T>
     concept ParserAllowedType = std::is_fundamental_v<T> || std::is_same_v<T, std::string>;
+struct ParserData {
+ public:
+    bool bool_has_read_ = false;
+    std::string str_value_;
+};
 class InputParser {
  private:
     char delimiter_ = ' ';
-    std::map<std::string, std::string> map_input_;
-    std::map<std::string, std::map<std::string, std::map<std::string, std::string>>> nested_map_input_;
+    std::map<std::string, ParserData> map_input_;
+    std::map<std::string, std::map<std::string, std::map<std::string, ParserData>>> nested_map_input_;
 
     std::vector<std::string> Split(const std::string& str, char delimiter) const;
     std::string Trim(const std::string& str) const;
@@ -66,10 +71,12 @@ class InputParser {
 
  public:
     bool print_values_when_read_ = false;
-    const std::map<std::string, std::string>& GetMapInput() const { return map_input_; }
-    const std::map<std::string, std::map<std::string, std::map<std::string, std::string>>>& GetNestedMapInput() const {
+    std::map<std::string, ParserData>& GetMapInput()  { return map_input_; }
+    std::map<std::string, std::map<std::string, std::map<std::string, ParserData>>>& GetNestedMapInput() {
         return nested_map_input_;
     }
+
+    void PrintUnusedParameters() const;
 
     explicit InputParser(const std::string& filename);
     InputParser() {}
@@ -98,35 +105,9 @@ class InputParser {
         result += ")";
         return result;
     }
-
-    // read single value
-    template <typename T>
-    bool GetValue(const std::string& key, const std::map<std::string, std::string>& map_variable,
-        T* const ptr_variable) const {
-        if (map_variable.find(key) == map_variable.end()) {
-            return false;
-        }
-        *ptr_variable = CheckType<T>(map_variable.at(key));
-        return true;
-    }
-    template <typename T>
-    bool GetValue(const std::string& key, const std::map<std::string, std::string>& map_variable,
-        T* const ptr_variable, const std::string& expected_scope) const {
-        CheckScope(key, expected_scope);
-        return Read(key, map_variable, ptr_variable);
-    }
-    template <typename T>
-    bool GetValue(const std::string& key, T* const ptr_variable) const {
-        return GetValue(key, map_input_, ptr_variable);
-    }
-    template <typename T>
-    bool GetValue(const std::string& key, T* const ptr_variable, const std::string& expected_scope) const {
-        CheckScope(key, expected_scope);
-        return GetValue(key, map_input_, ptr_variable);
-    }
     template <typename T>
     bool GetNestedValue(const std::string& key, const std::string& name,
-        const std::string& nested_key, T* const ptr_variable) const {
+        const std::string& nested_key, T* const ptr_variable) {
         auto it = nested_map_input_.find(key);
         if (it == nested_map_input_.end()) {
             return false;
@@ -139,48 +120,77 @@ class InputParser {
         if (value_it == nested_it->second.end()) {
             return false;
         }
-        *ptr_variable = CheckType<T>(value_it->second);
+        *ptr_variable = CheckType<T>(value_it->second.str_value_);
+        value_it->second.bool_has_read_ = true;
         return true;
+    }
+
+    // read single value
+    template <typename T>
+    bool GetValue(const std::string& key, std::map<std::string, ParserData>* const ptr_map_variable,
+        T* const ptr_variable) const {
+        if (ptr_map_variable->find(key) == ptr_map_variable->end()) {
+            return false;
+        }
+        *ptr_variable = CheckType<T>(ptr_map_variable->at(key).str_value_);
+        ptr_map_variable->at(key).bool_has_read_ = true;
+        return true;
+    }
+    template <typename T>
+    bool GetValue(const std::string& key, std::map<std::string, ParserData>* const ptr_map_variable,
+        T* const ptr_variable, const std::string& expected_scope) const {
+        CheckScope(key, expected_scope);
+        return Read(key, ptr_map_variable, ptr_variable);
+    }
+    template <typename T>
+    bool GetValue(const std::string& key, T* const ptr_variable) {
+        return GetValue(key, &map_input_, ptr_variable);
+    }
+    template <typename T>
+    bool GetValue(const std::string& key, T* const ptr_variable, const std::string& expected_scope) {
+        CheckScope(key, expected_scope);
+        return GetValue(key, &map_input_, ptr_variable);
     }
 
     // read std::vector
     template <typename T>
     bool GetValue(const std::string& key,
-        const std::map<std::string, std::string>& map_variable, std::vector<T>* const ptr_variable) const {
-        if (map_variable.find(key) == map_variable.end()) {
+        std::map<std::string, ParserData>* const ptr_map_variable, std::vector<T>* const ptr_variable) const {
+        if (ptr_map_variable->find(key) == ptr_map_variable->end()) {
             return false;
         }
-        std::vector<std::string> tokens = Split(map_variable.at(key), delimiter_);
+        std::vector<std::string> tokens = Split(ptr_map_variable->at(key).str_value_, delimiter_);
         ptr_variable->resize(tokens.size());
         for (auto i = 0; i < tokens.size(); ++i) {
             ptr_variable->at(i) = CheckType<T>(tokens.at(i));
         }
+        ptr_map_variable->at(key).bool_has_read_ = true;
         return true;
     }
     template <typename T>
-    bool GetValue(const std::string& key, const std::map<std::string, std::string>& map_variable,
+    bool GetValue(const std::string& key, std::map<std::string, ParserData>* const ptr_map_variable,
         std::vector<T>* const ptr_variable, const std::string& expected_scope) const {
         CheckScope(key, expected_scope);
-        return GetValue(key, map_variable, ptr_variable);
+        return GetValue(key, ptr_map_variable, ptr_variable);
     }
     template <typename T>
-    bool GetValue(const std::string& key, std::vector<T>* const ptr_variable) const {
-        return GetValue(key, map_input_, ptr_variable);
+    bool GetValue(const std::string& key, std::vector<T>* const ptr_variable) {
+        return GetValue(key, &map_input_, ptr_variable);
     }
     template <typename T>
     bool GetValue(const std::string& key,
-        std::vector<T>* const ptr_variable, const std::string& expected_scope) const {
+        std::vector<T>* const ptr_variable, const std::string& expected_scope) {
         CheckScope(key, expected_scope);
-        return GetValue(key, map_input_, ptr_variable);
+        return GetValue(key, &map_input_, ptr_variable);
     }
 
     template <typename T>
-    bool GetValue(const std::string& key, const std::map<std::string, std::string>& map_variable,
+    bool GetValue(const std::string& key, std::map<std::string, ParserData>* const ptr_map_variable,
         std::vector<T>* const ptr_variable, size_t expected_elements) const {
-        if (map_variable.find(key) == map_variable.end()) {
+        if (ptr_map_variable->find(key) == ptr_map_variable->end()) {
             return false;
         }
-        std::vector<std::string> tokens = Split(map_variable[key], delimiter_);
+        std::vector<std::string> tokens = Split(ptr_map_variable->at(key).str_value_, delimiter_);
         if (tokens.size() != expected_elements) {
             throw std::runtime_error("Expected " + std::to_string(expected_elements) +
                 " elements for " + key + ", got " + std::to_string(tokens.size()));
@@ -189,34 +199,35 @@ class InputParser {
         for (const auto& token : tokens) {
             ptr_variable->push_back(CheckType<T>(token));
         }
+        ptr_map_variable->at(key).bool_has_read_ = true;
         return true;
     }
     template <typename T>
-    bool GetValue(const std::string& key, const std::map<std::string, std::string>& map_variable,
+    bool GetValue(const std::string& key, std::map<std::string, ParserData>* const ptr_map_variable,
         std::vector<T>* const ptr_variable, const std::string& expected_scope, size_t expected_elements) const {
         CheckScope(key, expected_scope);
-        return GetValue(key, map_variable, ptr_variable, expected_elements);
+        return GetValue(key, ptr_map_variable, ptr_variable, expected_elements);
     }
     template <typename T>
-    bool GetValue(const std::string& key, std::vector<T>* const ptr_variable, size_t expected_elements) const {
-        return GetValue(key, map_input_, ptr_variable, expected_elements);
+    bool GetValue(const std::string& key, std::vector<T>* const ptr_variable, size_t expected_elements) {
+        return GetValue(key, &map_input_, ptr_variable, expected_elements);
     }
     template <typename T>
     bool GetValue(const std::string& key, std::vector<T>* const ptr_variable,
-        const std::string& expected_scope, size_t expected_elements) const {
+        const std::string& expected_scope, size_t expected_elements) {
         CheckScope(key, expected_scope);
-        return GetValue(key, map_input_, ptr_variable, expected_elements);
+        return GetValue(key, &map_input_, ptr_variable, expected_elements);
     }
 
     // read std::array
     template <typename T, std::size_t N>
-    bool GetValue(const std::string& key, const std::map<std::string, std::string>& map_variable,
+    bool GetValue(const std::string& key, std::map<std::string, ParserData>* const ptr_map_variable,
         std::array<T, N>* const ptr_variable) const {
-        if (map_variable.find(key) == map_variable.end()) {
+        if (ptr_map_variable->find(key) == ptr_map_variable->end()) {
             return false;
         }
 
-        std::vector<std::string> tokens = Split(map_variable.at(key), delimiter_);
+        std::vector<std::string> tokens = Split(ptr_map_variable->at(key).str_value_, delimiter_);
         if (tokens.size() != N) {
             throw std::runtime_error("Expected " + std::to_string(N) +
                 " elements for " + key + ", got " + std::to_string(tokens.size()));
@@ -225,24 +236,24 @@ class InputParser {
         for (std::size_t i = 0; i < N; ++i) {
             ptr_variable->at(i) = CheckType<T>(tokens[i]);
         }
+        ptr_map_variable->at(key).bool_has_read_ = true;
         return true;
     }
     template <typename T, std::size_t N>
-    void GetValue(const std::string& key, const std::map<std::string, std::string>& map_variable,
+    void GetValue(const std::string& key, std::map<std::string, ParserData>* const ptr_map_variable,
         std::array<T, N>* const ptr_variable, const std::string& expected_scope) const {
         CheckScope(key, expected_scope);
-        return GetValue(key, map_variable, ptr_variable);
+        return GetValue(key, ptr_map_variable, ptr_variable);
     }
     template <typename T, std::size_t N>
-    bool GetValue(const std::string& key,
-        std::array<T, N>* const ptr_variable) const {
-        return GetValue(key, map_input_, ptr_variable);
+    bool GetValue(const std::string& key, std::array<T, N>* const ptr_variable) {
+        return GetValue(key, &map_input_, ptr_variable);
     }
     template <typename T, std::size_t N>
     void GetValue(const std::string& key,
-        std::array<T, N>* const ptr_variable, const std::string& expected_scope) const {
+        std::array<T, N>* const ptr_variable, const std::string& expected_scope) {
         CheckScope(key, expected_scope);
-        return GetValue(key, map_input_, ptr_variable);
+        return GetValue(key, &map_input_, ptr_variable);
     }
 };
 }  // end namespace amrproject

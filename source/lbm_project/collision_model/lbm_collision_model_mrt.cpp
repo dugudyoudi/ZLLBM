@@ -13,30 +13,48 @@ namespace rootproject {
 namespace lbmproject {
 /**
  * @brief function to calculate relaxation time and matrix.
+ * @param[in] vis_lbm viscosity scaling for LBM solver.
  * @param[in] lbm_solver reference to LBM solver.
  */
-void LbmMrtCollisionOpt::CalRelaxationTime(const SolverLbmInterface& lbm_solver) {
-    LbmCollisionOptInterface::CalRelaxationTime(lbm_solver);
-    SetImSMMatrix(1./tau_, lbm_solver);
+void LbmMrtCollisionOpt::CalRelaxationTime(const DefReal vis_lbm, const SolverLbmInterface& lbm_solver) {
+    LbmCollisionOptInterface::CalRelaxationTime(vis_lbm, lbm_solver);
+    const DefReal relax_tau = 1./tau0_;
+    SetImSMMatrix(relax_tau, lbm_solver);
+    SetImDMMatrix(relax_tau, lbm_solver);
 }
 /**
  * @brief function to calculate relaxation time and matrix based on node information.
- * @param[in] node reference to LBM node information
+ * @param[in] tau_eff effective relaxation time.
  * @param[in] lbm_solver reference to LBM solver.
  */
-void LbmMrtCollisionOpt::CalRelaxationTimeNode(const GridNodeLbm& node, const SolverLbmInterface& lbm_solver) {
-    LbmCollisionOptInterface::CalRelaxationTimeNode(node, lbm_solver);
-    SetImSMMatrix(1./tau_, lbm_solver);
+void LbmMrtCollisionOpt::SetEffectiveRelaxationTime(
+    const DefReal tau_eff, const SolverLbmInterface& lbm_solver) {
+    tau_eff_ = tau_eff;
+    SetImSMMatrix(1./tau_eff, lbm_solver);
+}
+/**
+ * @brief function to calculate relaxation time and matrix based on node information.
+ * @param[in] tau_eff effective relaxation time.
+ * @param[in] lbm_solver reference to LBM solver.
+ */
+void LbmMrtCollisionOpt::SetEffectiveRelaxationTimeForForcing(
+    const DefReal tau_eff, const SolverLbmInterface& lbm_solver) {
+    tau_eff_ = tau_eff;
+    const DefReal relax_tau = 1./tau_eff;
+    SetImSMMatrix(relax_tau, lbm_solver);
+    SetImDMMatrix(relax_tau, lbm_solver);
 }
 LbmMrtCollisionOpt::LbmMrtCollisionOpt(const DefInt i_level, const SolverLbmInterface& lbm_solver)
     : LbmCollisionOptInterface(i_level, lbm_solver) {
-    LbmCollisionOptInterface::CalRelaxationTime(lbm_solver);
-    LbmCollisionOptInterface::CalRelaxationTimeRatio(lbm_solver);
+    LbmCollisionOptInterface::CalRelaxationTime(viscosity_lbm_, lbm_solver);
+    LbmCollisionOptInterface::CalRelaxationTimeRatio(viscosity_lbm_, lbm_solver);
     matrix_m_ = lbm_solver.GetMrtMMatrix();
     matrix_im_ = lbm_solver.GetMrtImMatrix();
-    const DefReal relax_tau = 1./tau_;
+    const DefReal relax_tau = 1./tau0_;
     diag_s_ = lbm_solver.InitialMrtSMatrix(relax_tau);
     SetImSMMatrix(relax_tau, lbm_solver);
+    diag_d_ = lbm_solver.InitialMrtDMatrix(relax_tau);
+    SetImDMMatrix(relax_tau, lbm_solver);
 }
 /**
  * @brief function to calculate matrix M^{-1}SM for MRT collision.
@@ -64,53 +82,11 @@ void LbmMrtCollisionOpt::SetImSMMatrix(const DefReal relax_tau, const SolverLbmI
     }
 }
 /**
- * @brief function to conduct MRT collision procedure.
- * @param[in] lbm_solver reference to LBM solver.
- * @param[out] lbm_solver pointer to LBM node information.
- */
-void LbmMrtCollisionOpt::CollisionOperator(const SolverLbmInterface& lbm_solver,
-    const std::vector<DefReal>& /*force*/, GridNodeLbm* const ptr_node) const {
-    const DefInt num_q = lbm_solver.k0NumQ_;
-    std::vector<DefReal> feq(num_q, 0.);
-    DefReal f_mrt = 0.;
-    lbm_solver.func_cal_feq_(ptr_node->rho_, ptr_node->velocity_, &feq);
-    for (DefInt iq = 0; iq < num_q; ++iq) {
-        f_mrt = 0.;
-        for (DefInt is = 0; is < num_q; ++is) {
-            f_mrt += matrix_im_s_m_.at(iq).at(is) * (ptr_node->f_[is] - feq[is]);
-        }
-        ptr_node->f_collide_[iq] = ptr_node->f_[iq] - f_mrt;
-    }
-}
-/**
- * @brief function to calculate relaxation time and matrix.
- * @param[in] lbm_solver reference to LBM solver.
- */
-void LbmMrtForceCollisionOpt::CalRelaxationTime(const SolverLbmInterface& lbm_solver) {
-    LbmMrtCollisionOpt::CalRelaxationTime(lbm_solver);
-    SetImDMMatrix(1./tau_, lbm_solver);
-}
-/**
- * @brief function to calculate relaxation time and matrix based on node information.
- * @param[in] node reference to LBM node information
- * @param[in] lbm_solver reference to LBM solver.
- */
-void LbmMrtForceCollisionOpt::CalRelaxationTimeNode(const GridNodeLbm& node, const SolverLbmInterface& lbm_solver) {
-    LbmMrtCollisionOpt::CalRelaxationTimeNode(node, lbm_solver);
-    SetImDMMatrix(1./tau_, lbm_solver);
-}
-LbmMrtForceCollisionOpt::LbmMrtForceCollisionOpt(const DefInt i_level, const SolverLbmInterface& lbm_solver)
-    : LbmMrtCollisionOpt(i_level, lbm_solver) {
-    const DefReal relax_tau = 1./tau_;
-    diag_d_ = lbm_solver.InitialMrtDMatrix(relax_tau);
-    SetImDMMatrix(relax_tau, lbm_solver);
-}
-/**
  * @brief function to calculate matrix M^{-1}DM for MRT collision.
  * @param[in] relax_tau reciprocal of relaxation time.
  * @param[in] lbm_solver reference to LBM solver.
  */
-void LbmMrtForceCollisionOpt::SetImDMMatrix(const DefReal relax_tau, const SolverLbmInterface& lbm_solver) {
+void LbmMrtCollisionOpt::SetImDMMatrix(const DefReal relax_tau, const SolverLbmInterface& lbm_solver) {
     lbm_solver.UpdateMrtDMatrix(relax_tau, &diag_d_);
     const DefInt num_q = lbm_solver.k0NumQ_;
     std::vector<std::vector<DefReal>> diag_d_m(num_q, std::vector<DefReal>(num_q, 0.));
@@ -131,19 +107,31 @@ void LbmMrtForceCollisionOpt::SetImDMMatrix(const DefReal relax_tau, const Solve
     }
 }
 /**
- * @brief function to conduct MRT collision procedure.
+ * @brief function to conduct SRT collision procedure.
  * @param[in] lbm_solver reference to LBM solver.
- * @param[in] force body force considered for the current node.
+ * @param[in] feq equilibrium distribution function.
  * @param[out] lbm_solver pointer to LBM node information.
  */
-void LbmMrtForceCollisionOpt::CollisionOperator(const SolverLbmInterface& lbm_solver,
-    const std::vector<DefReal>& force, GridNodeLbm* const ptr_node) const {
-    const DefInt num_q = lbm_solver.k0NumQ_;
-    std::vector<DefReal> feq(num_q, 0.), forcing_term(num_q, 0.);
-    lbm_solver.func_cal_feq_(ptr_node->rho_, ptr_node->velocity_, &feq);
+void LbmMrtCollisionOpt::CollisionOperator(const DefInt num_q, const std::vector<DefReal>& feq,
+    GridNodeLbm* const ptr_node) const {
+    DefReal f_mrt = 0.;
     for (DefInt iq = 0; iq < num_q; ++iq) {
-        forcing_term[iq] = (lbm_solver.*(lbm_solver.ptr_func_cal_force_iq_))(iq, *ptr_node, force);
+        f_mrt = 0.;
+        for (DefInt is = 0; is < num_q; ++is) {
+            f_mrt += matrix_im_s_m_.at(iq).at(is) * (ptr_node->f_[is] - feq[is]);
+        }
+        ptr_node->f_collide_[iq] = ptr_node->f_[iq] - f_mrt;
     }
+}
+/**
+ * @brief function to conduct SRT collision procedure.
+ * @param[in] lbm_solver reference to LBM solver.
+ * @param[in] feq equilibrium distribution function.
+ * @param[in] forcing_term foring term distribution function.
+ * @param[out] lbm_solver pointer to LBM node information.
+ */
+void LbmMrtCollisionOpt::CollisionOperator(const DefInt num_q, const std::vector<DefReal>& feq,
+    const std::vector<DefReal>& forcing_term, GridNodeLbm* const ptr_node) const {
     DefReal f_mrt = 0.;
     for (DefInt iq = 0; iq < num_q; ++iq) {
         f_mrt = 0.;

@@ -48,14 +48,15 @@ void GeoShapeDefaultCircle2D::InitialShape(const DefReal dx_background) {
 * @param[in] shape_parameters map storing shape parameters.
 * @return true if all parameters are found, false if some parameters are missing.
 */
-bool GeoShapeDefaultCircle2D::ReadAndSetGeoShapeParameters(const std::map<std::string, std::string>& shape_parameters) {
+bool GeoShapeDefaultCircle2D::ReadAndSetGeoShapeParameters(
+    std::map<std::string, ParserData>* const ptr_shape_parameters) {
     InputParser input_parser;
     bool parameter_exist = true;
-    if (!input_parser.GetValue<DefReal>("cylinder.center", shape_parameters, &center_)) {
+    if (!input_parser.GetValue<DefReal>("cylinder.center", ptr_shape_parameters, &center_)) {
         LogManager::LogWarning("center is not found for 2d circle");
         parameter_exist = false;
     }
-    if (!input_parser.GetValue<DefReal>("cylinder.radius", shape_parameters, &radius_)) {
+    if (!input_parser.GetValue<DefReal>("cylinder.radius", ptr_shape_parameters, &radius_)) {
         LogManager::LogWarning("radius is not found for 2d circle");
         parameter_exist = false;
     }
@@ -94,17 +95,18 @@ void GeoShapeDefaultLine2D::InitialShape(const DefReal dx) {
 }
 /**
 * @brief   function to read and set parameters for a 2d line.
-* @param[in] shape_parameters map storing shape parameters.
+* @param[in] ptr_shape_parameters pointer to map storing shape parameters.
 * @return true if all parameters are found, false if some parameters are missing.
 */
-bool GeoShapeDefaultLine2D::ReadAndSetGeoShapeParameters(const std::map<std::string, std::string>& shape_parameters) {
+bool GeoShapeDefaultLine2D::ReadAndSetGeoShapeParameters(
+    std::map<std::string, ParserData>* const ptr_shape_parameters) {
     InputParser input_parser;
     bool parameter_exist = true;
-    if (!input_parser.GetValue<DefReal>("line.start_point", shape_parameters, &start_point_)) {
+    if (!input_parser.GetValue<DefReal>("line.start_point", ptr_shape_parameters, &start_point_)) {
         LogManager::LogWarning("start point is not found for 2d line");
         parameter_exist = false;
     }
-    if (!input_parser.GetValue<DefReal>("line.end_point", shape_parameters, &end_point_)) {
+    if (!input_parser.GetValue<DefReal>("line.end_point", ptr_shape_parameters, &end_point_)) {
         LogManager::LogWarning("end point is not found for 2d line");
         parameter_exist = false;
     }

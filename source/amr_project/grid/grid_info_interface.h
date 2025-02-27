@@ -274,10 +274,6 @@ class GridInfoInterface {
     virtual int TransferInfoToCoarseGrid(const SFBitsetAuxInterface& sfbitset_aux,
         const DefInt node_flag, GridInfoInterface* const ptr_grid_info_coarse) {return -1;}
 
-    // debug
-    virtual void DebugWrite() {}
-    virtual void DebugWriteNode(const GridNode& node) {}
-
     // parent grid manager
  protected:
     GridManagerInterface* ptr_parent_grid_manager_ = nullptr;

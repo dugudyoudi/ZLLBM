@@ -26,41 +26,40 @@ DefReal MultiTimeSteppingC2F::GetCurrentTimeStep(const DefInt i_level,
 }
 /**
 * @brief      function to read grid related parameters.
-* @param[in]  input_parser    class for parsing input.
+* @param[in, out] ptr_input_parser pointer to class for input parsing. 
 */
-void GridManagerInterface::ReadAndSetupGridParameters(const InputParser& input_parser) {
+void GridManagerInterface::ReadAndSetupGridParameters(InputParser* const ptr_input_parser) {
     // parameters could be read
     std::vector<DefReal> grid_size;   // compulsory
     std::vector<DefReal> domain_size;   // compulsory
     DefInt max_level = 0;  // optional
 
-    if (input_parser.GetValue<DefInt>("grid.max_level", &max_level)
-        && input_parser.print_values_when_read_) {
+    if (ptr_input_parser->GetValue<DefInt>("grid.max_level", &max_level)
+        && ptr_input_parser->print_values_when_read_) {
         LogManager::LogInfo("Read and set max refinement level: " + std::to_string(max_level));
     }
     SetMaxLevel(max_level);
 
     std::string values_str;
-    if (input_parser.GetValue<DefReal>("grid.domain_size", &domain_size)) {
+    if (ptr_input_parser->GetValue<DefReal>("grid.domain_size", &domain_size)) {
         SetDomainSize(domain_size);
-        if (input_parser.print_values_when_read_) {
-            values_str = input_parser.ValuesToOutputStr<DefReal>(domain_size);
+        if (ptr_input_parser->print_values_when_read_) {
+            values_str = ptr_input_parser->ValuesToOutputStr<DefReal>(domain_size);
             LogManager::LogInfo("Read and set computational domain size: " + values_str);
         }
     } else {
         LogManager::LogError("Domain size is not given.");
     }
-    
-    if (input_parser.GetValue<DefReal>("grid.grid_size", &grid_size)) {
+
+    if (ptr_input_parser->GetValue<DefReal>("grid.grid_size", &grid_size)) {
         SetDomainGridSize(grid_size);
-        if (input_parser.print_values_when_read_) {
-            values_str = input_parser.ValuesToOutputStr<DefReal>(grid_size);
+        if (ptr_input_parser->print_values_when_read_) {
+            values_str = ptr_input_parser->ValuesToOutputStr<DefReal>(grid_size);
             LogManager::LogInfo("Read and set grid size of background level: " + values_str);
         }
     } else {
         LogManager::LogError("Grid size (grid.grid_size) is not given");
     }
-    
 }
 /**
 * @brief      function to print grid related parameters.
@@ -297,20 +296,20 @@ void GridManagerInterface::SetNumberOfExtendLayerForGrid(const DefInt i_level,
         && (geo_extend.at(i_level) > k0IntExtendMin_)) {
         ptr_inner_layer_neg->at(kXIndex) = geo_extend.at(i_level);
         ptr_inner_layer_neg->at(kYIndex) = geo_extend.at(i_level);
-        ptr_inner_layer_pos->at(kXIndex) = geo_extend.at(i_level);
-        ptr_inner_layer_pos->at(kYIndex) = geo_extend.at(i_level);
+        ptr_inner_layer_pos->at(kXIndex) = geo_extend.at(i_level) + 1;
+        ptr_inner_layer_pos->at(kYIndex) = geo_extend.at(i_level) + 1;
         if (k0GridDims_ == 3) {
             ptr_inner_layer_neg->at(kZIndex) = geo_extend.at(i_level);
-            ptr_inner_layer_pos->at(kZIndex) = geo_extend.at(i_level);
+            ptr_inner_layer_pos->at(kZIndex) = geo_extend.at(i_level) + 1;
         }
     } else {
         ptr_inner_layer_neg->at(kXIndex) = k0IntExtendMin_;
         ptr_inner_layer_neg->at(kYIndex) = k0IntExtendMin_;
-        ptr_inner_layer_pos->at(kXIndex) = k0IntExtendMin_;
-        ptr_inner_layer_pos->at(kYIndex) = k0IntExtendMin_;
+        ptr_inner_layer_pos->at(kXIndex) = k0IntExtendMin_ + 1;
+        ptr_inner_layer_pos->at(kYIndex) = k0IntExtendMin_ + 1;
         if (k0GridDims_ == 3) {
             ptr_inner_layer_neg->at(kZIndex) = k0IntExtendMin_;
-            ptr_inner_layer_pos->at(kZIndex) = k0IntExtendMin_;
+            ptr_inner_layer_pos->at(kZIndex) = k0IntExtendMin_ + 1;
         }
     }
     geo_extend = geo_info.GetXExtendNegative();
@@ -321,9 +320,9 @@ void GridManagerInterface::SetNumberOfExtendLayerForGrid(const DefInt i_level,
     }
     geo_extend = geo_info.GetXExtendPositive();
     if ((static_cast<DefInt>(geo_extend.size()) > i_level) && (geo_extend.at(i_level) > k0IntExtendMin_)) {
-        ptr_outer_layer_pos->at(kXIndex) = geo_extend.at(i_level);
+        ptr_outer_layer_pos->at(kXIndex) = geo_extend.at(i_level) + 1;
     } else {
-        ptr_outer_layer_pos->at(kXIndex) = k0IntExtendMin_;
+        ptr_outer_layer_pos->at(kXIndex) = k0IntExtendMin_ + 1;
     }
     geo_extend = geo_info.GetYExtendNegative();
     if ((static_cast<DefInt>(geo_extend.size()) > i_level) && (geo_extend.at(i_level) > k0IntExtendMin_)) {
@@ -333,9 +332,9 @@ void GridManagerInterface::SetNumberOfExtendLayerForGrid(const DefInt i_level,
     }
     geo_extend = geo_info.GetYExtendPositive();
     if ((static_cast<DefInt>(geo_extend.size()) > i_level) && (geo_extend.at(i_level) > k0IntExtendMin_)) {
-        ptr_outer_layer_pos->at(kYIndex) = geo_extend.at(i_level);
+        ptr_outer_layer_pos->at(kYIndex) = geo_extend.at(i_level) + 1;
     } else {
-        ptr_outer_layer_pos->at(kYIndex) = k0IntExtendMin_;
+        ptr_outer_layer_pos->at(kYIndex) = k0IntExtendMin_ + 1;
     }
     if (k0GridDims_ == 3) {
         geo_extend = geo_info.GetZExtendNegative();
@@ -346,10 +345,10 @@ void GridManagerInterface::SetNumberOfExtendLayerForGrid(const DefInt i_level,
         }
         geo_extend = geo_info.GetZExtendPositive();
         if ((static_cast<DefInt>(geo_extend.size()) > i_level) && (geo_extend.at(i_level) >
-                k0IntExtendMin_)) {
-            ptr_outer_layer_pos->at(kZIndex) = geo_extend.at(i_level);
+            k0IntExtendMin_)) {
+            ptr_outer_layer_pos->at(kZIndex) = geo_extend.at(i_level) + 1;
         } else {
-            ptr_outer_layer_pos->at(kZIndex) = k0IntExtendMin_;
+            ptr_outer_layer_pos->at(kZIndex) = k0IntExtendMin_ + 1;
         }
     }
 }

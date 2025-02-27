@@ -52,7 +52,7 @@ class SolverInterface {
     virtual void InformationFromGridOfDifferentLevel(
         const DefInt time_step_current, const amrproject::SFBitsetAuxInterface& sfbitset_aux,
         amrproject::GridInfoInterface* const ptr_grid_info) {}
-    virtual void ReadAndSetupSolverParameters(const InputParser& input_parser) {}
+    virtual void ReadAndSetupSolverParameters(InputParser* const ptr_input_parser) {}
 
     virtual ~SolverInterface() = default;
 };

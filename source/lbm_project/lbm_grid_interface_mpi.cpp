@@ -109,20 +109,9 @@ void GridInfoLbmInteface::ComputeInfoInMpiLayers(const std::map<int, DefMap<DefI
     } else {
         amrproject::LogManager::LogError("LBM solver is not created.");
     }
-    const LbmCollisionOptInterface& collision_operator = ptr_lbm_solver->GetCollisionOperator(i_level_);
+    LbmCollisionOptInterface& collision_operator = ptr_lbm_solver->GetCollisionOperator(i_level_);
     DefReal dt_lbm = collision_operator.GetDtLbm();
     DefInt dims = ptr_lbm_solver->GetSolverDim();
-    std::function<void(const DefReal, const std::vector<DefReal>&, const std::vector<DefReal>&,
-        DefReal* const, std::vector<DefReal>* const)> func_macro;
-
-    DefMap<std::unique_ptr<GridNodeLbm>>* ptr_lbm_grid_nodes = GetPtrToLbmGrid();
-    if (ptr_lbm_solver->bool_forces_) {
-        func_macro = ptr_lbm_solver->func_macro_with_force_;
-    } else {
-        func_macro = [ptr_lbm_solver](const DefReal dt_lbm, const std::vector<DefReal>& f,
-            const std::vector<DefReal>& force, DefReal* const ptr_rho, std::vector<DefReal>* const ptr_velocity) {
-            ptr_lbm_solver->func_macro_without_force_(f, ptr_rho, ptr_velocity);};
-    }
 
     // collision for nodes in outer and inner MPI communication layers
     DefInt flag_not_collide = NodeFlagNotCollision_&(~(amrproject::NodeBitStatus::kNodeStatusMpiPartitionOuter_
@@ -130,16 +119,12 @@ void GridInfoLbmInteface::ComputeInfoInMpiLayers(const std::map<int, DefMap<DefI
     ptr_lbm_solver->CollisionForGivenNodes<DefInt>(i_level_, flag_not_collide, map_outer_nodes, this);
     DefMap<DefInt> map_one_layer_near_inner;
     std::vector<DefSFBitset> vec_neighbor;
+
     for (const auto& iter_layer : map_inner_nodes) {
         for (const auto& iter_node : iter_layer.second) {
             if (!(ptr_lbm_grid_nodes_->at(iter_node.first)->flag_status_&flag_not_collide)) {
-                std::vector<DefReal> force(
-                    ptr_lbm_solver->GetAllForcesForANode(*ptr_lbm_grid_nodes_->at(iter_node.first).get()));
-                func_macro(dt_lbm, ptr_lbm_grid_nodes_->at(iter_node.first)->f_, force,
-                    &ptr_lbm_grid_nodes_->at(iter_node.first)->rho_,
-                    &ptr_lbm_grid_nodes_->at(iter_node.first)->velocity_);
-                collision_operator.CollisionOperator(*ptr_lbm_solver, force,
-                    ptr_lbm_grid_nodes_->at(iter_node.first).get());
+                ptr_lbm_solver->func_collision_node_(
+                    dt_lbm, &collision_operator, ptr_lbm_grid_nodes_->at(iter_node.first).get());
             }
             ptr_sfbitset_aux_->SFBitsetFindAllNeighborsVir(iter_node.first, &vec_neighbor);
             for (const auto& iter_neighbor : vec_neighbor) {

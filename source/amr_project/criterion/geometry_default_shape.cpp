@@ -32,8 +32,8 @@ std::unique_ptr<GeoShapeInterface> GeoShapeReader::ReadAndCreateGeoShape(const D
 #ifndef  DEBUG_DISABLE_3D_FUNCTIONS
         if (shape_id == "sphere") {
             return std::make_unique<GeoShapeDefaultSphere3D>(ptr_geo);
-        } else if (shape_id == "cubic") {
-            return std::make_unique<GeoShapeDefaultCubic3D>(ptr_geo);
+        } else if (shape_id == "cube") {
+            return std::make_unique<GeoShapeDefaultCube3D>(ptr_geo);
         } else if (shape_id == "quadrilateral") {
             return std::make_unique<GeoShapeDefaultQuadrilateral3D>(ptr_geo);
         } else {

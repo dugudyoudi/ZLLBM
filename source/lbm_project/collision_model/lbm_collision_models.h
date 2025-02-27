@@ -28,18 +28,20 @@ enum class ELbmCollisionOperatorType {
 */
 class LbmCollisionOptInterface {
  protected:
-    DefReal tau_;
+    DefReal tau0_, tau_eff_;
     DefReal dt_lbm_, viscosity_lbm_, tau_collision_c2f_, tau_collision_f2c_, tau_stream_c2f_, tau_stream_f2c_;
 
  public:
     DefReal GetDtLbm() const { return dt_lbm_; }
     DefReal GetViscosityLbm() const { return viscosity_lbm_; }
-    DefReal GetRelaxationTime() const { return tau_; }
+    DefReal GetRelaxationTime() const { return tau0_; }
+    DefReal GetEffectiveRelaxationTime() const { return tau0_; }
 
     bool cal_tau_each_node_ = false;
-    virtual void CalRelaxationTime(const SolverLbmInterface& lbm_solver);
-    virtual void CalRelaxationTimeNode(const GridNodeLbm& node, const SolverLbmInterface& lbm_solver);
-    virtual void CalRelaxationTimeRatio(const SolverLbmInterface& lbm_solver);
+    virtual void CalRelaxationTime(const DefReal vis_lbm, const SolverLbmInterface& lbm_solver);
+    virtual void SetEffectiveRelaxationTime(const DefReal tau_eff, const SolverLbmInterface& lbm_solver);
+    virtual void SetEffectiveRelaxationTimeForForcing(const DefReal tau_eff, const SolverLbmInterface& lbm_solver);
+    virtual void CalRelaxationTimeRatio(const DefReal vis_lbm, const SolverLbmInterface& lbm_solver);
     virtual void PostCollisionCoarse2Fine(const std::vector<DefReal>& feq,
         const std::vector<DefReal>& f_collide_coarse, std::vector<DefReal>* const ptr_f_collide_fine) const;
     virtual void PostCollisionFine2Coarse(const std::vector<DefReal>& feq,
@@ -56,8 +58,10 @@ class LbmCollisionOptInterface {
         const SolverLbmInterface& lbm_solver,
         DefReal (SolverLbmInterface::*ptr_func_cal_force_iq)(const int, const GridNodeLbm&) const,
         const GridNodeLbm& node_fine, GridNodeLbm* const ptr_node_coarse) const;
-    virtual void CollisionOperator(const SolverLbmInterface& lbm_solver,
+    virtual void CollisionOperator(const DefInt num_q, const std::vector<DefReal>& feq,
         const std::vector<DefReal>& force, GridNodeLbm* const ptr_node) const = 0;
+    virtual void CollisionOperator(const DefInt num_q, const std::vector<DefReal>& feq,
+        GridNodeLbm* const ptr_node) const = 0;
 
     LbmCollisionOptInterface(const DefInt i_level, const SolverLbmInterface& lbm_solver);
     virtual ~LbmCollisionOptInterface() {}
@@ -67,54 +71,34 @@ class LbmCollisionOptInterface {
 */
 class LbmStrCollisionOpt : public LbmCollisionOptInterface {
  public:
-    void CollisionOperator(const SolverLbmInterface& lbm_solver,
+    void CollisionOperator(const DefInt num_q, const std::vector<DefReal>& feq,
         const std::vector<DefReal>& force, GridNodeLbm* const ptr_node) const override;
+    void CollisionOperator(const DefInt num_q, const std::vector<DefReal>& feq,
+        GridNodeLbm* const ptr_node) const override;
     LbmStrCollisionOpt(const DefInt i_level, const SolverLbmInterface& lbm_solver)
         : LbmCollisionOptInterface(i_level, lbm_solver) {
-        CalRelaxationTime(lbm_solver);
-        CalRelaxationTimeRatio(lbm_solver);
+        CalRelaxationTime(viscosity_lbm_, lbm_solver);
+        CalRelaxationTimeRatio(viscosity_lbm_, lbm_solver);
     }
-};
-/**
-* @brief interface class to manage the SRT collision model with forcing term
-*/
-class LbmStrForceCollisionOpt : public LbmStrCollisionOpt {
- public:
-    void CollisionOperator(const SolverLbmInterface& lbm_solver, const std::vector<DefReal>& force,
-        GridNodeLbm* const ptr_node) const override;
-    LbmStrForceCollisionOpt(DefInt i_level, const SolverLbmInterface& lbm_solver)
-        : LbmStrCollisionOpt(i_level, lbm_solver) {}
 };
 /**
 * @brief interface class to manage the SRT collision model
 */
 class LbmMrtCollisionOpt : public LbmCollisionOptInterface {
  public:
-    void CalRelaxationTime(const SolverLbmInterface& lbm_solver) override;
-    void CalRelaxationTimeNode(const GridNodeLbm& node, const SolverLbmInterface& lbm_solver) override;
-    void CollisionOperator(const SolverLbmInterface& lbm_solver,
+    void CalRelaxationTime(const DefReal vis_lbm, const SolverLbmInterface& lbm_solver) override;
+    void SetEffectiveRelaxationTime(const DefReal tau_eff, const SolverLbmInterface& lbm_solver) override;
+    void SetEffectiveRelaxationTimeForForcing(const DefReal tau_eff, const SolverLbmInterface& lbm_solver) override;
+    void CollisionOperator(const DefInt num_q, const std::vector<DefReal>& feq,
         const std::vector<DefReal>& force, GridNodeLbm* const ptr_node) const override;
+    void CollisionOperator(const DefInt num_q, const std::vector<DefReal>& feq,
+        GridNodeLbm* const ptr_node) const override;
     LbmMrtCollisionOpt(const DefInt i_level, const SolverLbmInterface& lbm_solver);
 
  protected:
     void SetImSMMatrix(const DefReal relax_tau, const SolverLbmInterface& lbm_solver);
-    std::vector<std::vector<DefReal>> matrix_m_, matrix_im_, diag_s_, matrix_im_s_m_;
-};
-/**
-* @brief interface class to manage the SRT collision model with forcing term
-*/
-class LbmMrtForceCollisionOpt : public LbmMrtCollisionOpt {
- public:
-    void CalRelaxationTime(const SolverLbmInterface& lbm_solver) override;
-    void CalRelaxationTimeNode(const GridNodeLbm& node, const SolverLbmInterface& lbm_solver) override;
-    void CollisionOperator(const SolverLbmInterface& lbm_solver, const std::vector<DefReal>& force,
-        GridNodeLbm* const ptr_node) const override;
-    LbmMrtForceCollisionOpt(DefInt i_level, const SolverLbmInterface& lbm_solver);
-
- protected:
     void SetImDMMatrix(const DefReal relax_tau, const SolverLbmInterface& lbm_solver);
-
- private:
+    std::vector<std::vector<DefReal>> matrix_m_, matrix_im_, diag_s_, matrix_im_s_m_;
     std::vector<std::vector<DefReal>> diag_d_, matrix_im_d_m_;
 };
 }  // end namespace lbmproject

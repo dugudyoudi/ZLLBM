@@ -80,7 +80,7 @@ class GeometryInfoImmersedBoundary : public amrproject::GeometryInfoOrigin, publ
     void SetupGeometryInfo(const DefReal time, const amrproject::MpiManager& mpi_manager,
         const amrproject::GridInfoInterface& sfbitset_aux) override;
     void ReadAndSetGeoParameters(const DefInt level,
-        const std::map<std::string, std::string>& geo_parameters) override;
+        std::map<std::string, amrproject::ParserData>* const ptr_geo_parameters) override;
     void WriteTimeHisLagrangianForce(const DefReal time, const DefReal dx_background) const;
     explicit GeometryInfoImmersedBoundary(const DefInt dims) : amrproject::GeometryInfoOrigin(dims) {
         this->node_type_ = "GeometryInfoImmersedBoundary";

@@ -29,8 +29,8 @@ std::unique_ptr<amrproject::GeoShapeInterface> GeoIBShapeReader::ReadAndCreateGe
 #ifndef DEBUG_DISABLE_3D_FUNCTIONS
         if (shape_id == "sphere") {
             return std::make_unique<GeoShapeIBSphere3D>(ptr_geo);
-        } else if (shape_id == "cubic") {
-            return std::make_unique<GeoShapeIBCubic3D>(ptr_geo);
+        } else if (shape_id == "cube") {
+            return std::make_unique<GeoShapeIBCube3D>(ptr_geo);
         } else if (shape_id == "quadrilateral") {
             return std::make_unique<GeoShapeIBQuadrilateral3D>(ptr_geo);
         } else {

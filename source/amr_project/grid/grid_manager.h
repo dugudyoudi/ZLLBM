@@ -129,7 +129,7 @@ class GridManagerInterface{
     std::vector<DefReal> GetDomainGridSize() const { return GetDomainDxArrAsVec(); }
 
     // settings
-    void ReadAndSetupGridParameters(const InputParser& input_parser);
+    void ReadAndSetupGridParameters(InputParser* const ptr_input_parser);
     void PrintGridSetting() const;
 
     // creators to instantiate classes

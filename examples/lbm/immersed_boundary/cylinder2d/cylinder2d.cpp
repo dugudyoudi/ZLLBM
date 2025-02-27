@@ -15,15 +15,15 @@ using namespace rootproject;
 int main(int argc, char* argv[]) {
     // case related settings
     lbmproject::SolverCreatorLbmD2Q9 solver_creator = lbmproject::SolverCreatorLbmD2Q9();
-    const lbmproject::ELbmCollisionOperatorType collision_type = lbmproject::ELbmCollisionOperatorType::kLbmMrt;
-    DefAmrLUint max_t = 6000;
+    const lbmproject::ELbmCollisionOperatorType collision_type = lbmproject::ELbmCollisionOperatorType::kLbmSrt;
+    DefAmrLUint max_t = 20000;
     DefInt max_refinement_level = 2;
     std::vector<DefReal> domain_size = {30, 20};
     DefReal grid_size = 0.1;
     std::array<DefReal, 2> center = {10, 10};
     DefReal diameter = 1.;
     std::vector<DefReal> velocity = {0.1, 0};;
-    DefReal Re = 20;
+    DefReal Re = 100;
     lbmproject::ELbmBoundaryConditionScheme boundary_condition =
         lbmproject::ELbmBoundaryConditionScheme::kNonEqExtrapolation;
 
@@ -77,7 +77,7 @@ int main(int argc, char* argv[]) {
     for (auto& iter_grid : ptr_amr_instance->ptr_grid_manager_->vec_ptr_grid_info_) {
         lbmproject::GridInfoLbmInteface& grid_ref
             = *dynamic_cast<lbmproject::GridInfoLbmInteface*>(iter_grid.get());
-        grid_ref.SetCollisionType(collision_type);
+        solver_ref.SetCollisionOperator(grid_ref.GetGridLevel(), collision_type);
         solver_ref.SetNumForces(dims);
         solver_ref.SetDomainBoundaryCondition(amrproject::EDomainBoundaryDirection::kBoundaryXMin,
             boundary_condition, &grid_ref.domain_boundary_condition_);

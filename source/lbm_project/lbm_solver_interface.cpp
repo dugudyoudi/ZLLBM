@@ -39,14 +39,16 @@ void SolverLbmInterface::SolverInitial() {
             this->func_macro_without_force_(lbm_node.f_, ptr_rho, ptr_v);
         };
     }
+    SetFunctionForNodeCollision();
     InitialModelDependencies();
 }
 /**
- * @brief function to input parameters for LBM solver.
- */
-void SolverLbmInterface::ReadAndSetupSolverParameters(const amrproject::InputParser& input_parser) {
+* @brief function to read abd set input parameters for LBM solver.
+* @param[in, out] ptr_input_parser pointer to class for input parsing. 
+*/
+void SolverLbmInterface::ReadAndSetupSolverParameters(amrproject::InputParser* const ptr_input_parser) {
     std::string key_for_this_func =  "solver.lbm";
-    const auto input_map = input_parser.GetNestedMapInput();
+    auto& input_map = ptr_input_parser->GetNestedMapInput();
 
     if (input_map.find(key_for_this_func) != input_map.end()) {
         if (input_map.at(key_for_this_func).find(name_) == input_map.at(key_for_this_func).end()) {
@@ -54,43 +56,58 @@ void SolverLbmInterface::ReadAndSetupSolverParameters(const amrproject::InputPar
                 + ") does not match any solver name in input file");
         } else {
             std::string values_str;
-            const auto& solver_parameters = input_map.at(key_for_this_func).at(solver_type_);
-            if (input_parser.GetValue<DefReal>("lbm.viscosity", solver_parameters, &k0LbmViscosity_)) {
-                if (input_parser.print_values_when_read_) {
+            auto ptr_solver_parameters = &input_map.at(key_for_this_func).at(solver_type_);
+            if (ptr_input_parser->GetValue<DefReal>("lbm.viscosity", ptr_solver_parameters, &k0LbmViscosity_)) {
+                if (ptr_input_parser->print_values_when_read_) {
                     amrproject::LogManager::LogInfo("Read and set LBM viscosity: " + std::to_string(k0LbmViscosity_));
                 }
             }
-            if (input_parser.GetValue<DefReal>("lbm.rho_ini", solver_parameters, &k0Rho_)) {
-                if (input_parser.print_values_when_read_) {
+            if (ptr_input_parser->GetValue<DefReal>("lbm.rho_ini", ptr_solver_parameters, &k0Rho_)) {
+                if (ptr_input_parser->print_values_when_read_) {
                     amrproject::LogManager::LogInfo("Read and set initial density: " + std::to_string(k0Rho_));
                 }
             }
-            if (input_parser.GetValue<DefReal>("lbm.velocity_ini", solver_parameters, &k0Velocity_)) {
-                if (input_parser.print_values_when_read_) {
-                    values_str = input_parser.ValuesToOutputStr<DefReal>(k0Velocity_);
+            if (ptr_input_parser->GetValue<DefReal>("lbm.velocity_ini", ptr_solver_parameters, &k0Velocity_)) {
+                if (ptr_input_parser->print_values_when_read_) {
+                    values_str = ptr_input_parser->ValuesToOutputStr<DefReal>(k0Velocity_);
                     amrproject::LogManager::LogInfo("Read and set initial velocity: " + values_str);
                 }
             }
             std::vector<DefReal> force_in;
-            if (input_parser.GetValue<DefReal>("lbm.force_ini", solver_parameters, &force_in)) {
+            if (ptr_input_parser->GetValue<DefReal>("lbm.force_ini", ptr_solver_parameters, &force_in)) {
                 SetDefaultForce(force_in);
-                if (input_parser.print_values_when_read_) {
-                    values_str = input_parser.ValuesToOutputStr<DefReal>(force_in);
+                if (ptr_input_parser->print_values_when_read_) {
+                    values_str = ptr_input_parser->ValuesToOutputStr<DefReal>(force_in);
                     amrproject::LogManager::LogInfo("Read and set initial force: " + values_str);
                 }
             }
-            if (input_parser.GetValue<DefReal>("lbm.const_force", solver_parameters, &force_in)) {
+            if (ptr_input_parser->GetValue<DefReal>("lbm.const_force", ptr_solver_parameters, &force_in)) {
                 SetConstantForce(force_in);
-                if (input_parser.print_values_when_read_) {
-                    values_str = input_parser.ValuesToOutputStr<DefReal>(force_in);
-                amrproject::LogManager::LogInfo("Read and set constant force: " + values_str);
+                if (ptr_input_parser->print_values_when_read_) {
+                    values_str = ptr_input_parser->ValuesToOutputStr<DefReal>(force_in);
+                    amrproject::LogManager::LogInfo("Read and set constant force: " + values_str);
                 }
             }
             DefInt num_force = 0;
-            if (input_parser.GetValue<DefInt>("lbm.force_size", solver_parameters, &num_force)) {
+            if (ptr_input_parser->GetValue<DefInt>("lbm.force_size", ptr_solver_parameters, &num_force)) {
                 SetNumForces(num_force);
-                if (input_parser.print_values_when_read_) {
+                if (ptr_input_parser->print_values_when_read_) {
                     amrproject::LogManager::LogInfo("Read and set number of forces : " +  std::to_string(num_force));
+                }
+            }
+            std::string str_tmp;
+            if (ptr_input_parser->GetValue<std::string>("lbm.les_model", ptr_solver_parameters, &str_tmp)) {
+                SetLesModel(str_tmp);
+            }
+            std::vector<std::string> str_vec_tmp;
+            if (ptr_input_parser->GetValue<std::string>("lbm.collision_models", ptr_solver_parameters, &str_vec_tmp)) {
+                ReadCollisionOperator(str_vec_tmp);
+                if (ptr_input_parser->print_values_when_read_) {
+                    values_str.clear();
+                    for (const auto iter_str : str_vec_tmp) {
+                        values_str += " " + iter_str;
+                    }
+                    amrproject::LogManager::LogInfo("Read and set collision model: " + values_str);
                 }
             }
         }
@@ -106,7 +123,7 @@ void SolverLbmInterface::SetDefaultForce(const std::vector<DefReal>& force_in) {
     k0Force_ = force_in;
 }
 /**
- * @brief function to set const force.
+ * @brief function to set constant forces.
  */
 void SolverLbmInterface::SetConstantForce(const std::vector<DefReal>& force_in) {
     bool_forces_ = true;
@@ -156,7 +173,7 @@ void SolverLbmInterface::SetDefault2DFunctions() {
             this->CalFeq2DIncompressible(rho, velocity, ptr_feq);
         };
     }
-    this->ptr_func_cal_force_iq_ = &SolverLbmInterface::CalForceIq2D;
+    this->ptr_func_cal_force_iq_ = &SolverLbmInterface::CalForcingTerming2D;
 }
 /**
  * @brief function to set pointers to the default 3D member functions.
@@ -189,7 +206,7 @@ void SolverLbmInterface::SetDefault3DFunctions() {
                 this->CalFeq3DIncompressible(rho, velocity, ptr_feq);
         };
     }
-    this->ptr_func_cal_force_iq_ = &SolverLbmInterface::CalForceIq3D;
+    this->ptr_func_cal_force_iq_ = &SolverLbmInterface::CalForcingTerming3D;
 }
 /**
  * @brief function to resize model related vectors for better performance.
@@ -247,6 +264,44 @@ void SolverLbmInterface::RunSolverOnGivenGrid(const amrproject::ETimeSteppingSch
     }
 }
 /**
+ * @brief function to set collision step according to settings.
+ */
+void SolverLbmInterface::SetFunctionForNodeCollision() {
+    if (bool_forces_) {
+        this->func_collision_node_ = [this](const DefReal dt_lbm,
+            LbmCollisionOptInterface* const ptr_collision_opt, GridNodeLbm* const ptr_node) {
+            std::vector<DefReal> force = GetAllForcesForANode(*ptr_node);
+            func_macro_with_force_(dt_lbm, ptr_node->f_, force, &ptr_node->rho_, &ptr_node->velocity_);
+            const DefInt& num_q = k0NumQ_;
+            std::vector<DefReal> feq(num_q, 0.), forcing_term(num_q, 0.);
+            func_cal_feq_(ptr_node->rho_, ptr_node->velocity_, &feq);
+            (this->*(this->ptr_func_cal_force_iq_))(*ptr_node, force, &forcing_term);
+            if (bool_les_model_) {
+                DefReal tau_sgs = ptr_les_model_->CalSgsRelaxationTimeWithForce(
+                    ptr_collision_opt->GetDtLbm(), ptr_collision_opt->GetRelaxationTime(),
+                    feq, force, *ptr_node, *this);
+                ptr_collision_opt->SetEffectiveRelaxationTimeForForcing(tau_sgs, *this);
+            }
+            ptr_collision_opt->CollisionOperator(num_q, feq, forcing_term, ptr_node);
+        };
+    } else {
+        this->func_collision_node_ = [this](const DefReal dt_lbm,
+            LbmCollisionOptInterface* const ptr_collision_opt, GridNodeLbm* const ptr_node) {
+            func_macro_without_force_(ptr_node->f_, &ptr_node->rho_, &ptr_node->velocity_);
+            const DefInt& num_q = k0NumQ_;
+            std::vector<DefReal> feq(num_q, 0.);
+            func_cal_feq_(ptr_node->rho_, ptr_node->velocity_, &feq);
+            if (bool_les_model_) {
+                DefReal tau_sgs = ptr_les_model_->CalSgsRelaxationTimeWithoutForce(
+                    ptr_collision_opt->GetDtLbm(), ptr_collision_opt->GetRelaxationTime(),
+                    feq, *ptr_node, *this);
+                ptr_collision_opt->SetEffectiveRelaxationTime(tau_sgs, *this);
+            }
+            ptr_collision_opt->CollisionOperator(num_q, feq, ptr_node);
+        };
+    }
+}
+/**
  * @brief function to perform collision step in the LBM simulation.
  * @param[in] flag_not_compute flag indicating whether to compute or not.
  * @param[out] ptr_lbm_grid_nodes_info pointer to class storing LBM grid information.
@@ -256,33 +311,15 @@ void SolverLbmInterface::Collision(
     // choose function to compute macroscopic variables based on if the forces are considered
     std::function<void(const DefReal, const std::vector<DefReal>&, const std::vector<DefReal>&,
         DefReal* const, std::vector<DefReal>* const)> func_macro;
-    const LbmCollisionOptInterface& collision_opt = GetCollisionOperator(ptr_lbm_grid_nodes_info->GetGridLevel());
+    LbmCollisionOptInterface& collision_opt = GetCollisionOperator(ptr_lbm_grid_nodes_info->GetGridLevel());
     const DefReal dt_lbm = collision_opt.GetDtLbm();
     DefMap<std::unique_ptr<GridNodeLbm>>& grid_nodes = *ptr_lbm_grid_nodes_info->GetPtrToLbmGrid();
 
     if (ptr_lbm_grid_nodes_info->GetPtrToLbmGrid() != nullptr) {
-        if (bool_forces_) {
-            if (grid_nodes.size() > 0 && grid_nodes.begin()->second->force_.size() != GetNumForces()) {
-                amrproject::LogManager::LogError("Size of forces should be "
-                    + std::to_string(GetNumForces())
-                    + " rather than " + std::to_string(grid_nodes.begin()->second->force_.size()) + " in "
-                    + std::string(__FILE__) + " at line " + std::to_string(__LINE__));
-            }
-            func_macro = func_macro_with_force_;
-        } else {
-            func_macro = [this](const DefReal dt_lbm, const std::vector<DefReal>& f,
-                const std::vector<DefReal>& /*force*/, DefReal* const ptr_rho,
-                std::vector<DefReal>* const ptr_velocity) {
-                func_macro_without_force_(f, ptr_rho, ptr_velocity);};
-        }
         for (auto& iter_node : grid_nodes) {
             if (iter_node.second->flag_status_ & flag_not_compute) {
             } else {
-                const std::vector<DefReal> force(GetAllForcesForANode(*iter_node.second.get()));
-                func_macro(dt_lbm, iter_node.second->f_, force,
-                    &iter_node.second->rho_, &iter_node.second->velocity_);
-
-                collision_opt.CollisionOperator(*this, force, iter_node.second.get());
+                this->func_collision_node_(dt_lbm, &collision_opt, iter_node.second.get());
             }
         }
     }
@@ -342,7 +379,7 @@ void SolverLbmInterface::CalFeq2DCompressible(const DefReal rho,
     ptr_feq->resize(this->k0NumQ_);
     DefReal c_uv = 0.;
     DefReal uv_sq = Square(velocity.at(kXIndex)) + Square(velocity.at(kYIndex));
-    for (int iq = 0; iq < this->k0NumQ_; ++iq) {
+    for (DefInt iq = 0; iq < this->k0NumQ_; ++iq) {
         c_uv = velocity.at(kXIndex) * k0Cx_.at(iq) + velocity.at(kYIndex) * k0Cy_.at(iq);
         ptr_feq->at(iq) = k0Weights_.at(iq) * rho * (1. + 3. * c_uv + 4.5 * c_uv * c_uv - 1.5 * uv_sq);
     }
@@ -358,7 +395,7 @@ void SolverLbmInterface::CalFeq2DIncompressible(const DefReal rho,
     ptr_feq->resize(this->k0NumQ_);
     DefReal c_uv = 0.;
     DefReal uv_sq = Square(velocity.at(kXIndex)) + Square(velocity.at(kYIndex));
-    for (int iq = 0; iq < this->k0NumQ_; ++iq) {
+    for (DefInt iq = 0; iq < this->k0NumQ_; ++iq) {
         c_uv = velocity.at(kXIndex) * k0Cx_.at(iq) + velocity.at(kYIndex) * k0Cy_.at(iq);
         ptr_feq->at(iq) = k0Weights_.at(iq) * (rho + 3. * c_uv + 4.5 * c_uv * c_uv - 1.5 * uv_sq);
     }
@@ -375,7 +412,7 @@ void SolverLbmInterface::CalFeq3DCompressible(const DefReal rho,
     DefReal c_uv = 0.;
     DefReal uv_sq = Square(velocity.at(kXIndex)) + Square(velocity.at(kYIndex))
         + Square(velocity.at(kZIndex));
-    for (int iq = 0; iq < this->k0NumQ_; ++iq) {
+    for (DefInt iq = 0; iq < this->k0NumQ_; ++iq) {
         c_uv = velocity.at(kXIndex) * k0Cx_.at(iq) + velocity.at(kYIndex) * k0Cy_.at(iq)
             + velocity.at(kZIndex) * k0Cz_.at(iq);
         ptr_feq->at(iq) = k0Weights_.at(iq) * rho * (1. + 3. * c_uv + 4.5 * c_uv * c_uv - 1.5 * uv_sq);
@@ -393,7 +430,7 @@ void SolverLbmInterface::CalFeq3DIncompressible(const DefReal rho,
     DefReal c_uv = 0.;
     DefReal uv_sq = Square(velocity.at(kXIndex)) + Square(velocity.at(kYIndex))
         + Square(velocity.at(kZIndex));
-    for (int iq = 0; iq < this->k0NumQ_; ++iq) {
+    for (DefInt iq = 0; iq < this->k0NumQ_; ++iq) {
         c_uv = velocity.at(kXIndex) * k0Cx_.at(iq) + velocity.at(kYIndex) * k0Cy_.at(iq)
             + velocity.at(kZIndex) * k0Cz_.at(iq);
         ptr_feq->at(iq) = k0Weights_.at(iq) *  (rho + 3. * c_uv + 4.5 * c_uv * c_uv - 1.5 * uv_sq);
@@ -403,31 +440,36 @@ void SolverLbmInterface::CalFeq3DIncompressible(const DefReal rho,
  * @brief function to calculate the force term for a given lattice direction in 2D.
  * @param[in] iq the ith lattice direction. 
  * @param[in] node grid node containing LBM related information.
- * @param[in] force force should be added.
- * @return the calculated LBM body force term
+ * @param[in] force body force acting on the node.
+ * @param[out] ptr_forcing_term pointer to forcing term disribution functions.
  */
-DefReal SolverLbmInterface::CalForceIq2D(const int iq, const GridNodeLbm& node,
-    const std::vector<DefReal>& force) const {
-    return k0Weights_[iq] * (3.*((k0Cx_[iq] - node.velocity_[kXIndex]) * force[kXIndex]
-        + (k0Cy_[iq] - node.velocity_[kYIndex]) * force[kYIndex])
-        + 9. * (node.velocity_.at(kXIndex) * k0Cx_.at(iq) + node.velocity_.at(kYIndex) * k0Cy_.at(iq))
-        * (k0Cx_[iq] * force[kXIndex] + k0Cy_[iq] * force[kYIndex]));
+void SolverLbmInterface::CalForcingTerming2D(const GridNodeLbm& node, const std::vector<DefReal>& force,
+    std::vector<DefReal>* const ptr_forcing_term) const {
+    ptr_forcing_term->resize(k0NumQ_);
+    for (DefInt iq = 0; iq < k0NumQ_; ++iq) {
+        ptr_forcing_term->at(iq) = k0Weights_[iq] * (3.*((k0Cx_[iq] - node.velocity_[kXIndex]) * force[kXIndex]
+            + (k0Cy_[iq] - node.velocity_[kYIndex]) * force[kYIndex])
+            + 9. * (node.velocity_.at(kXIndex) * k0Cx_.at(iq) + node.velocity_.at(kYIndex) * k0Cy_.at(iq))
+            * (k0Cx_[iq] * force[kXIndex] + k0Cy_[iq] * force[kYIndex]));
+    }
 }
 /**
  * @brief function to calculate the force term for a given lattice direction in 3D.
- * @param[in] iq the ith lattice direction. 
  * @param[in] node grid node containing LBM related information.
- * @param[in] force force should be added.
- * @return the calculated LBM body force term
+ * @param[in] force body force acting on the node.
+ * @param[out] ptr_forcing_term pointer to forcing term disribution functions.
  */
-DefReal SolverLbmInterface::CalForceIq3D(const int iq, const GridNodeLbm& node,
-    const std::vector<DefReal>& force) const {
-    return k0Weights_[iq] * (3.*((k0Cx_[iq] - node.velocity_[kXIndex]) * force[kXIndex]
-        + (k0Cy_[iq] - node.velocity_[kYIndex]) * force[kYIndex]
-        + (k0Cz_[iq] - node.velocity_[kZIndex]) * force[kZIndex])
-        + 9. * (node.velocity_.at(kXIndex) * k0Cx_.at(iq) + node.velocity_.at(kYIndex) * k0Cy_.at(iq)
+void SolverLbmInterface::CalForcingTerming3D(const GridNodeLbm& node, const std::vector<DefReal>& force,
+    std::vector<DefReal>* const ptr_forcing_term) const {
+    ptr_forcing_term->resize(k0NumQ_);
+    for (DefInt iq = 0; iq < k0NumQ_; ++iq) {
+        ptr_forcing_term->at(iq) = k0Weights_[iq] * (3.*((k0Cx_[iq] - node.velocity_[kXIndex]) * force[kXIndex]
+            + (k0Cy_[iq] - node.velocity_[kYIndex]) * force[kYIndex]
+            + (k0Cz_[iq] - node.velocity_[kZIndex]) * force[kZIndex])
+            + 9. * (node.velocity_.at(kXIndex) * k0Cx_.at(iq) + node.velocity_.at(kYIndex) * k0Cy_.at(iq)
             + node.velocity_.at(kZIndex) * k0Cz_.at(iq))
-        * (k0Cx_[iq] * force[kXIndex] + k0Cy_[iq] * force[kYIndex] + k0Cz_[iq] * force[kZIndex]));
+            * (k0Cx_[iq] * force[kXIndex] + k0Cy_[iq] * force[kYIndex] + k0Cz_[iq] * force[kZIndex]));
+    }
 }
 /**
  * @brief function to calculate macroscopic variables based on distribution functions (without forcing term).
@@ -495,7 +537,7 @@ void SolverLbmInterface::CalMacro3DIncompressible(const std::vector<DefReal>& f,
  * @brief function to calculate macroscopic variables based on distribution functions (with forcing term).
  * @param[in] dt_lbm time spacing of LBM at current refinement level.
  * @param[in] f distribution function.
- * @param[in] force forcing term.
+ * @param[in] force body force acting on the node.
  * @param[out] ptr_rho pointer to fluid density.
  * @param[out] ptr_velocity pointer to fluid velocity.
  */
@@ -510,7 +552,7 @@ void SolverLbmInterface::CalMacroForce2DCompressible(const DefReal dt_lbm, const
  * @brief function to calculate macroscopic variables based on distribution functions (with forcing term).
  * @param[in] dt_lbm time spacing of LBM at current refinement level.
  * @param[in] f distribution function.
- * @param[in] force forcing term.
+ * @param[in] force body force acting on the node.
  * @param[out] ptr_rho pointer to fluid density.
  * @param[out] ptr_velocity pointer to fluid velocity.
  */
@@ -525,7 +567,7 @@ void SolverLbmInterface::CalMacroForce2DIncompressible(const DefReal dt_lbm, con
  * @brief function to calculate macroscopic variables based on distribution functions (with forcing term).
  * @param[in] dt_lbm time spacing of LBM at current refinement level.
  * @param[in] f distribution function.
- * @param[in] force forcing term.
+ * @param[in] force body force acting on the node.
  * @param[out] ptr_rho pointer to fluid density.
  * @param[out] ptr_velocity pointer to fluid velocity.
  */
@@ -541,7 +583,7 @@ void SolverLbmInterface::CalMacroForce3DCompressible(const DefReal dt_lbm, const
  * @brief function to calculate macroscopic variables based on distribution functions (with forcing term).
  * @param[in] dt_lbm time spacing of LBM at current refinement level.
  * @param[in] f distribution function.
- * @param[in] force forcing term.
+ * @param[in] force body force acting on the node.
  * @param[out] ptr_rho pointer to fluid density.
  * @param[out] ptr_velocity pointer to fluid velocity.
  */

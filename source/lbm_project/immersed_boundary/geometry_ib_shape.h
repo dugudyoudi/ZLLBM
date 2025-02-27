@@ -38,10 +38,10 @@ class GeoShapeIBLine2D : public amrproject::GeoShapeDefaultLine2D {
 };
 #endif  // DEBUG_DISABLE_2D_FUNCTIONS
 #ifndef  DEBUG_DISABLE_3D_FUNCTIONS
-class GeoShapeIBCubic3D : public amrproject::GeoShapeDefaultCubic3D {
+class GeoShapeIBCube3D : public amrproject::GeoShapeDefaultCube3D {
  public:
-    explicit GeoShapeIBCubic3D(const std::weak_ptr<amrproject::GeometryInfoInterface> ptr_geo)
-    : amrproject::GeoShapeDefaultCubic3D(ptr_geo) {}
+    explicit GeoShapeIBCube3D(const std::weak_ptr<amrproject::GeometryInfoInterface> ptr_geo)
+    : amrproject::GeoShapeDefaultCube3D(ptr_geo) {}
 };
 class GeoShapeIBQuadrilateral3D : public amrproject::GeoShapeDefaultQuadrilateral3D {
  public:

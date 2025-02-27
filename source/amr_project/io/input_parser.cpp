@@ -70,6 +70,7 @@ InputParser::InputParser(const std::string& filename) {
     bool inside_block = false;
     std::string block_key;
     std::string block_content;
+    ParserData parser_data;
     while (std::getline(file, line)) {
         line = Trim(line);
         if (line.empty() || line[0] == '#') continue;
@@ -83,9 +84,11 @@ InputParser::InputParser(const std::string& filename) {
             inside_block = true;
             block_key = key;
             block_content.clear();
+            continue;
         } else if (line.back() == '}') {
             inside_block = false;
-            std::istringstream nested_stream(block_content.substr(1, block_content.size() - 1));
+            block_content += line.substr(0, line.size() - 1);
+            std::istringstream nested_stream(block_content);
             ParseNestedStructure(block_key, filename, nested_stream);
             continue;
         }
@@ -94,17 +97,26 @@ InputParser::InputParser(const std::string& filename) {
             block_content += line + "\n";
         } else {
             if (map_input_.find(key) == map_input_.end()) {
-                map_input_.insert({key, value});
+                parser_data.bool_has_read_ = false;
+                parser_data.str_value_ = value;
+                map_input_.insert({key, parser_data});
             } else {
                 LogManager::LogError("Duplicate key word: " + key + " in input file " + filename);
             }
         }
     }
 }
+/**
+* @brief function to assign inputs in curly braces to nested map.
+* @param[in] key   key outside curly braces
+* @param[in] filename  name of input file.
+* @param[in] stream  string stream storing inputs in curly braces.
+*/
 void InputParser::ParseNestedStructure(const std::string& key,
     const std::string& filename, std::istringstream& stream) {
     std::string line;
-    std::map<std::string, std::string> nested_map;
+    ParserData parser_data;
+    std::map<std::string, ParserData> nested_map;
     std::string name;
     while (std::getline(stream, line)) {
         line = Trim(line);
@@ -118,13 +130,14 @@ void InputParser::ParseNestedStructure(const std::string& key,
         }
 
         std::string nested_key = Trim(line.substr(0, pos));
-        std::string nested_value = Trim(line.substr(pos + 1));
+        parser_data.bool_has_read_ = false;
+        parser_data.str_value_ = Trim(line.substr(pos + 1));
 
         if (nested_key == "identifier") {
-            name = nested_value;
+            name = parser_data.str_value_;
+        } else {
+            nested_map[nested_key] = parser_data;
         }
-
-        nested_map[nested_key] = nested_value;
     }
 
     if (name.empty()) {
@@ -137,10 +150,28 @@ void InputParser::ParseNestedStructure(const std::string& key,
         LogManager::LogError("Duplicate name is not allowed for key: " + key + " with name: " + name
             + " in input file " + filename);
     }
-
-    nested_map_input_[key][name] = nested_map;
+    nested_map_input_.at(key).insert({name, nested_map});
 }
-
+/**
+* @brief function to print unused parameters in input setting.
+*/
+void InputParser::PrintUnusedParameters() const {
+    for (const auto & iter : map_input_) {
+        if (!iter.second.bool_has_read_) {
+            LogManager::LogWarning("Input " + iter.first + " has not been used.");
+        }
+    }
+    for (const auto& iter : nested_map_input_) {
+        for (const auto& iter_id : iter.second) {
+            for (const auto& iter_key : iter_id.second) {
+                if (!iter_key.second.bool_has_read_) {
+                    LogManager::LogWarning("Input " + iter_key.first + " with identifier "
+                        + iter_id.first + " in scope " + iter.first + " has not been used.");
+                }
+            }
+        }
+    }
+}
 
 }  // end namespace amrproject
 }  // end namespace rootproject

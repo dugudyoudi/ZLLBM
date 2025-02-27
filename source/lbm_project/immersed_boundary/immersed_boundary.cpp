@@ -584,13 +584,13 @@ void GeometryInfoImmersedBoundary::SetupGeometryInfo(const DefReal time,
 /**
  * @brief function to read and set geometry parameters.
  * @param[in] level default geometry level.
- * @param[in] geo_parameters map storing geometry parameters.
+ * @param[in, out] ptr_geo_parameters map storing geometry parameters.
  */
 void GeometryInfoImmersedBoundary::ReadAndSetGeoParameters(const DefInt level,
-    const std::map<std::string, std::string>& geo_parameters) {
+    std::map<std::string, amrproject::ParserData>* const ptr_geo_parameters) {
     amrproject::InputParser input_parser;
-    input_parser.GetValue<bool>("ib.output_ib_force", geo_parameters, &write_ib_force_);
-    amrproject::GeometryInfoInterface::ReadAndSetGeoParameters(level, geo_parameters);
+    input_parser.GetValue<bool>("ib.output_ib_force", ptr_geo_parameters, &write_ib_force_);
+    amrproject::GeometryInfoInterface::ReadAndSetGeoParameters(level, ptr_geo_parameters);
 }
 /**
  * @brief function to write time history of Lagrangian force acting on the geometry.

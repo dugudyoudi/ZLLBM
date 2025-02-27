@@ -55,7 +55,6 @@ class GeometryInfoInterface {
 
     TrackingGridInfoCreatorInterface* ptr_tracking_grid_info_creator_ = nullptr;
 
-    // number of extended layer based on geometry
     std::vector<DefInt> k0XIntExtendPositive_, k0XIntExtendNegative_, k0YIntExtendPositive_,
         k0YIntExtendNegative_, k0ZIntExtendPositive_, k0ZIntExtendNegative_;
         ///< number of extened layers
@@ -193,7 +192,7 @@ class GeometryInfoInterface {
 
     void ChooseGridExtendType(const std::string type_string);
     virtual void ReadAndSetGeoParameters(const DefInt level,
-        const std::map<std::string, std::string>& geo_parameters);
+        std::map<std::string, ParserData>*  const ptr_geo_parameters);
 
     std::vector<std::unique_ptr<GeometryVertex>> vec_vertices_{};
     // only vertex information on current rank will be stored,
