@@ -97,7 +97,7 @@ void GridInfoLbmInteface::ComputeNodeInfoBeforeMpiCommunication(
     lbm_solver.StreamInForAGivenNode(sfbitset_in, *ptr_sfbitset_aux_, ptr_lbm_grid_nodes_);
 }
 /**
- * @brief function to compute macroscopic variables based on distribution functions in the last time step.
+ * @brief function to compute information of node in mpi communication layers.
  * @param map_inner_nodes container storing space filling codes of inner mpi communication layers will be sent to other ranks.
  * @param map_outer_nodes container storing space filling codes of outer mpi communication layer of the current rank.
  */
@@ -141,6 +141,57 @@ void GridInfoLbmInteface::ComputeInfoInMpiLayers(const std::map<int, DefMap<DefI
     DefInt flag_not_stream = NodeFlagNotStream_&(~(amrproject::NodeBitStatus::kNodeStatusMpiPartitionOuter_
         |amrproject::NodeBitStatus::kNodeStatusMpiPartitionInner_));
     for (const auto& iter_layer : map_inner_nodes) {
+        ptr_lbm_solver->StreamInForGivenNodes<DefInt>(
+            flag_not_stream, *ptr_sfbitset_aux_, iter_layer.second, this);
+    }
+}
+/**
+ * @brief function to compute information of node in mpi communication layers for interpolation.
+ * @param map_interp_nodes container storing space filling codes of mpi communication layers for interpolation.
+ * @note need to be called before ComputeInfoInMpiLayers
+ */
+void GridInfoLbmInteface::ComputeInfoInInterpMpiLayers(const std::map<int, DefMap<DefInt>>& map_interp_nodes) {
+    SolverLbmInterface* ptr_lbm_solver = nullptr;
+    if (auto ptr_tmp = ptr_solver_.lock()) {
+        ptr_lbm_solver = dynamic_cast<SolverLbmInterface*>(ptr_tmp.get());
+    } else {
+        amrproject::LogManager::LogError("LBM solver is not created.");
+    }
+    LbmCollisionOptInterface& collision_operator = ptr_lbm_solver->GetCollisionOperator(i_level_);
+    DefReal dt_lbm = collision_operator.GetDtLbm();
+    DefInt dims = ptr_lbm_solver->GetSolverDim();
+
+    // collision for nodes in outer and inner MPI communication layers
+    DefInt flag_not_collide = NodeFlagNotCollision_&(~(amrproject::NodeBitStatus::kNodeStatusMpiPartitionOuter_
+        |amrproject::NodeBitStatus::kNodeStatusMpiPartitionInner_
+        |amrproject::NodeBitStatus::kNodeStatusMpiInterpInner_));
+    DefMap<DefInt> map_one_layer_near_inner;
+    std::vector<DefSFBitset> vec_neighbor;
+
+    for (const auto& iter_layer : map_interp_nodes) {
+        for (const auto& iter_node : iter_layer.second) {
+            if (ptr_lbm_grid_nodes_->find(iter_node.first) != ptr_lbm_grid_nodes_->end()) {
+                if (!(ptr_lbm_grid_nodes_->at(iter_node.first)->flag_status_&flag_not_collide)) {
+                    ptr_lbm_solver->func_collision_node_(
+                        dt_lbm, &collision_operator, ptr_lbm_grid_nodes_->at(iter_node.first).get());
+                }
+                ptr_sfbitset_aux_->SFBitsetFindAllNeighborsVir(iter_node.first, &vec_neighbor);
+                for (const auto& iter_neighbor : vec_neighbor) {
+                    if (map_one_layer_near_inner.find(iter_neighbor) == map_one_layer_near_inner.end()) {
+                        map_one_layer_near_inner.insert({iter_neighbor, 0});
+                    }
+                }
+            }
+        }
+    }
+    // Since stream step will be performed before mpi communication, post-collision distribution
+    // functions of neighboring nodes are need
+    ptr_lbm_solver->CollisionForGivenNodes<DefInt>(i_level_, flag_not_collide, map_one_layer_near_inner, this);
+
+    DefInt flag_not_stream = NodeFlagNotStream_&(~(amrproject::NodeBitStatus::kNodeStatusMpiPartitionOuter_
+        |amrproject::NodeBitStatus::kNodeStatusMpiPartitionInner_
+        |amrproject::NodeBitStatus::kNodeStatusMpiInterpInner_));
+    for (const auto& iter_layer : map_interp_nodes) {
         ptr_lbm_solver->StreamInForGivenNodes<DefInt>(
             flag_not_stream, *ptr_sfbitset_aux_, iter_layer.second, this);
     }

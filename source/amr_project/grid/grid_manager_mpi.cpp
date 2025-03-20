@@ -329,7 +329,6 @@ void GridManagerInterface::InstantiateGridNodeAllLevelMpi(const int i_rank,
             sfbitset_aux, sfbitset_one_lower_level.at(i_level), sfbitset_c2f_one_lower_level.at(i_level_lower),
             sfbitset_partition_interface_0, &ptr_mpi_outer_layer->at(i_level), &ptr_mpi_outer_layer->at(i_level_lower));
 
-
         // instantiate nodes stored in sfbitset_one_lower_level
         DefMap<DefInt> partition_interface_level;   // nodes on partition interface at current level
         DefMap<DefInt> outer_layer_tmp;
@@ -397,6 +396,7 @@ void GridManagerInterface::InstantiateGridNodeAllLevelMpi(const int i_rank,
             code_min_background_level, code_max_background_level,
             periodic_min, periodic_max, sfbitset_one_lower_level.at(i_level),
             sfbitset_aux, vec_ptr_grid_info_.at(i_level).get(), &inner_layer_tmp, &ptr_mpi_outer_layer->at(i_level));
+
         // Extend mpi interface nodes for a given number of inner communication layers.
         // Noting that nodes on the partitioned interface is considered in the inner layer.
         // Use temporal container (inner_layer_tmp) at this stage since some of them inserted

@@ -11,6 +11,7 @@
 #include <vector>
 #include "io/input_parser.h"
 #include "io/log_write.h"
+#include "mpi/mpi_manager.h"
 namespace rootproject {
 namespace amrproject {
 /**
@@ -172,6 +173,164 @@ void InputParser::PrintUnusedParameters() const {
         }
     }
 }
+/**
+* @brief function to serialize map_input_.
+* @return  string storing inputs.
+*/
+std::string InputParser::SerializeMapInput() const {
+    std::ostringstream oss;
+    for (const auto& pair : map_input_) {
+        oss << pair.first << "=" << pair.second.str_value_ << ";";
+    }
+    return oss.str();
+}
+/**
+* @brief function to deserialize map_input_.
+* @param[in] data  string storing inputs.
+*/
+void InputParser::DeserializeMapInput(const std::string& data) {
+    std::istringstream iss(data);
+    std::string item;
+    map_input_.clear();
+    while (std::getline(iss, item, ';')) {
+        size_t pos = item.find('=');
+        if (pos != std::string::npos) {
+            std::string key = item.substr(0, pos);
+            std::string value = item.substr(pos + 1);
+            ParserData parser_data;
+            parser_data.str_value_ = value;
+            map_input_[key] = parser_data;
+        }
+    }
+}
+/**
+* @brief function to serialize nested_map_input_.
+* @return  string storing inputs.
+*/
+std::string InputParser::SerializeNestedMapInput() const {
+    std::ostringstream oss;
+    for (const auto& outer_pair : nested_map_input_) {
+        oss << outer_pair.first << "{";
+        for (const auto& middle_pair : outer_pair.second) {
+            oss << middle_pair.first << "[";
+            for (const auto& inner_pair : middle_pair.second) {
+                oss << inner_pair.first << "=" << inner_pair.second.str_value_ << ";";
+            }
+            oss << "]";
+        }
+        oss << "}";
+    }
+    return oss.str();
+}
+/**
+* @brief function to deserialize nested_map_input_.
+* @param[in] data  string storing inputs.
+*/
+void InputParser::DeserializeNestedMapInput(const std::string& data) {
+    std::istringstream iss(data);
+    char c;
+    std::string outer_key, middle_key, inner_item;
+    nested_map_input_.clear();
 
+    while (iss >> std::ws && !iss.eof()) {
+        outer_key.clear();
+        while (iss.get(c) && c != '{' && c != '}') {
+            if (c != ' ') outer_key += c;
+            else if (!outer_key.empty()) outer_key += c;
+        }
+        outer_key = outer_key.substr(0, outer_key.find_last_not_of(' ') + 1);
+        if (outer_key.empty()) {
+            continue;
+        }
+
+        std::map<std::string, std::map<std::string, ParserData>> middle_map;
+        if (c == '{') {
+            while (iss >> std::ws && iss.peek() != '}' && !iss.eof()) {
+                middle_key.clear();
+                while (iss.get(c) && c != '[' && c != '}') {
+                    if (c != ' ') middle_key += c;
+                    else if (!middle_key.empty()) middle_key += c;
+                }
+                middle_key = middle_key.substr(0, middle_key.find_last_not_of(' ') + 1);
+                if (middle_key.empty()) {
+                    if (c == '}') break;
+                    continue;
+                }
+
+                std::map<std::string, ParserData> inner_map;
+                if (c == '[') {  // Only process inner level if we have an opening bracket
+                    while (iss >> std::ws && iss.peek() != ']' && iss.peek() != '}') {
+                        inner_item.clear();
+                        while (iss.get(c) && c != ';' && c != ']' && c != '}') {
+                            inner_item += c;
+                        }
+                        size_t pos = inner_item.find('=');
+                        if (pos != std::string::npos) {
+                            std::string inner_key = inner_item.substr(0, pos);
+                            std::string inner_value = inner_item.substr(pos + 1);
+                            // Trim whitespace
+                            inner_key = inner_key.substr(inner_key.find_first_not_of(' '));
+                            inner_key = inner_key.substr(0, inner_key.find_last_not_of(' ') + 1);
+                            inner_value = inner_value.substr(inner_value.find_first_not_of(' '));
+                            inner_value = inner_value.substr(0, inner_value.find_last_not_of(' ') + 1);
+
+                            ParserData parser_data;
+                            parser_data.str_value_ = inner_value;
+                            inner_map[inner_key] = parser_data;
+                        }
+
+                        if (iss.peek() == ']') {
+                            iss.get();
+                            break;
+                        }
+                    }
+                }
+                if (!middle_key.empty()) {
+                    middle_map[middle_key] = inner_map;
+                }
+                if (iss.peek() == '}') {
+                    iss.get();
+                    break;
+                }
+            }
+        }
+        if (!outer_key.empty()) {
+            nested_map_input_[outer_key] = middle_map;
+        }
+    }
+}
+/**
+* @brief function to broad cast inputs stored on rank 0.
+* @param[in] mpi_manager  class to manage mpi processes.
+*/
+void InputParser::BroadcastInputData(const MpiManager& mpi_manager) {
+#ifdef ENABLE_MPI
+    std::string serialized_map_input;
+    std::string serialized_nested_map_input;
+
+    int rank_id =  mpi_manager.GetRankId();
+    if (rank_id == 0) {
+        serialized_map_input = SerializeMapInput();
+        serialized_nested_map_input = SerializeNestedMapInput();
+    }
+
+    int map_input_size = static_cast<int>(serialized_map_input.size());
+    int nested_map_input_size = static_cast<int>(serialized_nested_map_input.size());
+
+    MPI_Bcast(&map_input_size, 1, MPI_INT, 0, MPI_COMM_WORLD);
+    MPI_Bcast(&nested_map_input_size, 1, MPI_INT, 0, MPI_COMM_WORLD);
+
+    serialized_map_input.resize(map_input_size);
+    serialized_nested_map_input.resize(nested_map_input_size);
+
+    MPI_Bcast(&serialized_map_input[0], map_input_size, MPI_CHAR, 0, MPI_COMM_WORLD);
+    MPI_Bcast(&serialized_nested_map_input[0], nested_map_input_size, MPI_CHAR, 0, MPI_COMM_WORLD);
+
+    if (rank_id != 0) {
+        DeserializeMapInput(serialized_map_input);
+        DeserializeNestedMapInput(serialized_nested_map_input);
+    }
+#endif  // ENABLE_MPI
+}
 }  // end namespace amrproject
 }  // end namespace rootproject

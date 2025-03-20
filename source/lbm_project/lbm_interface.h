@@ -234,6 +234,8 @@ class GridInfoLbmInteface : public amrproject::GridInfoInterface {
     // mpi related
     void ComputeInfoInMpiLayers(const std::map<int, DefMap<DefInt>>& map_inner_nodes,
         const DefMap<DefInt>& map_outer_nodes) override;
+    void ComputeInfoInInterpMpiLayers(
+        const std::map<int, DefMap<DefInt>>& map_intper_nodes) override;
     virtual void ComputeNodeInfoBeforeMpiCommunication(const DefSFBitset sfbitset_in,
         const SolverLbmInterface& lbm_solver);
     virtual void ComputeNodeInfoAfterMpiCommunication(const DefSFBitset sfbitset_in,

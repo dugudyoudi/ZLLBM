@@ -65,7 +65,7 @@ void LogManager::LogEndTime() {
 
     FILE* fp = nullptr;
     errno_t err = fopen_s(&fp,
-        (logfile_name_ + std::to_string(rank_id)).c_str(), "w");
+        (logfile_name_ + std::to_string(rank_id)).c_str(), "a");
     if (!fp) {
         printf_s("The file was not opened for writing log\n");
     } else {

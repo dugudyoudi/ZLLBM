@@ -69,6 +69,7 @@ struct NodeBitStatus {
     inline static DefInt kNodeStatusFine2CoarseGhost_ = 1 << 4;
     inline static DefInt kNodeStatusMpiPartitionOuter_ = 1 << 5;
     inline static DefInt kNodeStatusMpiPartitionInner_ = 1 << 6;
+    inline static DefInt kNodeStatusMpiInterpInner_ = 1 << 7;
 };
 /**
 * @class GridManagerInterface

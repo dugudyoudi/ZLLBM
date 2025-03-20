@@ -211,6 +211,14 @@ void AmrManager::InitializeMesh() {
             ptr_mpi_manager_->SendNReceiveSFbitsetForInterpolation(i_level + 1, *grid_info.GetPtrSFBitsetAux(),
                 grid_info.interp_nodes_outer_layer_, &grid_info.vec_num_interp_nodes_receive_,
                 &grid_info.interp_nodes_inner_layer_);
+            for (const auto& iter_layer : grid_info.interp_nodes_inner_layer_) {
+                for (const auto& iter_node : iter_layer.second) {
+                    if (grid_info.map_grid_node_.find(iter_node.first) != grid_info.map_grid_node_.end()) {
+                        grid_info.map_grid_node_.at(iter_node.first)->flag_status_
+                            |= NodeBitStatus::kNodeStatusMpiInterpInner_;
+                    }
+                }
+            }
         }
     }
 
@@ -270,6 +278,9 @@ void AmrManager::TimeMarching(const DefAmrLUint time_step_background) {
         grid_ref.AdvancingAtCurrentTime(k0TimeSteppingType_, time_step_level[i_level],
             time_step_current, ptr_mpi_manager_.get(), ptr_criterion_manager_.get());
     }
+#ifdef ENABLE_MPI
+        MPI_Barrier(MPI_COMM_WORLD);
+#endif  // ENABLE_MPI
 }
 /**
 * @brief   function to initialize solvers.
@@ -308,6 +319,16 @@ void AmrManager::FinalizeSimulation() {
     LogManager::LogEndTime();
 #ifdef ENABLE_MPI
     ptr_mpi_manager_->FinalizeMpi();
+#endif  // ENABLE_MPI
+}
+void AmrManager::BroadCastInputParse(InputParser* const ptr_input_parser) const {
+#ifdef ENABLE_MPI
+    MpiManager* ptr_mpi = GetPointerToMpiManager();
+    if (ptr_mpi == nullptr) {
+        LogManager::LogError("Pointer to mpi manager is nullptr");
+    } else {
+        ptr_input_parser->BroadcastInputData(*ptr_mpi);
+    }
 #endif  // ENABLE_MPI
 }
 }  // end namespace amrproject

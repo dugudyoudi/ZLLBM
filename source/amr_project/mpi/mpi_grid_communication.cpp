@@ -589,7 +589,6 @@ int MpiManager::WaitAndReadGhostNodeForInterpolation(const std::vector<BufferSiz
             ++i_send;
         }
     }
-    MPI_Barrier(MPI_COMM_WORLD);
     return 0;
 }
 }  // end namespace amrproject

@@ -154,6 +154,11 @@ void MpiManager::CheckMpiPeriodicCorrespondence(const GridInfoInterface& grid_in
                 pos_layers(dims, k0NumPartitionOuterLayers_);
             pos_layers.at(i) = k0NumPartitionOuterLayers_ - 1;
             for (const auto& iter_node : grid_info.domain_boundary_min_.at(i)) {
+                if ((grid_info.map_grid_node_.at(iter_node.first)->flag_status_
+                    &NodeBitStatus::kNodeStatusMpiPartitionOuter_)
+                    ==NodeBitStatus::kNodeStatusMpiPartitionOuter_) {
+                    continue;   // skip boundary nodes on mpi outer layers
+                }
                 if (i == kXIndex) {
                     sfbitset_max = (take_xref[SFBitsetAuxInterface::kRefOthers_]&iter_node.first)|domain_max_n_level[i];
                 } else if (i == kYIndex) {
@@ -206,6 +211,11 @@ void MpiManager::CheckMpiPeriodicCorrespondence(const GridInfoInterface& grid_in
                 pos_layers(dims, k0NumPartitionOuterLayers_);
             neg_layers.at(i) = k0NumPartitionOuterLayers_ - 1;
             for (const auto& iter_node : grid_info.domain_boundary_max_.at(i)) {
+                if ((grid_info.map_grid_node_.at(iter_node.first)->flag_status_
+                    &NodeBitStatus::kNodeStatusMpiPartitionOuter_)
+                    ==NodeBitStatus::kNodeStatusMpiPartitionOuter_) {
+                    continue;   // skip boundary nodes on mpi outer layers
+                }
                 if (i == kXIndex) {
                     sfbitset_min = (take_xref[SFBitsetAuxInterface::kRefOthers_]&iter_node.first)|domain_min_n_level[i];
                 } else if (i == kYIndex) {

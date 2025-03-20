@@ -111,6 +111,9 @@ void GridInfoLbmInteface::AdvancingAtCurrentTime(const amrproject::ETimeStepping
     std::vector<amrproject::MpiManager::BufferSizeInfo> send_buffer_info, receive_buffer_info;
     std::vector<std::vector<MPI_Request>> vec_vec_reqs_send, vec_vec_reqs_receive;
     std::vector<std::unique_ptr<char[]>> vec_ptr_buffer_send, vec_ptr_buffer_receive;
+    if (i_level > 0) {
+        ComputeInfoInInterpMpiLayers(interp_nodes_inner_layer_);
+    }
     ptr_mpi_manager->SendAndReceiveGridNodesOnAllMpiLayers(&send_buffer_info, &receive_buffer_info,
         &vec_vec_reqs_send, &vec_vec_reqs_receive, &vec_ptr_buffer_send, &vec_ptr_buffer_receive, this);
 #endif  //  ENABLE_MPI
@@ -131,8 +134,6 @@ void GridInfoLbmInteface::AdvancingAtCurrentTime(const amrproject::ETimeStepping
     ptr_mpi_manager->WaitAndReadGridNodesFromBuffer(send_buffer_info,
         receive_buffer_info, vec_ptr_buffer_receive, func_read_a_node_from_buffer,
         &vec_vec_reqs_send, &vec_vec_reqs_receive, this);
-
-    MPI_Barrier(MPI_COMM_WORLD);
 #endif  //  ENABLE_MPI
 
     ComputeDomainBoundaryCondition();
@@ -387,9 +388,11 @@ void GridInfoLbmInteface::SetUpGridAtBeginningOfTimeStep(const DefInt time_step)
  */
 void GridInfoLbmInteface::InitialNotComputeNodeFlag() {
     NodeFlagNotCollision_ = amrproject::NodeBitStatus::kNodeStatusMpiPartitionOuter_
-        |amrproject::NodeBitStatus::kNodeStatusMpiPartitionInner_;
+        |amrproject::NodeBitStatus::kNodeStatusMpiPartitionInner_
+        |amrproject::NodeBitStatus::kNodeStatusMpiInterpInner_;
     NodeFlagNotStream_ = amrproject::NodeBitStatus::kNodeStatusMpiPartitionOuter_
-        |amrproject::NodeBitStatus::kNodeStatusMpiPartitionInner_;
+        |amrproject::NodeBitStatus::kNodeStatusMpiPartitionInner_
+        |amrproject::NodeBitStatus::kNodeStatusMpiInterpInner_;
 }
 /**
  * @brief function to transfer information on the interface from the coarse grid to fine grid.

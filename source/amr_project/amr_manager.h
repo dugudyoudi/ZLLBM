@@ -19,6 +19,7 @@
 #include "grid/grid_manager.h"
 #include "mpi/mpi_manager.h"
 #include "criterion/criterion_manager.h"
+#include "io/input_parser.h"
 namespace rootproject {
 namespace amrproject {
 /**
@@ -60,6 +61,8 @@ class AmrManager {
 
     void AddSolverToGridManager(const SolverCreatorInterface& solver_creator);
     void SetSameSolverDependentInfoForAllGrids(const std::shared_ptr<SolverInterface>& ptr_solver);
+
+    void BroadCastInputParse(InputParser* const ptr_input_parser) const;
 
  private:
     // mpi

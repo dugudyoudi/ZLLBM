@@ -21,6 +21,7 @@
 #include <type_traits>
 namespace rootproject {
 namespace amrproject {
+class MpiManager;
 template <typename T>
     concept ParserAllowedType = std::is_fundamental_v<T> || std::is_same_v<T, std::string>;
 struct ParserData {
@@ -29,7 +30,7 @@ struct ParserData {
     std::string str_value_;
 };
 class InputParser {
- private:
+ protected:
     char delimiter_ = ' ';
     std::map<std::string, ParserData> map_input_;
     std::map<std::string, std::map<std::string, std::map<std::string, ParserData>>> nested_map_input_;
@@ -255,6 +256,16 @@ class InputParser {
         CheckScope(key, expected_scope);
         return GetValue(key, &map_input_, ptr_variable);
     }
+
+    // mpi related
+ protected:
+    std::string SerializeMapInput() const;
+    void DeserializeMapInput(const std::string& data);
+    std::string SerializeNestedMapInput() const;
+    void DeserializeNestedMapInput(const std::string& data);
+
+ public:
+    void BroadcastInputData(const MpiManager& mpi_manager);
 };
 }  // end namespace amrproject
 }  // end namespace rootproject

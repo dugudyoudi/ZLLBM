@@ -364,8 +364,9 @@ class GridInfoInterface {
         const std::function<void(const char*,  GridNode* const ptr_node)>& func_read_buffer,
         const DefSizet buffer_size, const std::unique_ptr<char[]>& buffer);
     virtual void ComputeInfoInMpiLayers(
-        const std::map<int, DefMap<DefInt>>& map_inner_nodes,
-        const DefMap<DefInt>& map_outer_nodes) {}
+        const std::map<int, DefMap<DefInt>>& map_inner_nodes, const DefMap<DefInt>& map_outer_nodes) {}
+    virtual void ComputeInfoInInterpMpiLayers(
+        const std::map<int, DefMap<DefInt>>& map_intper_nodes) {}
     void SetPeriodicBoundaryAsPartitionInterface(DefInt dims, const SFBitsetAuxInterface& sfbitset_aux,
         const std::vector<bool>& bool_periodic_min, const std::vector<bool>& bool_periodic_max,
         DefMap<DefInt>* const ptr_partition_interface);

@@ -131,7 +131,7 @@ void GridManagerInterface::CreateSameGridInstanceForAllLevel(const std::weak_ptr
         grid_ref.InitialNotComputeNodeFlag();
 
         // grid spacing
-        std::vector<DefReal>grid_space = std::vector<DefReal>(k0GridDims_, 0.);
+        std::vector<DefReal> grid_space = std::vector<DefReal>(k0GridDims_, 0.);
         std::vector<DefReal> domain_dx_ = GetDomainDxArrAsVec();
         for (DefInt idim = 0; idim < k0GridDims_; ++idim) {
             grid_space.at(idim) =

@@ -34,13 +34,20 @@ int main(int argc, char* argv[]) {
     DefInt max_t;
     lbmproject::GeoIBTypeReader geo_ib_reader;
     amrproject::InputParser input_parser(input_name);
+    ptr_amr_instance->BroadCastInputParse(&input_parser);
     input_parser.GetValue<DefInt>("max_time_step", &max_t);
     ptr_amr_instance->ptr_grid_manager_->ReadAndSetupGridParameters(&input_parser);
     ptr_amr_instance->ptr_criterion_manager_->ReadAndSetGeoParametersBasedOnShape(
         dims, ptr_amr_instance->ptr_grid_manager_->GetMaxLevel(), &input_parser, geo_ib_reader);
     ptr_amr_instance->ptr_grid_manager_->vec_ptr_solver_.at(0)->ReadAndSetupSolverParameters(&input_parser);
 
-    input_parser.PrintUnusedParameters();
+    if (ptr_amr_instance->ptr_mpi_manager_ != nullptr) {
+        if (ptr_amr_instance->ptr_mpi_manager_->GetRankId() == 0) {
+            input_parser.PrintUnusedParameters();
+        }
+    } else {
+        input_parser.PrintUnusedParameters();
+    }
 
     // use default tracking node type for all geometries
     ptr_amr_instance->ptr_grid_manager_->vec_ptr_tracking_info_creator_.push_back(
