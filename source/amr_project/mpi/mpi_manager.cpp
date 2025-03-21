@@ -18,37 +18,77 @@
 #include "io/log_write.h"
 namespace rootproject {
 namespace amrproject {
+static MPI_Datatype MPI_REAL_DATA_TYPE;
+static MPI_Datatype MPI_INT_DATA_TYPE;
+static MPI_Datatype MPI_UINT_DATA_TYPE;
+static MPI_Datatype MPI_SIZET_DATA_TYPE;
+static MPI_Datatype MPI_AMR_LUINT_TYPE;
+static MPI_Datatype MPI_CODE_UINT_TYPE;
+static std::once_flag mpi_init_flag;
+void SetupMpiTypes() {
+    MPI_Type_match_size(MPI_TYPECLASS_REAL, sizeof(DefReal), &MPI_REAL_DATA_TYPE);
+    MPI_Type_match_size(MPI_TYPECLASS_INTEGER, sizeof(DefInt), &MPI_INT_DATA_TYPE);
+    MPI_Type_match_size(MPI_TYPECLASS_INTEGER, sizeof(DefUint), &MPI_UINT_DATA_TYPE);
+    MPI_Type_match_size(MPI_TYPECLASS_INTEGER, sizeof(DefSizet), &MPI_SIZET_DATA_TYPE);
+    MPI_Type_match_size(MPI_TYPECLASS_INTEGER, sizeof(DefAmrLUint), &MPI_AMR_LUINT_TYPE);
+    MPI_Type_match_size(MPI_TYPECLASS_INTEGER, sizeof(DefSFCodeToUint), &MPI_CODE_UINT_TYPE);
+}
+MPI_Datatype GetMpiRealType() {
+    std::call_once(mpi_init_flag, SetupMpiTypes);
+    return MPI_REAL_DATA_TYPE;
+}
+MPI_Datatype GetMpiIntType() {
+    std::call_once(mpi_init_flag, SetupMpiTypes);
+    return MPI_INT_DATA_TYPE;
+}
+MPI_Datatype GetMpiUintType() {
+    std::call_once(mpi_init_flag, SetupMpiTypes);
+    return MPI_UINT_DATA_TYPE;
+}
+MPI_Datatype GetMpiSizeTType() {
+    std::call_once(mpi_init_flag, SetupMpiTypes);
+    return MPI_SIZET_DATA_TYPE;
+}
+MPI_Datatype GetMpiAmrLUintType() {
+    std::call_once(mpi_init_flag, SetupMpiTypes);
+    return MPI_AMR_LUINT_TYPE;
+}
+MPI_Datatype GetMpiCodeUintType() {
+    std::call_once(mpi_init_flag, SetupMpiTypes);
+    return MPI_CODE_UINT_TYPE;
+}
 void MpiManager::SetUpMpi() {
     MPI_Comm_rank(MPI_COMM_WORLD, &rank_id_);
     MPI_Comm_size(MPI_COMM_WORLD, &num_of_ranks_);
 
+    SetupMpiTypes();
     int data_size;
-    MPI_Type_size(MPI_REAL_DATA_TYPE, &data_size);
+    MPI_Type_size(GetMpiRealType(), &data_size);
     if (sizeof(DefReal) != data_size) {
         LogManager::LogError("size of DefReal is not equal to size of MPI_REAL_DATA_TYPE) in "
         + std::string(__FILE__) + " at line " + std::to_string(__LINE__));
     }
-    MPI_Type_size(MPI_INT_DATA_TYPE, &data_size);
+    MPI_Type_size(GetMpiIntType(), &data_size);
     if (sizeof(DefInt) != data_size) {
         LogManager::LogError("size of DefInt is not equal to size of MPI_INT_DATA_TYPE) in "
         + std::string(__FILE__) + " at line " + std::to_string(__LINE__));
     }
-    MPI_Type_size(MPI_UINT_DATA_TYPE, &data_size);
+    MPI_Type_size(GetMpiUintType(), &data_size);
     if (sizeof(DefInt) != data_size) {
         LogManager::LogError("size of DefInt is not equal to size of MPI_UINT_DATA_TYPE) in "
         + std::string(__FILE__) + " at line " + std::to_string(__LINE__));
     }
-    MPI_Type_size(MPI_SIZET_DATA_TYPE, &data_size);
+    MPI_Type_size(GetMpiSizeTType(), &data_size);
     if (sizeof(DefSizet) != data_size) {
         LogManager::LogError("size of DefSizet is not equal to size of MPI_SIZET_DATA_TYPE) in "
         + std::string(__FILE__) + " at line " + std::to_string(__LINE__));
     }
-    MPI_Type_size(MPI_AMR_LUINT_TYPE, &data_size);
+    MPI_Type_size(GetMpiAmrLUintType(), &data_size);
     if (sizeof(DefAmrLUint) != data_size) {
         LogManager::LogError("size of DefAmrLUint is not equal to size of MPI_AMR_LUINT_TYPE) in "
         + std::string(__FILE__) + " at line " + std::to_string(__LINE__));
     }
-    MPI_Type_size(MPI_CODE_UINT_TYPE, &data_size);
+    MPI_Type_size(GetMpiCodeUintType(), &data_size);
     if (sizeof(DefSFCodeToUint) != data_size) {
         LogManager::LogError("size of DefSFCodeToUint is not equal to size of MPI_CODE_UINT_TYPE) in "
         + std::string(__FILE__) + " at line " + std::to_string(__LINE__));

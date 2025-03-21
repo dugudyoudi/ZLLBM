@@ -8,7 +8,7 @@
 */
 #include "./amr_manager.h"
 #ifdef DEBUG_CHECK_GRID
-#include "io/log_write.h"
+#include "../io/log_write.h"
 namespace rootproject {
 namespace amrproject {
 void AmrManager::CheckMeshAfterInitialization() const {

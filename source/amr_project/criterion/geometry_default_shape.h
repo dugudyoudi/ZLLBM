@@ -22,11 +22,11 @@ namespace amrproject {
 class  GeometryInfoInterface;
 class GeoShapeInterface {
  public:
-    virtual bool ReadAndSetGeoShapeParameters(std::map<std::string, ParserData>* const ptr_shape_parameters) {
+    virtual bool ReadAndSetGeoShapeParameters(std::map<std::string, ParserData>* const /*ptr_shape_parameters*/) {
         return true;
     }
-    virtual void InitialShape(const DefReal dx) = 0;
-    virtual void UpdateShape(const DefReal sum_t) {}
+    virtual void InitialShape(const DefReal /*dx*/) = 0;
+    virtual void UpdateShape(const DefReal /*sum_t*/) {}
     virtual ~GeoShapeInterface() {}
     explicit GeoShapeInterface(const std::weak_ptr<GeometryInfoInterface> ptr_geo) : ptr_geo_info_(ptr_geo) {}
 

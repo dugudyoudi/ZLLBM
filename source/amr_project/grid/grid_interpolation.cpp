@@ -164,7 +164,7 @@ int GridInfoInterface::InterpolationLinear2D(const DefAmrLUint region_length,
             coeffi_y[0] = 1.;
             coeffi_y[1] = 0.;
         }
-        DefAmrLUint index_x, index_y, num_elements = 2 * region_length;
+        DefAmrLUint index_x, index_y;
         DefSFBitset sfbitset_fine;
         std::unique_ptr<GridNode> ptr_node_coarse2fine = GridNodeCreator();
         for (auto iy = 0; iy <= 1; ++iy) {
@@ -259,7 +259,7 @@ int GridInfoInterface::InterpolationLagrangian2D(const DefAmrLUint interpolation
         } else {
             std::copy(coeff.coeff0.begin(), coeff.coeff0.end(), coeffi_y.begin());
         }
-        DefAmrLUint index_x, index_y, num_elements = 2 * region_length;
+        DefAmrLUint index_x, index_y;
         DefSFBitset sfbitset_fine;
         std::unique_ptr<GridNode> ptr_node_coarse2fine = GridNodeCreator();
         for (DefAmrLUint iy = 0; iy < num_coeff; ++iy) {
@@ -369,7 +369,7 @@ int GridInfoInterface::InterpolationLinear3D(const DefAmrLUint region_length,
             coeffi_z[0] = 1.;
             coeffi_z[1] = 0.;
         }
-        DefAmrLUint index_x, index_y, index_z, num_elements = 2 * region_length;
+        DefAmrLUint index_x, index_y, index_z;
         DefSFBitset sfbitset_fine;
         std::unique_ptr<GridNode> ptr_node_coarse2fine = GridNodeCreator();
         for (auto iz = 0; iz <= 1; ++iz) {
@@ -479,7 +479,7 @@ int GridInfoInterface::InterpolationLagrangian3D(const DefAmrLUint interpolation
         } else {
             std::copy(coeff.coeff0.begin(), coeff.coeff0.end(), coeffi_z.begin());
         }
-        DefAmrLUint index_x, index_y, index_z, num_elements = 2 * region_length;
+        DefAmrLUint index_x, index_y, index_z;
         DefSFBitset sfbitset_fine;
         std::unique_ptr<GridNode> ptr_node_coarse2fine = GridNodeCreator();
         for (DefAmrLUint iz = 0; iz < num_coeff; ++iz) {

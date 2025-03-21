@@ -8,7 +8,6 @@
 */
 #include <vector>
 #include "mpi/mpi_manager.h"
-#ifdef DEBUG_UNIT_TEST
 #ifdef ENABLE_MPI
 #include "io/log_write.h"
 namespace rootproject {
@@ -30,7 +29,6 @@ void MpiManager::CheckMpiNodesCorrespondence(const GridInfoInterface& grid_info)
     std::vector<std::vector<MPI_Request>> vec_vec_reqs_send, vec_vec_reqs_receive;
     std::vector<std::unique_ptr<char[]>> vec_ptr_buffer_send, vec_ptr_buffer_receive(num_of_ranks_);
     int node_info_size = 0;
-    int node_buffer_size = static_cast<int>(sizeof(DefSFBitset));
     if (static_cast<DefInt>(mpi_communication_inner_layers_.size()) > i_level) {
         SendNReceiveGridNodeBufferSize(node_info_size, i_level, mpi_communication_inner_layers_.at(i_level),
             &send_buffer_info, &receive_buffer_info);
@@ -49,7 +47,6 @@ void MpiManager::CheckMpiNodesCorrespondence(const GridInfoInterface& grid_info)
                 + receive_buffer_info.at(i_rank).array_buffer_size_.at(1);
             vec_ptr_buffer_receive.at(i_rank) = std::make_unique<char[]>(buffer_size_total);
             std::unique_ptr<char[]>& buffer = vec_ptr_buffer_receive.at(i_rank);
-            int position = 0;
             for (int i_chunk = 0; i_chunk < num_chunks - 1; ++i_chunk) {
                 MPI_Irecv(buffer.get()+i_chunk*buffer_size_rest, buffer_size_rest, MPI_BYTE, i_rank,
                     i_chunk, MPI_COMM_WORLD, &vec_vec_reqs_receive.back().at(i_chunk));
@@ -97,9 +94,6 @@ void MpiManager::CheckMpiNodesCorrespondence(const GridInfoInterface& grid_info)
             DefMap<DefInt> map_received_tmp;
             MPI_Waitall(static_cast<int>(vec_vec_reqs_receive.at(i_rev).size()),
                 vec_vec_reqs_receive.at(i_rev).data(), MPI_STATUSES_IGNORE);
-            DefSizet buffer_size = sizeof(int) + receive_buffer_info.at(i_rank).array_buffer_size_.at(1)
-                + (receive_buffer_info.at(i_rank).num_chunks_ - 1)
-                *receive_buffer_info.at(i_rank).array_buffer_size_.at(0);
             DeserializeNodeSFBitset(flag_receive_once, vec_ptr_buffer_receive.at(i_rank), &map_received_tmp);
             for (const auto& iter : map_received_tmp) {
                 if (map_received.find(iter.first) == map_received.end()) {
@@ -142,7 +136,7 @@ void MpiManager::CheckMpiPeriodicCorrespondence(const GridInfoInterface& grid_in
     const DefInt i_level = grid_info.GetGridLevel();
     grid_info.GetPtrSFBitsetAux()->GetMinAtGivenLevel(i_level, indices_min, &domain_min_n_level);
     grid_info.GetPtrSFBitsetAux()->GetMaxAtGivenLevel(i_level, indices_max, &domain_max_n_level);
-    DefSFBitset sfbitset_max = ~0, sfbitset_min = ~0, sfbitset_tmp = ~0;
+    DefSFBitset sfbitset_max = ~0, sfbitset_min = ~0;
     std::vector<DefReal> coordinates(dims), coordinates2(dims);
     std::vector<DefSFBitset> vec_in_region;
     const std::array<DefSFBitset, 2>& take_xref = grid_info.GetPtrSFBitsetAux()->GetTakeXRef(),
@@ -258,4 +252,3 @@ void MpiManager::CheckMpiPeriodicCorrespondence(const GridInfoInterface& grid_in
 }  // end namespace amrproject
 }  // end namespace rootproject
 #endif  // ENABLE_MPI
-#endif  // DEBUG_UNIT_TEST

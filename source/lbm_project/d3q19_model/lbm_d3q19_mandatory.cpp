@@ -347,7 +347,7 @@ void SolverLbmD3Q19::UpdateMrtSMatrix(
     const DefReal relax_tau, std::vector<std::vector<DefReal>>* const ptr_diag_s) const {
     const std::array<DefInt, 5> tau_index = {9, 11, 13, 14, 15};
     for (DefInt i = 0; i < 5; ++i) {
-        ptr_diag_s->at(i).at(i) = relax_tau;
+        ptr_diag_s->at(tau_index[i]).at(tau_index[i]) = relax_tau;
     }
 }
 /**
@@ -359,7 +359,7 @@ void SolverLbmD3Q19::UpdateMrtDMatrix(
     const DefReal relax_tau, std::vector<std::vector<DefReal>>* const ptr_diag_d) const {
     const std::array<DefInt, 5> tau_index = {9, 11, 13, 14, 15};
     for (DefInt i = 0; i < 5; ++i) {
-        ptr_diag_d->at(i).at(i) = 1. - 0.5 * relax_tau;
+        ptr_diag_d->at(tau_index[i]).at(tau_index[i]) = 1. - 0.5 * relax_tau;
     }
 }
 }  // end namespace lbmproject

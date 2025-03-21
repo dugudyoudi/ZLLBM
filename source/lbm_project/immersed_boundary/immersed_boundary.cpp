@@ -34,7 +34,6 @@ void FsiImmersedBoundary::CalculateBodyForce(const GridInfoLbmInteface& grid_inf
     DefMap<std::unique_ptr<GridNodeLbm>>* ptr_map_grid_nodes) {
     const amrproject::GridManagerInterface* ptr_grid_manager = grid_info.GetPtrToParentGridManager();
 
-    const DefInt i_level = grid_info.GetGridLevel();
     const DefInt dim = ptr_grid_manager->k0GridDims_;
     std::vector<DefSFBitset> domain_min_n_level(dim), domain_max_n_level(dim);
     const amrproject::SFBitsetAuxInterface& sfbitset_aux = *grid_info.GetPtrSFBitsetAux();
@@ -540,13 +539,6 @@ void GeometryInfoImmersedBoundary::SetupGeometryInfo(const DefReal time,
     this->amrproject::GeometryInfoInterface::SetupGeometryInfo(time, mpi_manager, grid_info);
 #ifdef ENABLE_MPI
     // find nodes near immersed boundary and on mpi outer layers
-    SolverLbmInterface* ptr_solver_lbm = nullptr;
-    if (auto ptr = grid_info.GetPtrToSolver().lock()) {
-        ptr_solver_lbm = dynamic_cast<SolverLbmInterface*>(ptr.get());
-    } else {
-        amrproject::LogManager::LogError("LBM solver is not created.");
-    }
-    const DefReal dt_lbm = ptr_solver_lbm->GetCollisionOperator(grid_info.GetGridLevel()).GetDtLbm();
     amrproject::DomainInfo domain_info = grid_info.GetDomainInfo();
     const amrproject::SFBitsetAuxInterface& sfbitset_aux = *grid_info.GetPtrSFBitsetAux();
     std::vector<DefReal> grid_space_background = sfbitset_aux.GetBackgroundGridSpacing();
@@ -615,14 +607,14 @@ void GeometryInfoImmersedBoundary::WriteTimeHisLagrangianForce(const DefReal tim
 
     if (time < 1 + kEps) {
         std::remove(filename.c_str());
-        fopen_s(&fp, filename.c_str(), "w");
+        fp = fopen(filename.c_str(), "w");
         if (fp) {
-            fprintf_s(fp, "%s %s %s %s\n", "time", "force_x", "force_y", "force_z");
+            fprintf(fp, "%s %s %s %s\n", "time", "force_x", "force_y", "force_z");
         } else {
             amrproject::LogManager::LogError("Failed to open the file for writing IB forces.\n");
         }
     } else {
-        fopen_s(&fp, filename.c_str(), "a");
+        fp = fopen(filename.c_str(), "a");
     }
     if (fp) {
         DefReal fx = 0., fy = 0., fz = 0.;
@@ -637,7 +629,7 @@ void GeometryInfoImmersedBoundary::WriteTimeHisLagrangianForce(const DefReal tim
             fy += ptr_vertex_info->force_.at(kYIndex) * ptr_vertex_info->area_ * scale;
             fz += ptr_vertex_info->force_.at(kZIndex) * ptr_vertex_info->area_ * scale;
         }
-        fprintf_s(fp, "%f %f %f %f\n", time - 1., fx, fy, fz);
+        fprintf(fp, "%f %f %f %f\n", time - 1., fx, fy, fz);
         fclose(fp);
     } else {
         amrproject::LogManager::LogError("Failed to open the file for writing IB forces.\n");

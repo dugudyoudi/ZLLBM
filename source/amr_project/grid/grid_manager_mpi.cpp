@@ -958,7 +958,6 @@ int GridManagerInterface::MarkRefinementInterface(const DefInt i_level,
         DefInt flag_tmp = NodeBitStatus::kNodeStatus0_;
         const DefInt maxlayer_lower = num_c2f_layer_lower - 1;
         for (DefInt i_layer = 1; i_layer < num_c2f_layer_lower - 1; ++i_layer) {
-            const DefInt layer_fine_lower = (num_c2f_layer_lower - i_layer - 1)*2;
             flag_tmp = NodeBitStatus::kNodeStatus0_;
             if (i_layer >= maxlayer_lower - vec_ptr_grid_info_.at(i_level - 1)->GetNumCoarse2FineGhostLayer()) {
                 flag_tmp |= NodeBitStatus::kNodeStatusCoarse2FineGhost_;

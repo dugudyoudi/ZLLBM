@@ -19,8 +19,7 @@ namespace amrproject {
 void DebugWriterManager::WriteCoordinatesInPts(const DefInt dims, const std::string& datafile_name,
     const std::vector<DefReal>& grid_offset, const std::vector<DefReal>& grid_space,
     const SFBitsetAuxInterface& sfbitset_aux, const DefMap<DefInt>& map_points) {
-    FILE* fp = nullptr;
-    errno_t err = fopen_s(&fp, ("pointdata_rank_" + datafile_name + ".pts").c_str(), "w");
+    FILE* fp = fopen(("pointdata_rank_" + datafile_name + ".pts").c_str(), "w");
     if (!fp) {
         int rank_id = 0;
 #ifdef ENABLE_MPI
@@ -32,17 +31,17 @@ void DebugWriterManager::WriteCoordinatesInPts(const DefInt dims, const std::str
     } else {
         DefSizet num_points = map_points.size();
 
-        fprintf_s(fp, "%zd\n", num_points);
+        fprintf(fp, "%zd\n", num_points);
 
         std::string str_format = "%.6f  %.6f %.6f\n";
         std::vector<DefReal> coordinates;
         for (const auto& iter : map_points) {
             sfbitset_aux.SFBitsetComputeCoordinateVir(iter.first, grid_space, &coordinates);
             if (dims == 2) {
-                fprintf_s(fp, str_format.c_str(),
+                fprintf(fp, str_format.c_str(),
                     coordinates.at(kXIndex), coordinates.at(kYIndex), 0.);
             } else {
-                fprintf_s(fp, str_format.c_str(),
+                fprintf(fp, str_format.c_str(),
                     coordinates.at(kXIndex), coordinates.at(kYIndex), coordinates.at(kZIndex));
             }
         }

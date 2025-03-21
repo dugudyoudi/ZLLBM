@@ -164,8 +164,7 @@ void VtkWriterManager::WriteVtuAll(const std::string& folder_name,
                 vec_pvtu_file_name.push_back(name_rank + "grid_level_" + std::to_string(i));
             }
             // write pvtu
-            FILE* fp = nullptr;
-            errno_t err = fopen_s(&fp, (proj_and_rank + ".pvtu").c_str(), "w");
+            FILE* fp = fopen((proj_and_rank + ".pvtu").c_str(), "w");
             if (!fp) {
                 LogManager::LogError("File was not opened for writing"
                     " pvtu file in WriteVtuAll in "
@@ -215,9 +214,8 @@ void VtkWriterManager::WriteVtuGeo(const std::string& datafile_name,
     const std::array<DefReal, 3>& grid_offset,
     const OutputDataFormat& output_data_format,
     const CriterionManager& criterion_manager) {
-    FILE* fp = nullptr;
     std::string str_tmp;
-    errno_t err = fopen_s(&fp, (datafile_name + ".vtu").c_str(), "w");
+    FILE* fp = fopen((datafile_name + ".vtu").c_str(), "w");
     if (!fp) {
         int rank_id = 0;
 #ifdef ENABLE_MPI
@@ -227,19 +225,19 @@ void VtkWriterManager::WriteVtuGeo(const std::string& datafile_name,
             + " was not opened for writing vtu data in WriteVtuGeo."
             + " in "+ std::string(__FILE__) + " at line " + std::to_string(__LINE__));
     } else {
-        fprintf_s(fp, "<?xml version=\"1.0\"?>\n");
+        fprintf(fp, "<?xml version=\"1.0\"?>\n");
         str_tmp.assign("<VTKFile type=\"UnstructuredGrid\""
             " version=\"0.1\" byte_order=\"" + str_vtk_byte_order_ + "\">\n");
-        fprintf_s(fp, str_tmp.c_str());
-        fprintf_s(fp, " <UnstructuredGrid>\n");
+        fprintf(fp, "%s", str_tmp.c_str());
+        fprintf(fp, " <UnstructuredGrid>\n");
 
         for (const auto& iter_geo : vec_geo_in_one_vtu) {
             WriteGeometryPieces(fp, bool_binary, dims, grid_offset,
                 output_data_format, *criterion_manager.vec_ptr_geometries_.at(iter_geo));
         }
 
-        fprintf_s(fp, " </UnstructuredGrid>\n");
-        fprintf_s(fp, "</VTKFile>");
+        fprintf(fp, " </UnstructuredGrid>\n");
+        fprintf(fp, "</VTKFile>");
         fclose(fp);
     }
 }
@@ -259,9 +257,8 @@ void VtkWriterManager::WriteVtuGrid(const std::string& datafile_name,
     const std::vector<DefInt>& vec_level_in_one_vtu,
     const OutputDataFormat& output_data_format,
     const GridManagerInterface& grid_manager) {
-    FILE* fp = nullptr;
     std::string str_tmp;
-    errno_t err = fopen_s(&fp, (datafile_name + ".vtu").c_str(), "w");
+    FILE* fp = fopen((datafile_name + ".vtu").c_str(), "w");
     if (!fp) {
         int rank_id = 0;
 #ifdef ENABLE_MPI
@@ -271,19 +268,19 @@ void VtkWriterManager::WriteVtuGrid(const std::string& datafile_name,
             + " was not opened for writing vtu data in WriteVtuGrid."
             + " in "+ std::string(__FILE__) + " at line " + std::to_string(__LINE__));
     } else {
-        fprintf_s(fp, "<?xml version=\"1.0\"?>\n");
+        fprintf(fp, "<?xml version=\"1.0\"?>\n");
         str_tmp.assign("<VTKFile type=\"UnstructuredGrid\""
             " version=\"0.1\" byte_order=\"" + str_vtk_byte_order_ + "\">\n");
-        fprintf_s(fp, str_tmp.c_str());
-        fprintf_s(fp, " <UnstructuredGrid>\n");
+        fprintf(fp, "%s", str_tmp.c_str());
+        fprintf(fp, " <UnstructuredGrid>\n");
 
         for (const auto& iter_level : vec_level_in_one_vtu) {
             grid_manager.vec_ptr_grid_info_.at(iter_level)->SetupOutputVariables();
             WriteGridPieces(fp, bool_binary, bool_overlap, overlap_flag,
                 *grid_manager.vec_ptr_grid_info_.at(iter_level), output_data_format, grid_manager);
         }
-        fprintf_s(fp, " </UnstructuredGrid>\n");
-        fprintf_s(fp, "</VTKFile>");
+        fprintf(fp, " </UnstructuredGrid>\n");
+        fprintf(fp, "</VTKFile>");
         fclose(fp);
     }
 }
@@ -298,21 +295,21 @@ void VtkWriterManager::WritePvtu(FILE* const fp, const std::vector<std::string> 
     const OutputDataFormat& output_data_format,
     const std::vector<std::unique_ptr<OutputNodeVariableInfoInterface>>& output_variables) {
     std::string str_tmp;
-    fprintf_s(fp, "<?xml version=\"1.0\"?>\n");
+    fprintf(fp, "<?xml version=\"1.0\"?>\n");
     str_tmp.assign("<VTKFile type=\"PUnstructuredGrid\""
         " version=\"0.1\" byte_order=\"" + str_vtk_byte_order_ + "\">\n");
-    fprintf_s(fp, str_tmp.c_str());
-    fprintf_s(fp, " <PUnstructuredGrid>\n");
+    fprintf(fp, "%s", str_tmp.c_str());
+    fprintf(fp, " <PUnstructuredGrid>\n");
 
     //// node data
-    fprintf_s(fp, "    <PPointData>\n");
+    fprintf(fp, "    <PPointData>\n");
     // flag_status
     str_tmp.assign("      <PDataArray NumberOfComponents=\"1\" type=\""
         + output_data_format.output_uint_.format_name_
         + "\" Name=\"flag_status\" format=\""
         + k0StrVtkAsciiOrBinary_ + "\">\n");
-    fprintf_s(fp, str_tmp.c_str());
-    fprintf_s(fp, "      </PDataArray>\n");
+    fprintf(fp, "%s", str_tmp.c_str());
+    fprintf(fp, "      </PDataArray>\n");
 
     // variables
     for (const auto& iter_var : output_variables) {
@@ -321,57 +318,57 @@ void VtkWriterManager::WritePvtu(FILE* const fp, const std::vector<std::string> 
         + output_data_format.output_real_.format_name_
         + "\" Name=\"" + iter_var->output_name_ +"\" format=\""
         + k0StrVtkAsciiOrBinary_ + "\">\n");
-        fprintf_s(fp, str_tmp.c_str());
-        fprintf_s(fp, "      </PDataArray>\n");
+        fprintf(fp, "%s", str_tmp.c_str());
+        fprintf(fp, "      </PDataArray>\n");
     }
 
     // vtkGhostType
     str_tmp.assign("      <PDataArray type=\"UInt8\" Name=\"vtkGhostType\""
         " format=\"" + k0StrVtkAsciiOrBinary_ + "\">\n");
-    fprintf_s(fp, str_tmp.c_str());
-    fprintf_s(fp, "      </PDataArray>\n");
-    fprintf_s(fp, "    </PPointData>\n");
-    fprintf_s(fp, "   <PPoints>\n");
+    fprintf(fp, "%s", str_tmp.c_str());
+    fprintf(fp, "      </PDataArray>\n");
+    fprintf(fp, "    </PPointData>\n");
+    fprintf(fp, "   <PPoints>\n");
     // node coordinates
     str_tmp.assign("    <PDataArray type=\""
         + output_data_format.output_real_.format_name_
         + "\" NumberOfComponents=\"3\" format=\""
         + k0StrVtkAsciiOrBinary_ + "\">\n");
-    fprintf_s(fp, str_tmp.c_str());
-    fprintf_s(fp, "    </PDataArray>\n");
-    fprintf_s(fp, "   </PPoints>\n");
+    fprintf(fp, "%s", str_tmp.c_str());
+    fprintf(fp, "    </PDataArray>\n");
+    fprintf(fp, "   </PPoints>\n");
 
-    fprintf_s(fp, "   <PCells>\n");
+    fprintf(fp, "   <PCells>\n");
     // cell connectivity
     str_tmp.assign("    <PDataArray type=\""
         + output_data_format.output_sizet_.format_name_
         + "\" Name=\"connectivity\" format=\""
         + k0StrVtkAsciiOrBinary_ + "\">\n");
-    fprintf_s(fp, str_tmp.c_str());
-    fprintf_s(fp, "    </PDataArray>\n");
+    fprintf(fp, "%s", str_tmp.c_str());
+    fprintf(fp, "    </PDataArray>\n");
     // cell offset
     str_tmp.assign("    <PDataArray type=\""
         + output_data_format.output_sizet_.format_name_
         + "\" Name=\"offsets\" format=\""
         + k0StrVtkAsciiOrBinary_ + "\">\n");
-    fprintf_s(fp, str_tmp.c_str());
-    fprintf_s(fp, "    </PDataArray>\n");
+    fprintf(fp, "%s", str_tmp.c_str());
+    fprintf(fp, "    </PDataArray>\n");
     // cell types
     str_tmp.assign("    <PDataArray type=\"UInt8\" Name=\"types\" "
         "format=\"" + k0StrVtkAsciiOrBinary_ + "\">\n");
-    fprintf_s(fp, str_tmp.c_str());
-    fprintf_s(fp, "    </PDataArray>\n");
+    fprintf(fp, "%s", str_tmp.c_str());
+    fprintf(fp, "    </PDataArray>\n");
 
-    fprintf_s(fp, "   </PCells>\n");
+    fprintf(fp, "   </PCells>\n");
 
     for (const auto& iter : vec_vtu_file_name) {
         str_tmp.assign("    <Piece Source=\""
             + iter + ".vtu" + "\"/>\n");
-        fprintf_s(fp, str_tmp.c_str());
+        fprintf(fp, "%s", str_tmp.c_str());
     }
 
-    fprintf_s(fp, " </PUnstructuredGrid>\n");
-    fprintf_s(fp, " </VTKFile>\n");
+    fprintf(fp, " </PUnstructuredGrid>\n");
+    fprintf(fp, " </VTKFile>\n");
 }
 /**
 * @brief   function to write pieces of grids in vtu
@@ -413,9 +410,9 @@ void VtkWriterManager::WriteGridPieces(FILE* const fp, const bool bool_binary,
     str_tmp.assign("  <Piece NumberOfPoints=\""
         + std::to_string(node_and_cell_number[0])
         + "\" NumberOfCells=\"" + std::to_string(node_and_cell_number[1]) + "\">\n");
-    fprintf_s(fp, str_tmp.c_str());
+    fprintf(fp, "%s", str_tmp.c_str());
 
-    fprintf_s(fp, "    <PointData>\n");
+    fprintf(fp, "    <PointData>\n");
 
     WriteGridNodeFlagStatus(fp, bool_binary, output_data_format,
         map_node_index, grid_info.map_grid_node_);
@@ -426,14 +423,14 @@ void VtkWriterManager::WriteGridPieces(FILE* const fp, const bool bool_binary,
     grid_info.WriteOutputScalarAndVectors(fp, bool_binary, base64_instance_,
         output_data_format, map_node_index);
 
-    fprintf_s(fp, "    </PointData>\n");
+    fprintf(fp, "    </PointData>\n");
 
     // write coordinates of vertices
-    fprintf_s(fp, "   <Points>\n");
+    fprintf(fp, "   <Points>\n");
     str_tmp.assign("    <DataArray type=\""
         + output_data_format.output_real_.format_name_
         + "\" NumberOfComponents=\"3\" format=\"" + k0StrVtkAsciiOrBinary_ + "\">\n");
-    fprintf_s(fp, str_tmp.c_str());
+    fprintf(fp, "%s", str_tmp.c_str());
     if (dims == 2) {
 #ifndef DEBUG_DISABLE_2D_FUNCTIONS
         const GridManager2D& grid_manager2d =
@@ -449,15 +446,15 @@ void VtkWriterManager::WriteGridPieces(FILE* const fp, const bool bool_binary,
             output_data_format, grid_manager3d, grid_info, &map_node_index);
 #endif  // DEBUG_DISABLE_3D_FUNCTIONS
     }
-    fprintf_s(fp, "    </DataArray>\n");
-    fprintf_s(fp, "   </Points>\n");
+    fprintf(fp, "    </DataArray>\n");
+    fprintf(fp, "   </Points>\n");
 
     // write cell connectivity
-    fprintf_s(fp, "   <Cells>\n");
+    fprintf(fp, "   <Cells>\n");
     str_tmp.assign("    <DataArray type=\""
         + output_data_format.output_sizet_.format_name_
         + "\" Name=\"connectivity\" format=\"" + k0StrVtkAsciiOrBinary_ + "\">\n");
-    fprintf_s(fp, str_tmp.c_str());
+    fprintf(fp, "%s", str_tmp.c_str());
     if (dims == 2) {
 #ifndef DEBUG_DISABLE_2D_FUNCTIONS
         const SFBitsetAux2D& bitset_aux2d =
@@ -473,26 +470,26 @@ void VtkWriterManager::WriteGridPieces(FILE* const fp, const bool bool_binary,
             output_data_format, bitset_aux3d, map_node_index);
 #endif  // DEBUG_DISABLE_3D_FUNCTIONS
     }
-    fprintf_s(fp, "    </DataArray>\n");
+    fprintf(fp, "    </DataArray>\n");
     str_tmp.assign("    <DataArray type=\""
         + output_data_format.output_sizet_.format_name_
         + "\" Name=\"offsets\" format=\""
         + k0StrVtkAsciiOrBinary_ + "\">\n");
-    fprintf_s(fp, str_tmp.c_str());
+    fprintf(fp, "%s", str_tmp.c_str());
     // write cell offsets
     WriteGridCellOffsets(fp, bool_binary, grid_manager.k0GridDims_,
         node_and_cell_number[1], output_data_format);
-    fprintf_s(fp, "    </DataArray>\n");
+    fprintf(fp, "    </DataArray>\n");
     str_tmp.assign("    <DataArray type=\"UInt8\" Name=\"types\" "
         "format=\"" + k0StrVtkAsciiOrBinary_ + "\">\n");
-    fprintf_s(fp, str_tmp.c_str());
+    fprintf(fp, "%s", str_tmp.c_str());
     // write cell types
     WriteGridCellTypes(fp, bool_binary,
         grid_manager.k0GridDims_, node_and_cell_number[1]);
-    fprintf_s(fp, "    </DataArray>\n");
-    fprintf_s(fp, "   </Cells>\n");
+    fprintf(fp, "    </DataArray>\n");
+    fprintf(fp, "   </Cells>\n");
 
-    fprintf_s(fp, "  </Piece>\n");
+    fprintf(fp, "  </Piece>\n");
 }
 /**
 * @brief   function to write offset for each cell
@@ -521,14 +518,14 @@ void VtkWriterManager::WriteGridCellOffsets(FILE* const fp,
         }
         base64_instance_.Encode(&vec_uint8, &vec_base64);
         for (const auto& iter : vec_base64) {
-            fprintf_s(fp, "%c", iter);
+            fprintf(fp, "%c", iter);
         }
-        fprintf_s(fp, "\n");
+        fprintf(fp, "\n");
     } else {
         std::string str_format = "   "
             + output_data_format.output_sizet_.printf_format_ + "\n";
         for (DefSizet i = 1; i < num_cell + 1; ++i) {
-            fprintf_s(fp, str_format.c_str(), i * num_offsets);
+            fprintf(fp, str_format.c_str(), i * num_offsets);
         }
     }
 }
@@ -555,12 +552,12 @@ void VtkWriterManager::WriteGridCellTypes(FILE* const fp,
         }
         base64_instance_.Encode(&vec_uint8, &vec_base64);
         for (const auto& iter : vec_base64) {
-            fprintf_s(fp, "%c", iter);
+            fprintf(fp, "%c", iter);
         }
-        fprintf_s(fp, "\n");
+        fprintf(fp, "\n");
     } else {
         for (DefAmrLUint i = 0; i < num_cell; ++i) {
-            fprintf_s(fp, "   %u\n", cell_type);
+            fprintf(fp, "   %u\n", cell_type);
         }
     }
 }
@@ -581,7 +578,7 @@ void VtkWriterManager::WriteGridNodeFlagStatus(FILE* const fp,
         + output_data_format.output_uint_.format_name_
         + "\" Name=\"flag_status\" format=\""
         + k0StrVtkAsciiOrBinary_ + "\">\n");
-    fprintf_s(fp, str_tmp.c_str());
+    fprintf(fp, "%s", str_tmp.c_str());
 
     if (bool_binary) {
         std::vector<uint8_t> vec_uint8{}, vec_base64{};
@@ -592,20 +589,20 @@ void VtkWriterManager::WriteGridNodeFlagStatus(FILE* const fp,
         }
         base64_instance_.Encode(&vec_uint8, &vec_base64);
         for (const auto& iter : vec_base64) {
-            fprintf_s(fp, "%c", iter);
+            fprintf(fp, "%c", iter);
         }
-        fprintf_s(fp, "\n");
+        fprintf(fp, "\n");
     } else {
         std::string str_format = "     "
             + output_data_format.output_uint_.printf_format_;
         for (const auto& iter : map_node_index) {
-            fprintf_s(fp, "  ");
-            fprintf_s(fp, str_format.c_str(),
+            fprintf(fp, "  ");
+            fprintf(fp, str_format.c_str(),
                 map_grid_node.at(iter.first)->flag_status_);
-            fprintf_s(fp, "\n");
+            fprintf(fp, "\n");
         }
     }
-    fprintf_s(fp, "      </DataArray>\n");
+    fprintf(fp, "      </DataArray>\n");
 }
 /**
 * @brief   function to write cell type.
@@ -626,7 +623,7 @@ void VtkWriterManager::WriteGridNodeVtkVisualization(
     str_tmp.assign("      <DataArray type=\"UInt8\" Name=\"vtkGhostType\" "
         "format=\"" + k0StrVtkAsciiOrBinary_ + "\">\n");
     uint8_t vtk_normal = kVtkNormalPoint_, vtk_overlap = kVtkDuplicatedPoint_;
-    fprintf_s(fp, str_tmp.c_str());
+    fprintf(fp, "%s", str_tmp.c_str());
     if (bool_binary) {
         std::vector<uint8_t> vec_uint8{}, vec_base64{};
         for (const auto& iter : map_node_index) {
@@ -639,20 +636,20 @@ void VtkWriterManager::WriteGridNodeVtkVisualization(
         }
         base64_instance_.Encode(&vec_uint8, &vec_base64);
         for (const auto& iter : vec_base64) {
-            fprintf_s(fp, "%c", iter);
+            fprintf(fp, "%c", iter);
         }
-        fprintf_s(fp, "\n");
+        fprintf(fp, "\n");
     } else {
         for (const auto& iter : map_node_index) {
             if ((map_grid_node.at(iter.first)->flag_status_
                 & flag_overlap_visual) == 0) {
-                fprintf_s(fp, "   %u\n", vtk_normal);
+                fprintf(fp, "   %u\n", vtk_normal);
             } else {
-                fprintf_s(fp, "   %u\n", vtk_overlap);
+                fprintf(fp, "   %u\n", vtk_overlap);
             }
         }
     }
-    fprintf_s(fp, "      </DataArray>\n");
+    fprintf(fp, "      </DataArray>\n");
 }
 /**
 * @brief   function to write pieces of geometries in vtu.
@@ -674,28 +671,28 @@ void VtkWriterManager::WriteGeometryPieces(
         + std::to_string(geo_info.GetNumOfGeometryPoints())
         + "\" NumberOfCells=\"" + std::to_string(cell_number)
         + "\">\n");
-    fprintf_s(fp, str_tmp.c_str());
+    fprintf(fp, "%s", str_tmp.c_str());
 
     // write vertex data
-    fprintf_s(fp, "   <Points>\n");
+    fprintf(fp, "   <Points>\n");
     str_tmp.assign("    <DataArray type=\""
         + output_data_format.output_real_.format_name_
         + "\" NumberOfComponents=\"3\" format=\""
         + k0StrVtkAsciiOrBinary_ + "\">\n");
-    fprintf_s(fp, str_tmp.c_str());
+    fprintf(fp, "%s", str_tmp.c_str());
     DefSizet num_points = 0;
 
     num_points = WriteGeometryCoordinates(fp, bool_binary, dims,
             grid_offset, output_data_format, geo_info);
 
-    fprintf_s(fp, "    </DataArray>\n");
-    fprintf_s(fp, "   </Points>\n");
-    fprintf_s(fp, "   <Cells>\n");
+    fprintf(fp, "    </DataArray>\n");
+    fprintf(fp, "   </Points>\n");
+    fprintf(fp, "   <Cells>\n");
     str_tmp.assign("    <DataArray type=\""
         + output_data_format.output_sizet_.format_name_
         + "\" Name=\"connectivity\" format=\""
         + k0StrVtkAsciiOrBinary_ + "\">\n");
-    fprintf_s(fp, str_tmp.c_str());
+    fprintf(fp, "%s", str_tmp.c_str());
 
     // write cell connectivity
     DefSizet num_cell = 0;
@@ -712,29 +709,29 @@ void VtkWriterManager::WriteGeometryPieces(
         break;
     }
 
-    fprintf_s(fp, "    </DataArray>\n");
+    fprintf(fp, "    </DataArray>\n");
     str_tmp.assign("    <DataArray type=\""
         + output_data_format.output_sizet_.format_name_
         + "\" Name=\"offsets\" format=\""
         + k0StrVtkAsciiOrBinary_ + "\">\n");
-    fprintf_s(fp, str_tmp.c_str());
+    fprintf(fp, "%s", str_tmp.c_str());
 
     // write cell offsets
     WriteGeometryCellOffset(fp, bool_binary, num_cell,
         geo_info.GetCellType(), output_data_format);
 
-    fprintf_s(fp, "    </DataArray>\n");
+    fprintf(fp, "    </DataArray>\n");
     str_tmp.assign("    <DataArray type=\"UInt8\" Name=\"types\" "
         "format=\"" + k0StrVtkAsciiOrBinary_ + "\">\n");
-    fprintf_s(fp, str_tmp.c_str());
+    fprintf(fp, "%s", str_tmp.c_str());
 
     // write cell types
     WriteGeometryCellType(
         fp, bool_binary, num_points, geo_info.GetCellType());
 
-    fprintf_s(fp, "    </DataArray>\n");
-    fprintf_s(fp, "   </Cells>\n");
-    fprintf_s(fp, "  </Piece>\n");
+    fprintf(fp, "    </DataArray>\n");
+    fprintf(fp, "   </Cells>\n");
+    fprintf(fp, "  </Piece>\n");
 }
 /**
 * @brief   function to calculate number of cells.
@@ -781,16 +778,16 @@ void VtkWriterManager::WriteGeometryCellConnectivityPolyLine(FILE* const fp,
         }
         base64_instance_.Encode(&vec_uint8, &vec_base64);
         for (const auto& iter : vec_base64) {
-            fprintf_s(fp, "%c", iter);
+            fprintf(fp, "%c", iter);
         }
-        fprintf_s(fp, "\n");
+        fprintf(fp, "\n");
     } else {
         std::string str_format = "   "
             + output_data_format.output_sizet_.printf_format_ + " "
             + output_data_format.output_sizet_.printf_format_ + "\n";
         if (num_points > 0) {
             for (DefSizet i_vertex = 0; i_vertex < num_points - 1; ++i_vertex) {
-                fprintf_s(fp, str_format.c_str(), i_vertex, i_vertex + 1);
+                fprintf(fp, str_format.c_str(), i_vertex, i_vertex + 1);
             }
         }
     }
@@ -828,14 +825,14 @@ void VtkWriterManager::WriteGeometryCellOffset(FILE* const fp,
         }
         base64_instance_.Encode(&vec_uint8, &vec_base64);
         for (const auto& iter : vec_base64) {
-            fprintf_s(fp, "%c", iter);
+            fprintf(fp, "%c", iter);
         }
-        fprintf_s(fp, "\n");
+        fprintf(fp, "\n");
     } else {
         std::string str_format = "   "
             + output_data_format.output_sizet_.printf_format_ + "\n";
         for (DefSizet i_vertex = 1; i_vertex < num_cell + 1; ++i_vertex) {
-            fprintf_s(fp, str_format.c_str(), i_vertex * num_offset);
+            fprintf(fp, str_format.c_str(), i_vertex * num_offset);
         }
     }
 }
@@ -859,14 +856,14 @@ void VtkWriterManager::WriteGeometryCellType(
             }
             base64_instance_.Encode(&vec_uint8, &vec_base64);
             for (const auto& iter : vec_base64) {
-                fprintf_s(fp, "%c", iter);
+                fprintf(fp, "%c", iter);
             }
-            fprintf_s(fp, "\n");
+            fprintf(fp, "\n");
         }
     } else {
         if (num_points > 0) {
             for (DefSizet i_vertex = 0; i_vertex < num_points - 1; ++i_vertex) {
-                fprintf_s(fp, "   %u\n",
+                fprintf(fp, "   %u\n",
                     static_cast<std::uint8_t>(geometry_cell_type));
             }
         }
@@ -900,12 +897,12 @@ DefSizet VtkWriterManager::WriteGeometryCoordinates(FILE* const fp,
         }
         base64_instance_.Encode(&vec_uint8, &vec_base64);
         for (const auto& iter : vec_base64) {
-            fprintf_s(fp, "%c", iter);
+            fprintf(fp, "%c", iter);
         }
-        fprintf_s(fp, "\n");
+        fprintf(fp, "\n");
     } else {
         for (const auto& iter : geo_info.vec_vertices_) {
-            fprintf_s(fp, str_format.c_str(),
+            fprintf(fp, str_format.c_str(),
                 iter->coordinate_.at(kXIndex) - grid_offset.at(kXIndex),
                 iter->coordinate_.at(kYIndex) - grid_offset.at(kYIndex),
                 iter->coordinate_.at(kZIndex) - grid_offset.at(kZIndex));
@@ -1003,16 +1000,16 @@ void VtkWriterManager::WriteGridCoordinates(FILE* const fp,
         }
         base64_instance_.Encode(&vec_uint8, &vec_base64);
         for (const auto& iter : vec_base64) {
-            fprintf_s(fp, "%c", iter);
+            fprintf(fp, "%c", iter);
         }
-        fprintf_s(fp, "\n");
+        fprintf(fp, "\n");
     } else {
         for (auto& iter : *ptr_map_node_index) {
             iter.second = i_nodes;
             grid_manager2d.SFBitsetComputeCoordinate(iter.first,
                 grid_space_2d, &coordi_2d);
             coordi = {coordi_2d[kXIndex], coordi_2d[kYIndex], 0 };
-            fprintf_s(fp, str_format.c_str(),
+            fprintf(fp, str_format.c_str(),
                 coordi[kXIndex], coordi[kYIndex], coordi[kZIndex]);
             ++i_nodes;
         }
@@ -1033,7 +1030,6 @@ void VtkWriterManager::WriteGridCellConnectivity(FILE* const fp,
     const OutputDataFormat& output_data_format,
     const SFBitsetAux2D& bitset_aux2d,
     const DefMap<DefSizet>& map_node_index) {
-    DefSizet size_vec = TwoPowerN(static_cast<DefSizet>(2));
     std::array<DefSFBitset, 4> bitset_cell_2d;
     // write connection
     if (bool_binary) {
@@ -1051,21 +1047,21 @@ void VtkWriterManager::WriteGridCellConnectivity(FILE* const fp,
         }
         base64_instance_.Encode(&vec_uint8, &vec_base64);
         for (const auto& iter : vec_base64) {
-            fprintf_s(fp, "%c", iter);
+            fprintf(fp, "%c", iter);
         }
-        fprintf_s(fp, "\n");
+        fprintf(fp, "\n");
     } else {
         std::string str_format = " "
             + output_data_format.output_sizet_.printf_format_;
         for (const auto& iter : map_node_index) {
             if (bitset_aux2d.SFBitsetBelongToOneCell(
                 iter.first, map_node_index, &bitset_cell_2d)) {
-                fprintf_s(fp, "  ");
+                fprintf(fp, "  ");
                 for (const auto& iter_sfbitset : bitset_cell_2d) {
-                    fprintf_s(fp, str_format.c_str(),
+                    fprintf(fp, str_format.c_str(),
                         map_node_index.at(iter_sfbitset));
                 }
-                fprintf_s(fp, "\n");
+                fprintf(fp, "\n");
             }
         }
     }
@@ -1162,9 +1158,9 @@ void VtkWriterManager::WriteGridCoordinates(FILE* const fp,
         }
         base64_instance_.Encode(&vec_uint8, &vec_base64);
         for (const auto& iter : vec_base64) {
-            fprintf_s(fp, "%c", iter);
+            fprintf(fp, "%c", iter);
         }
-        fprintf_s(fp, "\n");
+        fprintf(fp, "\n");
     } else {
         for (auto& iter : *ptr_map_node_index) {
             iter.second = i_node;
@@ -1172,7 +1168,7 @@ void VtkWriterManager::WriteGridCoordinates(FILE* const fp,
                     grid_space_3d, &coordi_3d);
                 coordi = { coordi_3d[kXIndex], coordi_3d[kYIndex],
                     coordi_3d[kZIndex] };
-            fprintf_s(fp, str_format.c_str(),
+            fprintf(fp, str_format.c_str(),
                 coordi[kXIndex], coordi[kYIndex], coordi[kZIndex]);
 
             ++i_node;
@@ -1193,9 +1189,7 @@ void VtkWriterManager::WriteGridCellConnectivity(FILE* const fp,
     const OutputDataFormat& output_data_format,
     const SFBitsetAux3D& bitset_aux3d,
     const DefMap<DefSizet>& map_node_index) {
-    DefSizet size_vec = TwoPowerN(static_cast<DefSizet>(3));
     std::array<DefSFBitset, 8> bitset_cell_3d;
-
     // write connection
     if (bool_binary) {
         std::vector<uint8_t> vec_uint8{}, vec_base64{};
@@ -1212,9 +1206,9 @@ void VtkWriterManager::WriteGridCellConnectivity(FILE* const fp,
         }
         base64_instance_.Encode(&vec_uint8, &vec_base64);
         for (const auto& iter : vec_base64) {
-            fprintf_s(fp, "%c", iter);
+            fprintf(fp, "%c", iter);
         }
-        fprintf_s(fp, "\n");
+        fprintf(fp, "\n");
     } else {
         std::string str_format = " "
             + output_data_format.output_sizet_.printf_format_;
@@ -1222,12 +1216,12 @@ void VtkWriterManager::WriteGridCellConnectivity(FILE* const fp,
             // check if the node is at the lower corner of a cell
             if (bitset_aux3d.SFBitsetBelongToOneCell(
                 iter.first, map_node_index, &bitset_cell_3d)) {
-                fprintf_s(fp, "  ");
+                fprintf(fp, "  ");
                 for (const auto& iter_sfbitset : bitset_cell_3d) {
-                    fprintf_s(fp, str_format.c_str(),
+                    fprintf(fp, str_format.c_str(),
                         map_node_index.at(iter_sfbitset));
                 }
-                fprintf_s(fp, "\n");
+                fprintf(fp, "\n");
             }
         }
     }

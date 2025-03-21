@@ -26,12 +26,21 @@
 #include <winsock2.h>
 #endif
 #include <mpi.h>
+#include <mutex>
+#include "criterion/geometry_info_interface.h"
 #include "grid/sfbitset_aux.h"
 #include "grid/grid_info_interface.h"
 #include "grid/grid_manager.h"
-#include "criterion/geometry_info_interface.h"
 namespace rootproject {
 namespace amrproject {
+// Thread-safe static storage
+void SetupMpiTypes();
+MPI_Datatype GetMpiRealType();
+MPI_Datatype GetMpiIntType();
+MPI_Datatype GetMpiUintType();
+MPI_Datatype GetMpiSizeTType();
+MPI_Datatype GetMpiAmrLUintType();
+MPI_Datatype GetMpiCodeUintType();
 /**
 * @class MpiManager
 * @brief class used to manage the mpi processes.
@@ -608,7 +617,6 @@ std::unique_ptr<char[]> MpiManager::BlockingSendNReceiveGridNode(const int i_ran
         DefSizet buffer_size_total = (num_chunks - 1)*buffer_size_rest
             + receive_buffer_info.at(i_rank_receive).array_buffer_size_.at(1);
         std::unique_ptr<char[]> buffer_receive = std::make_unique<char[]>(buffer_size_total);
-        int position = 0;
         for (int i_chunk = 0; i_chunk < num_chunks - 1; ++i_chunk) {
             MPI_Recv(buffer_receive.get()+i_chunk*buffer_size_rest, buffer_size_rest, MPI_BYTE, i_rank_receive,
                 i_chunk, MPI_COMM_WORLD, MPI_STATUS_IGNORE);

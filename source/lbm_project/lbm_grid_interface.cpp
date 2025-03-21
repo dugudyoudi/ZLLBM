@@ -12,6 +12,8 @@
 #include "io/log_write.h"
 #include "io/vtk_writer.h"
 #include "criterion/criterion_manager.h"
+#include "criterion/geometry_default_shape.h"
+#include "grid/grid_info_interface.h"
 #include "mpi/mpi_manager.h"
 #include "immersed_boundary/immersed_boundary.h"
 namespace rootproject {
@@ -178,7 +180,7 @@ void GridInfoLbmInteface::InitialGridInfo(const DefInt dims) {
     ptr_lbm_solver->SetInitialDisFuncBasedOnReferenceMacros(&f_ini_, &f_collide_ini_);
     ptr_lbm_solver->InstantiateCollisionOperator(i_level_);
     ChooseInterpolationMethod(dims);
-    if (ptr_lbm_solver->GetNumForces() != ptr_lbm_solver->GetDefaultForce().size()) {
+    if (ptr_lbm_solver->GetNumForces() != static_cast<DefInt>(ptr_lbm_solver->GetDefaultForce().size())) {
         amrproject::LogManager::LogWarning("Dimension of forces (k0NumForces_) is not equal to"
             " the dimension of default forces (k0Force_) in the solver for"
             " initialization in GridInfoLbmInteface::InitialGridInfo.");
@@ -472,7 +474,6 @@ int GridInfoLbmInteface::TransferInfoFromCoarseGrid(const amrproject::SFBitsetAu
     DefSFBitset sfbitset_coarse;
     std::vector<DefSFBitset> nodes_in_region;
     DefAmrLUint valid_length = max_interp_length_;
-    const GridInfoLbmInteface& lbm_grid_coarse = dynamic_cast<const GridInfoLbmInteface&>(grid_info_coarse);
     DefInt start_layer = k0NumFine2CoarseLayer_ - k0NumFine2CoarseGhostLayer_;
 
     for (auto& iter_interface : map_ptr_interface_layer_info_) {
@@ -681,7 +682,7 @@ int GridInfoLbmInteface::OutputOneVariable(
     str_tmp.assign("      <DataArray NumberOfComponents=\"" + std::to_string(dims)
         + "\" type=\"" + output_data_format.output_real_.format_name_
         + "\" Name=\"" + output_info.output_name_ + "\" format=\"" + str_format + "\">\n");
-    fprintf_s(fp, str_tmp.c_str());
+    fprintf(fp, "%s", str_tmp.c_str());
 
     if (bool_binary) {
         std::vector<uint8_t> vec_uint8{}, vec_base64{};
@@ -694,22 +695,22 @@ int GridInfoLbmInteface::OutputOneVariable(
         }
         base64_instance.Encode(&vec_uint8, &vec_base64);
         for (const auto& iter : vec_base64) {
-            fprintf_s(fp, "%c", iter);
+            fprintf(fp, "%c", iter);
         }
-        fprintf_s(fp, "\n");
+        fprintf(fp, "\n");
     } else {
         std::string str_format = "     "
             + output_data_format.output_real_.printf_format_;
         for (auto iter = map_node_index.begin(); iter != map_node_index.end(); ++iter) {
             const std::vector<DefReal>& vec_var =  output_info.func_get_var_(map_grid_node.at(iter->first).get());
             for (DefInt i_dims = 0; i_dims < dims; ++i_dims) {
-                fprintf_s(fp, "  ");
-                fprintf_s(fp, str_format.c_str(), vec_var.at(i_dims));
+                fprintf(fp, "  ");
+                fprintf(fp, str_format.c_str(), vec_var.at(i_dims));
             }
-            fprintf_s(fp, "\n");
+            fprintf(fp, "\n");
         }
     }
-    fprintf_s(fp, "      </DataArray>\n");
+    fprintf(fp, "      </DataArray>\n");
     return 0;
 }
 }  // end namespace lbmproject

@@ -326,7 +326,6 @@ void MpiManager::IniTraverseBackgroundForPartitionRank0(
     int i_rank = 0;
     ptr_bitset_min->at(i_rank) = 0;
     ptr_bitset_max->back() = bitset_domain_max;
-    DefAmrLUint cost_background = vec_cost.at(0);
     std::array<DefAmrLUint, 3> indices(indices_min);
     DefSFCodeToUint i_code = bitset_domain_min.to_ullong();
     DefSFBitset sfbitset_tmp = static_cast<DefSFBitset>(i_code);

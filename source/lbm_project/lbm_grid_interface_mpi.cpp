@@ -111,7 +111,6 @@ void GridInfoLbmInteface::ComputeInfoInMpiLayers(const std::map<int, DefMap<DefI
     }
     LbmCollisionOptInterface& collision_operator = ptr_lbm_solver->GetCollisionOperator(i_level_);
     DefReal dt_lbm = collision_operator.GetDtLbm();
-    DefInt dims = ptr_lbm_solver->GetSolverDim();
 
     // collision for nodes in outer and inner MPI communication layers
     DefInt flag_not_collide = NodeFlagNotCollision_&(~(amrproject::NodeBitStatus::kNodeStatusMpiPartitionOuter_

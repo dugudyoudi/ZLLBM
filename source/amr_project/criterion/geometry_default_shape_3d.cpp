@@ -174,11 +174,11 @@ void GeoShapeDefaultQuadrilateral3D::InitialShape(const DefReal dx_background) {
         edge2_dir_z = (diagonal_point_.at(kZIndex) - neighbor_point_.at(kZIndex)) / edge2_length;
     DefReal mid_x, mid_y, mid_z;
     DefSizet node_index;
-    for (DefSizet i = 0; i < edge1_num_points_; ++i) {
+    for (DefInt i = 0; i < edge1_num_points_; ++i) {
         mid_x = neighbor_point_.at(kXIndex) + (i + 0.5) * edge1_dir_x * edge1_arc + offset[kXIndex];
         mid_y = neighbor_point_.at(kYIndex) + (i + 0.5) * edge1_dir_y * edge1_arc + offset[kYIndex];
         mid_z = neighbor_point_.at(kZIndex) + (i + 0.5) * edge1_dir_z * edge1_arc + offset[kZIndex];
-        for (DefSizet j = 0; j < edge2_num_points_; ++j) {
+        for (DefInt j = 0; j < edge2_num_points_; ++j) {
             node_index = i*edge1_num_points_ + j;
             ptr_geo_info->vec_vertices_.at(node_index) = ptr_geo_info->GeoIndexVertexCreator();
             ptr_geo_info->vec_vertices_.at(node_index)->coordinate_[kXIndex] =
@@ -349,7 +349,7 @@ void GeoShapeDefaultSphere3D::InitialShape(const DefReal dx_background) {
         a2 = sin(phi) * sin(aa);
         DefInt n_theta_mid = static_cast<DefInt>(kPi / acos(a1 / a2) + 0.5);
 
-        DefReal theta, dphi = kPi / (n_phi_out - 1) / 4.;
+        DefReal theta;
         DefInt icount = 0;
         DefInt num_points = 2*(min_val + 1) - n_theta_mid;
         ptr_geo_info->vec_vertices_.resize(num_points);

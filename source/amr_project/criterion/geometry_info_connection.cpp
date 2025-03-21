@@ -23,7 +23,6 @@ namespace amrproject {
 * @return  0 successful
 */
 void GeometryInfoConnection::InitialGeometry(const DefReal dx) {
-    int return_status = 0;
     this->SetupConnectionParameters(this->geometry_cell_type_);
     this->InitialGeometry(dx);
 }

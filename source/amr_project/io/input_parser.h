@@ -31,8 +31,8 @@ struct ParserData {
 class InputParser {
  private:
     char delimiter_ = ' ';
-    std::map<std::string, ParserData> map_input_;
-    std::map<std::string, std::map<std::string, std::map<std::string, ParserData>>> nested_map_input_;
+    std::map<std::string, ParserData> map_input_{};
+    std::map<std::string, std::map<std::string, std::map<std::string, ParserData>>> nested_map_input_{};
 
     std::vector<std::string> Split(const std::string& str, char delimiter) const;
     std::string Trim(const std::string& str) const;
@@ -161,7 +161,7 @@ class InputParser {
         }
         std::vector<std::string> tokens = Split(ptr_map_variable->at(key).str_value_, delimiter_);
         ptr_variable->resize(tokens.size());
-        for (auto i = 0; i < tokens.size(); ++i) {
+        for (size_t i = 0; i < tokens.size(); ++i) {
             ptr_variable->at(i) = CheckType<T>(tokens.at(i));
         }
         ptr_map_variable->at(key).bool_has_read_ = true;
