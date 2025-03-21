@@ -174,14 +174,12 @@ void MpiManager::SendGridNodeInformation(const int rank_send, const BufferSizeIn
 std::unique_ptr<char[]> MpiManager::ReceiveGridNodeInformation(const int rank_receive, const int node_info_size,
     const BufferSizeInfo& receive_buffer_info, std::vector<MPI_Request>* const ptr_reqs_receive) const {
     if (receive_buffer_info.bool_exist_) {
-        int node_buffer_size = sizeof(DefSFBitset) + node_info_size;
         const int& num_chunks = receive_buffer_info.num_chunks_;
         ptr_reqs_receive->resize(num_chunks);
         const int& buffer_size_rest = receive_buffer_info.array_buffer_size_.at(0);
         DefSizet buffer_size_total = (num_chunks - 1)*buffer_size_rest
             + receive_buffer_info.array_buffer_size_.at(1);
         std::unique_ptr<char[]> buffer = std::make_unique<char[]>(buffer_size_total);
-        int position = 0;
         for (int i_chunk = 0; i_chunk < num_chunks - 1; ++i_chunk) {
             MPI_Irecv(buffer.get()+i_chunk*buffer_size_rest, buffer_size_rest, MPI_BYTE, rank_receive,
                 i_chunk, MPI_COMM_WORLD, &ptr_reqs_receive->at(i_chunk));
@@ -477,8 +475,6 @@ int MpiManager::SendGhostNodeForInterpolation(const SFBitsetAuxInterface& sfbits
                 MPI_Send(&num_chunks, 1, MPI_INT, i_rank_send, i_level, MPI_COMM_WORLD);
             }
 
-            bool bool_receive_from_i_rank = (ptr_grid_info->interp_nodes_inner_layer_.find(i_rank_receive)
-                != ptr_grid_info->interp_nodes_inner_layer_.end());
             if (vec_num_recv.at(i_rank_receive) > 0) {
                 ptr_receive_buffer_info->at(i_rank_receive).bool_exist_ = true;
                 MPI_Recv(&ptr_receive_buffer_info->at(i_rank_receive).num_chunks_,

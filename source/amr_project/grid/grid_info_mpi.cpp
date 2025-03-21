@@ -27,14 +27,12 @@ void GridInfoInterface::SetPeriodicBoundaryAsPartitionInterface(DefInt dims,
     const SFBitsetAuxInterface& sfbitset_aux,
     const std::vector<bool>& bool_periodic_min, const std::vector<bool>& bool_periodic_max,
     DefMap<DefInt>* const ptr_partition_interface) {
-    DefInt flag0 = ~0;
-    DefInt i_level = i_level_;
-    if (bool_periodic_min.size() != dims) {
+    if (static_cast<DefInt>(bool_periodic_min.size()) != dims) {
         LogManager::LogError("size of bool_periodic_min " + std::to_string(bool_periodic_min.size())
             + " is not equal to the grid dimension " + std::to_string(dims) + "in "
             + std::string(__FILE__) + " at line " + std::to_string(__LINE__));
     }
-    if (bool_periodic_max.size() != dims) {
+    if (static_cast<DefInt>(bool_periodic_max.size()) != dims) {
         LogManager::LogError("size of bool_periodic_max " + std::to_string(bool_periodic_min.size())
             + " is not equal to the grid dimension " + std::to_string(dims) + "in "
             + std::string(__FILE__) + " at line " + std::to_string(__LINE__));
@@ -267,30 +265,15 @@ void GridInfoInterface::CopyInterpolationNodeInfoToBuffer(
             func_copy_buffer(*map_grid_node_.at(iter.first).get(), ptr_buffer + position);
             position += node_info_size;
         } else {
-            if (&coarse_grid_info != nullptr) {
-                const DefMap<std::unique_ptr<GridNode>>& map_coarse_node = coarse_grid_info.map_grid_node_;
-                DefSFBitset sfbitset_lower = ptr_sfbitset_aux_->SFBitsetToNLowerLevelVir(1, iter.first);
-                if (map_coarse_node.find(sfbitset_lower) != map_coarse_node.end()) {
-                    std::memcpy(ptr_buffer + position, &(iter.first), key_size);
-                    position+=key_size;
-                    coarse_grid_info.NodeInfoCoarse2fine(
-                        *map_coarse_node.at(sfbitset_lower).get(), ptr_node_coarse2fine.get());
-                    func_copy_buffer(*ptr_node_coarse2fine.get(), ptr_buffer + position);
-                    position += node_info_size;
-                } else {
-                    std::vector<DefReal> indices;
-                    ptr_sfbitset_aux_->SFBitsetComputeCoordinateVir(iter.first, grid_space_, &indices);
-                    std::string msg;
-                    if (indices.size() == 2) {
-                        msg = "grid node (" + std::to_string(indices[kXIndex]) + ", " + std::to_string(indices[kYIndex])
-                            + ") at " + std::to_string(i_level_) + " at level not exist for copying to a buffer";
-                    } else {
-                        msg = "grid node (" + std::to_string(indices[kXIndex]) + ", " + std::to_string(indices[kYIndex])
-                            + std::to_string(indices[kZIndex]) +  + ") at " + std::to_string(i_level_)
-                            + " level does not exist for copying to a buffer";
-                    }
-                    amrproject::LogManager::LogError(msg);
-                }
+            const DefMap<std::unique_ptr<GridNode>>& map_coarse_node = coarse_grid_info.map_grid_node_;
+            DefSFBitset sfbitset_lower = ptr_sfbitset_aux_->SFBitsetToNLowerLevelVir(1, iter.first);
+            if (map_coarse_node.find(sfbitset_lower) != map_coarse_node.end()) {
+                std::memcpy(ptr_buffer + position, &(iter.first), key_size);
+                position+=key_size;
+                coarse_grid_info.NodeInfoCoarse2fine(
+                    *map_coarse_node.at(sfbitset_lower).get(), ptr_node_coarse2fine.get());
+                func_copy_buffer(*ptr_node_coarse2fine.get(), ptr_buffer + position);
+                position += node_info_size;
             } else {
                 std::vector<DefReal> indices;
                 ptr_sfbitset_aux_->SFBitsetComputeCoordinateVir(iter.first, grid_space_, &indices);

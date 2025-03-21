@@ -11,6 +11,7 @@
 #ifndef SOURCE_AMR_PROJECT_GRID_SFBITSET_AUX_H_
 #define SOURCE_AMR_PROJECT_GRID_SFBITSET_AUX_H_
 #include <array>
+#include <cstring>
 #include <vector>
 #include <utility>
 #include "../defs_libs.h"

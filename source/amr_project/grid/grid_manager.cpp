@@ -65,25 +65,25 @@ void GridManagerInterface::ReadAndSetupGridParameters(InputParser* const ptr_inp
 * @brief      function to print grid related parameters.
 */
 void GridManagerInterface::PrintGridSetting() const {
-    printf_s("Max refinement level: %d \n", GetMaxLevel());
+    printf("Max refinement level: %d \n", GetMaxLevel());
 
     std::vector<DefReal> vec_tmp;
 
     vec_tmp.clear();
     vec_tmp = GetDomainSize();
-    printf_s("Size of computational domain:");
+    printf("Size of computational domain:");
     for (const auto& iter : vec_tmp) {
-        printf_s(" %f", iter);
+        printf(" %f", iter);
     }
-    printf_s("\n");
+    printf("\n");
 
     vec_tmp.clear();
     vec_tmp = GetDomainGridSize();
-    printf_s("Grid size at background level:");
+    printf("Grid size at background level:");
     for (const auto& iter : vec_tmp) {
-        printf_s(" %f", iter);
+        printf(" %f", iter);
     }
-    printf_s("\n");
+    printf("\n");
 }
 /**
 * @brief   function tp create a tracking grid instance for a given geometry.

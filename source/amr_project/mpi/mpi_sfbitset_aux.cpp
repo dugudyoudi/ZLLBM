@@ -657,8 +657,6 @@ void SFBitsetAux2D::FindPartitionRemainMin(const DefSFCodeToUint& code_in, const
     std::array<DefAmrLUint, 2> indices;
     bitset_current = static_cast<DefSFBitset>(code_current);
     SFBitsetComputeIndices(bitset_current, &indices);
-    DefAmrLUint index_x = indices[kXIndex], index_y = indices[kYIndex];
-    DefAmrLUint i_max1 = block_length - 1, i_max2 = block_length * 2 - 1;
     DefSFCodeToUint code_max_current = code_partition_max/ block_length/ block_length;
     bitset_tmp = bitset_current;
     switch (code_remain) {
@@ -967,7 +965,7 @@ void SFBitsetAux3D::FindPartitionRemainMax(const DefSFCodeToUint& code_in, const
     code_remain = (code_in - 1) % 8;
     DefSFCodeToUint code_min_current = code_partition_min/ block_length_cubic;
     DefSFBitset bitset_tmp = static_cast<DefSFBitset>(code_current);
-    for (auto i = 0; i <= code_remain; ++i) {
+    for (DefSFCodeToUint i = 0; i <= code_remain; ++i) {
         if (code_in - 1 - i>= code_min_current) {
             bitset_tmp = static_cast<DefSFBitset>((code_in - 1 - i) * block_length_cubic);
             FindPartitionOneBlock(bitset_tmp, block_level, code_partition_min, code_partition_max,
@@ -1000,7 +998,7 @@ void SFBitsetAux3D::FindPartitionRemainMin(const DefSFCodeToUint& code_in, const
     DefSFCodeToUint code_max_current = code_partition_max/ block_length_cubic;
     DefSFBitset bitset_tmp = static_cast<DefSFBitset>(code_current);
     code_remain = 8 - code_remain;
-    for (auto i = 1; i <= code_remain; ++i) {
+    for (DefSFCodeToUint i = 1; i <= code_remain; ++i) {
         if (code_in + i <= code_max_current) {
             bitset_tmp = static_cast<DefSFBitset>((code_in - 1 + i) * block_length_cubic);
             FindPartitionOneBlock(bitset_tmp, block_level, code_partition_min, code_partition_max,

@@ -21,7 +21,7 @@ void GridInfoInterface::SetComputationalCost(DefInt computational_cost) {
     computational_cost_ = computational_cost;
 }
 void GridInfoInterface::SetGridSpace(const std::vector<DefReal>& grid_space) {
-    if (grid_space.size() != GetPtrToParentGridManager()->k0GridDims_) {
+    if (static_cast<DefInt>(grid_space.size()) != GetPtrToParentGridManager()->k0GridDims_) {
         LogManager::LogError("Dimension of grid space is not the same as the dimension of grid.");
     } else {
         grid_space_ = grid_space;

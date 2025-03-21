@@ -68,7 +68,7 @@ void SolverLbmInterface::InstantiateCollisionOperator(const DefInt i_level) {
     if (collision_type_.empty()) {  // default is SRT collision model
         InstantiateCollisionOperator(i_level, ELbmCollisionOperatorType::kLbmSrt);
     } else {
-        if (collision_type_.size() > i_level) {
+        if (static_cast<DefInt>(collision_type_.size()) > i_level) {
             InstantiateCollisionOperator(i_level, collision_type_.at(i_level));
         } else {
             InstantiateCollisionOperator(i_level, collision_type_.back());
@@ -82,7 +82,7 @@ void SolverLbmInterface::InstantiateCollisionOperator(const DefInt i_level) {
  */
 void SolverLbmInterface::SetCollisionOperator(const DefInt i_level,
     const ELbmCollisionOperatorType collision_operator_type) {
-    if (collision_type_.size() > i_level) {
+    if (static_cast<DefInt>(collision_type_.size()) > i_level) {
         collision_type_.at(i_level) = collision_operator_type;
     } else {
         collision_type_.resize(i_level + 1);
@@ -228,7 +228,6 @@ void LbmCollisionOptInterface::PostCollisionFine2CoarseForce(const std::vector<D
     DefInt num_q = static_cast<DefInt>(feq.size());
     ptr_node_coarse->rho_ = node_fine.rho_;
     ptr_node_coarse->velocity_ = node_fine.velocity_;
-    bool bool_forces_coarse = (node_fine.force_.size() != 0);
     for (DefInt iq = 0; iq < num_q; ++iq) {
         ptr_node_coarse->f_collide_[iq] = feq.at(iq) + tau_collision_f2c_ * (node_fine.f_collide_[iq] - feq.at(iq));
         force_tmp = (lbm_solver.*ptr_func_cal_force_iq)(iq, node_fine);

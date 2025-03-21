@@ -21,7 +21,7 @@ void GridManagerInterface::GenerateGridFromHighToLowLevelSerial(
     const std::vector<std::shared_ptr<GeometryInfoInterface>>&vec_geo_info,
     std::vector<DefMap<DefInt>>* const ptr_sfbitset_one_lower_level) {
     SFBitsetAuxInterface* ptr_sfbitset_aux = this->GetPtrToSFBitsetAux();
-    if (vec_ptr_grid_info_.size() != k0MaxLevel_ + 1) {
+    if (static_cast<DefInt>(vec_ptr_grid_info_.size()) != k0MaxLevel_ + 1) {
         LogManager::LogError("Number of grid refinement level " + std::to_string(
             vec_ptr_grid_info_.size() - 1) + " is different from k0MaxLevel_ "
             + std::to_string(k0MaxLevel_) + ", need to create grid instance "
@@ -37,7 +37,6 @@ void GridManagerInterface::GenerateGridFromHighToLowLevelSerial(
 
     std::vector<DefReal> flood_fill_origin(k0GridDims_);
     std::map<std::pair<ECriterionType, DefInt>, DefMap<DefInt>> innermost_layer, outermost_layer;
-    GeometryInfoInterface* ptr_geo_info = nullptr;
     struct NumExtendLayer {
         std::vector<DefAmrLUint> neg;
         std::vector<DefAmrLUint> pos;
@@ -254,14 +253,14 @@ void GridManagerInterface::ExtendGivenNumbOfLayer(
     ComputeSFBitsetOnBoundaryAtGivenLevel(
         i_level - 1, &vec_bitset_min, &vec_bitset_max);
     // calculate layers need to be extended in each direction
-    if (num_extend_neg.size() != k0GridDims_) {
+    if (static_cast<DefInt>(num_extend_neg.size()) != k0GridDims_) {
         LogManager::LogError("Dimension of num_extend_neg at" + std::to_string(i_level)
             + " should be " + std::to_string(k0GridDims_)
             + " rather than " + std::to_string(num_extend_neg.size())
             + " in GridManagerInterface::ExtendGivenNumbOfLayer in "
             + std::string(__FILE__) + " at line " + std::to_string(__LINE__));
     }
-    if (num_extend_pos.size() != k0GridDims_) {
+    if (static_cast<DefInt>(num_extend_pos.size()) != k0GridDims_) {
         LogManager::LogError("Dimension of num_extend_pos at" + std::to_string(i_level)
             + " should be " + std::to_string(k0GridDims_)
             + " rather than " + std::to_string(num_extend_pos.size())

@@ -15,7 +15,7 @@
 #include <unordered_map>
 #include <vector>
 #include <utility>
-#include "criterion/geometry_info_Interface.h"
+#include "criterion/geometry_info_interface.h"
 #include "criterion/geometry_info_connection.h"
 namespace rootproject {
 namespace amrproject {

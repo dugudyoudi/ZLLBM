@@ -32,7 +32,7 @@ int MpiManager::CreateAndCommitCriterionIndexType(MPI_Datatype* ptr_mpi_tracking
     MPI_Type_contiguous(sizeof(ECriterionType), MPI_BYTE, &mpi_tracking_enum_type);
     MPI_Type_commit(&mpi_tracking_enum_type);
     // the last MPI_UNSIGNED store the index (k0IndexCreator) of the creator for tracking grid nodes
-    MPI_Datatype mpi_create_type[3] = {mpi_tracking_enum_type, MPI_INT_DATA_TYPE, MPI_INT_DATA_TYPE};
+    MPI_Datatype mpi_create_type[3] = {mpi_tracking_enum_type, GetMpiIntType(), GetMpiIntType()};
     int mpi_block_length[3] = {1, 1, 1};
     MPI_Aint mpi_disp[3];
     mpi_disp[0] = offsetof(CriterionIndexForMpi, enum_criterion);
@@ -126,9 +126,9 @@ void MpiManager::IniSendNReceiveTracking(const DefInt dims, const DefInt i_level
         }
     }
 
-    DefSizet num_max = ull_max.size();
+    int num_max = static_cast<int>(ull_max.size());
     DefInt num_tracking = DefInt(ptr_map_tracking_info->size());
-    MPI_Bcast(&num_tracking, 1, MPI_INT_DATA_TYPE, 0, MPI_COMM_WORLD);
+    MPI_Bcast(&num_tracking, 1, GetMpiIntType(), 0, MPI_COMM_WORLD);
     CriterionIndexForMpi tracking_index_tmp;
     std::vector<std::pair<ECriterionType, DefInt>> vec_tracking_indices;
     if (rank_id == 0) {
@@ -146,25 +146,29 @@ void MpiManager::IniSendNReceiveTracking(const DefInt dims, const DefInt i_level
             tracking_index_tmp.index_creator =
                 ptr_map_tracking_info->at(vec_tracking_indices.at(i_tracking))->k0IndexCreator;
 #ifdef DEBUG_CHECK_GRID
-            if (ptr_map_tracking_info->at(vec_tracking_indices.at(i_tracking))->k0ExtendOuterNeg_.size() != dims) {
+            if (static_cast<DefInt>(ptr_map_tracking_info->at(
+                vec_tracking_indices.at(i_tracking))->k0ExtendOuterNeg_.size()) != dims) {
                 LogManager::LogError("size of k0ExtendOuterNeg_ " + std::to_string(
                 ptr_map_tracking_info->at(vec_tracking_indices.at(i_tracking))->k0ExtendOuterNeg_.size())
                 + " is not equal to the dimension " + std::to_string(dims) + " in IniSendNReceiveTracking in "
                 + std::string(__FILE__) + " at line " + std::to_string(__LINE__));
             }
-            if (ptr_map_tracking_info->at(vec_tracking_indices.at(i_tracking))->k0ExtendOuterPos_.size() != dims) {
+            if (static_cast<DefInt>(ptr_map_tracking_info->at(
+                vec_tracking_indices.at(i_tracking))->k0ExtendOuterPos_.size()) != dims) {
                 LogManager::LogError("size of k0ExtendOuterPos_ " + std::to_string(
                 ptr_map_tracking_info->at(vec_tracking_indices.at(i_tracking))->k0ExtendOuterPos_.size())
                 + " is not equal to the dimension " + std::to_string(dims) + " in IniSendNReceiveTracking in "
                 + std::string(__FILE__) + " at line " + std::to_string(__LINE__));
             }
-            if (ptr_map_tracking_info->at(vec_tracking_indices.at(i_tracking))->k0ExtendInnerNeg_.size() != dims) {
+            if (static_cast<DefInt>(ptr_map_tracking_info->at(
+                vec_tracking_indices.at(i_tracking))->k0ExtendInnerNeg_.size()) != dims) {
                 LogManager::LogError("size of k0ExtendInnerNeg_ " + std::to_string(
                 ptr_map_tracking_info->at(vec_tracking_indices.at(i_tracking))->k0ExtendInnerNeg_.size())
                 + " is not equal to the dimension " + std::to_string(dims) + " in IniSendNReceiveTracking in "
                 + std::string(__FILE__) + " at line " + std::to_string(__LINE__));
             }
-            if (ptr_map_tracking_info->at(vec_tracking_indices.at(i_tracking))->k0ExtendInnerPos_.size() != dims) {
+            if (static_cast<DefInt>(ptr_map_tracking_info->at(
+                vec_tracking_indices.at(i_tracking))->k0ExtendInnerPos_.size()) != dims) {
                 LogManager::LogError("size of k0ExtendInnerPos_ " + std::to_string(
                 ptr_map_tracking_info->at(vec_tracking_indices.at(i_tracking))->k0ExtendInnerPos_.size())
                 + " is not equal to the dimension " + std::to_string(dims) + " in IniSendNReceiveTracking in "
@@ -191,13 +195,13 @@ void MpiManager::IniSendNReceiveTracking(const DefInt dims, const DefInt i_level
 
          // broadcast number of extending layers
         MPI_Bcast(ptr_tracking_info->k0ExtendInnerNeg_.data(),
-           static_cast<int>(dims), MPI_INT_DATA_TYPE, 0, MPI_COMM_WORLD);
+           static_cast<int>(dims), GetMpiIntType(), 0, MPI_COMM_WORLD);
         MPI_Bcast(ptr_tracking_info->k0ExtendInnerPos_.data(),
-           static_cast<int>(dims), MPI_INT_DATA_TYPE, 0, MPI_COMM_WORLD);
+           static_cast<int>(dims), GetMpiIntType(), 0, MPI_COMM_WORLD);
         MPI_Bcast(ptr_tracking_info->k0ExtendOuterNeg_.data(),
-           static_cast<int>(dims), MPI_INT_DATA_TYPE, 0, MPI_COMM_WORLD);
+           static_cast<int>(dims), GetMpiIntType(), 0, MPI_COMM_WORLD);
         MPI_Bcast(ptr_tracking_info->k0ExtendOuterPos_.data(),
-           static_cast<int>(dims), MPI_INT_DATA_TYPE, 0, MPI_COMM_WORLD);
+           static_cast<int>(dims), GetMpiIntType(), 0, MPI_COMM_WORLD);
 
         // broadcast type information
         DefInt uint_type[2] = {0, 0};
@@ -205,7 +209,7 @@ void MpiManager::IniSendNReceiveTracking(const DefInt dims, const DefInt i_level
             uint_type[0] = ptr_tracking_info->computational_cost_;
             uint_type[1] = static_cast<DefInt>(ptr_tracking_info->grid_extend_type_);
         }
-        MPI_Bcast(uint_type, 2, MPI_INT_DATA_TYPE, 0, MPI_COMM_WORLD);
+        MPI_Bcast(uint_type, 2, GetMpiIntType(), 0, MPI_COMM_WORLD);
         if (rank_id > 0) {
             ptr_tracking_info->computational_cost_ = uint_type[0];
             ptr_tracking_info->grid_extend_type_ = static_cast<EGridExtendType>(uint_type[1]);
@@ -435,9 +439,9 @@ void MpiManager::IniSendNReceiveCoarse2Fine0Interface(const DefInt dims,
     std::shared_ptr<InterfaceLayerInfo>>* const ptr_map_interface_info) const {
     MPI_Datatype mpi_interface_index_type;
     CreateAndCommitCriterionIndexType(&mpi_interface_index_type);
-    int rank_id = rank_id_, num_ranks = num_of_ranks_;
+    int rank_id = rank_id_;
     DefInt num_interface = DefInt(ptr_map_interface_info->size());
-    MPI_Bcast(&num_interface, 1, MPI_INT_DATA_TYPE, 0, MPI_COMM_WORLD);
+    MPI_Bcast(&num_interface, 1, GetMpiIntType(), 0, MPI_COMM_WORLD);
     std::vector<std::pair<ECriterionType, DefInt>> vec_interface_indices;
     if (rank_id == 0) {
         // save interface indices stored in unordered_map to vector
@@ -470,44 +474,48 @@ void MpiManager::IniSendNReceiveCoarse2Fine0Interface(const DefInt dims,
         } else {
 #ifdef DEBUG_CHECK_GRID
             if (i_level > 0) {
-                if (ptr_map_interface_info->at(pair_interface)->k0ExtendOuterNeg_.size() != dims) {
+                if (static_cast<DefInt>(ptr_map_interface_info->at(
+                    pair_interface)->k0ExtendOuterNeg_.size()) != dims) {
                     LogManager::LogError("size of k0ExtendOuterNeg_ " + std::to_string(
                      ptr_map_interface_info->at(pair_interface)->k0ExtendOuterNeg_.size())
                      + " is not equal to the dimension " + std::to_string(dims)
                      + " in MpiManager::IniSendNReceiveCoarse2Fine0Interface in "
                      + std::string(__FILE__) + " at line " + std::to_string(__LINE__));
                 }
-                if (ptr_map_interface_info->at(pair_interface)->k0ExtendOuterPos_.size() != dims) {
+                if (static_cast<DefInt>(ptr_map_interface_info->at(
+                    pair_interface)->k0ExtendOuterPos_.size()) != dims) {
                     LogManager::LogError("size of k0ExtendOuterPos_ " + std::to_string(
                      ptr_map_interface_info->at(pair_interface)->k0ExtendOuterPos_.size())
                      + " is not equal to the dimension " + std::to_string(dims)
                      + " in MpiManager::IniSendNReceiveCoarse2Fine0Interface in "
                      + std::string(__FILE__) + " at line " + std::to_string(__LINE__));
                 }
-                if (ptr_map_interface_info->at(pair_interface)->k0ExtendInnerNeg_.size() != dims) {
+                if (static_cast<DefInt>(ptr_map_interface_info->at(
+                    pair_interface)->k0ExtendInnerNeg_.size()) != dims) {
                     LogManager::LogError("size of k0ExtendInnerNeg_ " + std::to_string(
                      ptr_map_interface_info->at(pair_interface)->k0ExtendInnerNeg_.size())
                      + " is not equal to the dimension " + std::to_string(dims)
                      + " in MpiManager::IniSendNReceiveCoarse2Fine0Interface in "
                      + std::string(__FILE__) + " at line " + std::to_string(__LINE__));
                 }
-                if (ptr_map_interface_info->at(pair_interface)->k0ExtendInnerPos_.size() != dims) {
+                if (static_cast<DefInt>(ptr_map_interface_info->at(
+                    pair_interface)->k0ExtendInnerPos_.size()) != dims) {
                     LogManager::LogError("size of k0ExtendInnerPos_ " + std::to_string(
                      ptr_map_interface_info->at(pair_interface)->k0ExtendInnerPos_.size())
                      + " is not equal to the dimension " + std::to_string(dims)
                      + " in MpiManager::IniSendNReceiveCoarse2Fine0Interface in "
                      + std::string(__FILE__) + " at line " + std::to_string(__LINE__));
                 }
-                if (ptr_map_interface_info->at(pair_interface)->vec_outer_coarse2fine_.size()
-                 != num_of_layers_coarse2fine) {
+                if (static_cast<DefInt>(ptr_map_interface_info->at(pair_interface)->vec_outer_coarse2fine_.size())
+                    != num_of_layers_coarse2fine) {
                     LogManager::LogError("size of vec_outer_coarse2fine_ " + std::to_string(
                      ptr_map_interface_info->at(pair_interface)->vec_outer_coarse2fine_.size())
                      + " is not equal to the number of layers " + std::to_string(num_of_layers_coarse2fine)
                      + " in MpiManager::IniSendNReceiveCoarse2Fine0Interface in "
                      + std::string(__FILE__) + " at line " + std::to_string(__LINE__));
                 }
-                if (ptr_map_interface_info->at(pair_interface)->vec_inner_coarse2fine_.size()
-                 != num_of_layers_coarse2fine) {
+                if (static_cast<DefInt>(ptr_map_interface_info->at(pair_interface)->vec_inner_coarse2fine_.size())
+                    != num_of_layers_coarse2fine) {
                     LogManager::LogError("size of vec_inner_coarse2fine_ " + std::to_string(
                      ptr_map_interface_info->at(pair_interface)->vec_inner_coarse2fine_.size())
                      + " is not equal to the number of layers " + std::to_string(num_of_layers_coarse2fine)
@@ -523,13 +531,13 @@ void MpiManager::IniSendNReceiveCoarse2Fine0Interface(const DefInt dims,
         // broadcast number of extending layers
         if (i_level > 0) {
             MPI_Bcast(ptr_interface->k0ExtendInnerNeg_.data(),
-             static_cast<int>(dims), MPI_INT_DATA_TYPE, 0, MPI_COMM_WORLD);
+             static_cast<int>(dims), GetMpiIntType(), 0, MPI_COMM_WORLD);
             MPI_Bcast(ptr_interface->k0ExtendInnerPos_.data(),
-             static_cast<int>(dims), MPI_INT_DATA_TYPE, 0, MPI_COMM_WORLD);
+             static_cast<int>(dims), GetMpiIntType(), 0, MPI_COMM_WORLD);
             MPI_Bcast(ptr_interface->k0ExtendOuterNeg_.data(),
-             static_cast<int>(dims), MPI_INT_DATA_TYPE, 0, MPI_COMM_WORLD);
+             static_cast<int>(dims), GetMpiIntType(), 0, MPI_COMM_WORLD);
             MPI_Bcast(ptr_interface->k0ExtendOuterPos_.data(),
-             static_cast<int>(dims), MPI_INT_DATA_TYPE, 0, MPI_COMM_WORLD);
+             static_cast<int>(dims), GetMpiIntType(), 0, MPI_COMM_WORLD);
         }
 
         //  send and receive outer layers

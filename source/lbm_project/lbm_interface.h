@@ -32,9 +32,9 @@ class SolverLbmInterface;
 * @brief structure to store node information for LBM simulation
 */
 struct GridNodeLbm : public amrproject::GridNode {
-    std::vector<DefReal> f_collide_{}, f_{};
     DefReal rho_ = 1.;
     std::vector<DefReal> velocity_{};
+    std::vector<DefReal> f_{}, f_collide_{}; 
     std::vector<DefReal> force_{};
     GridNodeLbm() {}
     GridNodeLbm(const DefReal rho0, const std::vector<DefReal>& velocity0,
@@ -47,7 +47,7 @@ struct GridNodeLbm : public amrproject::GridNode {
     GridNodeLbm(const DefReal rho0, const std::vector<DefReal>& velocity0,
         const std::vector<DefReal>& force0,
         const std::vector<DefReal>& f, const std::vector<DefReal>& f_collide)
-        : rho_(rho0), velocity_(velocity0), force_(force0), f_(f), f_collide_(f_collide) {
+        : rho_(rho0), velocity_(velocity0), f_(f), f_collide_(f_collide), force_(force0) {
             velocity_.shrink_to_fit();
             force_.shrink_to_fit();
             f_.shrink_to_fit();
@@ -285,9 +285,9 @@ class SolverLbmInterface :public amrproject::SolverInterface {
 
     bool bool_forces_ = false;
     const DefInt k0NumQ_;
+    const DefInt k0NumQInOneDirection_ = 0;   ///< number of Q indices in each direction
     const std::vector<DefReal> k0Cx_, k0Cy_, k0Cz_;  ///< directions of particle velocity
     const std::vector<DefReal> k0Weights_;
-    const DefInt k0NumQInOneDirection_ = 0;   ///< number of Q indices in each direction
     // noting that the nth element in k0QIndicesPos_ must be the inverse index of the nth element in k0QIndicesNeg_
     const std::vector<std::vector<DefInt>> k0QIndicesNeg_, k0QIndicesPos_;
     static constexpr DefReal kCs_Reciprocal_ = SqrtConstexpr(3.), kCs_Sq_Reciprocal_ = 3.,

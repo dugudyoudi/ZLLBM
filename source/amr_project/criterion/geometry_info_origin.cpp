@@ -17,7 +17,6 @@
 namespace rootproject {
 namespace amrproject {
 void GeometryInfoOrigin::InitialGeometry(const DefReal dx) {
-    int return_status = 0;
     this->GeometryInfoInterface::InitialGeometry(dx);
 }
 /**

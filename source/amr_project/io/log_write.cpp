@@ -10,8 +10,13 @@
 #ifdef ENABLE_MPI
 #include <mpi.h>
 #endif  // ENABLE_MPI
+#ifdef __cpp_lib_stacktrace
+    #include <stacktrace>
+    #define HAS_STACKTRACE 1
+#else
+    #define HAS_STACKTRACE 0
+#endif
 #include <chrono>
-#include <stacktrace>
 #include <filesystem>
 #include "../defs_libs.h"
 #include "io/log_write.h"
@@ -23,20 +28,18 @@ void LogManager::LogStartTime() {
         std::chrono::system_clock::now());
 
     char time_char[26];
-    ctime_s(time_char, sizeof time_char, &current_time);
+    ctime_r(&current_time, time_char);
 
     int rank_id = 0;
 #ifdef ENABLE_MPI
     MPI_Comm_rank(MPI_COMM_WORLD, &rank_id);
 #endif  // ENABLE_MPI
 
-    FILE* fp = nullptr;
-    errno_t err = fopen_s(&fp,
-        (logfile_name_ + std::to_string(rank_id)).c_str(), "w");
+    FILE* fp = fopen((logfile_name_ + std::to_string(rank_id)).c_str(), "w");
     if (!fp) {
-        printf_s("The file was not opened for writing log\n");
+        printf("The file was not opened for writing log\n");
     } else {
-        fprintf_s(fp, "project setup on: %s", time_char);
+        fprintf(fp, "project setup on: %s", time_char);
         if (rank_id == 0) {
             printf("project setup on: %s", time_char);
         }
@@ -44,9 +47,9 @@ void LogManager::LogStartTime() {
         int numprocs;
         MPI_Comm_size(MPI_COMM_WORLD, &numprocs);
         if (rank_id == 0) {
-            printf_s("number of MPI ranks is: %d\n", numprocs);
+            printf("number of MPI ranks is: %d\n", numprocs);
         }
-        fprintf_s(fp, "number of MPI ranks is: %d; current node is: %d \n", numprocs, rank_id);
+        fprintf(fp, "number of MPI ranks is: %d; current node is: %d \n", numprocs, rank_id);
 #endif  // ENABLE_MPI
         fclose(fp);
     }
@@ -56,20 +59,18 @@ void LogManager::LogEndTime() {
         std::chrono::system_clock::now());
 
     char time_char[26];
-    ctime_s(time_char, sizeof time_char, &current_time);
+    ctime_r(&current_time, time_char);
 
     int rank_id = 0;
 #ifdef ENABLE_MPI
     MPI_Comm_rank(MPI_COMM_WORLD, &rank_id);
 #endif  // ENABLE_MPI
 
-    FILE* fp = nullptr;
-    errno_t err = fopen_s(&fp,
-        (logfile_name_ + std::to_string(rank_id)).c_str(), "a");
+    FILE* fp = fopen((logfile_name_ + std::to_string(rank_id)).c_str(), "w");
     if (!fp) {
-        printf_s("The file was not opened for writing log\n");
+        printf("The file was not opened for writing log\n");
     } else {
-        fprintf_s(fp, "project end on: %s", time_char);
+        fprintf(fp, "project end on: %s", time_char);
         if (rank_id == 0) {
             printf("project end on: %s", time_char);
         }
@@ -85,11 +86,9 @@ void LogManager::LogInfo(const std::string& msg) {
 #ifdef ENABLE_MPI
     MPI_Comm_rank(MPI_COMM_WORLD, &rank_id);
 #endif  // ENABLE_MPI
-    FILE* fp = nullptr;
-    errno_t err = fopen_s(&fp,
-        (logfile_name_ + std::to_string(rank_id)).c_str(), "a");
+    FILE* fp = fopen((logfile_name_ + std::to_string(rank_id)).c_str(), "a");
     if (!fp) {
-        printf_s("The log file was not opened\n");
+        printf("The log file was not opened\n");
     } else {
         fprintf(fp, "%s. \n", msg.c_str());
         fclose(fp);
@@ -106,11 +105,9 @@ void LogManager::LogWarning(const std::string& msg) {
 #ifdef ENABLE_MPI
     MPI_Comm_rank(MPI_COMM_WORLD, &rank_id);
 #endif  // ENABLE_MPI
-    FILE* fp = nullptr;
-    errno_t err = fopen_s(&fp,
-        (logfile_name_ + std::to_string(rank_id)).c_str(), "a");
+    FILE* fp = fopen((logfile_name_ + std::to_string(rank_id)).c_str(), "a");
     if (!fp) {
-        printf_s("The log file was not opened\n");
+        printf("The log file was not opened\n");
     } else {
         fprintf(fp, "Warning: %s. \n", msg.c_str());
         fclose(fp);
@@ -136,15 +133,19 @@ void LogManager::LogError(const std::string& msg) {
 #ifdef ENABLE_MPI
     MPI_Comm_rank(MPI_COMM_WORLD, &rank_id);
 #endif  // ENABLE_MPI
-    FILE* fp = nullptr;
-    errno_t err = fopen_s(&fp, (logfile_name_ + std::to_string(rank_id)).c_str(), "a");
+    FILE* fp = fopen((logfile_name_ + std::to_string(rank_id)).c_str(), "a");
+#if HAS_STACKTRACE
     auto trace_msg = std::to_string(std::stacktrace::current());
     size_t first_newline_pos = trace_msg.find('\n');
     if (first_newline_pos != std::string::npos) {
         trace_msg = trace_msg.substr(first_newline_pos + 1);
     }
+#else
+    std::string trace_msg = "";
+#endif   
+    
     if (!fp) {
-        printf_s("The log file was not opened\n");
+        printf("The log file was not opened\n");
     } else {
         fprintf(fp, "Error: %s. \n%s", msg.c_str(), trace_msg.c_str());
         fclose(fp);

@@ -104,7 +104,7 @@ void SolverLbmInterface::ReadAndSetupSolverParameters(amrproject::InputParser* c
                 ReadCollisionOperator(str_vec_tmp);
                 if (ptr_input_parser->print_values_when_read_) {
                     values_str.clear();
-                    for (const auto iter_str : str_vec_tmp) {
+                    for (const auto& iter_str : str_vec_tmp) {
                         values_str += " " + iter_str;
                     }
                     amrproject::LogManager::LogInfo("Read and set collision model: " + values_str);
@@ -227,7 +227,6 @@ void SolverLbmInterface::InformationFromGridOfDifferentLevel(
     amrproject::GridInfoInterface* const ptr_grid_info) {
     const DefInt i_level = ptr_grid_info->GetGridLevel();
     if (i_level > 0 && (time_step_level%2 == 0)) {
-        GridInfoLbmInteface* ptr_lbm_grid_info = dynamic_cast<GridInfoLbmInteface*>(ptr_grid_info);
         GridInfoLbmInteface* ptr_lbm_grid_info_coarse = dynamic_cast<GridInfoLbmInteface*>(
             ptr_grid_manager_->vec_ptr_grid_info_.at(i_level - 1).get());
 
@@ -248,7 +247,6 @@ void SolverLbmInterface::InformationFromGridOfDifferentLevel(
 void SolverLbmInterface::RunSolverOnGivenGrid(const amrproject::ETimeSteppingScheme time_scheme,
     const DefInt time_step_level, const DefReal time_step_current,
     const amrproject::SFBitsetAuxInterface& sfbitset_aux, amrproject::GridInfoInterface* const ptr_grid_info) {
-    const DefInt i_level = ptr_grid_info->GetGridLevel();
     GridInfoLbmInteface* ptr_lbm_grid_nodes_info = dynamic_cast<GridInfoLbmInteface*>(ptr_grid_info);
     if (ptr_lbm_grid_nodes_info->GetPtrToLbmGrid() != nullptr) {
         DefMap<std::unique_ptr<GridNodeLbm>>& grid_nodes = *ptr_lbm_grid_nodes_info->GetPtrToLbmGrid();
@@ -346,7 +344,7 @@ void SolverLbmInterface::Stream(const DefInt flag_not_compute, const amrproject:
  */
 void SolverLbmInterface::SetInitialDisFuncBasedOnReferenceMacros(
     std::vector<DefReal>* const ptr_f, std::vector<DefReal>* const ptr_f_collide) const {;
-    if (k0Velocity_.size() == k0SolverDims_) {
+    if (static_cast<DefInt>(k0Velocity_.size()) == k0SolverDims_) {
         CalInitialDisFuncAsFeq(k0Rho_, k0Velocity_, ptr_f, ptr_f_collide);
         ptr_f->resize(k0NumQ_);
         ptr_f_collide->resize(k0NumQ_);
@@ -558,7 +556,6 @@ void SolverLbmInterface::CalMacroForce2DCompressible(const DefReal dt_lbm, const
  */
 void SolverLbmInterface::CalMacroForce2DIncompressible(const DefReal dt_lbm, const std::vector<DefReal>& f,
     const std::vector<DefReal>& force, DefReal* const ptr_rho, std::vector<DefReal>* const ptr_velocity) const {
-    DefReal& rho = (*ptr_rho);
     CalMacro2DIncompressible(f, ptr_rho, ptr_velocity);
     ptr_velocity->at(kXIndex) += 0.5 * force.at(kXIndex) * dt_lbm;
     ptr_velocity->at(kYIndex) += 0.5 * force.at(kYIndex) * dt_lbm;
@@ -589,7 +586,6 @@ void SolverLbmInterface::CalMacroForce3DCompressible(const DefReal dt_lbm, const
  */
 void SolverLbmInterface::CalMacroForce3DIncompressible(const DefReal dt_lbm, const std::vector<DefReal>& f,
     const std::vector<DefReal>& force, DefReal* const ptr_rho, std::vector<DefReal>* const ptr_velocity) const {
-    DefReal& rho = (*ptr_rho);
     CalMacro3DIncompressible(f, ptr_rho, ptr_velocity);
     ptr_velocity->at(kXIndex) += 0.5 * force.at(kXIndex) * dt_lbm;
     ptr_velocity->at(kYIndex) += 0.5 * force.at(kYIndex) * dt_lbm;

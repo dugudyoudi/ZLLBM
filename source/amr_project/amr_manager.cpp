@@ -190,7 +190,6 @@ void AmrManager::InitializeMesh() {
             &ptr_mpi_manager_->mpi_communication_inner_layers_, &ptr_mpi_manager_->mpi_communication_outer_layers_);
 #endif  // DEBUG_DISABLE_3D_FUNCTIONS
     }
-    const DefInt flag0 = ptr_grid_manager_->kFlagSize0_;
     for (DefInt i_level = 0; i_level < max_level; ++i_level) {
         // add nodes on both the refinement and partition interfaces
         // which are only stored in coarse to fine refinement interfaces

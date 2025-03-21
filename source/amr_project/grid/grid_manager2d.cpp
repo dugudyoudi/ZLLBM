@@ -486,8 +486,6 @@ void GridManager2D::IdentifyInterfaceForACellAcrossTwoLevels(
     std::array<DefMap<DefInt>* const, 3> arr_ptr_layer = {
         ptr_inner_layer, ptr_mid_layer, ptr_outer_layer };
     DefMap<DefInt> discard_layer;
-    std::array<DefMap<DefInt>* const, 3> arr_ptr_mid_layer = {
-        &discard_layer, ptr_mid_layer, &discard_layer };
     bool belong_to_cell = SFBitsetBelongToOneCellAcrossTwoLevels(
         bitset_in, map_node_exist, map_exist_coarse, &bitset_neighbors);
     if (belong_to_cell) {

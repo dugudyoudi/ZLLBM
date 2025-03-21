@@ -37,7 +37,7 @@ class CriterionManager;
 struct TrackingNode {
  public:
     // the first element (DefInt) refers to the level of  criterion points
-    std::set<std::pair<DefInt, DefSizet>> set_point_index;
+    std::set<std::pair<DefInt, DefSizet>> set_point_index{};
     ///< count of this tracking node relies on how many criterion points
     std::vector<DefInt> vec_int{};
     std::vector<DefReal> vec_real{};
@@ -61,13 +61,13 @@ struct GridNode {
     virtual ~GridNode() {}
 
     // functions need to be override for interpolation
-    virtual void InterpolationAdditionAssignCoefficient(const GridNode& node_in, const DefReal coefficient) {
+    virtual void InterpolationAdditionAssignCoefficient(const GridNode& /*node_in*/, const DefReal /*coefficient*/) {
         // *this += node_in * coefficient;
     }
-    virtual void CopyVariablesToBuffer(const GridNode& node_ref, char* const ptr_node_buffer) const {}
-    virtual void ReadVariablesFromBuffer(const char* ptr_node_buffer, const GridNode* const ptr_node) {}
-    virtual void CopyANodeToBufferForMpi(char* const ptr_node_buffer) const {}
-    virtual void ReadANodeFromBufferForMpi(const char* ptr_node_buffer) {}
+    virtual void CopyVariablesToBuffer(const GridNode& /*node_ref*/, char* const /*ptr_node_buffer*/) const {}
+    virtual void ReadVariablesFromBuffer(const char* /*ptr_node_buffer*/, const GridNode* const /*ptr_node*/) {}
+    virtual void CopyANodeToBufferForMpi(char* const /*ptr_node_buffer*/) const {}
+    virtual void ReadANodeFromBufferForMpi(const char* /*ptr_node_buffer*/) {}
     virtual void CopyAInterpNodeToBufferForMpi(char* const ptr_node_buffer) const {
         CopyANodeToBufferForMpi(ptr_node_buffer);
     }
@@ -253,10 +253,10 @@ class GridInfoInterface {
     // output related
     std::vector<std::unique_ptr<OutputNodeVariableInfoInterface>> output_variables_;
     virtual void SetupOutputVariables() {}
-    virtual void WriteOutputScalarAndVectors(FILE* const fp, const bool bool_binary,
-        const Base64Utility& base64_instance,
-        const OutputDataFormat& output_data_format,
-        const DefMap<DefSizet>& map_node_index) const {}
+    virtual void WriteOutputScalarAndVectors(FILE* const /*fp*/, const bool /*bool_binary*/,
+        const Base64Utility& /*base64_instance*/,
+        const OutputDataFormat& /*output_data_format*/,
+        const DefMap<DefSizet>& /*map_node_index*/) const {}
 
     // node type
     virtual void InitialNotComputeNodeFlag() {}
@@ -266,13 +266,13 @@ class GridInfoInterface {
     virtual void SetPointerToCurrentNodeType() {}
 
     // time marching related
-    virtual void SetUpGridAtBeginningOfTimeStep(const DefInt time_step) {}
+    virtual void SetUpGridAtBeginningOfTimeStep(const DefInt /*time_step*/) {}
 
     // communication between grid of different refinement levels
-    virtual int TransferInfoFromCoarseGrid(const SFBitsetAuxInterface& sfbitset_aux,
-        const DefInt node_flag, const GridInfoInterface& grid_info_coarse) {return -1;}
-    virtual int TransferInfoToCoarseGrid(const SFBitsetAuxInterface& sfbitset_aux,
-        const DefInt node_flag, GridInfoInterface* const ptr_grid_info_coarse) {return -1;}
+    virtual int TransferInfoFromCoarseGrid(const SFBitsetAuxInterface& /*sfbitset_aux*/,
+        const DefInt /*node_flag*/, const GridInfoInterface& /*grid_info_coarse*/) {return -1;}
+    virtual int TransferInfoToCoarseGrid(const SFBitsetAuxInterface& /*sfbitset_aux*/,
+        const DefInt /*node_flag*/, GridInfoInterface* const /*ptr_grid_info_coarse*/) {return -1;}
 
     // parent grid manager
  protected:

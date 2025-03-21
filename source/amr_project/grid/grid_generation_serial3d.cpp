@@ -60,7 +60,7 @@ void GridManager3D::IdentifyTypeOfLayerByFloodFill(
     DefMap<DefInt>* const ptr_map_nodes_outside,
     DefMap<DefInt>* const ptr_map_nodes_inside) const {
     // step 1: find start point for flood fill
-    if (flood_fill_start_point.size() != k0GridDims_) {
+    if ( static_cast<DefInt>(flood_fill_start_point.size()) != k0GridDims_) {
         LogManager::LogWarning("Dimension of flood_fill_start_point is different from k0GridDims_.");
     }
     std::array<DefReal, 3> flood_fill_origin =
@@ -565,7 +565,6 @@ void  GridManager3D::FindOutmostLayerForFineGrid(
         vec_bitset_max_lower[id] = SFBitsetToOneLowerLevel(vec_bitset_max[id]);
     }
     std::array<bool, 3> bool_neg_not_boundary, bool_pos_not_boundary;
-    DefInt flag_node_boundary;
     std::vector<DefSFBitset> vec_neighbors, vec_lower_neighbors;
     DefSFBitset bitset_lower_level, sfbitset_tmp, bitset_neighbor;
     for (const auto& iter : map_outmost_layer) {
@@ -587,8 +586,7 @@ void  GridManager3D::FindOutmostLayerForFineGrid(
         bool_pos_not_boundary[kZIndex]
             = !((iter.first & k0SFBitsetTakeZRef_[kRefCurrent_])
                 == vec_bitset_max[kZIndex]);
-        flag_node_boundary = FindAllNeighborsWithSpecifiedDirection(
-            iter.first, bool_neg_not_boundary,
+        FindAllNeighborsWithSpecifiedDirection(iter.first, bool_neg_not_boundary,
             bool_pos_not_boundary, &vec_neighbors);
         for (const auto& iter_neighbour : vec_neighbors) {
             if (map_exist->find(iter_neighbour) == map_exist->end()) {

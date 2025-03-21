@@ -136,7 +136,6 @@ void GridManager3D::SetupDependentGridParameters() {
     // number of bits available for background mesh in one dimension
     DefInt bit_max = kSFBitsetBit / k0GridDims_ - k0MaxLevel_;
     DefSizet index_max = TwoPowerN(bit_max);
-    DefAmrLUint scale_i_level = static_cast<DefAmrLUint>(TwoPowerN(k0MaxLevel_));
     if (k0MaxIndexOfBackgroundNode_.at(kXIndex) > index_max) {
         LogManager::LogError("Domain size exceeds the limits of space filling code in"
             " x direction, try to increase number of bits for "
@@ -1065,8 +1064,6 @@ void GridManager3D::IdentifyInterfaceForACellAcrossTwoLevels(
     bool belong_to_cell =  SFBitsetBelongToOneCellAcrossTwoLevels(
         bitset_in, map_node_exist, map_exist_coarse, &bitset_neighbors);
     DefMap<DefInt> discard_layer;
-    std::array<DefMap<DefInt>* const, 3> arr_ptr_mid_layer = {
-        &discard_layer, ptr_mid_layer, &discard_layer };
     if (belong_to_cell) {
         // bottom surface
         // edge (0 + dx/2, 0, 0)

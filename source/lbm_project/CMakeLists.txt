@@ -36,9 +36,9 @@ add_library(${LBM_PROJECT_NAME} STATIC
             ${SOURCE_LBM_D2Q9_SRC} ${SOURCE_LBM_D2Q9_HEAD}
             ${SOURCE_LBM_D3Q19_SRC} ${SOURCE_LBM_D3Q19_HEAD})
 
+target_link_libraries(${LBM_PROJECT_NAME} amr_project)
 if(BUILD_WITH_MPI)
-    target_link_libraries(${LBM_PROJECT_NAME}
-    ${BUILD_LINK_LIBRARY})
+    target_link_libraries(${LBM_PROJECT_NAME} ${BUILD_LINK_LIBRARY})
 endif(BUILD_WITH_MPI)
 if(WIN32)
     target_link_libraries(${LBM_PROJECT_NAME} ws2_32)

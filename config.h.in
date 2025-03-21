@@ -1,9 +1,6 @@
-// the unique method solved on AMR nodes, must choose one
-#define SOLVER_LBM
-
 // automatic generated from cmake option
 @CONFIG_MPI@
 @CONFIG_DEBUG_CHECK_GRID@
 @CONFIG_DEBUG_BUILD_2D_ONLY@
 @CONFIG_DEBUG_BUILD_3D_ONLY@
-@CONFIG_DEBUG_UNIT_TEST@
+@CONFIG_DEBUG_BUILD_UNIT_TEST@

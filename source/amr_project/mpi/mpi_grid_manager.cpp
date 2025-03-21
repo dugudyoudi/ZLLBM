@@ -214,7 +214,7 @@ void MpiManager::IniSendNReceivePartitionedGrid(const DefInt dims,
     int int_interface_status;
     DefInt num_ghost_lower = k0NumPartitionOuterLayers_/2,
         num_ghost_upper = (k0NumPartitionOuterLayers_ + 1)/2;
-    DefSizet num_max = ull_max.size();
+    int num_max = static_cast<int>(ull_max.size());
     std::vector<DefMap<DefInt>> partition_interface_background(num_ranks);
     if (rank_id == 0) {  // partition nodes on rank 0
         for (auto i_rank = 0; i_rank < num_ranks; ++i_rank) {
@@ -249,7 +249,7 @@ void MpiManager::IniSendNReceivePartitionedGrid(const DefInt dims,
             std::vector<bool> periodic_min, periodic_max, periodic_false(dims, false);
             bool bool_has_periodic_boundary =
                 ptr_vec_grid_info->at(i_level)->CheckIfPeriodicDomainRequired(dims, &periodic_min, &periodic_max);
-            if (periodic_min.size() != dims || periodic_max.size() != dims) {
+            if (static_cast<DefInt>(periodic_min.size()) != dims || static_cast<DefInt>(periodic_max.size()) != dims) {
                 LogManager::LogError("dimension of periodic boundary indicator is incorrect "
                     + std::string(__FILE__) + " at line " + std::to_string(__LINE__));
             }
@@ -715,7 +715,6 @@ void MpiManager::IniSendNReceivePartitionedGrid(const DefInt dims,
                         }
                     }
                 }
-                int max_buffer_int = (std::numeric_limits<int>::max)() / (sizeof(DefSFBitset) + sizeof(DefInt)) - 1;
                 for (const auto& iter_ghost : map_ghost_n_refinement) {
                     if (i_ghost_counts.at(i_rank) == 0) {
                         vec_ghost_nodes_ranks.at(i_rank).push_back({iter_ghost});
@@ -830,8 +829,8 @@ void MpiManager::IniSendNReceiveGridInfoAtAllLevels(const DefInt flag_size0,
     }
 
     // broadcast minimum and maximum space filling code of all ranks to each rank
-    MPI_Bcast(&bitset_min[0], static_cast<int>(num_of_ranks_), MPI_CODE_UINT_TYPE, 0, MPI_COMM_WORLD);
-    MPI_Bcast(&bitset_max[0], static_cast<int>(num_of_ranks_), MPI_CODE_UINT_TYPE, 0, MPI_COMM_WORLD);
+    MPI_Bcast(&bitset_min[0], static_cast<int>(num_of_ranks_), GetMpiUintType(), 0, MPI_COMM_WORLD);
+    MPI_Bcast(&bitset_max[0], static_cast<int>(num_of_ranks_), GetMpiCodeUintType(), 0, MPI_COMM_WORLD);
     vec_sfcode_min_all_ranks_.resize(bitset_min.size());
     vec_sfcode_max_all_ranks_.resize(bitset_max.size());
     for (DefSizet i = 0; i < bitset_max.size(); ++i) {

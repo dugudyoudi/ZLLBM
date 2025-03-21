@@ -3,7 +3,7 @@ cmake_minimum_required(VERSION 3.5)
 # settings
 option(BUILD_WITH_MPI                          "Enable MPI"                                                ON)
 option(BUILD_EXAMPLES                          "Build example cases"                                       ON)
-option(BUILD_WITH_TAU                          "Enable TAU profiling (requires MPI)"                       OFF)
+option(BUILD_WITH_TAU                          "Enable TAU profiling (requires MPI)"                       ON)
 
 option(DEBUG_BUILD_UNIT_TEST                   "Build unit tests"                                          ON)
 option(DEBUG_BUILD_INTEGRATE_TEST              "Build integrate tests"                                     ON)
@@ -11,22 +11,72 @@ option(DEBUG_CHECK_GRID                        "Enable if clauses for checking g
 option(DEBUG_BUILD_2D_ONLY                     "Disable 3D related functions"                              OFF)
 option(DEBUG_BUILD_3D_ONLY                     "Disable 2D related functions"                              OFF)
 option(DEBUG_TREAT_WARNING_AS_ERROR            "Treat warnings as errors"                                  ON)
+set(CMAKE_CXX_STANDARD 23)
+
+# Set compilers before project() to avoid reconfiguration issues
+# Find GCC (default C compiler)
+find_program(CMAKE_C_COMPILER
+    NAMES gcc
+    PATHS
+        /usr/bin
+        /usr/local/bin
+        ENV PATH
+    DOC "Path to C compiler"
+)
+if(NOT CMAKE_C_COMPILER)
+    message(FATAL_ERROR "C compiler (gcc) not found. Please install GCC or specify -DCMAKE_C_COMPILER=/path/to/gcc.")
+endif()
+
+# Find C++ compiler based on BUILD_WITH_TAU option
+
+if(BUILD_WITH_TAU)
+    # Allow user to specify TAU root directory via cache variable
+    set(TAU_ROOT "" CACHE PATH "Root directory of TAU installation")
+    if(TAU_ROOT)
+        find_program(CMAKE_CXX_COMPILER
+            NAMES tau_cxx.sh
+            PATHS "${TAU_ROOT}/x86_64/bin"
+            NO_DEFAULT_PATH
+            DOC "Path to TAU C++ compiler wrapper"
+        )
+    else()
+        find_program(CMAKE_CXX_COMPILER
+            NAMES tau_cxx.sh
+            PATHS
+                ENV PATH
+                /home/${USER}/tau*/x86_64/bin
+                /opt/tau*/x86_64/bin
+                /usr/local/tau*/x86_64/bin
+            DOC "Path to TAU C++ compiler wrapper"
+        )
+    endif()
+    if(NOT CMAKE_CXX_COMPILER)
+        message(FATAL_ERROR "TAU compiler (tau_cxx.sh) not found. Please install TAU, add it to PATH, or specify -DTAU_ROOT=/path/to/tau.")
+    endif()
+else()
+    find_program(CMAKE_CXX_COMPILER
+        NAMES g++
+        PATHS
+            /usr/bin
+            /usr/local/bin
+            ENV PATH
+        DOC "Path to C++ compiler"
+    )
+    if(NOT CMAKE_CXX_COMPILER)
+        message(FATAL_ERROR "C++ compiler (g++) not found. Please install GCC or specify -DCMAKE_CXX_COMPILER=/path/to/g++.")
+    endif()
+endif()
 
 # Project information
 set(PROJECT_NAME rootProject)
 set(PROJECT_VERSION 0.1.0)
-set(CMAKE_CXX_STANDARD 23)
-set(CMAKE_CXX_STANDARD_REQUIRED ON)
-set(CMAKE_CXX_EXTENSIONS OFF)
 
 include(${CMAKE_SOURCE_DIR}/cmake/build_functions.cmake)
-if(BUILD_WITH_TAU)
-    include(${CMAKE_SOURCE_DIR}/cmake/mpi_profiling.cmake)
-endif(BUILD_WITH_TAU)
 
 # config project
 project(${PROJECT_NAME}
     VERSION ${PROJECT_VERSION}
+    LANGUAGES CXX
 )
 
 enable_language(CXX)
@@ -47,18 +97,19 @@ if(DEBUG_BUILD_3D_ONLY)
     # define command disabling 2D related functions
     set(CONFIG_DEBUG_BUILD_3D_ONLY "#define DEBUG_DISABLE_2D_FUNCTIONS")
 endif(DEBUG_BUILD_3D_ONLY)
-if(DEBUG_BUILD_UNIT_TEST)
+if(DEBUG_UNIT_TEST)
     # define command for unit test to declare friend class
-    set(CONFIG_DEBUG_BUILD_UNIT_TEST "#define DEBUG_UNIT_TEST")
-endif(DEBUG_BUILD_UNIT_TEST)
+    set(CONFIG_DEBUG_UNIT_TEST "#define DEBUG_UNIT_TEST")
+endif(DEBUG_UNIT_TEST)
 configure_file (
-    "${CMAKE_SOURCE_DIR}/config.h.in"
-    "${CMAKE_SOURCE_DIR}/source/config.h"
+"${CMAKE_SOURCE_DIR}/config.h.in"
+"${CMAKE_SOURCE_DIR}/source/config.h"
 )
 if(NOT CMAKE_BUILD_TYPE)
     set(CMAKE_BUILD_TYPE "Release")
 endif()
 message("Build Type: ${CMAKE_BUILD_TYPE}")
+set(BUILD_LINK_LIBRARY)
 
 # System
 if (CMAKE_SYSTEM_NAME MATCHES "Linux")
@@ -85,7 +136,7 @@ if(${CMAKE_CXX_COMPILER_ID} STREQUAL MSVC)
     set(CMAKE_CXX_FLAGS_RELEASE "/Ox /Ot /GS- /GL /LTCG")
     set(CMAKE_CXX_FLAGS_DEBUG "/W3 /Zi /EHsc")
     if (DEBUG_TREAT_WARNING_AS_ERROR)
-        AppendFlag(CMAKE_CXX_FLAGS_DEBUG "/D_CRT_SECURE_NO_WARNINGS /WX")
+        AppendFlag(CMAKE_CXX_FLAGS_DEBUG "/WX")
     endif()
 elseif(${CMAKE_CXX_COMPILER_ID} STREQUAL GNU)
     message("Compiler: GNU")
@@ -93,7 +144,7 @@ elseif(${CMAKE_CXX_COMPILER_ID} STREQUAL GNU)
     set(CMAKE_CXX_FLAGS_RELEASE "-Ofast -fexec-charset=GBK")
     set(CMAKE_CXX_FLAGS_DEBUG "-g -O0")
     if (DEBUG_TREAT_WARNING_AS_ERROR)
-        AppendFlag(CMAKE_CXX_FLAGS_DEBUG "-pedantic-errors -Wno-unused-parameter -Wno-cast-function-type -Wno-effc++ -Werror")
+        AppendFlag(CMAKE_CXX_FLAGS_DEBUG "-pedantic-errors -Werror")
         message(CMAKE_CXX_FLAGS_DEBUG)
     endif()
 elseif(${CMAKE_CXX_COMPILER_ID} STREQUAL Clang)
@@ -102,18 +153,32 @@ elseif(${CMAKE_CXX_COMPILER_ID} STREQUAL Clang)
     set(CMAKE_CXX_FLAGS_RELEASE "-O3")
     set(CMAKE_CXX_FLAGS_DEBUG "-g -O0")
     if (DEBUG_TREAT_WARNING_AS_ERROR)
-        AppendFlag(CMAKE_CXX_FLAGS_DEBUG "-pedantic-errors -Wno-unused-parameter -Wno-cast-function-type -Wno-effc++ -Werror")
+        AppendFlag(CMAKE_CXX_FLAGS_DEBUG "-pedantic-errors -Werror")
     endif()
 else()
     message(FATAL_ERROR "CXX compiler not recognized. CMake will quit.")
 endif()
 
+# TAU Configuration
+if(BUILD_WITH_TAU)
+    if(NOT BUILD_WITH_MPI)
+        message(FATAL_ERROR "BUILD_WITH_TAU requires BUILD_WITH_MPI to be enabled. CMake will quit.")
+    endif()
+
+    get_filename_component(TAU_BIN_DIR "${CMAKE_CXX_COMPILER}" DIRECTORY)
+    get_filename_component(TAU_BASE_DIR "${TAU_BIN_DIR}" DIRECTORY)
+    set(TAU_MAKEFILE_PATH "${TAU_BASE_DIR}/lib/Makefile.tau-mpi")
+    if(EXISTS "${TAU_MAKEFILE_PATH}")
+        set(ENV{TAU_MAKEFILE} "${TAU_MAKEFILE_PATH}")
+    else()
+        message(FATAL_ERROR "TAU Makefile not found at ${TAU_MAKEFILE_PATH}. Check your TAU installation.")
+    endif()
+
+    message(STATUS "TAU profiling enabled with compiler: ${CMAKE_CXX_COMPILER}")
+endif()
 
 # MSMPI is chosen priorly
-set(BUILD_LINK_LIBRARY)
 if(BUILD_WITH_MPI)
-    set(MPI_C_COMPILER mpicc)
-    set(MPI_CXX_COMPILER mpic++)
     find_package(MPI REQUIRED)
     if(MPI_CXX_FOUND)
         if(EXISTS "$ENV{MSMPI_INC}")
@@ -124,10 +189,10 @@ if(BUILD_WITH_MPI)
            message("${MPI_CXX_COMPILER} directory: ${MPI_CXX_INCLUDE_DIRS}")  
         endif(EXISTS "$ENV{MSMPI_INC}")
 
-        foreach(LIB ${MPI_C_LIBRARIES} ${MPI_CXX_LIBRARIES})
-            if (LIB)
-                list (APPEND BUILD_LINK_LIBRARY ${LIB})
-            endif ( )
+        foreach( LIB ${MPI_C_LIBRARIES} ${MPI_CXX_LIBRARIES} )
+           if ( LIB )
+              list ( APPEND BUILD_LINK_LIBRARY ${LIB} )
+           endif ( )
         endforeach ( )
         AppendFlag(CMAKE_CXX_FLAGS "${MPI_CXX_FLAGS}")
     endif(MPI_CXX_FOUND)
