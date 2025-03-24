@@ -16,8 +16,6 @@ option(DEBUG_TREAT_WARNING_AS_ERROR            "Treat warnings as errors"       
 set(PROJECT_NAME rootProject)
 set(PROJECT_VERSION 0.1.0)
 set(CMAKE_CXX_STANDARD 23)
-set(CMAKE_CXX_STANDARD_REQUIRED ON)
-set(CMAKE_CXX_EXTENSIONS OFF)
 
 include(${CMAKE_SOURCE_DIR}/cmake/build_functions.cmake)
 if(BUILD_WITH_TAU)
@@ -112,8 +110,6 @@ endif()
 # MSMPI is chosen priorly
 set(BUILD_LINK_LIBRARY)
 if(BUILD_WITH_MPI)
-    set(MPI_C_COMPILER mpicc)
-    set(MPI_CXX_COMPILER mpic++)
     find_package(MPI REQUIRED)
     if(MPI_CXX_FOUND)
         if(EXISTS "$ENV{MSMPI_INC}")

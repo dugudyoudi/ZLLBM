@@ -829,8 +829,8 @@ void MpiManager::IniSendNReceiveGridInfoAtAllLevels(const DefInt flag_size0,
     }
 
     // broadcast minimum and maximum space filling code of all ranks to each rank
-    MPI_Bcast(&bitset_min[0], static_cast<int>(num_of_ranks_), GetMpiCodeUintType(), 0, MPI_COMM_WORLD);
-    MPI_Bcast(&bitset_max[0], static_cast<int>(num_of_ranks_), GetMpiCodeUintType(), 0, MPI_COMM_WORLD);
+    MPI_Bcast(&bitset_min[0], static_cast<int>(num_of_ranks_), GetMpiUintType(), 0, MPI_COMM_WORLD);
+    MPI_Bcast(&bitset_max[0], static_cast<int>(num_of_ranks_), GetMpiUintType(), 0, MPI_COMM_WORLD);
     vec_sfcode_min_all_ranks_.resize(bitset_min.size());
     vec_sfcode_max_all_ranks_.resize(bitset_max.size());
     for (DefSizet i = 0; i < bitset_max.size(); ++i) {

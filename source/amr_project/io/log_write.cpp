@@ -16,6 +16,9 @@
 #else
     #define HAS_STACKTRACE 0
 #endif
+#ifdef _MSC_VER
+#define _CRT_SECURE_NO_DEPRECATE
+#endif
 #include <chrono>
 #include <filesystem>
 #include "../defs_libs.h"
@@ -28,7 +31,11 @@ void LogManager::LogStartTime() {
         std::chrono::system_clock::now());
 
     char time_char[26];
+#ifdef _MSC_VER
+    ctime_s(time_char, sizeof time_char, &current_time);
+#else
     ctime_r(&current_time, time_char);
+#endif
 
     int rank_id = 0;
 #ifdef ENABLE_MPI
@@ -59,7 +66,12 @@ void LogManager::LogEndTime() {
         std::chrono::system_clock::now());
 
     char time_char[26];
+
+#ifdef _MSC_VER
+    ctime_s(time_char, sizeof time_char, &current_time);
+#else
     ctime_r(&current_time, time_char);
+#endif
 
     int rank_id = 0;
 #ifdef ENABLE_MPI

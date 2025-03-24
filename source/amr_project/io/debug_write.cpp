@@ -6,8 +6,10 @@
 * @author Zhengliang Liu
 * @date  2022-8-14
 */
+#ifdef _MSC_VER
+#define _CRT_SECURE_NO_DEPRECATE
+#endif
 #include <vector>
-
 #include "../defs_libs.h"
 #ifdef ENABLE_MPI
 #include <mpi.h>

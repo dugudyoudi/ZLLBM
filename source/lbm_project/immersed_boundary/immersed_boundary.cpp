@@ -7,6 +7,9 @@
 * @brief functions used to implement immersed boundary method.
 * @date  2023-11-6
 */
+#ifdef _MSC_VER
+#define _CRT_SECURE_NO_DEPRECATE
+#endif
 #include <unordered_map>
 #include <utility>
 #include <cstdio>

@@ -7,6 +7,9 @@
 * @brief functions used to write vtk data.
 * @date  2022-8-04
 */
+#ifdef _MSC_VER
+#define _CRT_SECURE_NO_DEPRECATE
+#endif
 #include <typeinfo>
 #include <filesystem>
 #include "./auxiliary_inline_func.h"
