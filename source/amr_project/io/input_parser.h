@@ -77,9 +77,12 @@ class InputParser {
         return nested_map_input_;
     }
 
+    void ReadInputFile(const std::string& filename);
     void PrintUnusedParameters() const;
 
-    explicit InputParser(const std::string& filename);
+    explicit InputParser(const std::string& filename) {
+        ReadInputFile(filename);
+    }
     InputParser() {}
 
     template <ParserAllowedType T>

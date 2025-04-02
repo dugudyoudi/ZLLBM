@@ -141,8 +141,8 @@ void GridInfoInterface::RemoveUnnecessaryF2CNodesOnMpiOuterLayer(const DefSFCode
             }
         }
         for (auto& iter_layer : iter_interface.second->vec_outer_fine2coarse_) {
+            std::vector<DefSFBitset> vec_node_to_remove;
             for (const auto& iter_node : iter_layer) {
-                std::vector<DefSFBitset> vec_node_to_remove;
                 code_current = sfbitset_aux.SFBitsetToNLowerLevelVir(i_level_, iter_node.first).to_ullong();
                 if (code_current > code_max || code_current < code_min) {
                     bool bool_remove = true;
@@ -160,14 +160,14 @@ void GridInfoInterface::RemoveUnnecessaryF2CNodesOnMpiOuterLayer(const DefSFCode
                         vec_node_to_remove.emplace_back(iter_node.first);
                     }
                 }
-                for (const auto& iter_node : vec_node_to_remove) {
-                    iter_layer.erase(iter_node);
-                    if (ptr_mpi_outer_layer->find(iter_node)!= ptr_mpi_outer_layer->end()) {
-                        ptr_mpi_outer_layer->erase(iter_node);
-                    }
-                    if (map_grid_node_.find(iter_node) != map_grid_node_.end()) {
-                        map_grid_node_.erase(iter_node);
-                    }
+            }
+            for (const auto& iter_node : vec_node_to_remove) {
+                iter_layer.erase(iter_node);
+                if (ptr_mpi_outer_layer->find(iter_node)!= ptr_mpi_outer_layer->end()) {
+                    ptr_mpi_outer_layer->erase(iter_node);
+                }
+                if (map_grid_node_.find(iter_node) != map_grid_node_.end()) {
+                    map_grid_node_.erase(iter_node);
                 }
             }
         }

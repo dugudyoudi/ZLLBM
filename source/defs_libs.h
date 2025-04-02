@@ -18,9 +18,6 @@
 #include <iostream>
 #include <fstream>
 #include "./config.h"  // configuration file generated
-#ifdef ENABLE_MPI
-#include <mpi.h>  // for debug
-#endif  // ENABLE_MPI
 namespace rootproject {
 using DefReal = double;
 using DefInt = int32_t;

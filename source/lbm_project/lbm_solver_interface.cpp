@@ -275,10 +275,10 @@ void SolverLbmInterface::SetFunctionForNodeCollision() {
             func_cal_feq_(ptr_node->rho_, ptr_node->velocity_, &feq);
             (this->*(this->ptr_func_cal_force_iq_))(*ptr_node, force, &forcing_term);
             if (bool_les_model_) {
+                const DefReal tau0 = ptr_collision_opt->GetRelaxationTime();
                 DefReal tau_sgs = ptr_les_model_->CalSgsRelaxationTimeWithForce(
-                    ptr_collision_opt->GetDtLbm(), ptr_collision_opt->GetRelaxationTime(),
-                    feq, force, *ptr_node, *this);
-                ptr_collision_opt->SetEffectiveRelaxationTimeForForcing(tau_sgs, *this);
+                    ptr_collision_opt->GetDtLbm(), tau0, feq, force, *ptr_node, *this);
+                ptr_collision_opt->SetEffectiveRelaxationTimeForForcing(tau0 + tau_sgs, *this);
             }
             ptr_collision_opt->CollisionOperator(num_q, feq, forcing_term, ptr_node);
         };
@@ -290,10 +290,10 @@ void SolverLbmInterface::SetFunctionForNodeCollision() {
             std::vector<DefReal> feq(num_q, 0.);
             func_cal_feq_(ptr_node->rho_, ptr_node->velocity_, &feq);
             if (bool_les_model_) {
+                const DefReal tau0 = ptr_collision_opt->GetRelaxationTime();
                 DefReal tau_sgs = ptr_les_model_->CalSgsRelaxationTimeWithoutForce(
-                    ptr_collision_opt->GetDtLbm(), ptr_collision_opt->GetRelaxationTime(),
-                    feq, *ptr_node, *this);
-                ptr_collision_opt->SetEffectiveRelaxationTime(tau_sgs, *this);
+                    ptr_collision_opt->GetDtLbm(), tau0, feq, *ptr_node, *this);
+                ptr_collision_opt->SetEffectiveRelaxationTime(tau0 + tau_sgs, *this);
             }
             ptr_collision_opt->CollisionOperator(num_q, feq, ptr_node);
         };

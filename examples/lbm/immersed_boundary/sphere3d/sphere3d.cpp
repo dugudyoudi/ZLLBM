@@ -33,7 +33,10 @@ int main(int argc, char* argv[]) {
     // read input file
     DefInt max_t;
     lbmproject::GeoIBTypeReader geo_ib_reader;
-    amrproject::InputParser input_parser(input_name);
+    amrproject::InputParser input_parser;
+    if(ptr_amr_instance->ptr_mpi_manager_->GetRankId() == 0) {
+        input_parser.ReadInputFile(input_name);
+    }
     ptr_amr_instance->BroadCastInputParse(&input_parser);
     input_parser.GetValue<DefInt>("max_time_step", &max_t);
     ptr_amr_instance->ptr_grid_manager_->ReadAndSetupGridParameters(&input_parser);
@@ -98,7 +101,6 @@ int main(int argc, char* argv[]) {
     }
 
     ptr_amr_instance->FinalizeSimulation();
-
     return 0;
 }
 

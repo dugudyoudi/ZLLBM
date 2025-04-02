@@ -108,6 +108,22 @@ void MpiManager::CheckMpiNodesCorrespondence(const GridInfoInterface& grid_info)
         }
     }
 
+if (rank_id_ == 1 && i_level == 2) {
+    SFBitsetAux3D aux3d;
+    std::array<DefAmrLUint, 3> indices;
+    //     std::ofstream file1("received.txt");
+    // for (auto& iter : map_received) {
+    //     aux3d.SFBitsetComputeIndices(iter.first, &indices);
+    //     file1 << indices.at(0) << " " << indices.at(1) << " " << indices.at(2) << std::endl;
+    // }file1.close();
+    std::ofstream file2("outer.txt");
+    for (auto& iter : mpi_communication_outer_layers_.at(i_level)) {
+        aux3d.SFBitsetComputeIndices(iter.first, &indices);
+        file2 << indices.at(0) << " " << indices.at(1)<< " " << indices.at(2)  << std::endl;
+    }file2.close();
+}
+
+
     // received nodes may be more than nodes in mpi outer layer in coarse to fine layers
     if (mpi_communication_outer_layers_.at(i_level).size() > map_received.size()) {
         LogManager::LogError("the number of received nodes is less than the number of nodes"

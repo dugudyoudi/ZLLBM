@@ -3,8 +3,7 @@ cmake_minimum_required(VERSION 3.5)
 # settings
 option(BUILD_WITH_MPI                          "Enable MPI"                                                ON)
 option(BUILD_EXAMPLES                          "Build example cases"                                       ON)
-option(BUILD_WITH_TAU                          "Enable TAU profiling (requires MPI)"                       OFF)
-
+option(BUILD_WITH_PROFILING                    "Enable Score-P profiling (requires MPI)"                   OFF)
 option(DEBUG_BUILD_UNIT_TEST                   "Build unit tests"                                          ON)
 option(DEBUG_BUILD_INTEGRATE_TEST              "Build integrate tests"                                     ON)
 option(DEBUG_CHECK_GRID                        "Enable if clauses for checking grid"                       ON)
@@ -18,9 +17,9 @@ set(PROJECT_VERSION 0.1.0)
 set(CMAKE_CXX_STANDARD 23)
 
 include(${CMAKE_SOURCE_DIR}/cmake/build_functions.cmake)
-if(BUILD_WITH_TAU)
+if(BUILD_WITH_PROFILING)
     include(${CMAKE_SOURCE_DIR}/cmake/mpi_profiling.cmake)
-endif(BUILD_WITH_TAU)
+endif(BUILD_WITH_PROFILING)
 
 # config project
 project(${PROJECT_NAME}
@@ -28,6 +27,9 @@ project(${PROJECT_NAME}
 )
 
 enable_language(CXX)
+if(BUILD_WITH_PROFILING)
+    set(CONFIG_PROFILING "#define ENABLE_PROFILING")
+endif(BUILD_WITH_PROFILING)
 if(BUILD_WITH_MPI)
     set(CONFIG_MPI "#define ENABLE_MPI")
 endif(BUILD_WITH_MPI)
@@ -103,9 +105,8 @@ elseif(${CMAKE_CXX_COMPILER_ID} STREQUAL Clang)
         AppendFlag(CMAKE_CXX_FLAGS_DEBUG "-pedantic-errors -Wno-unused-parameter -Wno-cast-function-type -Wno-effc++ -Werror")
     endif()
 else()
-    message(FATAL_ERROR "CXX compiler not recognized. CMake will quit.")
+    message(F "CXX compiler is set as " ${CMAKE_CXX_COMPILER_ID})
 endif()
-
 
 # MSMPI is chosen priorly
 set(BUILD_LINK_LIBRARY)
@@ -128,6 +129,8 @@ if(BUILD_WITH_MPI)
         AppendFlag(CMAKE_CXX_FLAGS "${MPI_CXX_FLAGS}")
     endif(MPI_CXX_FOUND)
 endif(BUILD_WITH_MPI)
+
+message( ${CMAKE_CXX_FLAGS_DEBUG})
 
 # amr project
 add_subdirectory("./source/amr_project")
@@ -153,7 +156,6 @@ if(DEBUG_BUILD_INTEGRATE_TEST)
     add_subdirectory("integrate_test/test_grid3d")
     add_subdirectory("integrate_test/test_lbm")
 endif(DEBUG_BUILD_INTEGRATE_TEST)
-
 
 if(DEBUG_BUILD_UNIT_TEST)
     message("Build unit tests")

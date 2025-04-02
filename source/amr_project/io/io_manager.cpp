@@ -91,9 +91,9 @@ void IoManager::SetupDependentIOParameters() {
     vtk_instance_.OptionInitial(bool_binary_);
 }
 /**
-* @brief function to write flow field.
+* @brief function to write data on mesh.
 */
-void IoManager::OutputFlowField(
+void IoManager::OutputMeshData(
     const std::string& prog_name,
     GridManagerInterface* const ptr_grid_manager,
     CriterionManager* const ptr_criterion_manager) {

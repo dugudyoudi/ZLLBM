@@ -306,7 +306,7 @@ class GridManagerInterface{
     }
 
  private:
-    const DefInt K0IMaxFloodFill_ = static_cast<DefInt>(90000);
+    const DefInt K0IMaxFloodFill_ = static_cast<DefInt>(9000000);
     ///<  maximum iteration for flood fill
     void FindOverlappingLayersBasedOnOutermostCoarse(
         const DefMap<DefInt>& layer_coarse_0,
@@ -417,7 +417,6 @@ class GridManagerInterface{
         const DefInt flag_outmost_refinement_n_outer_mpi,
         const DefSFCodeToUint code_min, const DefSFCodeToUint code_max, const SFBitsetAuxInterface& sfbitset_aux,
         const DefMap<DefInt>& map_sfbitset_one_lower_level, const DefMap<DefInt>& map_c2f_one_lower_level,
-        const DefMap<DefInt>& sfbitset_partition_interface_background,
         DefMap<DefInt>* const ptr_outer_layer_current_level, DefMap<DefInt>* const ptr_outer_layer_lower_level);
     void InstantiateDomainBoundaryForMpi(const DefAmrLUint num_partition_outer_layer,
         const DefInt flag_normal_outer_node, const DefInt flag_periodic_outer_node,

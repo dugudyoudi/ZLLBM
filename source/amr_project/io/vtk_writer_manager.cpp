@@ -94,13 +94,13 @@ void VtkWriterManager::OptionInitial(const bool bool_binary) {
 }
 /**
 * @brief   function to write all grid levels
-* @param[in]  folder_name name of the folder
+* @param[in]  folder_name_in name of the folder
 * @param[in]  bool_binary write data in binary or ascii format
 * @param[in]  output_data_format output data (real or integer) format
 * @param[in]  grid_manager class to manage grid information
 * @param[in]  criterion_manager class to manage criterion information
 */
-void VtkWriterManager::WriteVtuAll(const std::string& folder_name,
+void VtkWriterManager::WriteVtuAll(const std::string& folder_name_in,
     const bool bool_binary, const OutputDataFormat& output_data_format,
     const GridManagerInterface& grid_manager,
     const CriterionManager& criterion_manager) {
@@ -108,6 +108,7 @@ void VtkWriterManager::WriteVtuAll(const std::string& folder_name,
 #ifdef ENABLE_MPI
     MPI_Comm_rank(MPI_COMM_WORLD, &rank_id);
 #endif  // ENABLE_MPI
+    std::string folder_name = folder_name_in + "_data";
     std::filesystem::create_directories(folder_name);
     std::string name_rank ="rank_" + std::to_string(rank_id) + "_";
     std::string proj_and_rank = folder_name + "/" + name_rank;

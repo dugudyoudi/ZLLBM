@@ -267,10 +267,6 @@ int GridInfoInterface::InterpolationLagrangian2D(const DefAmrLUint interpolation
                 + region_length - interpolation_length;
             for (DefAmrLUint ix = 0; ix < num_coeff; ++ix) {
                 index_x = index_y + ix;
-
-                int i_rank;
-                MPI_Comm_rank(MPI_COMM_WORLD, &i_rank);
-
                 if (std::fabs(coeffi_x[ix] * coeffi_y[iy]) > kEps) {
                     if (nodes_coarse.find(sfbitset_coarse_region.at(index_x)) != nodes_coarse.end()
                         &&!(nodes_coarse.at(sfbitset_coarse_region.at(index_x))->flag_status_

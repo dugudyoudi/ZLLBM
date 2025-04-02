@@ -96,8 +96,8 @@ class SFBitsetAuxInterface {
         std::vector<DefSFBitset>* const ptr_vec_neighbors) const = 0;
     virtual void SFBitsetFindAllBondedNeighborsVir(const DefSFBitset& sfbitset_in,
         const std::vector<bool>& bool_periodic_min, const std::vector<bool>& bool_periodic_max,
-        const std::vector<DefSFBitset>& domain_min_m1_n_level,
-        const std::vector<DefSFBitset>& domain_max_p1_n_level,
+        const std::vector<DefSFBitset>& domain_min_n_level,
+        const std::vector<DefSFBitset>& domain_max_n_level,
         std::vector<DefSFBitset>* const ptr_vec_neighbors) const = 0;
     virtual void SFBitsetComputeCoordinateVir(const DefSFBitset& bitset_in,
         const std::vector<DefReal>& grid_space, std::vector<DefReal>* const ptr_coordi) const = 0;
@@ -192,8 +192,8 @@ class  SFBitsetAux2D : public SFBitsetAuxInterface {
         std::array<DefSFBitset, 9>* const ptr_bitset_neighbour) const;
     void SFBitsetFindAllBondedNeighborsVir(const DefSFBitset& bitset_in,
         const std::vector<bool>& bool_periodic_min, const std::vector<bool>& bool_periodic_max,
-        const std::vector<DefSFBitset>& domain_min_m1_n_level,
-        const std::vector<DefSFBitset>& domain_max_p1_n_level,
+        const std::vector<DefSFBitset>& domain_min_n_level,
+        const std::vector<DefSFBitset>& domain_max_n_level,
         std::vector<DefSFBitset>* const ptr_vec_neighbors) const;
     void SFBitsetFindCellNeighbors(const DefSFBitset& sfbitset_corner,
         std::array<DefSFBitset, 4>* const ptr_bitset_neighbour) const;
@@ -429,8 +429,8 @@ class  SFBitsetAux3D : public SFBitsetAuxInterface {
         std::array<DefSFBitset, 8>* const ptr_vec_bitset_neighbour) const;
     void SFBitsetFindAllBondedNeighborsVir(const DefSFBitset& bitset_in,
         const std::vector<bool>& bool_periodic_min, const std::vector<bool>& bool_periodic_max,
-        const std::vector<DefSFBitset>& domain_min_m1_n_level,
-        const std::vector<DefSFBitset>& domain_max_p1_n_level,
+        const std::vector<DefSFBitset>& domain_min_n_level,
+        const std::vector<DefSFBitset>& domain_max_n_level,
         std::vector<DefSFBitset>* const ptr_vec_neighbors) const;
     void SFBitsetHigherLevelInACell(const DefInt level_diff, const DefSFBitset& sfbitset_corner,
         std::vector<DefSFBitset>* const ptr_ptr_sfbitsets_higher_level) const;

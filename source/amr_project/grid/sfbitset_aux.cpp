@@ -1400,9 +1400,16 @@ bool SFBitsetAux2D::CheckExistenceCurrentLevel(
     DefSFBitset current_bit = sfbitset_in&k0SfBitsetCurrentLevelBits_;
     if (current_bit != 0) {
         if ((current_bit&k0SFBitsetTakeXRef_.at(kRefCurrent_)) != 0) {
-            if (exist_nodes_lower_level.find(FindXPos(sfbitset_in_lower))
+            DefSFBitset sfbitset0 = FindXPos(sfbitset_in_lower);
+            if (exist_nodes_lower_level.find(sfbitset0)
                 == exist_nodes_lower_level.end()) {
                 return false;
+            }
+            if ((current_bit&k0SFBitsetTakeYRef_.at(kRefCurrent_)) != 0) {
+                if (exist_nodes_lower_level.find(FindYPos(sfbitset0))
+                    == exist_nodes_lower_level.end()) {
+                    return false;
+                }
             }
         }
         if ((current_bit&k0SFBitsetTakeYRef_.at(kRefCurrent_)) != 0) {
@@ -4594,20 +4601,51 @@ bool SFBitsetAux3D::CheckExistenceCurrentLevel(
         return false;
     }
     DefSFBitset current_bit = sfbitset_in&k0SfBitsetCurrentLevelBits_;
+    bool bool_x = (current_bit&k0SFBitsetTakeXRef_.at(kRefCurrent_)) != 0,
+        bool_y = (current_bit&k0SFBitsetTakeYRef_.at(kRefCurrent_)) != 0,
+        bool_z = (current_bit&k0SFBitsetTakeZRef_.at(kRefCurrent_)) != 0;
     if (current_bit != 0) {
-        if ((current_bit&k0SFBitsetTakeXRef_.at(kRefCurrent_)) != 0) {
-            if (exist_nodes_lower_level.find(FindXPos(sfbitset_in_lower))
+        if (bool_x) {
+            DefSFBitset sfbitset0 = FindXPos(sfbitset_in_lower);
+            if (exist_nodes_lower_level.find(sfbitset0)
                 == exist_nodes_lower_level.end()) {
                 return false;
             }
+            DefSFBitset sfbitset1 = FindYPos(sfbitset0);
+            if (bool_y) {
+                if (exist_nodes_lower_level.find(sfbitset1)
+                    == exist_nodes_lower_level.end()) {
+                    return false;
+                }
+                if (bool_z) {
+                    if (exist_nodes_lower_level.find(FindZPos(sfbitset1))
+                        == exist_nodes_lower_level.end()) {
+                        return false;
+                    }
+                }
+            }
+            if (bool_z) {
+                if (exist_nodes_lower_level.find(FindZPos(sfbitset0))
+                    == exist_nodes_lower_level.end()) {
+                    return false;
+                }
+            }
+            
         }
-        if ((current_bit&k0SFBitsetTakeYRef_.at(kRefCurrent_)) != 0) {
-            if (exist_nodes_lower_level.find(FindYPos(sfbitset_in_lower))
+        if (bool_y) {
+            DefSFBitset sfbitset0 = FindYPos(sfbitset_in_lower);
+            if (exist_nodes_lower_level.find(sfbitset0)
                 == exist_nodes_lower_level.end()) {
                 return false;
             }
+            if (bool_z) {
+                if (exist_nodes_lower_level.find(FindZPos(sfbitset0))
+                    == exist_nodes_lower_level.end()) {
+                    return false;
+                }
+            }
         }
-        if ((current_bit&k0SFBitsetTakeZRef_.at(kRefCurrent_)) != 0) {
+        if (bool_z) {
             if (exist_nodes_lower_level.find(FindYPos(sfbitset_in_lower))
                 == exist_nodes_lower_level.end()) {
                 return false;

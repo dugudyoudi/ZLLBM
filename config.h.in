@@ -1,4 +1,5 @@
 // automatic generated from cmake option
+@CONFIG_PROFILING@
 @CONFIG_MPI@
 @CONFIG_DEBUG_CHECK_GRID@
 @CONFIG_DEBUG_BUILD_2D_ONLY@

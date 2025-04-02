@@ -58,13 +58,13 @@ void InputParser::CheckScope(const std::string& key, const std::string& expected
     }
 }
 /**
-* @brief  constructor of InputParser
+* @brief  read parameters from an input file.
 * @param[in] filename  name of input file.
 */
-InputParser::InputParser(const std::string& filename) {
+void InputParser::ReadInputFile(const std::string& filename) {
     std::ifstream file(filename);
     if (!file.is_open()) {
-        LogManager::LogError("Could not open file: " + filename);
+        return;
     }
 
     std::string line;

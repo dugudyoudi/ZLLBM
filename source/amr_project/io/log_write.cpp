@@ -7,9 +7,6 @@
 * @brief functions used to write log files.
 * @date  2022-8-14
 */
-#ifdef ENABLE_MPI
-#include <mpi.h>
-#endif  // ENABLE_MPI
 #ifdef __cpp_lib_stacktrace
     #include <stacktrace>
     #define HAS_STACKTRACE 1
@@ -22,6 +19,9 @@
 #include <chrono>
 #include <filesystem>
 #include "../defs_libs.h"
+#ifdef ENABLE_MPI
+#include <mpi.h>
+#endif  // ENABLE_MPI
 #include "io/log_write.h"
 namespace rootproject {
 namespace amrproject {
@@ -154,8 +154,8 @@ void LogManager::LogError(const std::string& msg) {
     }
 #else
     std::string trace_msg = "";
-#endif   
-    
+#endif
+
     if (!fp) {
         printf("The log file was not opened\n");
     } else {
