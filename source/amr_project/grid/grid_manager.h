@@ -154,8 +154,6 @@ class GridManagerInterface{
     virtual void CalDomainBoundsAtGivenLevel(const DefInt i_level,
         std::vector<DefSFBitset>* const ptr_domain_min, std::vector<DefSFBitset>* const ptr_domain_max) const = 0;
 
-    // setup dimension related members
-
     // function to check nodes should be on domain boundaries
     void (GridManagerInterface::*ptr_func_insert_domain_boundary_)(const int flag_node,
         const DefSFBitset& bitset_in, GridInfoInterface* const ptr_grid_info) const = nullptr;
@@ -174,8 +172,7 @@ class GridManagerInterface{
         const std::array<DefReal, 3>& coordinate_max,
         const std::array<DefReal, 3>& domain_min,
         const std::array<DefReal, 3>& domain_max) const;
-    bool InstantiateGridNode(const DefSFBitset& bitset_in,
-        GridInfoInterface* const ptr_grid_info);
+    bool InstantiateGridNode(const DefSFBitset& bitset_in, GridInfoInterface* const ptr_grid_info);
     virtual int CheckNodeOnDomainBoundary(const DefInt i_level, const DefSFBitset& sfbitset_in) const = 0;
     virtual bool CheckNodeNotOutsideDomainBoundary(const DefSFBitset& sfbitset_in,
         const std::vector<DefSFCodeToUint>& sfbitset_min,
@@ -195,8 +192,8 @@ class GridManagerInterface{
         const DefInt n_level, const DefSFBitset& sfbitset_in) const = 0;
     virtual DefAmrLUint CalNumOfBackgroundNode() const = 0;
     virtual bool CheckBackgroundOffset(const DefSFBitset& sfbitset_in) const = 0;
-    void FindNeighborsBasedOnDirection(const DefInt num_mpi_inner_layer,
-        const DefInt node_flag, const DefSFBitset& sfbitset_in, const SFBitsetAuxInterface& sfbitset_aux,
+    void FindNodesNearDomainBoundaryInGivenDirection(const DefInt num_mpi_inner_layer,
+        const DefSFBitset& sfbitset_in, const SFBitsetAuxInterface& sfbitset_aux,
         const std::vector<bool>& periodic_min, const std::vector<bool>& periodic_max,
         const std::vector<DefSFBitset>& domain_min_n_level, const std::vector<DefSFBitset>& domain_max_n_level,
         std::vector<DefSFBitset>* const ptr_node_added);
@@ -276,7 +273,8 @@ class GridManagerInterface{
     void IdentifyInterfaceNodeOnEdgeAcrossTwoLevels(
         const std::array<std::pair<DefSFBitset, DefInt>, 2>& arr_bitset_lower,
         const DefSFBitset bitset_mid_higher, const SFBitsetAuxInterface& sfbitset_aux,
-        const DefMap<DefInt>& node_outmost, const std::array<DefMap<DefInt>* const, 3>& arr_ptr_layer);
+        const DefMap<DefInt>& node_outmost, const std::array<DefMap<DefInt>* const, 3>& arr_ptr_layer,
+        DefMap<DefInt>* const ptr_coarse_outer);
     virtual void OverlapLayerFromHighToLow(
         const DefMap<DefInt>& layer_high_level,
         DefMap<DefInt>* const ptr_layer_low_level) = 0;
@@ -407,7 +405,7 @@ class GridManagerInterface{
         const DefSFBitset bitset_in, const DefMap<DefInt>& node_coarse_interface,
         const DefMap<DefInt>& node_exist, const DefMap<DefInt>& sfbitset_exist_coarse,
         DefMap<DefInt>* const ptr_inner_layer, DefMap<DefInt>* const ptr_mid_layer,
-        DefMap<DefInt>* const ptr_outer_layer) = 0;
+        DefMap<DefInt>* const ptr_outer_layer, DefMap<DefInt>* ptr_coarse_outer) = 0;
      void FindOverlappingLayersBasedOnOutermostCoarseAndLowerLevelNodes(
         const DefMap<DefInt>& layer_coarse_0, const DefMap<DefInt>& sfbitset_exist,
         const DefMap<DefInt>& sfbitset_exist_coarse, DefMap<DefInt>* const ptr_layer_coarse_m1,
@@ -430,6 +428,14 @@ class GridManagerInterface{
         const DefSFCodeToUint code_min_background_level, const DefSFCodeToUint code_max_background_level,
         const std::vector<bool>& periodic_min, const std::vector<bool>& periodic_max,
         const std::vector<DefSFBitset>& domain_min_n_level, const std::vector<DefSFBitset>& domain_max_n_level);
+    void SearchMpiLayersForPeriodicBoundaries(const DefInt dims, const int i_rank,
+        const DefInt flag_periodic_outer_node, const DefInt  num_mpi_inner_layer, const DefInt num_mpi_outer_layer,
+        const DefSFCodeToUint code_min_background_level, const DefSFCodeToUint code_max_background_level,
+        const SFBitsetAuxInterface& sfbitset_aux, const std::vector<DefSFCodeToUint>& ull_max,
+        const std::vector<bool>& periodic_min, const std::vector<bool>& periodic_max,
+        const std::vector<DefSFBitset>& domain_min_n_level, const std::vector<DefSFBitset>& domain_max_n_level,
+        DefMap<DefInt>* const ptr_mpi_outer_layer, std::map<int, DefMap<DefInt>>* const ptr_mpi_inner_layer,
+        GridInfoInterface* const ptr_grid_info);
 };
 #ifndef  DEBUG_DISABLE_2D_FUNCTIONS
 /**
@@ -562,7 +568,7 @@ class GridManager2D :public  GridManagerInterface, public SFBitsetAux2D {
         const DefSFBitset bitset_in, const DefMap<DefInt>& node_coarse_interface,
         const DefMap<DefInt>& node_exist, const DefMap<DefInt>& sfbitset_exist_coarse,
         DefMap<DefInt>* const ptr_inner_layer, DefMap<DefInt>* const ptr_mid_layer,
-        DefMap<DefInt>* const ptr_outer_layer) override;
+        DefMap<DefInt>* const ptr_outer_layer, DefMap<DefInt>* ptr_coarse_outer) override;
 
  private:
     DefInt kFlagCurrentNodeXNeg_ = 1, kFlagCurrentNodeXPos_ = 1 << 1,
@@ -701,7 +707,7 @@ class GridManager3D :public  GridManagerInterface, public SFBitsetAux3D {
         const DefSFBitset bitset_in, const DefMap<DefInt>& node_coarse_interface,
         const DefMap<DefInt>& node_exist, const DefMap<DefInt>& sfbitset_exist_coarse,
         DefMap<DefInt>* const ptr_inner_layer, DefMap<DefInt>* const ptr_mid_layer,
-        DefMap<DefInt>* const ptr_outer_layer) override;
+        DefMap<DefInt>* const ptr_outer_layer, DefMap<DefInt>* ptr_coarse_outer) override;
 
  private:
     DefInt kFlagCurrentNodeXNeg_ = 1, kFlagCurrentNodeXPos_ = 1 << 1,
@@ -719,7 +725,7 @@ class GridManager3D :public  GridManagerInterface, public SFBitsetAux3D {
         const std::array<std::pair<DefSFBitset, DefInt>, 4>& arr_bitset_lower,
         const DefSFBitset bitset_center_higher,
         const DefMap<DefInt>& node_coarse_interface,
-        const std::array<DefMap<DefInt>* const, 3>& arr_ptr_layer);
+        const std::array<DefMap<DefInt>* const, 3>& arr_ptr_layer,  DefMap<DefInt>* const ptr_coarse_outer);
 };
 #endif  // DEBUG_DISABLE_3D_FUNCTIONS
 /**

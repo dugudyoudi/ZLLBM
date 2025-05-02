@@ -117,7 +117,11 @@ void AmrManager::InitializeMesh() {
     // mpi partition sending and receiving nodes
     std::vector<DefInt> vec_cost;
     for (auto iter_grid : ptr_grid_manager_->vec_ptr_grid_info_) {
-        vec_cost.emplace_back(iter_grid->GetComputationalCost());
+        if (iter_grid->GetGridLevel() == 0) {
+            vec_cost.emplace_back(iter_grid->GetComputationalCost());
+        } else {
+            vec_cost.emplace_back(iter_grid->GetComputationalCost() * 2 * ptr_grid_manager_->k0GridDims_);
+        }
     }
     std::vector<DefMap<DefInt>> sfbitset_one_lower_level_current_rank(max_level + 1),
        sfbitset_ghost_one_lower_level_current_rank(max_level + 1);

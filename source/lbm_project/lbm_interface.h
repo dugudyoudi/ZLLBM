@@ -33,8 +33,9 @@ class SolverLbmInterface;
 */
 struct GridNodeLbm : public amrproject::GridNode {
     DefReal rho_ = 1.;
+    const int kSizeReal = sizeof(DefReal);
     std::vector<DefReal> velocity_{};
-    std::vector<DefReal> f_{}, f_collide_{}; 
+    std::vector<DefReal> f_{}, f_collide_{};
     std::vector<DefReal> force_{};
     GridNodeLbm() {}
     GridNodeLbm(const DefReal rho0, const std::vector<DefReal>& velocity0,
@@ -53,21 +54,55 @@ struct GridNodeLbm : public amrproject::GridNode {
             f_.shrink_to_fit();
             f_collide_.shrink_to_fit();
     }
+    int CopyANodeToBufferForCheckpoint(char* const ptr_node_buffer) const override {
+        std::memcpy(ptr_node_buffer, &flag_status_, sizeof(DefInt));
+        int offset = sizeof(DefInt);
+        std::memcpy(ptr_node_buffer + offset, f_.data(), f_.size() * kSizeReal);
+        offset += static_cast<int>(f_.size()) * kSizeReal;
+        if (!force_.empty()) {
+            std::memcpy(ptr_node_buffer + offset, force_.data(), force_.size() * kSizeReal);
+            offset += static_cast<int>(force_.size()) * kSizeReal;
+        }
+        return offset;
+    }
+    int ReadANodeFromBufferForCheckpoint(const char* ptr_node_buffer) override {
+        std::memcpy(&flag_status_, ptr_node_buffer, sizeof(DefInt));
+        int offset = sizeof(DefInt);
+        std::memcpy(f_.data(), ptr_node_buffer, f_.size() * kSizeReal);
+        offset += static_cast<int>(f_.size()) * kSizeReal;
+        if (!force_.empty()) {
+            std::memcpy(force_.data(), ptr_node_buffer + offset, force_.size() * kSizeReal);
+            offset += static_cast<int>(force_.size()) * kSizeReal;
+        }
+        return offset;
+    }
 
     // compulsory function from the GridNode base class
-    void CopyANodeToBufferForMpi(char* const ptr_node_buffer) const override {
-        DefSizet f_size = f_.size() * sizeof(DefReal);
-        std::memcpy(ptr_node_buffer, f_.data(), f_size);
+    int CopyANodeToBufferForMpi(char* const ptr_node_buffer) const override {
+        std::memcpy(ptr_node_buffer, &rho_, kSizeReal);
+        int offset = kSizeReal;
+        std::memcpy(ptr_node_buffer + offset, velocity_.data(), velocity_.size() * kSizeReal);
+        offset += static_cast<int>(velocity_.size()) * kSizeReal;
+        std::memcpy(ptr_node_buffer + offset, f_.data(), f_.size() * kSizeReal);
+        offset += static_cast<int>(f_.size()) * kSizeReal;
         if (!force_.empty()) {
-            std::memcpy(ptr_node_buffer + f_size, force_.data(), force_.size() * sizeof(DefReal));
+            std::memcpy(ptr_node_buffer + offset, force_.data(), force_.size() * kSizeReal);
+            offset += static_cast<int>(force_.size()) * kSizeReal;
         }
+        return offset;
     }
-    void ReadANodeFromBufferForMpi(const char* ptr_node_buffer) override {
-        DefSizet f_size = f_.size() * sizeof(DefReal);
-        std::memcpy(f_.data(), ptr_node_buffer, f_size);
+    int ReadANodeFromBufferForMpi(const char* ptr_node_buffer) override {
+        std::memcpy(&rho_, ptr_node_buffer, kSizeReal);
+        int offset = kSizeReal;
+        std::memcpy(velocity_.data(), ptr_node_buffer + offset, velocity_.size() * kSizeReal);
+        offset += static_cast<int>(velocity_.size()) * kSizeReal;
+        std::memcpy(f_.data(), ptr_node_buffer + offset, f_.size() * kSizeReal);
+        offset += static_cast<int>(f_.size()) * kSizeReal;
         if (!force_.empty()) {
-            std::memcpy(force_.data(), ptr_node_buffer + f_size, force_.size() * sizeof(DefReal));
+            std::memcpy(force_.data(), ptr_node_buffer + offset, force_.size() * kSizeReal);
+            offset += static_cast<int>(force_.size()) * kSizeReal;
         }
+        return offset;
     }
 
     // GridNodeLbm& operator=(const GridNodeLbm& node_r) {
@@ -191,9 +226,9 @@ class GridInfoLbmInteface : public amrproject::GridInfoInterface {
     DefInt GetNodeFlagNotStream() const { return NodeFlagNotStream_;}
     DefInt GetNodeFlagNotCollision() const { return NodeFlagNotCollision_;}
     int GetSizeOfGridNodeInfoForMpiCommunication() const override;
+    int GetSizeOfGridNodeInfoForCheckPoint() const override;
 
  protected:
-
     // domain boundaries
     bool CheckIfPeriodicDomainRequired(const DefInt dims,
         std::vector<bool>* const ptr_periodic_min, std::vector<bool>* const ptr_periodic_max) const override;

@@ -12,7 +12,7 @@
 #define SOURCE_AMR_PROJECT_CRITERION_CRITERION_NUMERATES_H_
 namespace rootproject {
 namespace amrproject {
-enum class ECriterionType : DefInt {
+enum class ECriterionType : int {
     kUndefined = 0,
     kGeometry = 1
 };
@@ -20,7 +20,7 @@ enum class ECriterionType : DefInt {
 * @struct EGridExtendType
 * @brief enum class to store grid extending type
 */
-enum class EGridExtendType : DefInt {
+enum class EGridExtendType : int {
     kSameInAllDirections = 1,
     kInAndOut = 2
 };
@@ -30,7 +30,7 @@ enum class EGridExtendType : DefInt {
 * @brief enum class to store data type for geometry connection type
 * @note numbering is the same as the cell types of vtk
 */
-enum class EGeometryCellType : DefInt {
+enum class EGeometryCellType : int {
     kUndefined = 0,
     kPolyLine = 4,
     kTriangle = 5
@@ -39,7 +39,7 @@ enum class EGeometryCellType : DefInt {
 * @class EGeometryStatus
 * @brief enum class to identify geometry status whether it cause dynamic mesh adaptation
 */
-enum class EGeometryStatus : DefInt {
+enum class EGeometryStatus : int {
     kVirtual = 0,
     kStatic = 1,
     kMoving = 2
@@ -48,7 +48,7 @@ enum class EGeometryStatus : DefInt {
 * @class DefaultGeometryShapeType
 * @brief enum class to store default geometry shape type
 */
-enum class DefaultGeoShapeType : DefInt {
+enum class DefaultGeoShapeType : int {
     kUndefined = 0,
     kReadFromFile = 1,
     kCircle = 2,

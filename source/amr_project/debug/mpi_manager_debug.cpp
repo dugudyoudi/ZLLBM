@@ -108,20 +108,38 @@ void MpiManager::CheckMpiNodesCorrespondence(const GridInfoInterface& grid_info)
         }
     }
 
-if (rank_id_ == 1 && i_level == 2) {
-    SFBitsetAux3D aux3d;
-    std::array<DefAmrLUint, 3> indices;
-    //     std::ofstream file1("received.txt");
-    // for (auto& iter : map_received) {
-    //     aux3d.SFBitsetComputeIndices(iter.first, &indices);
-    //     file1 << indices.at(0) << " " << indices.at(1) << " " << indices.at(2) << std::endl;
-    // }file1.close();
-    std::ofstream file2("outer.txt");
-    for (auto& iter : mpi_communication_outer_layers_.at(i_level)) {
-        aux3d.SFBitsetComputeIndices(iter.first, &indices);
-        file2 << indices.at(0) << " " << indices.at(1)<< " " << indices.at(2)  << std::endl;
-    }file2.close();
-}
+
+// if (rank_id_ == 1 && i_level == 1) {
+//     std::cout << mpi_communication_outer_layers_.at(i_level).size() << std::endl;
+//     SFBitsetAux3D aux3d;
+//     std::array<DefAmrLUint, 3> indices;
+//         std::ofstream file1("received.txt");
+//     for (auto& iter : map_received) {
+//         aux3d.SFBitsetComputeIndices(iter.first, &indices);
+//         file1 << indices.at(0) << " " << indices.at(1) << " " << indices.at(2) << std::endl;
+//     }file1.close();
+//     std::ofstream file2("outer.txt");
+//     for (auto& iter : mpi_communication_outer_layers_.at(i_level)) {
+//         aux3d.SFBitsetComputeIndices(iter.first, &indices);
+//         file2 << indices.at(0) << " " << indices.at(1)<< " " << indices.at(2)  << std::endl;
+//     }file2.close();
+// }
+
+// if (rank_id_ == 1 && i_level == 0) {
+//     SFBitsetAux2D aux3d;
+//     std::array<DefAmrLUint, 2> indices;
+//         std::ofstream file1("received.txt");
+//     for (auto& iter : map_received) {
+//         aux3d.SFBitsetComputeIndices(iter.first, &indices);
+//         file1 << indices.at(0) << " " << indices.at(1)  << std::endl;
+//     }file1.close();
+//     std::ofstream file2("outer.txt");
+//     for (auto& iter : mpi_communication_outer_layers_.at(i_level)) {
+//         aux3d.SFBitsetComputeIndices(iter.first, &indices);
+//         file2 << indices.at(0) << " " << indices.at(1) << std::endl;
+//     }file2.close();
+// }
+// MPI_Barrier(MPI_COMM_WORLD);
 
 
     // received nodes may be more than nodes in mpi outer layer in coarse to fine layers
@@ -164,6 +182,21 @@ void MpiManager::CheckMpiPeriodicCorrespondence(const GridInfoInterface& grid_in
                 pos_layers(dims, k0NumPartitionOuterLayers_);
             pos_layers.at(i) = k0NumPartitionOuterLayers_ - 1;
             for (const auto& iter_node : grid_info.domain_boundary_min_.at(i)) {
+                if (grid_info.map_grid_node_.find(iter_node.first) == grid_info.map_grid_node_.end()) {
+                    grid_info.GetPtrSFBitsetAux()->SFBitsetComputeCoordinateVir(
+                    iter_node.first, grid_info.GetGridSpace(), &coordinates);
+                    if (dims == 2) {
+                        LogManager::LogError("Can not find node ("
+                            + std::to_string(coordinates[kXIndex]) + ", "
+                            + std::to_string(coordinates[kYIndex]) + ") on the minimum boundary at level "
+                            + std::to_string(i_level) + " on rank " + std::to_string(rank_id_));
+                    } else if (dims == 3) {
+                        LogManager::LogError("Can not find node ("
+                            + std::to_string(coordinates[kXIndex]) + ", "+ std::to_string(coordinates[kYIndex])
+                            + ", "+ std::to_string(coordinates[kZIndex]) + ") on the minimum boundary at level "
+                            + std::to_string(i_level) + " on rank " + std::to_string(rank_id_));
+                    }
+                }
                 if ((grid_info.map_grid_node_.at(iter_node.first)->flag_status_
                     &NodeBitStatus::kNodeStatusMpiPartitionOuter_)
                     ==NodeBitStatus::kNodeStatusMpiPartitionOuter_) {
@@ -185,9 +218,9 @@ void MpiManager::CheckMpiPeriodicCorrespondence(const GridInfoInterface& grid_in
                         && ((grid_info.map_grid_node_.at(iter_region)->flag_status_
                         &NodeBitStatus::kNodeStatusMpiPartitionOuter_)
                         !=NodeBitStatus::kNodeStatusMpiPartitionOuter_)) {
-                            exist_inner_mpi_node = true;
-                            break;
-                        }
+                        exist_inner_mpi_node = true;
+                        break;
+                    }
                 }
                 if (exist_inner_mpi_node && grid_info.domain_boundary_max_.at(i).find(sfbitset_max)
                     == grid_info.domain_boundary_max_.at(i).end()) {

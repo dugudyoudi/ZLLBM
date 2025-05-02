@@ -12,6 +12,7 @@
 #include <string>
 #include "../defs_libs.h"
 #include "io/vtk_writer.h"
+#include "mpi/mpi_manager.h"
 namespace rootproject {
 namespace amrproject {
 /**
@@ -24,7 +25,7 @@ class IoManager {
     void SetupOutputFormat();
     void SetupDependentIOParameters();
 
-    // write flow field options
+    // write output data options
     bool bool_binary_ = true;
     OutputDataFormat k0OutputDataFormat_;
 
@@ -32,6 +33,12 @@ class IoManager {
         GridManagerInterface* const ptr_grid_manager,
         CriterionManager* const ptr_criterion_manager);
     VtkWriterManager vtk_instance_;
+
+    // write checkpoint data
+    void WriteCheckPointData(const std::string& prog_name,
+        const MpiManager& mpi_manager,
+        GridManagerInterface* const ptr_grid_manager,
+        CriterionManager* const ptr_criterion_manager);
 };
 }  // end namespace amrproject
 }  // end namespace rootproject

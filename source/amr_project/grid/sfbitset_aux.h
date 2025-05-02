@@ -38,6 +38,8 @@ class SFBitsetAuxInterface {
         return k0SpaceBackground_;
     }
 
+    inline DefSFCodeToUint SFBitsetoSFCode(const DefSFBitset& sfbitset) const { return sfbitset.to_ullong(); }
+
     virtual void SFBitsetInitial() = 0;
     virtual DefSFBitset SFBitsetEncodingCoordi(
         const std::vector<DefReal>& grid_space, const std::vector<DefReal>& coordi) const = 0;
@@ -47,8 +49,8 @@ class SFBitsetAuxInterface {
     virtual DefSFBitset FindNodeInPos(const DefInt dir, const DefSFBitset& sfbitset_in) const = 0;
     virtual void FindNodesInReginOfGivenLength(const DefSFBitset& sfbitset_in,
         const DefInt region_length,
-        const std::vector<DefSFBitset>& domain_min_m1_n_level,
-        const std::vector<DefSFBitset>& domain_max_p1_n_level,
+        const std::vector<DefSFBitset>& domain_min_n_level,
+        const std::vector<DefSFBitset>& domain_max_n_level,
         std::vector<DefSFBitset>* const ptr_sfbitset_nodes) const = 0;
     virtual DefInt FindNodesInPeriodicRegionCorner(const DefSFBitset& sfbitset_in,
         const DefInt region_length,
@@ -58,6 +60,13 @@ class SFBitsetAuxInterface {
         std::vector<DefSFBitset>* const ptr_sfbitset_node) const = 0;
     virtual DefInt FindNodesInPeriodicRegionCornerOverlap(const DefSFBitset& sfbitset_in,
         const DefInt region_length,
+        const std::vector<bool>& periodic_min, const std::vector<bool>& periodic_max,
+        const std::vector<DefSFBitset>& domain_min_n_level,
+        const std::vector<DefSFBitset>& domain_max_n_level,
+        std::vector<DefSFBitset>* const ptr_sfbitset_node,
+        std::vector<std::pair<DefAmrLUint, DefSFBitset>>* const ptr_sfbitset_node_overlap) const = 0;
+    virtual DefInt FindNodesInPeriodicRegionCenterOverlap(const DefSFBitset& sfbitset_in,
+        const std::vector<DefInt>& region_length_neg, const std::vector<DefInt>& region_length_pos,
         const std::vector<bool>& periodic_min, const std::vector<bool>& periodic_max,
         const std::vector<DefSFBitset>& domain_min_n_level,
         const std::vector<DefSFBitset>& domain_max_n_level,
@@ -81,10 +90,18 @@ class SFBitsetAuxInterface {
         const std::vector<DefSFBitset>& domain_min_n_level,
         const std::vector<DefSFBitset>& domain_max_n_level,
         std::vector<DefSFBitset>* const ptr_sfbitset_node) const = 0;
+    virtual DefSFBitset SetIindexinGivenDirection(const DefInt i_dir, const DefSFBitset& sfbitset_in,
+        const DefSFBitset& sfbitset_target) const = 0;
+    virtual void SFBitsetHigherLevelInACell(
+        const DefInt level_diff, const DefSFBitset& sfbitset_corner,
+        std::vector<DefSFBitset>* const ptr_vec_bitset_neighbour) const = 0;
+
     virtual void FindNeighboringCoarseFromFine(const DefSFBitset& sfbitset_fine,
         std::vector<DefSFBitset>* const ptr_vec_coarse) const = 0;
     virtual bool CheckExistenceCurrentLevel(
         const DefSFBitset& sfbitset_in, const DefMap<DefInt>& exist_nodes) const = 0;
+    virtual bool CheckIfOnGivenBoundary(const DefInt i_dir,
+        const DefSFBitset& sfbitset_in, const DefSFBitset& sfbitset_boundary) const = 0;
 
     // compared to inline function, this virtual is costly, avoiding using this if possible
     virtual DefSFBitset SFBitsetToNLowerLevelVir(
@@ -101,6 +118,8 @@ class SFBitsetAuxInterface {
         std::vector<DefSFBitset>* const ptr_vec_neighbors) const = 0;
     virtual void SFBitsetComputeCoordinateVir(const DefSFBitset& bitset_in,
         const std::vector<DefReal>& grid_space, std::vector<DefReal>* const ptr_coordi) const = 0;
+    virtual void SFBitsetFindCellNeighborsVir(const DefSFBitset& sfbitset_corner,
+            std::vector<DefSFBitset>* const ptr_bitset_neighbour) const = 0;
 
     virtual std::vector<DefAmrLUint> GetMinBackgroundIndices() const = 0;
     virtual std::vector<DefAmrLUint> GetMaxBackgroundIndices() const = 0;
@@ -197,9 +216,6 @@ class  SFBitsetAux2D : public SFBitsetAuxInterface {
         std::vector<DefSFBitset>* const ptr_vec_neighbors) const;
     void SFBitsetFindCellNeighbors(const DefSFBitset& sfbitset_corner,
         std::array<DefSFBitset, 4>* const ptr_bitset_neighbour) const;
-    void SFBitsetHigherLevelInACell(
-        const DefInt level_diff, const DefSFBitset& sfbitset_corner,
-        std::vector<DefSFBitset>* const ptr_vec_bitset_neighbour) const;
     template<typename DataType>
     bool SFBitsetBelongToOneCell(const DefSFBitset& sfbitset_in,
         const DefMap<DataType>& map_node_exist,
@@ -249,6 +265,14 @@ class  SFBitsetAux2D : public SFBitsetAuxInterface {
         ptr_coordi->at(kXIndex) = arr_coordi[kXIndex];
         ptr_coordi->at(kYIndex) = arr_coordi[kYIndex];
     }
+    void SFBitsetFindCellNeighborsVir(const DefSFBitset& sfbitset_corner,
+        std::vector<DefSFBitset>* const ptr_bitset_neighbour) const final {
+         std::array<DefSFBitset, 4> array_neighbors;
+        SFBitsetFindCellNeighbors(sfbitset_corner, &array_neighbors);
+        ptr_bitset_neighbour->resize(4);
+        memcpy(ptr_bitset_neighbour->data(), array_neighbors.data(),
+            4 * sizeof(DefSFBitset));
+    }
     void FindNodesInReginOfGivenLength(const DefSFBitset& sfbitset_in,
         const DefInt region_length,
         const std::vector<DefSFBitset>& domain_min_m1_n_level,
@@ -285,8 +309,23 @@ class  SFBitsetAux2D : public SFBitsetAuxInterface {
         const std::vector<DefSFBitset>& domain_min_n_level,
         const std::vector<DefSFBitset>& domain_max_n_level,
         std::vector<DefSFBitset>* const ptr_sfbitset_node) const final;
+    DefInt FindNodesInPeriodicRegionCenterOverlap(const DefSFBitset& sfbitset_in,
+        const std::vector<DefInt>& region_length_neg, const std::vector<DefInt>& region_length_pos,
+        const std::vector<bool>& periodic_min, const std::vector<bool>& periodic_max,
+        const std::vector<DefSFBitset>& domain_min_n_level,
+        const std::vector<DefSFBitset>& domain_max_n_level,
+        std::vector<DefSFBitset>* const ptr_sfbitset_node,
+        std::vector<std::pair<DefAmrLUint, DefSFBitset>>* const ptr_sfbitset_node_overlap) const final;
+    DefSFBitset SetIindexinGivenDirection(const DefInt i_dir, const DefSFBitset& sfbitset_in,
+        const DefSFBitset& sfbitset_target) const final;
+    void SFBitsetHigherLevelInACell(
+            const DefInt level_diff, const DefSFBitset& sfbitset_corner,
+            std::vector<DefSFBitset>* const ptr_vec_bitset_neighbour) const final;
+
     bool CheckExistenceCurrentLevel(
         const DefSFBitset& sfbitset_in, const DefMap<DefInt>& exist_nodes) const final;
+    bool CheckIfOnGivenBoundary(const DefInt i_dir,
+        const DefSFBitset& sfbitset_in, const DefSFBitset& sfbitset_boundary) const final;
 
     DefSFBitset SFBitsetToNLowerLevelVir(const DefInt n_level,
         const DefSFBitset& morton_in) const final {
@@ -432,8 +471,6 @@ class  SFBitsetAux3D : public SFBitsetAuxInterface {
         const std::vector<DefSFBitset>& domain_min_n_level,
         const std::vector<DefSFBitset>& domain_max_n_level,
         std::vector<DefSFBitset>* const ptr_vec_neighbors) const;
-    void SFBitsetHigherLevelInACell(const DefInt level_diff, const DefSFBitset& sfbitset_corner,
-        std::vector<DefSFBitset>* const ptr_ptr_sfbitsets_higher_level) const;
     template<typename DataType>
     bool SFBitsetBelongToOneCell(const DefSFBitset& sfbitset_in,
         const DefMap<DataType>& map_node_exist, std::array<DefSFBitset, 8>* const ptr_sfbitsets) const;
@@ -490,6 +527,14 @@ class  SFBitsetAux3D : public SFBitsetAuxInterface {
         ptr_coordi->at(kYIndex) = arr_coordi[kYIndex];
         ptr_coordi->at(kZIndex) = arr_coordi[kZIndex];
     }
+    void SFBitsetFindCellNeighborsVir(const DefSFBitset& sfbitset_corner,
+        std::vector<DefSFBitset>* const ptr_bitset_neighbour) const final {
+        std::array<DefSFBitset, 8> array_neighbors;
+        SFBitsetFindCellNeighbors(sfbitset_corner, &array_neighbors);
+        ptr_bitset_neighbour->resize(8);
+        memcpy(ptr_bitset_neighbour->data(), array_neighbors.data(),
+            8 * sizeof(DefSFBitset));
+    }
     void FindNodesInReginOfGivenLength(const DefSFBitset& sfbitset_in,
         const DefInt region_length,
         const std::vector<DefSFBitset>& domain_min_m1_n_level,
@@ -526,10 +571,23 @@ class  SFBitsetAux3D : public SFBitsetAuxInterface {
         const std::vector<DefSFBitset>& domain_min_n_level,
         const std::vector<DefSFBitset>& domain_max_n_level,
         std::vector<DefSFBitset>* const ptr_sfbitset_node) const final;
+    DefInt FindNodesInPeriodicRegionCenterOverlap(const DefSFBitset& sfbitset_in,
+        const std::vector<DefInt>& region_length_neg, const std::vector<DefInt>& region_length_pos,
+        const std::vector<bool>& periodic_min, const std::vector<bool>& periodic_max,
+        const std::vector<DefSFBitset>& domain_min_n_level,
+        const std::vector<DefSFBitset>& domain_max_n_level,
+        std::vector<DefSFBitset>* const ptr_sfbitset_node,
+        std::vector<std::pair<DefAmrLUint, DefSFBitset>>* const ptr_sfbitset_node_overlap) const final;
+    DefSFBitset SetIindexinGivenDirection(const DefInt i_dir, const DefSFBitset& sfbitset_in,
+        const DefSFBitset& sfbitset_target) const final;
     bool CheckExistenceCurrentLevel(
         const DefSFBitset& sfbitset_in, const DefMap<DefInt>& exist_nodes) const final;
+    bool CheckIfOnGivenBoundary(const DefInt i_dir,
+        const DefSFBitset& sfbitset_in, const DefSFBitset& sfbitset_boundary) const final;
     void FindNeighboringCoarseFromFine(const DefSFBitset& sfbitset_fine,
         std::vector<DefSFBitset>* const ptr_vec_coarse) const final;
+    void SFBitsetHigherLevelInACell(const DefInt level_diff, const DefSFBitset& sfbitset_corner,
+        std::vector<DefSFBitset>* const ptr_ptr_sfbitsets_higher_level) const final;
 
     DefSFBitset  SFBitsetToNLowerLevelVir(const DefInt n_level, const DefSFBitset& morton_in) const final {
         return SFBitsetToNLowerLevel(n_level, morton_in);

@@ -16,39 +16,6 @@
 namespace rootproject {
 namespace amrproject {
 /**
- * @brief function to set mpi communication region for periodic boundary conditions.
- * @param[in] dims  dimensions of the grid.
- * @param[in] sfbitset_aux class to manage space filling codes.
- * @param[in] bool_periodic_min booleans indicating if the boundary is periodic at minimum domain boundaries.
- * @param[in] bool_periodic_max booleans indicating if the boundary is periodic at maximum domain boundaries.
- * @param[out] ptr_partition_interface pointer to container storing nodes on partition information.
- */
-void GridInfoInterface::SetPeriodicBoundaryAsPartitionInterface(DefInt dims,
-    const SFBitsetAuxInterface& sfbitset_aux,
-    const std::vector<bool>& bool_periodic_min, const std::vector<bool>& bool_periodic_max,
-    DefMap<DefInt>* const ptr_partition_interface) {
-    if (static_cast<DefInt>(bool_periodic_min.size()) != dims) {
-        LogManager::LogError("size of bool_periodic_min " + std::to_string(bool_periodic_min.size())
-            + " is not equal to the grid dimension " + std::to_string(dims) + "in "
-            + std::string(__FILE__) + " at line " + std::to_string(__LINE__));
-    }
-    if (static_cast<DefInt>(bool_periodic_max.size()) != dims) {
-        LogManager::LogError("size of bool_periodic_max " + std::to_string(bool_periodic_min.size())
-            + " is not equal to the grid dimension " + std::to_string(dims) + "in "
-            + std::string(__FILE__) + " at line " + std::to_string(__LINE__));
-    }
-    for (DefInt i_dims = 0; i_dims < dims; ++i_dims) {
-        if (bool_periodic_min.at(i_dims)) {
-            ptr_partition_interface->insert(
-                domain_boundary_min_.at(i_dims).begin(), domain_boundary_min_.at(i_dims).end());
-        }
-        if (bool_periodic_max.at(i_dims)) {
-            ptr_partition_interface->insert(
-                domain_boundary_max_.at(i_dims).begin(), domain_boundary_max_.at(i_dims).end());
-        }
-    }
-}
-/**
  * @brief function to add nodes not exist on current rank but used in interpolation.
  * @param[in] bool_periodic_min booleans indicating if the boundary is periodic at minimum domain boundaries.
  * @param[in] bool_periodic_max booleans indicating if the boundary is periodic at maximum domain boundaries.
@@ -108,15 +75,24 @@ void GridInfoInterface::RemoveUnnecessaryF2CNodesOnMpiOuterLayer(const DefSFCode
     std::vector<DefSFBitset> domain_min_n_level(dims), domain_max_n_level(dims);
     sfbitset_aux.GetMinAtGivenLevel(i_level_, indices_min, &domain_min_n_level);
     sfbitset_aux.GetMaxAtGivenLevel(i_level_, indices_max, &domain_max_n_level);
+    std::vector<DefInt> search_length_neg(dims, num_outer_layer), search_length_pos(dims, num_outer_layer);
     for (const auto& iter_interface : map_ptr_interface_layer_info_) {
         for (auto& iter_layer : iter_interface.second->vec_inner_fine2coarse_) {
             std::vector<DefSFBitset> vec_node_to_remove;
             for (const auto& iter_node : iter_layer) {
-                code_current = sfbitset_aux.SFBitsetToNLowerLevelVir(i_level_, iter_node.first).to_ullong();
+                code_current = sfbitset_aux.SFBitsetoSFCode(
+                    sfbitset_aux.SFBitsetToNLowerLevelVir(i_level_, iter_node.first));
                 if (code_current > code_max || code_current < code_min) {
                     bool bool_remove = true;
-                    sfbitset_aux.FindNodesInPeriodicRegionCenter(iter_node.first, num_outer_layer,
-                        periodic_min, periodic_max, domain_min_n_level, domain_max_n_level, &nodes_in_region);
+                    std::vector<std::pair<DefAmrLUint, DefSFBitset>> vec_overlap;
+                    sfbitset_aux.FindNodesInPeriodicRegionCenterOverlap(iter_node.first,
+                        search_length_neg, search_length_pos, periodic_min, periodic_max,
+                        domain_min_n_level, domain_max_n_level, &nodes_in_region, &vec_overlap);
+                    if (!vec_overlap.empty()) {
+                        for (const auto& iter_overlap : vec_overlap) {
+                            nodes_in_region.push_back(iter_overlap.second);
+                        }
+                    }
                     for (auto& iter_node_region : nodes_in_region) {
                         if (map_grid_node_.find(iter_node_region) != map_grid_node_.end()
                             && (map_grid_node_.at(iter_node_region)->flag_status_
@@ -137,17 +113,33 @@ void GridInfoInterface::RemoveUnnecessaryF2CNodesOnMpiOuterLayer(const DefSFCode
                 }
                 if (map_grid_node_.find(iter_node) != map_grid_node_.end()) {
                     map_grid_node_.erase(iter_node);
+                    for (DefInt dim = 0; dim <dims; ++dim) {
+                        if (domain_boundary_min_.at(dim).find(iter_node) != domain_boundary_min_.at(dim).end()) {
+                            domain_boundary_min_.at(dim).erase(iter_node);
+                        }
+                        if (domain_boundary_max_.at(dim).find(iter_node) != domain_boundary_max_.at(dim).end()) {
+                            domain_boundary_max_.at(dim).erase(iter_node);
+                        }
+                    }
                 }
             }
         }
         for (auto& iter_layer : iter_interface.second->vec_outer_fine2coarse_) {
             std::vector<DefSFBitset> vec_node_to_remove;
             for (const auto& iter_node : iter_layer) {
-                code_current = sfbitset_aux.SFBitsetToNLowerLevelVir(i_level_, iter_node.first).to_ullong();
+                code_current = sfbitset_aux.SFBitsetoSFCode(
+                    sfbitset_aux.SFBitsetToNLowerLevelVir(i_level_, iter_node.first));
                 if (code_current > code_max || code_current < code_min) {
                     bool bool_remove = true;
-                    sfbitset_aux.FindNodesInPeriodicRegionCenter(iter_node.first, num_outer_layer,
-                        periodic_min, periodic_max, domain_min_n_level, domain_max_n_level, &nodes_in_region);
+                    std::vector<std::pair<DefAmrLUint, DefSFBitset>> vec_overlap;
+                    sfbitset_aux.FindNodesInPeriodicRegionCenterOverlap(iter_node.first,
+                        search_length_neg, search_length_pos, periodic_min, periodic_max,
+                        domain_min_n_level, domain_max_n_level, &nodes_in_region, &vec_overlap);
+                    if (!vec_overlap.empty()) {
+                        for (const auto& iter_overlap : vec_overlap) {
+                            nodes_in_region.push_back(iter_overlap.second);
+                        }
+                    }
                     for (auto& iter_node_region : nodes_in_region) {
                         if (map_grid_node_.find(iter_node_region) != map_grid_node_.end()
                             && (map_grid_node_.at(iter_node_region)->flag_status_
@@ -168,6 +160,14 @@ void GridInfoInterface::RemoveUnnecessaryF2CNodesOnMpiOuterLayer(const DefSFCode
                 }
                 if (map_grid_node_.find(iter_node) != map_grid_node_.end()) {
                     map_grid_node_.erase(iter_node);
+                    for (DefInt dim = 0; dim <dims; ++dim) {
+                        if (domain_boundary_min_.at(dim).find(iter_node) != domain_boundary_min_.at(dim).end()) {
+                            domain_boundary_min_.at(dim).erase(iter_node);
+                        }
+                        if (domain_boundary_max_.at(dim).find(iter_node) != domain_boundary_max_.at(dim).end()) {
+                            domain_boundary_max_.at(dim).erase(iter_node);
+                        }
+                    }
                 }
             }
         }
@@ -195,7 +195,8 @@ void GridInfoInterface::CopyNodeInfoToBuffer(
             if (position > buffer_size) {
                 LogManager::LogError("Buffer to store node information overflows (buffer size is "
                     + std::to_string(buffer_size) + " ), please check"
-                    " size of node info for mpi communication");
+                    " size of node info for mpi communication in "
+                    + std::string(__FILE__) + " at line " + std::to_string(__LINE__));
             }
         } else {
             std::vector<DefReal> indices;
@@ -203,11 +204,13 @@ void GridInfoInterface::CopyNodeInfoToBuffer(
             std::string msg;
             if (indices.size() == 2) {
                 msg = "grid node (" + std::to_string(indices[kXIndex]) + ", " + std::to_string(indices[kYIndex])
-                        + ") at " + std::to_string(i_level_) + " at level not exist for copying to a buffer";
+                        + ") at " + std::to_string(i_level_) + " at level not exist for copying to a buffer in "
+                    + std::string(__FILE__) + " at line " + std::to_string(__LINE__);
             } else {
                 msg = "grid node (" + std::to_string(indices[kXIndex]) + ", " + std::to_string(indices[kYIndex])
                     + std::to_string(indices[kZIndex]) +  + ") at " + std::to_string(i_level_)
-                    + " level does not exist for copying to a buffer";
+                    + " level does not exist for copying to a buffer in "
+                    + std::string(__FILE__) + " at line " + std::to_string(__LINE__);
             }
             LogManager::LogError(msg);
         }
@@ -238,7 +241,8 @@ void GridInfoInterface::ReadNodeInfoFromBuffer(
         position += node_info_size;
         if (position > buffer_size) {
             LogManager::LogError("Buffer to store node information overflows, please check"
-                " size of node info for mpi communication");
+                " size of node info for mpi communication in "
+                + std::string(__FILE__) + " at line " + std::to_string(__LINE__));
         }
     }
 }
@@ -280,11 +284,13 @@ void GridInfoInterface::CopyInterpolationNodeInfoToBuffer(
                 std::string msg;
                 if (indices.size() == 2) {
                     msg = "grid node (" + std::to_string(indices[kXIndex]) + ", " + std::to_string(indices[kYIndex])
-                        + ") at " + std::to_string(i_level_) + " at level not exist for copying to a buffer";
+                        + ") at " + std::to_string(i_level_) + " at level not exist for copying to a buffer in "
+                        + std::string(__FILE__) + " at line " + std::to_string(__LINE__);
                 } else {
                     msg = "grid node (" + std::to_string(indices[kXIndex]) + ", " + std::to_string(indices[kYIndex])
                         + std::to_string(indices[kZIndex]) +  + ") at " + std::to_string(i_level_)
-                        + " level does not exist for copying to a buffer";
+                        + " level does not exist for copying to a buffer in "
+                        + std::string(__FILE__) + " at line " + std::to_string(__LINE__);
                 }
                 amrproject::LogManager::LogError(msg);
             }
@@ -315,7 +321,8 @@ void GridInfoInterface::ReadInterpolationNodeInfoFromBuffer(
             position += node_info_size;
             if (position > buffer_size) {
                 LogManager::LogError("Buffer to store node information overflows, please check"
-                    " size of node info for mpi communication");
+                    " size of node info for mpi communication in "
+                    + std::string(__FILE__) + " at line " + std::to_string(__LINE__));
             }
         } else {
             std::vector<DefReal> coordinates;
@@ -324,11 +331,13 @@ void GridInfoInterface::ReadInterpolationNodeInfoFromBuffer(
             std::string msg;
             if (coordinates.size() == 2) {
                 msg = "grid node (" + std::to_string(coordinates[kXIndex]) + ", " + std::to_string(coordinates[kYIndex])
-                    + ") at " + std::to_string(i_level_) + " level does not exist for copying from a buffer";
+                    + ") at " + std::to_string(i_level_) + " level does not exist for copying from a buffer in "
+                    + std::string(__FILE__) + " at line " + std::to_string(__LINE__);
             } else {
                 msg = "grid node (" + std::to_string(coordinates[kXIndex]) + ", " + std::to_string(coordinates[kYIndex])
                     + ", " + std::to_string(coordinates[kZIndex]) + ") at " + std::to_string(i_level_)
-                    + " level does not exist for copying from a buffer";
+                    + " level does not exist for copying from a buffer in "
+                    + std::string(__FILE__) + " at line " + std::to_string(__LINE__);
             }
             amrproject::LogManager::LogError(msg);
         }

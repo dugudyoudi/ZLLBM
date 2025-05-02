@@ -66,13 +66,27 @@ struct GridNode {
     }
     virtual void CopyVariablesToBuffer(const GridNode& /*node_ref*/, char* const /*ptr_node_buffer*/) const {}
     virtual void ReadVariablesFromBuffer(const char* /*ptr_node_buffer*/, const GridNode* const /*ptr_node*/) {}
-    virtual void CopyANodeToBufferForMpi(char* const /*ptr_node_buffer*/) const {}
-    virtual void ReadANodeFromBufferForMpi(const char* /*ptr_node_buffer*/) {}
-    virtual void CopyAInterpNodeToBufferForMpi(char* const ptr_node_buffer) const {
-        CopyANodeToBufferForMpi(ptr_node_buffer);
+    virtual int CopyANodeToBufferForMpi(char* const ptr_node_buffer) const {
+        std::memcpy(ptr_node_buffer, &flag_status_, sizeof(DefInt));
+        int offset = sizeof(DefInt);
+        return offset;
     }
-    virtual void ReadAInterpNodeFromBufferForMpi(const char* ptr_node_buffer) {
-        ReadANodeFromBufferForMpi(ptr_node_buffer);
+    virtual int ReadANodeFromBufferForMpi(const char* ptr_node_buffer) {
+        std::memcpy(&flag_status_, ptr_node_buffer, sizeof(DefInt));
+        int offset = sizeof(DefInt);
+        return offset;
+    }
+    virtual int CopyAInterpNodeToBufferForMpi(char* const ptr_node_buffer) const {
+        return CopyANodeToBufferForMpi(ptr_node_buffer);
+    }
+    virtual int ReadAInterpNodeFromBufferForMpi(const char* ptr_node_buffer) {
+        return ReadANodeFromBufferForMpi(ptr_node_buffer);
+    }
+    virtual int CopyANodeToBufferForCheckpoint(char* const ptr_node_buffer) const {
+        return CopyANodeToBufferForMpi(ptr_node_buffer);
+    }
+    virtual int ReadANodeFromBufferForCheckpoint(const char* ptr_node_buffer) {
+        return ReadANodeFromBufferForMpi(ptr_node_buffer);
     }
 };
 /**
@@ -189,7 +203,7 @@ class GridInfoInterface {
     std::shared_ptr<GhostGridInfoInterface> ptr_ghost_grid_info_;
 
     // interface between grid of different refinement levels
-    DefInt k0NumFine2CoarseLayer_ = 3;  // (k0NumCoarse2FineLayer_)*2 - 1
+    DefInt k0NumFine2CoarseLayer_ = 3;
     DefInt k0NumCoarse2FineLayer_ = 2;
     DefInt k0NumFine2CoarseGhostLayer_ = k0NumFine2CoarseLayer_/2 + 1;
     DefInt k0NumCoarse2FineGhostLayer_ = k0NumCoarse2FineLayer_/2;
@@ -203,10 +217,19 @@ class GridInfoInterface {
     DefInt GetNumCoarse2FineLayer() const {return k0NumCoarse2FineLayer_;}
     DefInt GetNumFine2CoarseGhostLayer() const {return k0NumFine2CoarseGhostLayer_;}
     DefInt GetNumCoarse2FineGhostLayer() const {return k0NumCoarse2FineGhostLayer_;}
-    std::weak_ptr<SolverInterface> GetPtrToSolver() const {return ptr_solver_;}
-    SFBitsetAuxInterface* GetPtrSFBitsetAux() const {return ptr_sfbitset_aux_;}
+    SFBitsetAuxInterface* GetPtrSFBitsetAux() const {
+        if (ptr_sfbitset_aux_ == nullptr) {
+            amrproject::LogManager::LogError("pointer to SFBitsetAux is nullptr");
+        }
+        return ptr_sfbitset_aux_;
+    }
     const std::string& GetNodeType() const {return node_type_;}
-
+    std::weak_ptr<SolverInterface> GetPtrToSolver() const {
+        if (ptr_solver_.expired()) {
+            amrproject::LogManager::LogError("pointer to solver is empty");
+        }
+        return ptr_solver_;
+    }
 
     void SetGridLevel(const DefInt i_level);
     void SetComputationalCost(const DefInt computational_cost);
@@ -283,7 +306,7 @@ class GridInfoInterface {
         ptr_parent_grid_manager_ = ptr_grid_manager;}
     GridManagerInterface* GetPtrToParentGridManager() const {
         if (ptr_parent_grid_manager_ == nullptr) {
-            amrproject::LogManager::LogError("pointer to parent grid manager is not nullptr");
+            amrproject::LogManager::LogError("pointer to parent grid manager is nullptr");
         }
         return ptr_parent_grid_manager_;
     }
@@ -349,7 +372,8 @@ class GridInfoInterface {
         ptr_periodic_max->assign(dims, false);
         return false;
     }
-    virtual int GetSizeOfGridNodeInfoForMpiCommunication() const {return 0;}
+    virtual int GetSizeOfGridNodeInfoForMpiCommunication() const {return sizeof(DefInt);}
+    virtual int GetSizeOfGridNodeInfoForCheckPoint() const {return GetSizeOfGridNodeInfoForMpiCommunication();}
     virtual void CopyNodeInfoToBuffer(
         const std::function<void(const GridNode& node_ref, char* const)>& func_copy_buffer,
         const DefMap<DefInt>& map_nodes, char* const ptr_buffer) const;
@@ -367,9 +391,6 @@ class GridInfoInterface {
         const std::map<int, DefMap<DefInt>>& map_inner_nodes, const DefMap<DefInt>& map_outer_nodes) {}
     virtual void ComputeInfoInInterpMpiLayers(
         const std::map<int, DefMap<DefInt>>& map_intper_nodes) {}
-    void SetPeriodicBoundaryAsPartitionInterface(DefInt dims, const SFBitsetAuxInterface& sfbitset_aux,
-        const std::vector<bool>& bool_periodic_min, const std::vector<bool>& bool_periodic_max,
-        DefMap<DefInt>* const ptr_partition_interface);
     void RemoveUnnecessaryF2CNodesOnMpiOuterLayer(const DefSFCodeToUint code_min,
         const DefSFCodeToUint code_max, const DefInt num_outer_layer, DefMap<DefInt>* const ptr_mpi_outer_layer);
 

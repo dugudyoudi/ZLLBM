@@ -17,6 +17,9 @@
 #include <unordered_map>
 #include <iostream>
 #include <fstream>
+#include <cstddef>
+#include <vector>
+#include <mpi.h>
 #include "./config.h"  // configuration file generated
 namespace rootproject {
 using DefReal = double;
@@ -40,6 +43,61 @@ class HashFunc {
 };
 template <typename value>
 using DefMap = std::unordered_map<DefSFBitset, value, HashFunc>;
+/**
+ * class BitField
+ * @brief class to store an arbitrary number of bits using the smallest number of bytes.
+ */
+class BitField {
+ public:
+    explicit BitField(std::size_t num_bits)
+        : num_bits_(num_bits), num_bytes_((num_bits + 7) / 8), data_(num_bytes_, 0) {}
+    explicit BitField(DefInt num_bits)
+        : BitField(static_cast<std::size_t>(num_bits)) {
+        if (num_bits < 0) {
+            throw std::invalid_argument("Number of bits cannot be negative");
+        }
+    }
+
+    void Clear() {
+        std::fill(data_.begin(), data_.end(), 0);
+    }
+
+    bool operator==(const BitField& other) const {
+        return num_bits_ == other.num_bits_ && data_ == other.data_;
+    }
+    bool operator!=(const BitField& other) const {
+        return !(*this == other);
+    }
+
+    void Set(std::size_t pos, bool value) {
+        if (pos >= num_bits_) throw std::out_of_range("Bit position out of range");
+        std::size_t byte_index = pos / 8;
+        std::size_t bit_index = pos % 8;
+        if (value) {
+            data_[byte_index] |= (1 << bit_index);
+        }  else {
+            data_[byte_index] &= ~(1 << bit_index);
+        }
+    }
+
+    bool Get(std::size_t pos) const {
+        if (pos >= num_bits_) throw std::out_of_range("Bit position out of range");
+        std::size_t byte_index = pos / 8;
+        std::size_t bit_index = pos % 8;
+        return (data_[byte_index] >> bit_index) & 1;
+    }
+
+    void* Data() { return data_.data(); }
+    const void* Data() const { return data_.data(); }
+
+    std::size_t GetNumBytes() const { return num_bytes_; }
+    std::size_t GetNumBits() const { return num_bits_; }
+
+ private:
+    std::size_t num_bits_;
+    std::size_t num_bytes_;
+    std::vector<uint8_t> data_;
+};
 
 // numerical parameters
 const DefReal kEps = DefReal(1.e-6);

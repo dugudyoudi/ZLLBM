@@ -26,8 +26,8 @@ void GridManager3D::GenerateGridNodeNearTrackingNode(const DefInt i_level,
     DefMap<DefInt>* const ptr_map_node_tmp) const {
     std::vector<DefSFCodeToUint> sfbitset_min(k0GridDims_), sfbitset_max(k0GridDims_);
     for (DefInt i_dms = 0; i_dms < k0GridDims_; ++i_dms) {
-        sfbitset_min.at(i_dms) = this->vec_ptr_grid_info_.at(i_level)->k0VecBitsetDomainMin_.at(i_dms).to_ullong();
-        sfbitset_max.at(i_dms) = this->vec_ptr_grid_info_.at(i_level)->k0VecBitsetDomainMax_.at(i_dms).to_ullong();
+        sfbitset_min.at(i_dms) = SFBitsetoSFCode(this->vec_ptr_grid_info_.at(i_level)->k0VecBitsetDomainMin_.at(i_dms));
+        sfbitset_max.at(i_dms) = SFBitsetoSFCode(this->vec_ptr_grid_info_.at(i_level)->k0VecBitsetDomainMax_.at(i_dms));
     }
     DefSFBitset bitset_lower_level;
     std::array<DefSFBitset, 27> bitset_of_a_cell;

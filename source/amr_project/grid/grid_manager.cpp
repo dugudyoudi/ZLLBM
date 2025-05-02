@@ -11,6 +11,7 @@
 #include <set>
 #include "./auxiliary_inline_func.h"
 #include "grid/grid_manager.h"
+#include "grid/sfbitset_aux.h"
 #include "criterion/criterion_manager.h"
 #include "io/log_write.h"
 #include "io/input_parser.h"
@@ -559,7 +560,16 @@ void GridManagerInterface::InstantiateGridNodeAllLevel(const DefSFBitset sfbitse
         vec_ptr_grid_info_.at(i_level)->InitialGridInfo(k0GridDims_);
     }
     InstantiateOverlapLayerOfRefinementInterface(sfbitset_one_lower_level);
-    DefSFCodeToUint code_min = sfbitset_min.to_ullong(), code_max = sfbitset_max.to_ullong();
+    DefSFCodeToUint code_min, code_max;
+    if (k0GridDims_ == 2) {
+        SFBitsetAux2D sfbitset_aux;
+        code_min = sfbitset_aux.SFBitsetoSFCode(sfbitset_min);
+        code_max = sfbitset_aux.SFBitsetoSFCode(sfbitset_max);
+    } else {
+        SFBitsetAux3D sfbitset_aux;
+        code_min = sfbitset_aux.SFBitsetoSFCode(sfbitset_min);
+        code_max = sfbitset_aux.SFBitsetoSFCode(sfbitset_max);
+    }
     for (DefInt i_level = k0MaxLevel_; i_level > 0; --i_level) {
         DefInt i_level_lower = i_level - 1;
         GridInfoInterface& grid_info = *(vec_ptr_grid_info_.at(i_level));
@@ -899,8 +909,9 @@ void GridManagerInterface::IdentifyInterfaceNodeOnEdgeAcrossTwoLevels(
     const std::array<std::pair<DefSFBitset, DefInt>, 2>& arr_bitset_lower,
     const DefSFBitset bitset_mid_higher, const SFBitsetAuxInterface& sfbitset_aux,
     const DefMap<DefInt>& node_coarse_interface,
-    const std::array<DefMap<DefInt>* const, 3>& arr_ptr_layer) {
+    const std::array<DefMap<DefInt>* const, 3>& arr_ptr_layer, DefMap<DefInt>* const ptr_coarse_outer) {
     const DefInt& flag_node_0 = arr_bitset_lower.at(0).second, flag_node_1 = arr_bitset_lower.at(1).second;
+    // flag: 1, nodes exist at current level; flag: 2, nodes exist at coarse level;
     // at least one node exist in desired grid
     if (((flag_node_0 == 1) || (flag_node_1 == 1)) && ((flag_node_0 > 0) && (flag_node_1 > 0))) {
         bool node0_flag = node_coarse_interface.find(arr_bitset_lower[0].first) != node_coarse_interface.end(),
@@ -930,6 +941,8 @@ void GridManagerInterface::IdentifyInterfaceNodeOnEdgeAcrossTwoLevels(
                     arr_ptr_layer[0]->insert({
                         sfbitset_aux.SFBitsetToNHigherLevelVir(1, arr_bitset_lower[1].first), kFlag0_ });
                 }
+                ptr_coarse_outer->insert({ arr_bitset_lower[0].first, kFlag0_ });
+                ptr_coarse_outer->insert({ arr_bitset_lower[1].first, kFlag0_ });
             }
         } else {
             if (node0_flag) {
@@ -944,6 +957,7 @@ void GridManagerInterface::IdentifyInterfaceNodeOnEdgeAcrossTwoLevels(
                     arr_ptr_layer[0]->insert({
                         sfbitset_aux.SFBitsetToNHigherLevelVir(1, arr_bitset_lower[1].first), kFlag0_ });
                 }
+                ptr_coarse_outer->insert({ arr_bitset_lower[1].first, kFlag0_ });
             } else {
                 if (flag_node_0 == 1) {
                     arr_ptr_layer[0]->insert({
@@ -956,6 +970,7 @@ void GridManagerInterface::IdentifyInterfaceNodeOnEdgeAcrossTwoLevels(
                     arr_ptr_layer[2]->insert({
                         sfbitset_aux.SFBitsetToNHigherLevelVir(1, arr_bitset_lower[1].first), kFlag0_ });
                 }
+                ptr_coarse_outer->insert({ arr_bitset_lower[0].first, kFlag0_ });
             }
         }
     }

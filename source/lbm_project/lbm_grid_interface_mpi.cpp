@@ -81,9 +81,10 @@ int GridInfoLbmInteface::GetSizeOfGridNodeInfoForMpiCommunication() const {
     } else {
         amrproject::LogManager::LogError("LBM solver is not created.");
     }
-    int size_info =  ptr_lbm_solver->k0NumQ_*sizeof(DefReal);
+    int size_info =  static_cast<int>(ptr_lbm_solver->k0NumQ_*sizeof(DefReal));
+    size_info += static_cast<int>((1 + ptr_lbm_solver->GetSolverDim()) * sizeof(DefReal));
     if (ptr_lbm_solver->bool_forces_) {
-        size_info += ptr_lbm_solver->GetNumForces()*sizeof(DefReal);
+        size_info += static_cast<int>(ptr_lbm_solver->GetNumForces()*sizeof(DefReal));
     }
     return size_info;
 }
@@ -133,6 +134,7 @@ void GridInfoLbmInteface::ComputeInfoInMpiLayers(const std::map<int, DefMap<DefI
             }
         }
     }
+
     // Since stream step will be performed before mpi communication, post-collision distribution
     // functions of neighboring nodes are need
     ptr_lbm_solver->CollisionForGivenNodes<DefInt>(i_level_, flag_not_collide, map_one_layer_near_inner, this);

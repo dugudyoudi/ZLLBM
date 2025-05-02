@@ -17,6 +17,7 @@
 #include <limits>
 #include <utility>
 #include <memory>
+#include <string>
 #include "../defs_libs.h"
 #ifdef ENABLE_MPI
 #ifdef __linux__
@@ -41,6 +42,14 @@ MPI_Datatype GetMpiUintType();
 MPI_Datatype GetMpiSizeTType();
 MPI_Datatype GetMpiAmrLUintType();
 MPI_Datatype GetMpiCodeUintType();
+struct BackgroundLoadData {
+    explicit BackgroundLoadData(DefInt num_bits) : level_bitset_(num_bits) {}
+
+    BitField level_bitset_;
+    int num_of_grid_nodes_ = 0;
+    int num_of_interface_nodes_ = 0;
+    DefInt total_load_ = 0;
+};
 /**
 * @class MpiManager
 * @brief class used to manage the mpi processes.
@@ -52,7 +61,7 @@ class MpiManager{
     DefSFBitset sfbitset_min_current_rank_, sfbitset_max_current_rank_;
     ///< space filling codes of background nodes on the interfaces of partitioned grid
     std::vector<DefSFCodeToUint> vec_sfcode_min_all_ranks_, vec_sfcode_max_all_ranks_;
-    DefInt k0NumPartitionOuterLayers_ = 2;
+    DefInt k0NumPartitionOuterLayers_ = 1;
     DefInt k0NumPartitionInnerLayers_ = k0NumPartitionOuterLayers_;
 
  public:
@@ -326,6 +335,13 @@ class MpiManager{
 
  private:
     void GridPartitionOnASingleRank(const DefMap<DefInt>& sfbitset_current_level);
+    void FindGhostMpiNodesForPeriodicBoundary(const DefInt num_ghost, const DefInt flag_not_c2f,
+        const DefInt flag_extra_extend, const DefInt flag_on_c2f, const DefInt flag_fine2coarse_outmost,
+        const std::vector<bool>& periodic_min, const std::vector<bool>& periodic_max,
+        const std::vector<DefSFBitset>& domain_min_n_level, const std::vector<DefSFBitset>& domain_max_n_level,
+        const DefMap<DefInt>& map_periodic, const DefMap<DefInt>& c2f_exist,
+        const DefMap<DefInt>& node_exist, const SFBitsetAuxInterface& sfbitset_aux,
+        DefMap<DefInt>* const ptr_sfbitset_c2f_each, DefMap<std::set<int>>* const ptr_outmost_for_all_ranks) const;
 
 // functions to serialize and deserialize information for node types other than grid node
  private:
@@ -490,6 +506,39 @@ class MpiManager{
         const std::vector<DefSFBitset>& domain_max_p1_n_level,
         DefMap<DefInt>* const ptr_map_ghost_layer) const;
 #endif  // DEBUG_DISABLE_3D_FUNCTIONS
+
+    // checkpoint related functions
+ public:
+    DefAmrLUint ComputeComputationalLoadOnEachRank(const DefInt max_level, const SFBitsetAuxInterface& sfbitset_aux,
+        const std::vector<std::shared_ptr<GridInfoInterface>>& vec_grid_info,
+        std::map<DefSFCodeToUint, BackgroundLoadData>* const ptr_node_level,
+        std::vector<DefAmrLUint>* const ptr_num_of_nodes) const;
+    void ComputeMinNMaxSFbitsetForEachRank(const DefAmrLUint load_all, const std::vector<DefInt>& vec_cost,
+        const std::map<DefSFCodeToUint, BackgroundLoadData>& map_node_level,
+        std::vector<DefSFBitset>* const ptr_bitset_min, std::vector<DefSFBitset>* const ptr_bitset_max,
+        std::vector<DefAmrLUint>* const ptr_num_of_grid_nodes, std::vector<DefAmrLUint>* const ptr_interface_of_nodes);
+    void WriteCheckPointNodesAtWhichLevels(const DefInt max_level,
+        const DefAmrLUint load_sum, const std::string& file_name,
+        const std::map<DefSFCodeToUint, BackgroundLoadData>& map__node_level) const;
+    DefAmrLUint ReadCheckPointNodesAtWhichLevels(const std::string& file_name,
+        std::map<DefSFCodeToUint, BackgroundLoadData>* const ptr_map_node_level) const;
+    void WriteCheckPointGridNodes(const std::string& file_name,
+        const std::vector<DefAmrLUint>& num_of_nodes,
+        const std::map<DefSFCodeToUint, BackgroundLoadData>& map_load_node_level,
+        const std::vector<std::shared_ptr<GridInfoInterface>>& vec_grid_info) const;
+    void ReadCheckPointGridNodes(const std::string& file_name,
+        const std::vector<DefAmrLUint>& num_of_nodes,
+        std::vector<std::shared_ptr<GridInfoInterface>>* const ptr_vec_grid_info) const;
+    void WriteCheckPointInterfaceNodes(const std::string& file_name,
+        const std::vector<DefAmrLUint>& num_of_nodes,
+        const std::map<DefSFCodeToUint, BackgroundLoadData>& map_load_node_level,
+        const std::vector<std::shared_ptr<GridInfoInterface>>& vec_grid_info) const;
+    void ReadCheckPointInterfaceNodes(const std::string& file_name,
+        const std::vector<DefAmrLUint>& num_of_nodes,
+        std::vector<std::shared_ptr<GridInfoInterface>>* const ptr_vec_grid_info) const;
+
+ private:
+    int CreateAndCommitInterfaceIndexType(MPI_Datatype* ptr_mpi_tracking_index_type) const;
 
     // functions for the purpose of debug
  public:

@@ -49,7 +49,7 @@ int MpiManager::CheckNodeOnPartitionInterface2D(DefInt i_level,
             sfbitset_aux.SFBitsetFindAllNeighbors(bitset_in, &array_neighbors);
             DefSFCodeToUint code;
             for (unsigned int i = 1; i < 9; ++i) {
-                code = array_neighbors.at(i).to_ullong();
+                code = sfbitset_aux.SFBitsetoSFCode(array_neighbors.at(i));
                 if (code < code_min
                     && ((array_neighbors.at(i) & take_xref.at(sfbitset_aux.kRefCurrent_))
                     != domain_min_m1_n_level.at(kXIndex))
@@ -107,7 +107,7 @@ void MpiManager::SearchForGhostLayerForMinNMax2D(const DefSFBitset sfbitset_in,
             for (DefInt ix = 0; ix <= num_of_ghost_layers; ++ix) {
                 if ((sfbitset_tmp_x&take_xref.at(sfbitset_aux.kRefCurrent_))
                  != domain_min_m1_n_level.at(kXIndex)) {
-                    code_tmp =  sfbitset_tmp_x.to_ullong();
+                    code_tmp = sfbitset_aux.SFBitsetoSFCode(sfbitset_tmp_x);
                     if ((this->*ptr_func_compare)(code_tmp, code_bound)) {
                         ptr_map_ghost_layer->insert({sfbitset_tmp_x, flag_ini});
                     }
@@ -121,7 +121,7 @@ void MpiManager::SearchForGhostLayerForMinNMax2D(const DefSFBitset sfbitset_in,
                 sfbitset_tmp_x = sfbitset_aux.FindXPos(sfbitset_tmp_x);
                 if ((sfbitset_tmp_x&take_xref.at(sfbitset_aux.kRefCurrent_))
                     != domain_max_p1_n_level.at(kXIndex)) {
-                    code_tmp = sfbitset_tmp_x.to_ullong();
+                    code_tmp = sfbitset_aux.SFBitsetoSFCode(sfbitset_tmp_x);
                     if ((this->*ptr_func_compare)(code_tmp, code_bound)) {
                         ptr_map_ghost_layer->insert({sfbitset_tmp_x, flag_ini});
                     }
@@ -145,7 +145,7 @@ void MpiManager::SearchForGhostLayerForMinNMax2D(const DefSFBitset sfbitset_in,
             for (DefInt ix = 0; ix <= num_of_ghost_layers; ++ix) {
                 if ((sfbitset_tmp_x&take_xref.at(sfbitset_aux.kRefCurrent_))
                  != domain_min_m1_n_level.at(kXIndex)) {
-                    code_tmp = sfbitset_tmp_x.to_ullong();
+                    code_tmp = sfbitset_aux.SFBitsetoSFCode(sfbitset_tmp_x);
                     if ((this->*ptr_func_compare)(code_tmp, code_bound)) {
                         ptr_map_ghost_layer->insert({sfbitset_tmp_x, flag_ini});
                     }
@@ -159,7 +159,7 @@ void MpiManager::SearchForGhostLayerForMinNMax2D(const DefSFBitset sfbitset_in,
                 sfbitset_tmp_x = sfbitset_aux.FindXPos(sfbitset_tmp_x);
                 if ((sfbitset_tmp_x&take_xref.at(sfbitset_aux.kRefCurrent_))
                  != domain_max_p1_n_level.at(kXIndex)) {
-                    code_tmp = sfbitset_tmp_x.to_ullong();
+                    code_tmp = sfbitset_aux.SFBitsetoSFCode(sfbitset_tmp_x);
                     if ((this->*ptr_func_compare)(code_tmp, code_bound)) {
                         ptr_map_ghost_layer->insert({sfbitset_tmp_x, flag_ini});
                     }
@@ -203,6 +203,10 @@ void MpiManager::IniTraverseBackgroundForPartitionRank0(
         DefInt node_cost = vec_cost.at(i_level);
         for (const auto& iter_low : vec_sfbitset.at(i_level)) {
             bitset_background = sfbitset_aux.SFBitsetToNLowerLevel(i_level_lower, iter_low.first);
+            if (sum_load + node_cost > (std::numeric_limits<DefAmrLUint>::max)()) {
+                LogManager::LogError("computational load exceeds the maximum of DefAmrLUint in "
+                    + std::string(__FILE__) + " at line " + std::to_string(__LINE__));
+            }
             if (background_occupied.find(bitset_background) ==
                 background_occupied.end()) {
                 background_occupied.insert({ bitset_background, node_cost });
@@ -228,7 +232,7 @@ void MpiManager::IniTraverseBackgroundForPartitionRank0(
     ptr_bitset_min->at(i_rank) = 0;
     ptr_bitset_max->back() = bitset_domain_max;
     DefAmrLUint cost_background = vec_cost.at(0);
-    DefSFCodeToUint i_code = bitset_domain_min.to_ullong();
+    DefSFCodeToUint i_code = sfbitset_aux.SFBitsetoSFCode(bitset_domain_min);
     DefSFBitset sfbitset_tmp = static_cast<DefSFBitset>(i_code);
     for (DefAmrLUint i_node = 0; i_node < num_background_nodes - 1; ++i_node) {
         if (load_count >= rank_load.at(i_rank)) {

@@ -106,6 +106,13 @@ void GridInfoLbmInteface::AdvancingAtCurrentTime(const amrproject::ETimeStepping
     amrproject::MpiManager* const ptr_mpi_manager,
     amrproject::CriterionManager* const ptr_criterion_manager) {
     const DefInt i_level = i_level_;
+    GetPtrToLbmGrid();
+    SolverLbmInterface* ptr_lbm_solver = nullptr;
+    if (auto ptr_tmp = ptr_solver_.lock()) {
+        ptr_lbm_solver = dynamic_cast<SolverLbmInterface*>(ptr_tmp.get());
+    } else {
+        amrproject::LogManager::LogError("LBM solver is not created.");
+    }
 
     UpdateCriterion(time_step_current, *ptr_mpi_manager, ptr_criterion_manager);
 
@@ -120,12 +127,6 @@ void GridInfoLbmInteface::AdvancingAtCurrentTime(const amrproject::ETimeStepping
         &vec_vec_reqs_send, &vec_vec_reqs_receive, &vec_ptr_buffer_send, &vec_ptr_buffer_receive, this);
 #endif  //  ENABLE_MPI
 
-    SolverLbmInterface* ptr_lbm_solver = nullptr;
-    if (auto ptr_tmp = ptr_solver_.lock()) {
-        ptr_lbm_solver = dynamic_cast<SolverLbmInterface*>(ptr_tmp.get());
-    } else {
-        amrproject::LogManager::LogError("LBM solver is not created.");
-    }
     ptr_lbm_solver->RunSolverOnGivenGrid(time_scheme, time_step_level, time_step_current, *ptr_sfbitset_aux_, this);
 
 #ifdef ENABLE_MPI
@@ -147,6 +148,7 @@ void GridInfoLbmInteface::AdvancingAtCurrentTime(const amrproject::ETimeStepping
             *GetPtrToParentGridManager()->vec_ptr_grid_info_.at(i_level - 1).get(), this);
     }
 #endif  //  ENABLE_MPI
+
     ptr_lbm_solver->InformationFromGridOfDifferentLevel(time_step_level, *ptr_sfbitset_aux_, this);
 }
 /**
@@ -402,7 +404,6 @@ void GridInfoLbmInteface::InitialNotComputeNodeFlag() {
  * @param node_flag flag indicates coarse node status, which will be not used for interpolation.
  * @param grid_info_coarse grid information on the coarse grid.
  * @return 0 run successfully, otherwise some error occurred in this function.
- * @note information on the layers from 1 to k0NumFine2CoarseLayer_ is transferred from the coarse grid.
  */
 int GridInfoLbmInteface::TransferInfoFromCoarseGrid(const amrproject::SFBitsetAuxInterface& sfbitset_aux,
     const DefInt node_flag_not_interp, const amrproject::GridInfoInterface& grid_info_coarse) {
@@ -539,6 +540,10 @@ int GridInfoLbmInteface::TransferInfoToCoarseGrid(const amrproject::SFBitsetAuxI
                 if (ptr_lbm_grid_nodes_->find(sfbitset_fine) != ptr_lbm_grid_nodes_->end()) {
                     NodeInfoFine2Coarse(*(ptr_lbm_grid_nodes_->at(sfbitset_fine).get()),
                         ptr_lbm_grid_coarse->at(iter_node.first).get());
+                } else if (interp_nodes_outer_layer_.find(sfbitset_fine) != interp_nodes_outer_layer_.end()
+                    && ptr_lbm_grid_coarse->find(iter_node.first) != ptr_lbm_grid_coarse->end()) {
+                    NodeInfoFine2Coarse(*(interp_nodes_outer_layer_.at(sfbitset_fine).get()),
+                        ptr_lbm_grid_coarse->at(iter_node.first).get());
                 }
             }
             // layers on outer interfaces
@@ -546,6 +551,10 @@ int GridInfoLbmInteface::TransferInfoToCoarseGrid(const amrproject::SFBitsetAuxI
                 sfbitset_fine = sfbitset_aux.SFBitsetToNHigherLevelVir(1, iter_node.first);
                 if (ptr_lbm_grid_nodes_->find(sfbitset_fine) != ptr_lbm_grid_nodes_->end()) {
                     NodeInfoFine2Coarse(*(ptr_lbm_grid_nodes_->at(sfbitset_fine).get()),
+                        ptr_lbm_grid_coarse->at(iter_node.first).get());
+                } else if (interp_nodes_outer_layer_.find(sfbitset_fine) != interp_nodes_outer_layer_.end()
+                    && ptr_lbm_grid_coarse->find(iter_node.first) != ptr_lbm_grid_coarse->end()) {
+                    NodeInfoFine2Coarse(*(interp_nodes_outer_layer_.at(sfbitset_fine).get()),
                         ptr_lbm_grid_coarse->at(iter_node.first).get());
                 }
             }
@@ -570,6 +579,8 @@ void GridInfoLbmInteface::NodeInfoCoarse2fine(const amrproject::GridNode& coarse
     }
     std::vector<DefReal> feq(ptr_lbm_solver->k0NumQ_);
     ptr_fine_node->velocity_.resize(ptr_lbm_solver->GetSolverDim());
+    ptr_fine_node->rho_ = coarse_node.rho_;
+    ptr_fine_node->velocity_.assign(coarse_node.velocity_.begin(), coarse_node.velocity_.end());
 
     ptr_lbm_solver->func_macro_without_force_(coarse_node.f_, &ptr_fine_node->rho_, &ptr_fine_node->velocity_);
     ptr_lbm_solver->func_cal_feq_(ptr_fine_node->rho_, ptr_fine_node->velocity_, &feq);
@@ -591,6 +602,9 @@ void GridInfoLbmInteface::NodeInfoFine2Coarse(const amrproject::GridNode& fine_b
     } else {
         amrproject::LogManager::LogError("LBM solver is not created.");
     }
+    ptr_coarse_node->rho_ = fine_node.rho_;
+    ptr_coarse_node->velocity_.resize(ptr_lbm_solver->GetSolverDim());
+    ptr_coarse_node->velocity_.assign(fine_node.velocity_.begin(), fine_node.velocity_.end());
     ptr_lbm_solver->func_cal_feq_(fine_node.rho_, fine_node.velocity_, &feq);
     ptr_lbm_solver->GetCollisionOperator(i_level_).PostStreamFine2Coarse(feq, fine_node, ptr_coarse_node);
 }
@@ -715,6 +729,23 @@ int GridInfoLbmInteface::OutputOneVariable(
     }
     fprintf(fp, "      </DataArray>\n");
     return 0;
+}
+/**
+ * @brief function to calculate the size of the grid node information needed for checkpoint IO.
+ * @return size of the grid node information for checkpoint IO.
+ */
+int GridInfoLbmInteface::GetSizeOfGridNodeInfoForCheckPoint() const {
+    SolverLbmInterface* ptr_lbm_solver = nullptr;
+    if (auto ptr_tmp = ptr_solver_.lock()) {
+        ptr_lbm_solver = dynamic_cast<SolverLbmInterface*>(ptr_tmp.get());
+    } else {
+        amrproject::LogManager::LogError("LBM solver is not created.");
+    }
+    int size_info = sizeof(DefInt) + static_cast<int>(ptr_lbm_solver->k0NumQ_*sizeof(DefReal));
+    if (ptr_lbm_solver->bool_forces_) {
+        size_info += static_cast<int>(ptr_lbm_solver->GetNumForces()*sizeof(DefReal));
+    }
+    return size_info;
 }
 }  // end namespace lbmproject
 }  // end namespace rootproject

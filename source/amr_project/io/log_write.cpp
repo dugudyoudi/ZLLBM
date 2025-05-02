@@ -172,7 +172,12 @@ void LogManager::LogError(const std::string& msg) {
         FOREGROUND_INTENSITY | FOREGROUND_RED
         | FOREGROUND_GREEN | FOREGROUND_BLUE);
 #endif
-    exit(0);
+
+#ifdef ENABLE_MPI
+    MPI_Abort(MPI_COMM_WORLD, 1);
+#else
+    exit(1);
+#endif
 }
 }  // end namespace amrproject
 }  // end namespace rootproject

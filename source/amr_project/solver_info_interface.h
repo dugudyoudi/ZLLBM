@@ -14,6 +14,7 @@
 #include <vector>
 #include "grid/grid_enumerates.h"
 #include "io/input_parser.h"
+#include "io/log_write.h"
 namespace rootproject {
 namespace amrproject {
 class GridInfoCreatorInterface;
@@ -41,7 +42,12 @@ class SolverInterface {
     DefInt GetSolverDim() const {return k0SolverDims_;}
     std::string GetSolverType() const {return solver_type_;}
     std::string GetName() const {return name_;}
-    GridManagerInterface* GetPtrToParentGridManager() const {return ptr_grid_manager_;}
+    GridManagerInterface* GetPtrToParentGridManager() const {
+        if (ptr_grid_manager_ == nullptr) {
+            LogManager::LogError("Grid manager is not assigned for solver.");
+        }
+        return ptr_grid_manager_;
+    }
 
     std::unique_ptr<GridInfoCreatorInterface> ptr_grid_info_creator_;
     virtual std::string GetSolverMethod() = 0;
