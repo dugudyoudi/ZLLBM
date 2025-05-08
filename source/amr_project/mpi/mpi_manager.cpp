@@ -151,7 +151,7 @@ DefAmrLUint MpiManager::ComputeComputationalLoadOnEachRank(
                 }
                 load_sum += node_cost;
                 ptr_num_of_nodes->at(node_cost) += 1;
-                code_background = sfbitset_aux.SFBitsetoSFCode(
+                code_background = sfbitset_aux.SFBitsetToSFCode(
                     sfbitset_aux.SFBitsetToNLowerLevelVir(i_level, iter_node.first));
                 if (ptr_node_level->find(code_background) == ptr_node_level->end()) {
                     ptr_node_level->insert({code_background, background_load_data});
@@ -170,7 +170,7 @@ DefAmrLUint MpiManager::ComputeComputationalLoadOnEachRank(
                         != iter_grid->map_grid_node_.end()) {
                         if (!(iter_grid->map_grid_node_.at(iter_node.first)->flag_status_
                             & NodeBitStatus::kNodeStatusMpiPartitionOuter_)) {
-                            code_background = sfbitset_aux.SFBitsetoSFCode(
+                            code_background = sfbitset_aux.SFBitsetToSFCode(
                                 sfbitset_aux.SFBitsetToNLowerLevelVir(i_level, iter_node.first));
                             ptr_node_level->at(code_background).num_of_interface_nodes_ += 1;
                         }

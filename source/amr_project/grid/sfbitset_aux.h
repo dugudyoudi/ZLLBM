@@ -38,7 +38,7 @@ class SFBitsetAuxInterface {
         return k0SpaceBackground_;
     }
 
-    inline DefSFCodeToUint SFBitsetoSFCode(const DefSFBitset& sfbitset) const { return sfbitset.to_ullong(); }
+    inline DefSFCodeToUint SFBitsetToSFCode(const DefSFBitset& sfbitset) const { return sfbitset.to_ullong(); }
 
     virtual void SFBitsetInitial() = 0;
     virtual DefSFBitset SFBitsetEncodingCoordi(

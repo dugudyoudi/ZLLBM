@@ -30,7 +30,7 @@ void GeometryInfoInterface::InstantiateGeometryVertexInfo(
         if (k0GeoDim_ == 3) {
             coordi[kZIndex] = vec_vertices_.at(i_vertex)->coordinate_[kZIndex];
         }
-        code_tmp = sfbitset_aux.SFBitsetoSFCode(sfbitset_aux.SFBitsetEncodingCoordi(grid_space_background, coordi));
+        code_tmp = sfbitset_aux.SFBitsetToSFCode(sfbitset_aux.SFBitsetEncodingCoordi(grid_space_background, coordi));
         if (code_tmp >= code_min && code_tmp <= code_max) {
             map_vertices_info_.insert({ i_vertex, GeoInfoVertexCreator() });
             map_vertices_info_.at(i_vertex)->coordinate_.at(kXIndex) = coordi[kXIndex];
@@ -49,8 +49,8 @@ void GeometryInfoInterface::InstantiateGeometryVertexInfo(
 void GeometryInfoInterface::SetupGeometryInfo(DefReal time,
     const MpiManager& mpi_manager, const GridInfoInterface& grid_info) {
     SFBitsetAuxInterface& sfbitset_aux = *grid_info.GetPtrSFBitsetAux();
-    InstantiateGeometryVertexInfo(sfbitset_aux.SFBitsetoSFCode(mpi_manager.GetSFBitsetMinCurrentRank()),
-        sfbitset_aux.SFBitsetoSFCode(mpi_manager.GetSFBitsetMaxCurrentRank()), *grid_info.GetPtrSFBitsetAux());
+    InstantiateGeometryVertexInfo(sfbitset_aux.SFBitsetToSFCode(mpi_manager.GetSFBitsetMinCurrentRank()),
+        sfbitset_aux.SFBitsetToSFCode(mpi_manager.GetSFBitsetMaxCurrentRank()), *grid_info.GetPtrSFBitsetAux());
     if (need_update_shape_) {
         ptr_geo_shape_->UpdateShape(time);
     }

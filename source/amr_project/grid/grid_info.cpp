@@ -89,32 +89,32 @@ DefInt GridInfoInterface::CheckIfNodeOutsideCubicDomain(const DefInt dims,
     const std::array<DefSFBitset, 2>& take_xref = sfbitset_aux.GetTakeXRef(),
         take_yref =  sfbitset_aux.GetTakeYRef(), take_zref = sfbitset_aux.GetTakeZRef();
     // x min
-    code_one_dim = sfbitset_aux.SFBitsetoSFCode(bitset_in&take_xref[current_bit]);
-    code_boundary = sfbitset_aux.SFBitsetoSFCode(k0VecBitsetDomainMin_[kXIndex]);
+    code_one_dim = sfbitset_aux.SFBitsetToSFCode(bitset_in&take_xref[current_bit]);
+    code_boundary = sfbitset_aux.SFBitsetToSFCode(k0VecBitsetDomainMin_[kXIndex]);
     if (code_one_dim < code_boundary) {
         return kFlagOutsideDomain_;
     } else if (code_one_dim == code_boundary) {
         flag_node |= kFlagXMinBoundary_;
     }
     // x max
-    code_one_dim = sfbitset_aux.SFBitsetoSFCode(bitset_in&take_xref[current_bit]);
-    code_boundary = sfbitset_aux.SFBitsetoSFCode(k0VecBitsetDomainMax_[kXIndex]);
+    code_one_dim = sfbitset_aux.SFBitsetToSFCode(bitset_in&take_xref[current_bit]);
+    code_boundary = sfbitset_aux.SFBitsetToSFCode(k0VecBitsetDomainMax_[kXIndex]);
     if (code_one_dim > code_boundary) {
         return kFlagOutsideDomain_;
     } else if (code_one_dim == code_boundary) {
         flag_node |= kFlagXMaxBoundary_;
     }
     // y min
-    code_one_dim = sfbitset_aux.SFBitsetoSFCode(bitset_in&take_yref[current_bit]);
-    code_boundary = sfbitset_aux.SFBitsetoSFCode(k0VecBitsetDomainMin_[kYIndex]);
+    code_one_dim = sfbitset_aux.SFBitsetToSFCode(bitset_in&take_yref[current_bit]);
+    code_boundary = sfbitset_aux.SFBitsetToSFCode(k0VecBitsetDomainMin_[kYIndex]);
     if (code_one_dim < code_boundary) {
         return kFlagOutsideDomain_;
     } else if (code_one_dim == code_boundary) {
         flag_node |= kFlagYMinBoundary_;
     }
     // y max
-    code_one_dim = sfbitset_aux.SFBitsetoSFCode(bitset_in&take_yref[current_bit]);
-    code_boundary = sfbitset_aux.SFBitsetoSFCode(k0VecBitsetDomainMax_[kYIndex]);
+    code_one_dim = sfbitset_aux.SFBitsetToSFCode(bitset_in&take_yref[current_bit]);
+    code_boundary = sfbitset_aux.SFBitsetToSFCode(k0VecBitsetDomainMax_[kYIndex]);
     if (code_one_dim > code_boundary) {
         return kFlagOutsideDomain_;
     } else if (code_one_dim == code_boundary) {
@@ -122,16 +122,16 @@ DefInt GridInfoInterface::CheckIfNodeOutsideCubicDomain(const DefInt dims,
     }
     if (dims == 3) {
         // z min
-        code_one_dim = sfbitset_aux.SFBitsetoSFCode(bitset_in&take_zref[current_bit]);
-        code_boundary = sfbitset_aux.SFBitsetoSFCode(k0VecBitsetDomainMin_[kZIndex]);
+        code_one_dim = sfbitset_aux.SFBitsetToSFCode(bitset_in&take_zref[current_bit]);
+        code_boundary = sfbitset_aux.SFBitsetToSFCode(k0VecBitsetDomainMin_[kZIndex]);
         if (code_one_dim < code_boundary) {
             return kFlagOutsideDomain_;
         } else if (code_one_dim == code_boundary) {
             flag_node |= kFlagZMinBoundary_;
         }
         // z max
-        code_one_dim = sfbitset_aux.SFBitsetoSFCode(bitset_in&take_zref[current_bit]);
-        code_boundary = sfbitset_aux.SFBitsetoSFCode(k0VecBitsetDomainMax_[kZIndex]);
+        code_one_dim = sfbitset_aux.SFBitsetToSFCode(bitset_in&take_zref[current_bit]);
+        code_boundary = sfbitset_aux.SFBitsetToSFCode(k0VecBitsetDomainMax_[kZIndex]);
         if (code_one_dim > code_boundary) {
             return kFlagOutsideDomain_;
         } else if (code_one_dim == code_boundary) {

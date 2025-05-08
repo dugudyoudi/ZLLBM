@@ -563,12 +563,12 @@ void GridManagerInterface::InstantiateGridNodeAllLevel(const DefSFBitset sfbitse
     DefSFCodeToUint code_min, code_max;
     if (k0GridDims_ == 2) {
         SFBitsetAux2D sfbitset_aux;
-        code_min = sfbitset_aux.SFBitsetoSFCode(sfbitset_min);
-        code_max = sfbitset_aux.SFBitsetoSFCode(sfbitset_max);
+        code_min = sfbitset_aux.SFBitsetToSFCode(sfbitset_min);
+        code_max = sfbitset_aux.SFBitsetToSFCode(sfbitset_max);
     } else {
         SFBitsetAux3D sfbitset_aux;
-        code_min = sfbitset_aux.SFBitsetoSFCode(sfbitset_min);
-        code_max = sfbitset_aux.SFBitsetoSFCode(sfbitset_max);
+        code_min = sfbitset_aux.SFBitsetToSFCode(sfbitset_min);
+        code_max = sfbitset_aux.SFBitsetToSFCode(sfbitset_max);
     }
     for (DefInt i_level = k0MaxLevel_; i_level > 0; --i_level) {
         DefInt i_level_lower = i_level - 1;

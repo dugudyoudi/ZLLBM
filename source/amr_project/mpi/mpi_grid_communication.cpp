@@ -386,7 +386,7 @@ void MpiManager::SendNReceiveSFbitsetForInterpolation(const DefInt i_level,
     std::vector<DefMap<DefInt>> requested_nodes(num_of_ranks_);
     int which_rank;
     for (const auto& iter_node : map_nodes_outer_layer) {
-        code_background = sfbitset_aux.SFBitsetoSFCode(sfbitset_aux.SFBitsetToNLowerLevelVir(i_level, iter_node.first));
+        code_background = sfbitset_aux.SFBitsetToSFCode(sfbitset_aux.SFBitsetToNLowerLevelVir(i_level, iter_node.first));
         which_rank = CheckNodeInWhichRank(code_background);
         if (which_rank != rank_id_) {
             if (which_rank >= num_of_ranks_) {

@@ -64,7 +64,7 @@ inline DefSFBitset SFBitsetAux2D::SFBitsetToNHigherLevel(
 */
 inline DefSFBitset SFBitsetAux2D::FindXNeg(
     const DefSFBitset& bitset_in) const {
-    DefSFCodeToUint x_ull =SFBitsetoSFCode(bitset_in & SFBitsetAux2D::k0SFBitsetTakeXRef_
+    DefSFCodeToUint x_ull =SFBitsetToSFCode(bitset_in & SFBitsetAux2D::k0SFBitsetTakeXRef_
         .at(SFBitsetAux2D::kRefCurrent_));
     if (x_ull == 0) {
         return bitset_in;
@@ -85,7 +85,7 @@ inline DefSFBitset SFBitsetAux2D::FindXNeg(
 inline DefSFBitset SFBitsetAux2D::FindXPos(
     const DefSFBitset& bitset_in) const {
     DefSFBitset sfbitest_tmp = static_cast<DefSFBitset>
-        (SFBitsetoSFCode(bitset_in | SFBitsetAux2D::k0SFBitsetTakeXRef_.
+        (SFBitsetToSFCode(bitset_in | SFBitsetAux2D::k0SFBitsetTakeXRef_.
             at(SFBitsetAux2D::kRefOthers_)) + 1);
     return ((sfbitest_tmp & SFBitsetAux2D::k0SFBitsetTakeXRef_.
         at(SFBitsetAux2D::kRefCurrent_))
@@ -100,7 +100,7 @@ inline DefSFBitset SFBitsetAux2D::FindXPos(
 */
 inline DefSFBitset SFBitsetAux2D::FindYNeg(
     const DefSFBitset& bitset_in)  const {
-    DefSFCodeToUint y_ull = SFBitsetoSFCode(bitset_in & SFBitsetAux2D::k0SFBitsetTakeYRef_
+    DefSFCodeToUint y_ull = SFBitsetToSFCode(bitset_in & SFBitsetAux2D::k0SFBitsetTakeYRef_
         .at(SFBitsetAux2D::kRefCurrent_));
     if (y_ull == 0) {
         return bitset_in;
@@ -120,7 +120,7 @@ inline DefSFBitset SFBitsetAux2D::FindYNeg(
 inline DefSFBitset SFBitsetAux2D::FindYPos(
     const DefSFBitset& bitset_in) const {
     DefSFBitset sfbitest_tmp = static_cast<DefSFBitset>
-        (SFBitsetoSFCode(bitset_in | SFBitsetAux2D::k0SFBitsetTakeYRef_.
+        (SFBitsetToSFCode(bitset_in | SFBitsetAux2D::k0SFBitsetTakeYRef_.
             at(SFBitsetAux2D::kRefOthers_)) + 1);
     return ((sfbitest_tmp & SFBitsetAux2D::k0SFBitsetTakeYRef_.
         at(SFBitsetAux2D::kRefCurrent_))
@@ -133,7 +133,7 @@ inline DefSFBitset SFBitsetAux2D::FindYPos(
 * @return  number of coincident lower refinement levels.
 */
 inline DefInt SFBitsetAux2D::SFBitsetCoincideLevel(const DefSFBitset& bitset_in) const {
-    return static_cast<DefInt>(std::countr_zero(SFBitsetoSFCode(bitset_in)))/2;
+    return static_cast<DefInt>(std::countr_zero(SFBitsetToSFCode(bitset_in)))/2;
 }
 #endif  // DEBUG_DISABLE_2D_FUNCTIONS
 #ifndef  DEBUG_DISABLE_3D_FUNCTIONS
@@ -183,7 +183,7 @@ inline DefSFBitset SFBitsetAux3D::SFBitsetToNHigherLevel(
 */
 inline DefSFBitset SFBitsetAux3D::FindXNeg(
     const DefSFBitset& bitset_in)  const {
-    DefSFCodeToUint x_ull = SFBitsetoSFCode(bitset_in & SFBitsetAux3D::k0SFBitsetTakeXRef_
+    DefSFCodeToUint x_ull = SFBitsetToSFCode(bitset_in & SFBitsetAux3D::k0SFBitsetTakeXRef_
         .at(SFBitsetAux3D::kRefCurrent_));
     if (x_ull == 0) {
         return bitset_in;
@@ -206,7 +206,7 @@ inline DefSFBitset SFBitsetAux3D::FindXNeg(
 inline DefSFBitset SFBitsetAux3D::FindXPos(
     const DefSFBitset& bitset_in)  const {
     DefSFBitset sfbitest_tmp = static_cast<DefSFBitset>
-        (SFBitsetoSFCode(bitset_in | SFBitsetAux3D::k0SFBitsetTakeXRef_.
+        (SFBitsetToSFCode(bitset_in | SFBitsetAux3D::k0SFBitsetTakeXRef_.
             at(SFBitsetAux3D::kRefOthers_)) + 1);
     return ((sfbitest_tmp & SFBitsetAux3D::k0SFBitsetTakeXRef_.
         at(SFBitsetAux3D::kRefCurrent_))
@@ -223,7 +223,7 @@ inline DefSFBitset SFBitsetAux3D::FindXPos(
 */
 inline DefSFBitset SFBitsetAux3D::FindYNeg(
     const DefSFBitset& bitset_in)  const {
-    DefSFCodeToUint y_ull = SFBitsetoSFCode(bitset_in & SFBitsetAux3D::k0SFBitsetTakeYRef_
+    DefSFCodeToUint y_ull = SFBitsetToSFCode(bitset_in & SFBitsetAux3D::k0SFBitsetTakeYRef_
         .at(SFBitsetAux3D::kRefCurrent_));
     if (y_ull == 0) {
         return bitset_in;
@@ -246,7 +246,7 @@ inline DefSFBitset SFBitsetAux3D::FindYNeg(
 inline DefSFBitset SFBitsetAux3D::FindYPos(
     const DefSFBitset& bitset_in)  const {
     DefSFBitset sfbitest_tmp = static_cast<DefSFBitset>
-        (SFBitsetoSFCode(bitset_in | SFBitsetAux3D::k0SFBitsetTakeYRef_.
+        (SFBitsetToSFCode(bitset_in | SFBitsetAux3D::k0SFBitsetTakeYRef_.
             at(SFBitsetAux3D::kRefOthers_)) + 1);
     return ((sfbitest_tmp & SFBitsetAux3D::k0SFBitsetTakeYRef_.
         at(SFBitsetAux3D::kRefCurrent_))
@@ -263,7 +263,7 @@ inline DefSFBitset SFBitsetAux3D::FindYPos(
 */
 inline DefSFBitset SFBitsetAux3D::FindZNeg(
     const DefSFBitset& bitset_in)  const {
-    DefSFCodeToUint z_ull = SFBitsetoSFCode(bitset_in & SFBitsetAux3D::k0SFBitsetTakeZRef_
+    DefSFCodeToUint z_ull = SFBitsetToSFCode(bitset_in & SFBitsetAux3D::k0SFBitsetTakeZRef_
         .at(SFBitsetAux3D::kRefCurrent_));
     if (z_ull == 0) {
         return bitset_in;
@@ -286,7 +286,7 @@ inline DefSFBitset SFBitsetAux3D::FindZNeg(
 inline DefSFBitset SFBitsetAux3D::FindZPos(
     const DefSFBitset& bitset_in) const {
     DefSFBitset sfbitest_tmp = static_cast<DefSFBitset>
-        (SFBitsetoSFCode(bitset_in | SFBitsetAux3D::k0SFBitsetTakeZRef_.
+        (SFBitsetToSFCode(bitset_in | SFBitsetAux3D::k0SFBitsetTakeZRef_.
             at(SFBitsetAux3D::kRefOthers_)) + 1);
     return ((sfbitest_tmp & SFBitsetAux3D::k0SFBitsetTakeZRef_.
         at(SFBitsetAux3D::kRefCurrent_))

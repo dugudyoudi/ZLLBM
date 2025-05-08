@@ -179,13 +179,13 @@ int SFBitsetAux2D::ResetIndicesExceedingDomain(const std::array<DefAmrLUint, 2>&
     if (indices[kXIndex] < domain_min_indices[kXIndex]) {
         sfbitset_tmp = SFBitsetEncoding(
             { domain_min_indices[kXIndex], indices[kYIndex] });
-        i_code = SFBitsetoSFCode(sfbitset_tmp);
+        i_code = SFBitsetToSFCode(sfbitset_tmp);
         SFBitsetComputeIndices(sfbitset_tmp, &indices);
     }
     if (indices[kYIndex] < domain_min_indices[kYIndex]) {
         sfbitset_tmp = SFBitsetEncoding(
             { indices[kXIndex] , domain_min_indices[kYIndex] });
-        i_code = SFBitsetoSFCode(sfbitset_tmp);
+        i_code = SFBitsetToSFCode(sfbitset_tmp);
         SFBitsetComputeIndices(sfbitset_tmp, &indices);
     }
     return 0;
@@ -432,19 +432,19 @@ int SFBitsetAux3D::ResetIndicesExceedingDomain(const std::array<DefAmrLUint, 3>&
     if (indices[kXIndex] < domain_min_indices[kXIndex]) {
         sfbitset_tmp = SFBitsetEncoding(
             { domain_min_indices[kXIndex], indices[kYIndex], indices[kZIndex] });
-        i_code = SFBitsetoSFCode(sfbitset_tmp);
+        i_code = SFBitsetToSFCode(sfbitset_tmp);
         SFBitsetComputeIndices(sfbitset_tmp, &indices);
     }
     if (indices[kYIndex] < domain_min_indices[kYIndex]) {
         sfbitset_tmp = SFBitsetEncoding(
             { indices[kXIndex], domain_min_indices[kYIndex], indices[kZIndex] });
-        i_code = SFBitsetoSFCode(sfbitset_tmp);
+        i_code = SFBitsetToSFCode(sfbitset_tmp);
         SFBitsetComputeIndices(sfbitset_tmp, &indices);
     }
     if (indices[kZIndex] < domain_min_indices[kZIndex]) {
         sfbitset_tmp = SFBitsetEncoding(
             { indices[kXIndex], indices[kYIndex], domain_min_indices[kZIndex] });
-        i_code = SFBitsetoSFCode(sfbitset_tmp);
+        i_code = SFBitsetToSFCode(sfbitset_tmp);
         SFBitsetComputeIndices(sfbitset_tmp, &indices);
     }
     return 0;

@@ -80,7 +80,7 @@ void GridInfoInterface::RemoveUnnecessaryF2CNodesOnMpiOuterLayer(const DefSFCode
         for (auto& iter_layer : iter_interface.second->vec_inner_fine2coarse_) {
             std::vector<DefSFBitset> vec_node_to_remove;
             for (const auto& iter_node : iter_layer) {
-                code_current = sfbitset_aux.SFBitsetoSFCode(
+                code_current = sfbitset_aux.SFBitsetToSFCode(
                     sfbitset_aux.SFBitsetToNLowerLevelVir(i_level_, iter_node.first));
                 if (code_current > code_max || code_current < code_min) {
                     bool bool_remove = true;
@@ -127,7 +127,7 @@ void GridInfoInterface::RemoveUnnecessaryF2CNodesOnMpiOuterLayer(const DefSFCode
         for (auto& iter_layer : iter_interface.second->vec_outer_fine2coarse_) {
             std::vector<DefSFBitset> vec_node_to_remove;
             for (const auto& iter_node : iter_layer) {
-                code_current = sfbitset_aux.SFBitsetoSFCode(
+                code_current = sfbitset_aux.SFBitsetToSFCode(
                     sfbitset_aux.SFBitsetToNLowerLevelVir(i_level_, iter_node.first));
                 if (code_current > code_max || code_current < code_min) {
                     bool bool_remove = true;

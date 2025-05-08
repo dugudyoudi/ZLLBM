@@ -809,7 +809,7 @@ bool SFBitsetAux2D::CheckPartitionLimits(const DefSFBitset& sfbitset_in,
     std::array<DefAmrLUint, 2> indices;
     SFBitsetFindAllNeighbors(sfbitset_in, &neighbors);
     for (DefInt i = 1; i < 9; ++i) {
-        code_neighbour = SFBitsetoSFCode(neighbors[i]);
+        code_neighbour = SFBitsetToSFCode(neighbors[i]);
         if (code_neighbour < code_partition_min || code_neighbour > code_partition_max) {
             SFBitsetComputeIndices(neighbors[i], &indices);
             if (indices[kXIndex] < code_domain_min[kXIndex] || indices[kXIndex] > code_domain_max[kXIndex]
@@ -3954,7 +3954,7 @@ bool SFBitsetAux3D::CheckPartitionLimits(const DefSFBitset& sfbitset_in,
     SFBitsetFindAllNeighbors(sfbitset_in, &neighbors);
 
     for (DefInt i = 1; i < 27; ++i) {
-        code_neighbour = SFBitsetoSFCode(neighbors[i]);
+        code_neighbour = SFBitsetToSFCode(neighbors[i]);
         if (code_neighbour < code_partition_min || code_neighbour > code_partition_max) {
             SFBitsetComputeIndices(neighbors[i], &indices);
             if (indices[kXIndex] < code_domain_min[kXIndex] || indices[kXIndex] > code_domain_max[kXIndex]

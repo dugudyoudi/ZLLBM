@@ -49,7 +49,7 @@ int MpiManager::CheckNodeOnPartitionInterface3D(DefInt i_level,
             sfbitset_aux.SFBitsetFindAllNeighbors(bitset_in, &array_neighbors);
             DefSFCodeToUint code;
             for (unsigned int i = 1; i < 27; ++i) {
-                code = sfbitset_aux.SFBitsetoSFCode(array_neighbors.at(i));
+                code = sfbitset_aux.SFBitsetToSFCode(array_neighbors.at(i));
                 if (code < code_min
                     && ((array_neighbors.at(i) & take_xref.at(sfbitset_aux.kRefCurrent_))
                     != domain_min_m1_n_level.at(kXIndex))  // node is not x_min - 1
@@ -120,7 +120,7 @@ void MpiManager::SearchForGhostLayerForMinNMax3D(const DefSFBitset sfbitset_in,
                     for (DefInt ix = 0; ix <= num_of_ghost_layers; ++ix) {
                         if ((sfbitset_tmp_x&take_xref.at(sfbitset_aux.kRefCurrent_))
                          != domain_min_m1_n_level.at(kXIndex)) {
-                            code_tmp = sfbitset_aux.SFBitsetoSFCode(sfbitset_tmp_x);
+                            code_tmp = sfbitset_aux.SFBitsetToSFCode(sfbitset_tmp_x);
                             if ((this->*ptr_func_compare)(code_tmp, code_bound)) {
                                 ptr_map_ghost_layer->insert({sfbitset_tmp_x, flag_ini});
                             }
@@ -134,7 +134,7 @@ void MpiManager::SearchForGhostLayerForMinNMax3D(const DefSFBitset sfbitset_in,
                         sfbitset_tmp_x = sfbitset_aux.FindXPos(sfbitset_tmp_x);
                         if ((sfbitset_tmp_x&take_xref.at(sfbitset_aux.kRefCurrent_))
                          != domain_max_p1_n_level.at(kXIndex)) {
-                            code_tmp = sfbitset_aux.SFBitsetoSFCode(sfbitset_tmp_x);
+                            code_tmp = sfbitset_aux.SFBitsetToSFCode(sfbitset_tmp_x);
                             if ((this->*ptr_func_compare)(code_tmp, code_bound)) {
                                 ptr_map_ghost_layer->insert({sfbitset_tmp_x, flag_ini});
                             }
@@ -157,7 +157,7 @@ void MpiManager::SearchForGhostLayerForMinNMax3D(const DefSFBitset sfbitset_in,
                     for (DefInt ix = 0; ix <= num_of_ghost_layers; ++ix) {
                         if ((sfbitset_tmp_x&take_xref.at(sfbitset_aux.kRefCurrent_))
                          != domain_min_m1_n_level.at(kXIndex)) {
-                            code_tmp = sfbitset_aux.SFBitsetoSFCode(sfbitset_tmp_x);
+                            code_tmp = sfbitset_aux.SFBitsetToSFCode(sfbitset_tmp_x);
                             if ((this->*ptr_func_compare)(code_tmp, code_bound)) {
                                 ptr_map_ghost_layer->insert({sfbitset_tmp_x, flag_ini});
                             }
@@ -171,7 +171,7 @@ void MpiManager::SearchForGhostLayerForMinNMax3D(const DefSFBitset sfbitset_in,
                         sfbitset_tmp_x = sfbitset_aux.FindXPos(sfbitset_tmp_x);
                         if ((sfbitset_tmp_x&take_xref.at(sfbitset_aux.kRefCurrent_))
                          != domain_max_p1_n_level.at(kXIndex)) {
-                            code_tmp = sfbitset_aux.SFBitsetoSFCode(sfbitset_tmp_x);
+                            code_tmp = sfbitset_aux.SFBitsetToSFCode(sfbitset_tmp_x);
                             if ((this->*ptr_func_compare)(code_tmp, code_bound)) {
                                 ptr_map_ghost_layer->insert({sfbitset_tmp_x, flag_ini});
                             }
@@ -203,7 +203,7 @@ void MpiManager::SearchForGhostLayerForMinNMax3D(const DefSFBitset sfbitset_in,
                     for (DefInt ix = 0; ix <= num_of_ghost_layers; ++ix) {
                         if ((sfbitset_tmp_x&take_xref.at(sfbitset_aux.kRefCurrent_))
                          != domain_min_m1_n_level.at(kXIndex)) {
-                            code_tmp = sfbitset_aux.SFBitsetoSFCode(sfbitset_tmp_x);
+                            code_tmp = sfbitset_aux.SFBitsetToSFCode(sfbitset_tmp_x);
                             if ((this->*ptr_func_compare)(code_tmp, code_bound)) {
                                 ptr_map_ghost_layer->insert({sfbitset_tmp_x, flag_ini});
                             }
@@ -217,7 +217,7 @@ void MpiManager::SearchForGhostLayerForMinNMax3D(const DefSFBitset sfbitset_in,
                         sfbitset_tmp_x = sfbitset_aux.FindXPos(sfbitset_tmp_x);
                         if ((sfbitset_tmp_x&take_xref.at(sfbitset_aux.kRefCurrent_))
                          != domain_max_p1_n_level.at(kXIndex)) {
-                            code_tmp = sfbitset_aux.SFBitsetoSFCode(sfbitset_tmp_x);
+                            code_tmp = sfbitset_aux.SFBitsetToSFCode(sfbitset_tmp_x);
                             if ((this->*ptr_func_compare)(code_tmp, code_bound)) {
                                 ptr_map_ghost_layer->insert({sfbitset_tmp_x, flag_ini});
                             }
@@ -240,7 +240,7 @@ void MpiManager::SearchForGhostLayerForMinNMax3D(const DefSFBitset sfbitset_in,
                     for (DefInt ix = 0; ix <= num_of_ghost_layers; ++ix) {
                         if ((sfbitset_tmp_x&take_xref.at(sfbitset_aux.kRefCurrent_))
                          != domain_min_m1_n_level.at(kXIndex)) {
-                            code_tmp = sfbitset_aux.SFBitsetoSFCode(sfbitset_tmp_x);
+                            code_tmp = sfbitset_aux.SFBitsetToSFCode(sfbitset_tmp_x);
                             if ((this->*ptr_func_compare)(code_tmp, code_bound)) {
                                 ptr_map_ghost_layer->insert({sfbitset_tmp_x, flag_ini});
                             }
@@ -254,7 +254,7 @@ void MpiManager::SearchForGhostLayerForMinNMax3D(const DefSFBitset sfbitset_in,
                         sfbitset_tmp_x = sfbitset_aux.FindXPos(sfbitset_tmp_x);
                         if ((sfbitset_tmp_x&take_xref.at(sfbitset_aux.kRefCurrent_))
                          != domain_max_p1_n_level.at(kXIndex)) {
-                            code_tmp = sfbitset_aux.SFBitsetoSFCode(sfbitset_tmp_x);
+                            code_tmp = sfbitset_aux.SFBitsetToSFCode(sfbitset_tmp_x);
                             if ((this->*ptr_func_compare)(code_tmp, code_bound)) {
                                 ptr_map_ghost_layer->insert({sfbitset_tmp_x, flag_ini});
                             }
@@ -330,7 +330,7 @@ void MpiManager::IniTraverseBackgroundForPartitionRank0(
     int i_rank = 0;
     ptr_bitset_min->at(i_rank) = 0;
     ptr_bitset_max->back() = bitset_domain_max;
-    DefSFCodeToUint i_code = sfbitset_aux.SFBitsetoSFCode(bitset_domain_min);
+    DefSFCodeToUint i_code = sfbitset_aux.SFBitsetToSFCode(bitset_domain_min);
     DefSFBitset sfbitset_tmp = static_cast<DefSFBitset>(i_code);
     for (DefAmrLUint i_node = 0; i_node < num_background_nodes - 1; ++i_node) {
         if (load_count >= rank_load.at(i_rank)) {

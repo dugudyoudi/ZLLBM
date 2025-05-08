@@ -549,8 +549,8 @@ void GeometryInfoImmersedBoundary::SetupGeometryInfo(const DefReal time,
 
     std::vector<DefSFBitset> nodes_in_region;
     DefSFBitset sfbitset_tmp;
-    DefSFCodeToUint code_background, code_min = sfbitset_aux.SFBitsetoSFCode(mpi_manager.GetSFBitsetMinCurrentRank()),
-        code_max = sfbitset_aux.SFBitsetoSFCode(mpi_manager.GetSFBitsetMaxCurrentRank());
+    DefSFCodeToUint code_background, code_min = sfbitset_aux.SFBitsetToSFCode(mpi_manager.GetSFBitsetMinCurrentRank()),
+        code_max = sfbitset_aux.SFBitsetToSFCode(mpi_manager.GetSFBitsetMaxCurrentRank());
     std::vector<DefSFCodeToUint>::iterator iter_index;
     std::vector<DefSFCodeToUint> ull_max = mpi_manager.GetSFCodeMaxAllRanks();
     int i_rank;
@@ -562,7 +562,7 @@ void GeometryInfoImmersedBoundary::SetupGeometryInfo(const DefReal time,
             domain_info.periodic_min_, domain_info.periodic_max_,
             domain_info.domain_min_n_level_, domain_info.domain_max_n_level_, &nodes_in_region);
         for (const auto& iter_sfbitset : nodes_in_region) {
-            code_background = sfbitset_aux.SFBitsetoSFCode(
+            code_background = sfbitset_aux.SFBitsetToSFCode(
                 sfbitset_aux.SFBitsetToNLowerLevelVir(i_level, iter_sfbitset));
             if (code_background < code_min || code_background > code_max) {
                 iter_index = std::lower_bound(ull_max.begin(), ull_max.end(), code_background);

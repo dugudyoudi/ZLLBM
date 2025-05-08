@@ -342,19 +342,19 @@ int GridManager3D::CheckNodeOnDomainBoundary(
 bool GridManager3D::CheckNodeNotOutsideDomainBoundary(const DefSFBitset& sfbitset_in,
     const std::vector<DefSFCodeToUint>& sfbitset_min,
     const std::vector<DefSFCodeToUint>& sfbitset_max) const {
-    if (SFBitsetoSFCode(sfbitset_in&k0SFBitsetTakeXRef_[kRefCurrent_]) < sfbitset_min.at(kXIndex)) {
+    if (SFBitsetToSFCode(sfbitset_in&k0SFBitsetTakeXRef_[kRefCurrent_]) < sfbitset_min.at(kXIndex)) {
         return false;
-    } else if (SFBitsetoSFCode(sfbitset_in&k0SFBitsetTakeXRef_[kRefCurrent_]) > sfbitset_max.at(kXIndex)) {
-        return false;
-    }
-    if (SFBitsetoSFCode(sfbitset_in&k0SFBitsetTakeYRef_[kRefCurrent_])< sfbitset_min.at(kYIndex)) {
-        return false;
-    } else if (SFBitsetoSFCode(sfbitset_in&k0SFBitsetTakeYRef_[kRefCurrent_]) > sfbitset_max.at(kYIndex)) {
+    } else if (SFBitsetToSFCode(sfbitset_in&k0SFBitsetTakeXRef_[kRefCurrent_]) > sfbitset_max.at(kXIndex)) {
         return false;
     }
-     if (SFBitsetoSFCode(sfbitset_in&k0SFBitsetTakeZRef_[kRefCurrent_]) < sfbitset_min.at(kZIndex)) {
+    if (SFBitsetToSFCode(sfbitset_in&k0SFBitsetTakeYRef_[kRefCurrent_])< sfbitset_min.at(kYIndex)) {
         return false;
-    } else if (SFBitsetoSFCode(sfbitset_in&k0SFBitsetTakeZRef_[kRefCurrent_]) > sfbitset_max.at(kZIndex)) {
+    } else if (SFBitsetToSFCode(sfbitset_in&k0SFBitsetTakeYRef_[kRefCurrent_]) > sfbitset_max.at(kYIndex)) {
+        return false;
+    }
+     if (SFBitsetToSFCode(sfbitset_in&k0SFBitsetTakeZRef_[kRefCurrent_]) < sfbitset_min.at(kZIndex)) {
+        return false;
+    } else if (SFBitsetToSFCode(sfbitset_in&k0SFBitsetTakeZRef_[kRefCurrent_]) > sfbitset_max.at(kZIndex)) {
         return false;
     }
     return true;

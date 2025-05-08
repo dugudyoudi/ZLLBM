@@ -149,7 +149,7 @@ void MpiManager::IniSendNReceiveTracking(const DefInt dims, const DefInt i_level
     std::vector<DefSFCodeToUint> ull_max(bitset_max.size());
     if (rank_id == 0) {
         for (DefSizet i = 0; i < bitset_max.size(); ++i) {
-            ull_max.at(i) = bitset_aux.SFBitsetoSFCode(bitset_max.at(i));
+            ull_max.at(i) = bitset_aux.SFBitsetToSFCode(bitset_max.at(i));
         }
     }
 
@@ -252,12 +252,12 @@ void MpiManager::IniSendNReceiveTracking(const DefInt dims, const DefInt i_level
             std::vector<DefSFCodeToUint>::iterator iter_index;
             std::vector<int> i_chunk_each_rank(num_ranks, -1), i_counts(num_ranks, 0);
             for (const auto& iter_node : ptr_tracking_info->map_tracking_node_) {
-                background_code = bitset_aux.SFBitsetoSFCode(
+                background_code = bitset_aux.SFBitsetToSFCode(
                     bitset_aux.SFBitsetToNLowerLevelVir(i_level, iter_node.first));
                 iter_index = std::lower_bound(ull_max.begin(),
                     ull_max.end(), background_code);
                 index = static_cast<int>(iter_index - ull_max.begin());
-                key_ull = bitset_aux.SFBitsetoSFCode(iter_node.first);
+                key_ull = bitset_aux.SFBitsetToSFCode(iter_node.first);
                 if (index != 0) {
                     vec_nodes_ranks.at(0).at(0).insert(key_ull);  // nodes need to be deleted on rank 0
 #ifdef DEBUG_CHECK_GRID
