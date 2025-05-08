@@ -452,7 +452,6 @@ void GridManagerInterface::InstantiateGridNodeAllLevelMpi(const int i_rank,
 
         // extend one mpi layer when necessary since mesh generation is based on one lower level
         DefMap<DefInt> map_extra_expand_outer;
-        DefSFBitset sfbitset_tmp;
         DefSFCodeToUint code_interface;
         std::vector<std::pair<DefAmrLUint, DefSFBitset>> vec_overlap;
         if (num_partition_outer_layer == 1) {
@@ -562,7 +561,7 @@ void GridManagerInterface::InstantiateGridNodeAllLevelMpi(const int i_rank,
             }
         }
         DefInt search_length = num_partition_inner_layer - 1;
-        auto func_set_inner = [this, &sfbitset_aux, &inner_layer_tmp,
+        auto func_set_inner = [&sfbitset_aux, &inner_layer_tmp,
             &map_grid, &periodic_min, &periodic_max,
             &domain_min_n_level, &domain_max_n_level, search_length,
             i_level, code_min_background_level, code_max_background_level](const DefSFBitset& sfbitset_in) {
@@ -829,7 +828,7 @@ void GridManagerInterface::InstantiateGridNodeAllLevelMpi(const int i_rank,
         }
     }
     DefInt search_length = num_partition_inner_layer - 1;
-    auto func_set_inner = [this, &sfbitset_aux, &inner_layer_tmp,
+    auto func_set_inner = [&sfbitset_aux, &inner_layer_tmp,
         &map_grid_level_0, &periodic_min, &periodic_max,
         &domain_min_n_level, &domain_max_n_level, search_length,
         code_min_background_level, code_max_background_level](const DefSFBitset& sfbitset_in) {
@@ -1016,7 +1015,6 @@ void  GridManagerInterface::SearchMpiLayersForPeriodicBoundaries(const DefInt di
     GridInfoInterface* const ptr_grid_info) {
     DefSFCodeToUint code_background_level;
     std::vector<DefSFBitset> bitset_neighbors;
-    DefSFBitset sfbitset_tmp, sfbitset_counterpart;
     const DefInt i_level = ptr_grid_info->GetGridLevel();
     auto& map_nodes = ptr_grid_info->map_grid_node_;
     DefMap<DefInt> map_not_instantiate_nodes;
@@ -1033,9 +1031,9 @@ void  GridManagerInterface::SearchMpiLayersForPeriodicBoundaries(const DefInt di
             search_length_pos.at(i_dims) = 0;
         }
     }
-    auto func_set_outer = [this, i_level, flag_periodic_outer_node, &search_length_neg, &search_length_pos,
-        &sfbitset_aux, &ptr_mpi_inner_layer, &ptr_mpi_outer_layer, &map_nodes, &periodic_min, &periodic_max, &ull_max,
-        &domain_min_n_level, &domain_max_n_level, &ptr_grid_info, &map_not_instantiate_nodes,
+    auto func_set_outer = [i_level, flag_periodic_outer_node, &search_length_neg, &search_length_pos,
+        &sfbitset_aux, &ptr_mpi_outer_layer, &map_nodes, &periodic_min, &periodic_max,
+        &domain_min_n_level, &domain_max_n_level, &map_not_instantiate_nodes,
         code_min_background_level, code_max_background_level](const DefSFBitset& sfbitset_in) {
         std::vector<DefSFBitset> vec_in_region;
         std::vector<std::pair<DefAmrLUint, DefSFBitset>> vec_overlap;
@@ -1098,7 +1096,7 @@ void  GridManagerInterface::SearchMpiLayersForPeriodicBoundaries(const DefInt di
     }
     std::fill(search_length_neg.begin(), search_length_neg.end(), num_mpi_inner_layer);
     std::fill(search_length_pos.begin(), search_length_pos.end(), num_mpi_inner_layer);
-    auto func_set_inner = [this, i_level, &search_length_neg, &search_length_pos, &sfbitset_aux,
+    auto func_set_inner = [i_level, &search_length_neg, &search_length_pos, &sfbitset_aux,
         &map_nodes, &periodic_min, &periodic_max, &ptr_mpi_inner_layer, &ull_max,
         &domain_min_n_level, &domain_max_n_level,
         code_min_background_level, code_max_background_level](const DefSFBitset& sfbitset_in) {
@@ -1641,7 +1639,6 @@ void  GridManagerInterface::InstantiateDomainBoundaryForMpi(const DefAmrLUint nu
     const SFBitsetAuxInterface& sfbitset_aux, GridInfoInterface* const ptr_grid_info,
     DefMap<DefInt>* const ptr_inner_layer, DefMap<DefInt>* const ptr_outer_layer) {
     const DefInt i_level = ptr_grid_info->GetGridLevel();
-    DefSFBitset sfbitset_tmp, sfbitset_tmp_pre;
     DefMap<std::unique_ptr<GridNode>>& map_grid = ptr_grid_info->map_grid_node_;
     std::vector<DefSFBitset> nodes_on_surface;
     DefSFCodeToUint code_tmp;

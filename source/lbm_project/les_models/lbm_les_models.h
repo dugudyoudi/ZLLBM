@@ -33,6 +33,7 @@ class LesModelInterface {
     virtual DefReal CalSgsRelaxationTimeWithForce(const DefReal dt_lbm,
         const DefReal tau_0, const std::vector<DefReal>& feq, const std::vector<DefReal>& force,
         const GridNodeLbm& node, const SolverLbmInterface& lbm_solver) const = 0;
+    virtual ~LesModelInterface() {}
 };
 /**
 * @brief interface class to manage LES model

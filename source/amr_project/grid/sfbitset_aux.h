@@ -209,11 +209,6 @@ class  SFBitsetAux2D : public SFBitsetAuxInterface {
         std::array<bool, 2>* const ptr_bool_not_at_boundary_pos) const;
     void SFBitsetFindAllNeighbors(const DefSFBitset& sfbitset_center,
         std::array<DefSFBitset, 9>* const ptr_bitset_neighbour) const;
-    void SFBitsetFindAllBondedNeighborsVir(const DefSFBitset& bitset_in,
-        const std::vector<bool>& bool_periodic_min, const std::vector<bool>& bool_periodic_max,
-        const std::vector<DefSFBitset>& domain_min_n_level,
-        const std::vector<DefSFBitset>& domain_max_n_level,
-        std::vector<DefSFBitset>* const ptr_vec_neighbors) const;
     void SFBitsetFindCellNeighbors(const DefSFBitset& sfbitset_corner,
         std::array<DefSFBitset, 4>* const ptr_bitset_neighbour) const;
     template<typename DataType>
@@ -321,6 +316,11 @@ class  SFBitsetAux2D : public SFBitsetAuxInterface {
     void SFBitsetHigherLevelInACell(
             const DefInt level_diff, const DefSFBitset& sfbitset_corner,
             std::vector<DefSFBitset>* const ptr_vec_bitset_neighbour) const final;
+    void SFBitsetFindAllBondedNeighborsVir(const DefSFBitset& bitset_in,
+        const std::vector<bool>& bool_periodic_min, const std::vector<bool>& bool_periodic_max,
+        const std::vector<DefSFBitset>& domain_min_n_level,
+        const std::vector<DefSFBitset>& domain_max_n_level,
+        std::vector<DefSFBitset>* const ptr_vec_neighbors) const final;
 
     bool CheckExistenceCurrentLevel(
         const DefSFBitset& sfbitset_in, const DefMap<DefInt>& exist_nodes) const final;
@@ -466,11 +466,6 @@ class  SFBitsetAux3D : public SFBitsetAuxInterface {
         std::array<DefSFBitset, 27>* const ptr_bitset_neighbour) const;
     void SFBitsetFindCellNeighbors(const DefSFBitset& sfbitset_corner,
         std::array<DefSFBitset, 8>* const ptr_vec_bitset_neighbour) const;
-    void SFBitsetFindAllBondedNeighborsVir(const DefSFBitset& bitset_in,
-        const std::vector<bool>& bool_periodic_min, const std::vector<bool>& bool_periodic_max,
-        const std::vector<DefSFBitset>& domain_min_n_level,
-        const std::vector<DefSFBitset>& domain_max_n_level,
-        std::vector<DefSFBitset>* const ptr_vec_neighbors) const;
     template<typename DataType>
     bool SFBitsetBelongToOneCell(const DefSFBitset& sfbitset_in,
         const DefMap<DataType>& map_node_exist, std::array<DefSFBitset, 8>* const ptr_sfbitsets) const;
@@ -588,6 +583,11 @@ class  SFBitsetAux3D : public SFBitsetAuxInterface {
         std::vector<DefSFBitset>* const ptr_vec_coarse) const final;
     void SFBitsetHigherLevelInACell(const DefInt level_diff, const DefSFBitset& sfbitset_corner,
         std::vector<DefSFBitset>* const ptr_ptr_sfbitsets_higher_level) const final;
+    void SFBitsetFindAllBondedNeighborsVir(const DefSFBitset& bitset_in,
+        const std::vector<bool>& bool_periodic_min, const std::vector<bool>& bool_periodic_max,
+        const std::vector<DefSFBitset>& domain_min_n_level,
+        const std::vector<DefSFBitset>& domain_max_n_level,
+        std::vector<DefSFBitset>* const ptr_vec_neighbors) const final;
 
     DefSFBitset  SFBitsetToNLowerLevelVir(const DefInt n_level, const DefSFBitset& morton_in) const final {
         return SFBitsetToNLowerLevel(n_level, morton_in);

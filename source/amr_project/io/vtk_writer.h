@@ -91,8 +91,7 @@ class VtkWriterManager {
         const CriterionManager& criterion_manager);
 
  private:
-    const uint8_t kVtkNormalPoint_ = 0, kVtkDuplicatedPoint_ = 1,
-        kVtkHiddenPoint_ = 2;
+    const uint8_t kVtkNormalPoint_ = 0, kVtkDuplicatedPoint_ = 1;
 
     // definition from kitware
     // export const CellGhostTypes = {

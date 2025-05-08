@@ -765,7 +765,7 @@ void MpiManager::ReadCheckPointGridNodes(const std::string& file_name,
                 DefInt i_level_read;
                 std::memcpy(&i_level_read, chunk_buffer.data() + index, int_size);
                 index += int_size;
-                if (ptr_vec_grid_info->size() <= i_level_read) {
+                if (static_cast<int>(ptr_vec_grid_info->size()) <= i_level_read) {
                     LogManager::LogError("Grid level exceeds available levels in " +
                         std::string(__FILE__) + " at line " + std::to_string(__LINE__));
                 } else {
@@ -935,8 +935,7 @@ void MpiManager::WriteCheckPointInterfaceNodes(const std::string& file_name,
     DefSizet chunk_index = 0;
     MPI_Offset current_offset = offset;
     std::vector<DefSFBitset> sfbitset_cell;
-    DefInt node_load = 0;
-    auto add_node = [sfbitset_size, int_size, &mpi_file, &mpi_status, &current_offset,
+    auto add_node = [&mpi_file, &mpi_status, &current_offset,
         &index_map, &chunk_index](const int layer_indicator,
         const DefInt i_level, const ECriterionType enum_criterion, const DefInt criterion_count,
         const DefSFBitset& sfbitset_in, const std::vector<DefMap<DefInt>>& layer_vec,
@@ -974,7 +973,6 @@ void MpiManager::WriteCheckPointInterfaceNodes(const std::string& file_name,
         }
     };
     for (const auto& iter : map_node_level) {
-        node_load = 0;
         for (DefInt i_level = 0; i_level <= max_level; ++i_level) {
             if (iter.second.level_bitset_.Get(i_level)) {
                 const auto& grid_info = *vec_grid_info.at(i_level).get();
@@ -1090,7 +1088,7 @@ void MpiManager::ReadCheckPointInterfaceNodes(const std::string& file_name,
                 const DefInt criterion_count = vec_interface_index.at(index_read).criterion_count;
                 const int layer_indicator = vec_interface_index.at(index_read).layer_indicator;
                 const int layer_count = vec_interface_index.at(index_read).layer_count;
-                if (ptr_vec_grid_info->size() <= i_level) {
+                if (static_cast<DefInt>(ptr_vec_grid_info->size()) <= i_level) {
                     LogManager::LogError("Grid level exceeds available levels in " +
                         std::string(__FILE__) + " at line " + std::to_string(__LINE__));
                 } else {
@@ -1103,25 +1101,25 @@ void MpiManager::ReadCheckPointInterfaceNodes(const std::string& file_name,
                     }
                     auto& ptr_interface = grid_info.map_ptr_interface_layer_info_.at(pair_interface);
                     if (layer_indicator == inner_fine2coarse) {
-                        if (ptr_interface->vec_inner_fine2coarse_.size() <= layer_count) {
+                        if (static_cast<int>(ptr_interface->vec_inner_fine2coarse_.size()) <= layer_count) {
                             ptr_interface->vec_inner_fine2coarse_.resize(layer_count + 1);
                         }
                         ptr_interface->vec_inner_fine2coarse_.at(layer_count).insert({sfbitset, 0});
                     }
                     if (layer_indicator == outer_fine2coarse) {
-                        if (ptr_interface->vec_outer_fine2coarse_.size() <= layer_count) {
+                        if (static_cast<int>(ptr_interface->vec_outer_fine2coarse_.size()) <= layer_count) {
                             ptr_interface->vec_outer_fine2coarse_.resize(layer_count + 1);
                         }
                         ptr_interface->vec_outer_fine2coarse_.at(layer_count).insert({sfbitset, 0});
                     }
                     if (layer_indicator == inner_coarse2fine) {
-                        if (ptr_interface->vec_inner_coarse2fine_.size() <= layer_count) {
+                        if (static_cast<int>(ptr_interface->vec_inner_coarse2fine_.size()) <= layer_count) {
                             ptr_interface->vec_inner_coarse2fine_.resize(layer_count + 1);
                         }
                         ptr_interface->vec_inner_coarse2fine_.at(layer_count).insert({sfbitset, 0});
                     }
                     if (layer_indicator == outer_coarse2fine) {
-                        if (ptr_interface->vec_outer_coarse2fine_.size() <= layer_count) {
+                        if (static_cast<int>(ptr_interface->vec_outer_coarse2fine_.size()) <= layer_count) {
                             ptr_interface->vec_outer_coarse2fine_.resize(layer_count + 1);
                         }
                         ptr_interface->vec_outer_coarse2fine_.at(layer_count).insert({sfbitset, 0});

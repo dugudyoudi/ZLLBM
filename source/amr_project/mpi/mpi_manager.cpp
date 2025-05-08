@@ -139,10 +139,8 @@ DefAmrLUint MpiManager::ComputeComputationalLoadOnEachRank(
     }
     DefSFCodeToUint code_background;
     BackgroundLoadData background_load_data(max_level + 1);
-    auto func_set_inner = [this, &sfbitset_aux](const DefSFBitset& sfbitset_in) {
-    };
 
-    for (const auto iter_grid : vec_grid_info) {
+    for (const auto& iter_grid : vec_grid_info) {
         DefInt node_cost = iter_grid->GetComputationalCost();
         DefInt i_level = iter_grid->GetGridLevel();
         for (const auto& iter_node : iter_grid->map_grid_node_) {
@@ -338,7 +336,6 @@ void MpiManager::ComputeMinNMaxSFbitsetForEachRank(const DefAmrLUint load_all, c
     ptr_bitset_min->at(i_rank) = static_cast<DefSFBitset>(std::prev(map_node_level.begin())->first);
     ptr_bitset_max->back() = static_cast<DefSFBitset>(std::prev(map_node_level.end())->first);
     DefInt node_cost = 0;
-    DefInt max_level = static_cast<DefInt>(vec_cost.size() - 1);
     ptr_num_of_grid_nodes->clear();
     ptr_num_of_grid_nodes->resize(num_of_ranks_, 0);
     ptr_interface_of_nodes->clear();

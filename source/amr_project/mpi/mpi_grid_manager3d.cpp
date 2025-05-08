@@ -43,7 +43,7 @@ int MpiManager::CheckNodeOnPartitionInterface3D(DefInt i_level,
         || (bitset_in & bitset_level_ones.at(kXIndex)) == bitset_level_ones.at(kXIndex)
         || (bitset_in & bitset_level_ones.at(kYIndex)) == bitset_level_ones.at(kYIndex)
         || (bitset_in & bitset_level_ones.at(kZIndex)) == bitset_level_ones.at(kZIndex)) {
-        DefSFBitset bitset_background = sfbitset_aux.SFBitsetToNLowerLevel(i_level, bitset_in), bitset_tmp;
+        DefSFBitset bitset_background = sfbitset_aux.SFBitsetToNLowerLevel(i_level, bitset_in);
         if (partitioned_interface_background.find(bitset_background) != partitioned_interface_background.end()) {
             std::array<DefSFBitset, 27> array_neighbors;
             sfbitset_aux.SFBitsetFindAllNeighbors(bitset_in, &array_neighbors);
@@ -330,7 +330,6 @@ void MpiManager::IniTraverseBackgroundForPartitionRank0(
     int i_rank = 0;
     ptr_bitset_min->at(i_rank) = 0;
     ptr_bitset_max->back() = bitset_domain_max;
-    std::array<DefAmrLUint, 3> indices(indices_min);
     DefSFCodeToUint i_code = sfbitset_aux.SFBitsetoSFCode(bitset_domain_min);
     DefSFBitset sfbitset_tmp = static_cast<DefSFBitset>(i_code);
     for (DefAmrLUint i_node = 0; i_node < num_background_nodes - 1; ++i_node) {

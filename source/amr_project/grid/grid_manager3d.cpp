@@ -72,7 +72,7 @@ void GridManager3D::SetupDependentGridParameters() {
     // check if grid space is given
     if (k0DomainDx_.at(kXIndex) < kEps
         && k0DomainDx_.at(kYIndex) < kEps
-        && k0DomainDx_.at(kZIndex < kEps)) {
+        && k0DomainDx_.at(kZIndex) < kEps) {
         LogManager::LogError("Grid space of x, y, or z (k0DomainDx_)"
             " should be positive values in "
             + std::string(__FILE__) + " at line " + std::to_string(__LINE__));
@@ -1058,7 +1058,7 @@ void GridManager3D::IdentifyInterfaceForACellAcrossTwoLevels(
     DefMap<DefInt>* const ptr_inner_layer, DefMap<DefInt>* const ptr_mid_layer,
     DefMap<DefInt>* const ptr_outer_layer, DefMap<DefInt>* ptr_coarse_outer) {
     std::array<std::pair<DefSFBitset, DefInt>, 8> bitset_neighbors;
-    DefSFBitset bitset_mid_higher, bitset_tmp;
+    DefSFBitset bitset_mid_higher;
     std::array<DefMap<DefInt>* const, 3> arr_ptr_layer = {
         ptr_inner_layer, ptr_mid_layer, ptr_outer_layer };
     bool belong_to_cell =  SFBitsetBelongToOneCellAcrossTwoLevels(
