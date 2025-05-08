@@ -205,7 +205,8 @@ void GridManager2D::ResetExtendLayerBasedOnDomainSize(
 
     std::array<DefAmrLUint, 2> indices;
     SFBitsetComputeIndices(sfbitset_in, &indices);
-
+    std::cout << ptr_vec_extend_neg->at(kXIndex) << " "
+        << indices[kXIndex] << " " << index_xmin << std::endl; 
     // reset extended layer
     if ((indices[kXIndex] - index_xmin) < ptr_vec_extend_neg->at(kXIndex)) {
         ptr_vec_extend_neg->at(kXIndex) = (indices[kXIndex] - index_xmin);
