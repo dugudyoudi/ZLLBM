@@ -54,8 +54,10 @@ DefSFBitset SFBitsetAux2D::SFBitsetEncoding(
     const std::array<DefAmrLUint, 2>& coordi_index) const {
     DefSFBitset sfbitset_code = 0;
     for (DefAmrLUint i = 0; i < static_cast<DefAmrLUint>(kSFBitsetBit / 2); ++i) {
-        sfbitset_code |= static_cast<DefSFCodeToUint>(((coordi_index.at(kXIndex)&(1 << i)) << i)
-            |((coordi_index.at(kYIndex)&(1 << i)) << (i + 1)));
+        sfbitset_code |= (static_cast<DefSFCodeToUint>(coordi_index.at(kXIndex)
+            &(static_cast<DefSFCodeToUint>(1) << i)) << i) |
+            (static_cast<DefSFCodeToUint>(coordi_index.at(kYIndex)
+            & (static_cast<DefSFCodeToUint>(1) << i)) << (i + 1));
             // int i_rank;
             // MPI_Comm_rank(MPI_COMM_WORLD, &i_rank);
             // if (i_rank == 0) {
