@@ -53,11 +53,9 @@ DefSFBitset SFBitsetAux2D::SFBitsetBitsForRefinement(const DefInt i_level) const
 DefSFBitset SFBitsetAux2D::SFBitsetEncoding(
     const std::array<DefAmrLUint, 2>& coordi_index) const {
     DefSFBitset sfbitset_code = 0;
-    for (auto i = 0; i < (kSFBitsetBit / 2); ++i) {
-        sfbitset_code |= ((coordi_index.at(kXIndex)
-            &((static_cast<DefAmrLUint>(1)) << i)) << i)
-            |((coordi_index.at(kYIndex)
-            &((static_cast<DefAmrLUint>(1)) << i)) << (i + 1));
+    for (DefAmrLUint i = 0; i < static_cast<DefAmrLUint>(kSFBitsetBit / 2); ++i) {
+        sfbitset_code |= static_cast<DefSFCodeToUint> ((coordi_index.at(kXIndex)&(1 << i)) << i)
+            |((coordi_index.at(kYIndex)&(1 << i)) << (i + 1));
     }
     return sfbitset_code;
 }
