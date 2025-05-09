@@ -193,20 +193,6 @@ void GridInfoInterface::CopyNodeInfoToBuffer(
             func_copy_buffer(*map_grid_node_.at(iter.first), ptr_buffer + position);
             position+=node_info_size;
 
-if (iter.first.to_ullong() == 160) {
-    DefSizet pos_tmp = position - node_info_size;
-    DefReal f_tmp;
-    int i_rank;
-    MPI_Comm_rank(MPI_COMM_WORLD, &i_rank);
-    std::cout << "rank " << i_rank << ": ";
-    for (int i = 0; i < 9; ++i) {
-        std::memcpy(&f_tmp, ptr_buffer + pos_tmp, sizeof(DefReal));
-        std::cout << f_tmp << " ";
-        pos_tmp += sizeof(DefReal);
-    }
-    std::cout << std::endl;
-}
-
             if (position > buffer_size) {
                 LogManager::LogError("Buffer to store node information overflows (buffer size is "
                     + std::to_string(buffer_size) + " ), please check"
@@ -258,20 +244,6 @@ void GridInfoInterface::ReadNodeInfoFromBuffer(
             LogManager::LogError("Buffer to store node information overflows, please check"
                 " size of node info for mpi communication in "
                 + std::string(__FILE__) + " at line " + std::to_string(__LINE__));
-        }
-
-        if (key_code.to_ullong() == 160) {
-            DefSizet pos_tmp = position - node_info_size;
-            DefReal f_tmp;
-            int i_rank;
-            MPI_Comm_rank(MPI_COMM_WORLD, &i_rank);
-            std::cout << "receive rank " << i_rank << ": ";
-            for (int i = 0; i < 9; ++i) {
-                std::memcpy(&f_tmp, ptr_buffer + pos_tmp, sizeof(DefReal));
-                std::cout << f_tmp << " ";
-                pos_tmp += sizeof(DefReal);
-            }
-            std::cout << std::endl;
         }
     }
 }
