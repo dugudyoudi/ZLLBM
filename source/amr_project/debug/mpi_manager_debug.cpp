@@ -110,7 +110,6 @@ void MpiManager::CheckMpiNodesCorrespondence(const GridInfoInterface& grid_info)
 
 
 // if (rank_id_ == 1 && i_level == 1) {
-//     std::cout << mpi_communication_outer_layers_.at(i_level).size() << std::endl;
 //     SFBitsetAux3D aux3d;
 //     std::array<DefAmrLUint, 3> indices;
 //         std::ofstream file1("received.txt");
