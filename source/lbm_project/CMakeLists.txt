@@ -1,5 +1,5 @@
 # /lbm_projectrce
-cmake_minimum_required(VERSION 3.5)
+cmake_minimum_required(VERSION 3.15...3.5)
 
 # project information
 set(LBM_PROJECT_NAME lbm_project)
