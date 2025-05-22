@@ -119,8 +119,9 @@ void IoManager::ReadCheckPointData(const DefAmrLUint time_step, const std::strin
         vec_interface_index, interface_to_send, ptr_grid_manager);
 
     // add nodes for interpolation
+    DefInt max_level = ptr_grid_manager->GetMaxLevel();
     DefInt dims = ptr_grid_manager->k0GridDims_;
-    for (DefInt i_level = 1; i_level <= ptr_grid_manager->GetMaxLevel(); ++i_level) {
+    for (DefInt i_level = 1; i_level <= max_level; ++i_level) {
         GridInfoInterface& grid_info = *ptr_grid_manager->vec_ptr_grid_info_.at(i_level);
         std::vector<bool> periodic_min(dims, false), periodic_max(dims, false);;
         grid_info.CheckIfPeriodicDomainRequired(dims, &periodic_min, &periodic_max);
@@ -137,6 +138,25 @@ void IoManager::ReadCheckPointData(const DefAmrLUint time_step, const std::strin
                     grid_info.AddGhostNodesForInterpolation(periodic_min, periodic_max,
                         sfbitset_aux, iter_interface.second->vec_outer_fine2coarse_.at(i_layer),
                         ptr_grid_manager->vec_ptr_grid_info_.at(i_level - 1)->map_grid_node_);
+                }
+            }
+        }
+    }
+
+    for (DefInt i_level = 0; i_level < max_level; ++i_level) {
+        if (max_level > 0) {
+            amrproject::GridInfoInterface& grid_info =
+                *ptr_grid_manager->vec_ptr_grid_info_.at(i_level+ 1);
+            ptr_mpi_manager->SendNReceiveSFbitsetForInterpolation(
+                i_level + 1, sfbitset_aux,
+                grid_info.interp_nodes_outer_layer_, &grid_info.vec_num_interp_nodes_receive_,
+                &grid_info.interp_nodes_inner_layer_);
+            for (const auto& iter_layer : grid_info.interp_nodes_inner_layer_) {
+                for (const auto& iter_node : iter_layer.second) {
+                    if (grid_info.map_grid_node_.find(iter_node.first) != grid_info.map_grid_node_.end()) {
+                        grid_info.map_grid_node_.at(iter_node.first)->flag_status_
+                            |= amrproject::NodeBitStatus::kNodeStatusMpiInterpInner_;
+                    }
                 }
             }
         }

@@ -1334,7 +1334,6 @@ void MpiManager::WriteCheckPointInterfaceNodes(const std::string& file_name,
     DefSizet chunk_index = 0;
     MPI_Offset current_offset = offset;
     std::vector<DefSFBitset> sfbitset_cell;
-
     int local_chunk_count = 0;
     auto add_node = [sfbitset_size, int_size, &mpi_file, &mpi_status, &current_offset,
         &index_map, &chunk_index, &local_chunk_count](const int layer_indicator,
@@ -1523,12 +1522,6 @@ void MpiManager::ReadCheckPointInterfaceNodes(const std::string& file_name,
                         LogManager::LogError("Grid node does not exist in " +
                             std::string(__FILE__) + " at line " + std::to_string(__LINE__));
                     }
-                                    //                                                                                 if (i_level == 1 && rank_id_ == 1) {
-                                    //     SFBitsetAux2D aux2d;
-                                    //     std::array<DefAmrLUint, 2> node_index;
-                                    //     aux2d.SFBitsetComputeIndices(sfbitset, &node_index);
-                                    //     std::cout <<" " << node_index[0] << " " << node_index[1] << std::endl;
-                                    // }
                     if (grid_info.map_grid_node_.at(sfbitset)->flag_status_&
                         NodeBitStatus::kNodeStatusMpiPartitionInner_) {
                         for (auto& iter_inner_layer : mpi_communication_inner_layers_.at(i_level)) {
