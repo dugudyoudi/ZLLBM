@@ -194,6 +194,7 @@ void GridInfoInterface::CopyNodeInfoToBuffer(
             position+=sizeof(DefSFBitset);
             func_copy_buffer(*map_grid_node_.at(iter.first), ptr_buffer + position);
             position+=node_info_size;
+
             if (position > buffer_size) {
                 LogManager::LogError("Buffer to store node information overflows (buffer size is "
                     + std::to_string(buffer_size) + " ), please check"

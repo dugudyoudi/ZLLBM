@@ -53,11 +53,11 @@ DefSFBitset SFBitsetAux2D::SFBitsetBitsForRefinement(const DefInt i_level) const
 DefSFBitset SFBitsetAux2D::SFBitsetEncoding(
     const std::array<DefAmrLUint, 2>& coordi_index) const {
     DefSFBitset sfbitset_code = 0;
-    for (auto i = 0; i < (kSFBitsetBit / 2); ++i) {
-        sfbitset_code |= ((coordi_index.at(kXIndex)
-            &((static_cast<DefAmrLUint>(1)) << i)) << i)
-            |((coordi_index.at(kYIndex)
-            &((static_cast<DefAmrLUint>(1)) << i)) << (i + 1));
+    for (DefAmrLUint i = 0; i < static_cast<DefAmrLUint>(kSFBitsetBit / 2); ++i) {
+        sfbitset_code |= ((static_cast<DefSFCodeToUint>(coordi_index.at(kXIndex))
+            &(static_cast<DefSFCodeToUint>(1) << i)) << i) |
+            ((static_cast<DefSFCodeToUint>(coordi_index.at(kYIndex))
+            & (static_cast<DefSFCodeToUint>(1) << i)) << (i + 1));
     }
     return sfbitset_code;
 }
@@ -274,13 +274,13 @@ DefSFBitset SFBitsetAux3D::SFBitsetBitsForRefinement(const DefInt max_level) con
 DefSFBitset SFBitsetAux3D::SFBitsetEncoding(
     const std::array<DefAmrLUint, 3>& coordi_index)  const {
     DefSFBitset sfbitset_code = 0;
-    for (DefSizet i = 0; i < (kSFBitsetBit / 3); ++i) {
-        sfbitset_code |= ((coordi_index.at(kXIndex) &
-            ((static_cast<DefAmrLUint>(1)) << i)) << (2 * i)) |
-            ((coordi_index.at(kYIndex) &
-                ((static_cast<DefAmrLUint>(1)) << i)) << (2 * i + 1)) |
-            ((coordi_index.at(kZIndex) &
-                ((static_cast<DefAmrLUint>(1)) << i)) << (2 * i + 2));
+    for (DefAmrLUint i = 0; i < static_cast<DefAmrLUint>(kSFBitsetBit / 3); ++i) {
+        sfbitset_code |= ((static_cast<DefSFCodeToUint>(coordi_index.at(kXIndex))
+            & (static_cast<DefSFCodeToUint>(1) << i)) << (2 * i)) |
+            ((static_cast<DefSFCodeToUint>(coordi_index.at(kYIndex))
+            & (static_cast<DefSFCodeToUint>(1) << i)) << (2 * i + 1)) |
+            ((static_cast<DefSFCodeToUint>(coordi_index.at(kZIndex))
+            & (static_cast<DefSFCodeToUint>(1) << i)) << (2 * i + 2));
     }
     return sfbitset_code;
 }

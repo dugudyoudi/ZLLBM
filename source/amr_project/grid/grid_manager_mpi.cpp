@@ -107,6 +107,7 @@ void GridManagerInterface::InstantiateOverlapLayerOfRefinementInterfaceMpi(
                     }
                     // check if node is on outer mpi communication layer
                     code_background = sfbitset_aux.SFBitsetToSFCode(sfbitset_aux.SFBitsetToNLowerLevelVir(
+                    code_background = sfbitset_aux.SFBitsetToSFCode(sfbitset_aux.SFBitsetToNLowerLevelVir(
                         i_level, iter_layer_node.first));
                     if (code_background < code_min || code_background > code_max) {
                         map_grid.at(iter_layer_node.first)->flag_status_
@@ -141,6 +142,7 @@ void GridManagerInterface::InstantiateOverlapLayerOfRefinementInterfaceMpi(
                         map_grid_lower.at(iter_layer_node.first)->flag_status_ |= flag_tmp;
                     }
                     // check if node on outer mpi communication layer
+                    code_background = sfbitset_aux.SFBitsetToSFCode(sfbitset_aux.SFBitsetToNLowerLevelVir(
                     code_background = sfbitset_aux.SFBitsetToSFCode(sfbitset_aux.SFBitsetToNLowerLevelVir(
                         i_lower_level, iter_layer_node.first));
                     if (code_background < code_min || code_background > code_max) {
@@ -191,6 +193,7 @@ void GridManagerInterface::InstantiateOverlapLayerOfRefinementInterfaceMpi(
 
                     // check if node on outer mpi communication layer
                     code_background = sfbitset_aux.SFBitsetToSFCode(sfbitset_aux.SFBitsetToNLowerLevelVir(
+                    code_background = sfbitset_aux.SFBitsetToSFCode(sfbitset_aux.SFBitsetToNLowerLevelVir(
                         i_level, iter_layer_node.first));
                     if (code_background < code_min || code_background > code_max) {
                         map_grid.at(iter_layer_node.first)->flag_status_
@@ -225,6 +228,7 @@ void GridManagerInterface::InstantiateOverlapLayerOfRefinementInterfaceMpi(
                         map_grid_lower.at(iter_layer_node.first)->flag_status_ |= flag_tmp;
                     }
                     // check if node on outer mpi communication layer
+                    code_background = sfbitset_aux.SFBitsetToSFCode(sfbitset_aux.SFBitsetToNLowerLevelVir(
                     code_background = sfbitset_aux.SFBitsetToSFCode(sfbitset_aux.SFBitsetToNLowerLevelVir(
                         i_lower_level, iter_layer_node.first));
                     if (code_background < code_min || code_background > code_max) {
@@ -313,6 +317,7 @@ void GridManagerInterface::InstantiateGridNodeAllLevelMpi(const int i_rank,
         for (const auto& iter_ghost : sfbitset_c2f_one_lower_level.at(i_level_lower)) {
             if (InstantiateGridNode(iter_ghost.first, vec_ptr_grid_info_.at(i_level_lower).get())) {
                 code_background = sfbitset_aux.SFBitsetToSFCode(
+                code_background = sfbitset_aux.SFBitsetToSFCode(
                     sfbitset_aux.SFBitsetToNLowerLevelVir(i_level_lower, iter_ghost.first));
                 if (code_background < code_min_background_level || code_background > code_max_background_level) {
                     vec_ptr_grid_info_.at(i_level_lower)->map_grid_node_.at(iter_ghost.first)->flag_status_
@@ -348,6 +353,7 @@ void GridManagerInterface::InstantiateGridNodeAllLevelMpi(const int i_rank,
                             periodic_min, periodic_max, domain_min_n_level, domain_max_n_level, &bitset_neighbors);
                         for (const auto& iter_neighbor : bitset_neighbors) {
                             code_background = sfbitset_aux.SFBitsetToSFCode(sfbitset_aux.SFBitsetToNLowerLevelVir(
+                            code_background = sfbitset_aux.SFBitsetToSFCode(sfbitset_aux.SFBitsetToNLowerLevelVir(
                                 i_level, iter_neighbor));
                             if (code_background < code_min_background_level
                                 || code_background > code_max_background_level) {
@@ -372,6 +378,7 @@ void GridManagerInterface::InstantiateGridNodeAllLevelMpi(const int i_rank,
                         sfbitset_aux.SFBitsetFindAllBondedNeighborsVir(iter_node.first,
                             periodic_min, periodic_max, domain_min_n_level, domain_max_n_level, &bitset_neighbors);
                         for (const auto& iter_neighbor : bitset_neighbors) {
+                            code_background = sfbitset_aux.SFBitsetToSFCode(sfbitset_aux.SFBitsetToNLowerLevelVir(
                             code_background = sfbitset_aux.SFBitsetToSFCode(sfbitset_aux.SFBitsetToNLowerLevelVir(
                                 i_level, iter_neighbor));
                             if (code_background < code_min_background_level
@@ -409,6 +416,7 @@ void GridManagerInterface::InstantiateGridNodeAllLevelMpi(const int i_rank,
                 FindAllNodesInACellAtOneLevelLower(bitset_cell_lower, &bitset_all);
                 for (const auto& iter_node : bitset_all) {
                     code_tmp = sfbitset_aux.SFBitsetToSFCode(
+                    code_tmp = sfbitset_aux.SFBitsetToSFCode(
                         sfbitset_aux.SFBitsetToNLowerLevelVir(i_level, iter_node));
                     if (code_tmp < code_min_background_level || code_tmp > code_max_background_level) {
                         if (outer_layer_tmp.find(iter_node) == outer_layer_tmp.end()) {
@@ -428,6 +436,7 @@ void GridManagerInterface::InstantiateGridNodeAllLevelMpi(const int i_rank,
                                 domain_min_n_level, domain_max_n_level, &bitset_neighbors);
                             bool_partition_outside = false;
                             for (const auto& iter_neighbor : bitset_neighbors) {
+                                code_tmp = sfbitset_aux.SFBitsetToSFCode(
                                 code_tmp = sfbitset_aux.SFBitsetToSFCode(
                                     sfbitset_aux.SFBitsetToNLowerLevelVir(i_level, iter_neighbor));
                                 if (code_tmp < code_min_background_level || code_tmp > code_max_background_level) {
@@ -452,7 +461,6 @@ void GridManagerInterface::InstantiateGridNodeAllLevelMpi(const int i_rank,
 
         // extend one mpi layer when necessary since mesh generation is based on one lower level
         DefMap<DefInt> map_extra_expand_outer;
-        DefSFBitset sfbitset_tmp;
         DefSFCodeToUint code_interface;
         std::vector<std::pair<DefAmrLUint, DefSFBitset>> vec_overlap;
         if (num_partition_outer_layer == 1) {
@@ -465,6 +473,7 @@ void GridManagerInterface::InstantiateGridNodeAllLevelMpi(const int i_rank,
                     sfbitset_aux.SFBitsetFindAllBondedNeighborsVir(iter_interface.first, periodic_min, periodic_max,
                         domain_min_n_level, domain_max_n_level, &bitset_neighbors);
                     for (const auto& iter_neighbor : bitset_neighbors) {
+                        code_tmp = sfbitset_aux.SFBitsetToSFCode(
                         code_tmp = sfbitset_aux.SFBitsetToSFCode(
                             sfbitset_aux.SFBitsetToNLowerLevelVir(i_level, iter_neighbor));
                         if (code_tmp < code_min_background_level || code_tmp > code_max_background_level) {
@@ -495,6 +504,7 @@ void GridManagerInterface::InstantiateGridNodeAllLevelMpi(const int i_rank,
                     }
                 }
                 code_interface = sfbitset_aux.SFBitsetToSFCode(
+                code_interface = sfbitset_aux.SFBitsetToSFCode(
                     sfbitset_aux.SFBitsetToNLowerLevelVir(i_level, iter_interface.first));
                 SetUpRanksSentForMpiInnerLayer(i_rank, code_interface, vec_in_region,
                     ull_max, inner_layer_tmp, &ptr_mpi_inner_layer->at(i_level));
@@ -511,6 +521,7 @@ void GridManagerInterface::InstantiateGridNodeAllLevelMpi(const int i_rank,
                                 node_exist = true;
                             }
                             if (node_exist) {
+                                code_neighbor_tmp = sfbitset_aux.SFBitsetToSFCode(sfbitset_aux.SFBitsetToNLowerLevelVir(
                                 code_neighbor_tmp = sfbitset_aux.SFBitsetToSFCode(sfbitset_aux.SFBitsetToNLowerLevelVir(
                                     i_level, iter_neighbor));
                                 if (code_neighbor_tmp > code_max_background_level
@@ -545,6 +556,7 @@ void GridManagerInterface::InstantiateGridNodeAllLevelMpi(const int i_rank,
                         periodic_min, periodic_max, domain_min_n_level, domain_max_n_level, &bitset_neighbors);
                     for (const auto& iter_neighbor : bitset_neighbors) {
                         code_background = sfbitset_aux.SFBitsetToSFCode(sfbitset_aux.SFBitsetToNLowerLevelVir(
+                        code_background = sfbitset_aux.SFBitsetToSFCode(sfbitset_aux.SFBitsetToNLowerLevelVir(
                             i_level, iter_neighbor));
                         if (code_background < code_min_background_level
                             || code_background > code_max_background_level) {
@@ -562,7 +574,7 @@ void GridManagerInterface::InstantiateGridNodeAllLevelMpi(const int i_rank,
             }
         }
         DefInt search_length = num_partition_inner_layer - 1;
-        auto func_set_inner = [this, &sfbitset_aux, &inner_layer_tmp,
+        auto func_set_inner = [&sfbitset_aux, &inner_layer_tmp,
             &map_grid, &periodic_min, &periodic_max,
             &domain_min_n_level, &domain_max_n_level, search_length,
             i_level, code_min_background_level, code_max_background_level](const DefSFBitset& sfbitset_in) {
@@ -578,6 +590,7 @@ void GridManagerInterface::InstantiateGridNodeAllLevelMpi(const int i_rank,
                 }
             }
             for (const auto& iter_node : vec_in_region) {
+                code_tmp = sfbitset_aux.SFBitsetToSFCode(
                 code_tmp = sfbitset_aux.SFBitsetToSFCode(
                     sfbitset_aux.SFBitsetToNLowerLevelVir(i_level, iter_node));
                 if ((code_tmp >= code_min_background_level && code_tmp <= code_max_background_level)
@@ -599,6 +612,7 @@ void GridManagerInterface::InstantiateGridNodeAllLevelMpi(const int i_rank,
                 }
             }
             for (const auto& iter_region : vec_in_region) {
+                code_tmp = sfbitset_aux.SFBitsetToSFCode(
                 code_tmp = sfbitset_aux.SFBitsetToSFCode(
                     sfbitset_aux.SFBitsetToNLowerLevelVir(i_level, iter_region));
                 if ((code_tmp < code_min_background_level || code_tmp > code_max_background_level)) {
@@ -651,6 +665,7 @@ void GridManagerInterface::InstantiateGridNodeAllLevelMpi(const int i_rank,
                 }
             }
             code_interface = sfbitset_aux.SFBitsetToSFCode(
+            code_interface = sfbitset_aux.SFBitsetToSFCode(
                 sfbitset_aux.SFBitsetToNLowerLevelVir(i_level, iter_node.first));
             SetUpRanksSentForMpiInnerLayer(i_rank, code_interface, vec_in_region,
                 ull_max, inner_layer_tmp, &ptr_mpi_inner_layer->at(i_level));
@@ -666,6 +681,7 @@ void GridManagerInterface::InstantiateGridNodeAllLevelMpi(const int i_rank,
         int node_rank;
         for (const auto& iter : ptr_mpi_outer_layer->at(i_level)) {
             code_tmp = sfbitset_aux.SFBitsetToSFCode(
+            code_tmp = sfbitset_aux.SFBitsetToSFCode(
                 sfbitset_aux.SFBitsetToNLowerLevelVir(i_level, iter.first));
             sfbitset_aux.FindNodesInPeriodicRegionCenterOverlap(iter.first,
                 {num_partition_inner_layer, num_partition_inner_layer, num_partition_inner_layer},
@@ -677,6 +693,7 @@ void GridManagerInterface::InstantiateGridNodeAllLevelMpi(const int i_rank,
                 }
             }
             for (const auto& iter_region : vec_in_region) {
+                code_neighbor_tmp = sfbitset_aux.SFBitsetToSFCode(
                 code_neighbor_tmp = sfbitset_aux.SFBitsetToSFCode(
                     sfbitset_aux.SFBitsetToNLowerLevelVir(i_level, iter_region));
                 if (code_neighbor_tmp >= code_min_background_level
@@ -766,6 +783,7 @@ void GridManagerInterface::InstantiateGridNodeAllLevelMpi(const int i_rank,
         for (const auto& iter_node : sfbitset_c2f_one_lower_level.at(0)) {
             if (map_grid_level_0.find(iter_node.first) != map_grid_level_0.end()) {
                 code_tmp = sfbitset_aux.SFBitsetToSFCode(iter_node.first);
+                code_tmp = sfbitset_aux.SFBitsetToSFCode(iter_node.first);
                 if (code_tmp < code_min_background_level || code_tmp > code_max_background_level) {
                     ptr_mpi_outer_layer->at(0).insert({iter_node.first, flag_normal_outer_node});
                     map_grid_level_0.at(iter_node.first)->flag_status_ |= NodeBitStatus::kNodeStatusMpiPartitionOuter_;
@@ -815,6 +833,8 @@ void GridManagerInterface::InstantiateGridNodeAllLevelMpi(const int i_rank,
                 for (const auto& iter_neighbor : bitset_neighbors) {
                     if (sfbitset_aux.SFBitsetToSFCode(iter_neighbor) < code_min_background_level
                         || sfbitset_aux.SFBitsetToSFCode(iter_neighbor) > code_max_background_level) {
+                    if (sfbitset_aux.SFBitsetToSFCode(iter_neighbor) < code_min_background_level
+                        || sfbitset_aux.SFBitsetToSFCode(iter_neighbor) > code_max_background_level) {
                         bool_partition_outside = true;
                         break;
                     }
@@ -829,7 +849,7 @@ void GridManagerInterface::InstantiateGridNodeAllLevelMpi(const int i_rank,
         }
     }
     DefInt search_length = num_partition_inner_layer - 1;
-    auto func_set_inner = [this, &sfbitset_aux, &inner_layer_tmp,
+    auto func_set_inner = [&sfbitset_aux, &inner_layer_tmp,
         &map_grid_level_0, &periodic_min, &periodic_max,
         &domain_min_n_level, &domain_max_n_level, search_length,
         code_min_background_level, code_max_background_level](const DefSFBitset& sfbitset_in) {
@@ -845,6 +865,7 @@ void GridManagerInterface::InstantiateGridNodeAllLevelMpi(const int i_rank,
             }
         }
         for (const auto& iter_node : vec_in_region) {
+            code_tmp = sfbitset_aux.SFBitsetToSFCode(iter_node);
             code_tmp = sfbitset_aux.SFBitsetToSFCode(iter_node);
             if ((code_tmp >= code_min_background_level && code_tmp <= code_max_background_level)
                 && inner_layer_tmp.find(iter_node) == inner_layer_tmp.end()
@@ -883,6 +904,7 @@ void GridManagerInterface::InstantiateGridNodeAllLevelMpi(const int i_rank,
                 sfbitset_aux.SFBitsetFindAllBondedNeighborsVir(iter_interface.first,
                     periodic_min, periodic_max, domain_min_n_level, domain_max_n_level, &vec_neighbors);
                 for (const auto& iter_node : vec_neighbors) {
+                    code_tmp = sfbitset_aux.SFBitsetToSFCode(iter_node);
                     code_tmp = sfbitset_aux.SFBitsetToSFCode(iter_node);
                     if ((code_tmp < code_min_background_level || code_tmp > code_max_background_level)
                         && background_occupied.find(iter_node) == background_occupied.end()) {
@@ -926,9 +948,11 @@ void GridManagerInterface::InstantiateGridNodeAllLevelMpi(const int i_rank,
         }
         for (const auto& iter_node : vec_in_region) {
             code_tmp = sfbitset_aux.SFBitsetToSFCode(iter_node);
+            code_tmp = sfbitset_aux.SFBitsetToSFCode(iter_node);
             if ((code_tmp >= code_min_background_level && code_tmp <= code_max_background_level)
                 && inner_layer_tmp.find(iter_node) != inner_layer_tmp.end()) {
                 iter_index = std::lower_bound(
+                    ull_max.begin(), ull_max.end(), sfbitset_aux.SFBitsetToSFCode(iter_interface.first));
                     ull_max.begin(), ull_max.end(), sfbitset_aux.SFBitsetToSFCode(iter_interface.first));
                 node_rank = static_cast<int>(iter_index - ull_max.begin());
                 if (node_rank != i_rank) {
@@ -1016,7 +1040,6 @@ void  GridManagerInterface::SearchMpiLayersForPeriodicBoundaries(const DefInt di
     GridInfoInterface* const ptr_grid_info) {
     DefSFCodeToUint code_background_level;
     std::vector<DefSFBitset> bitset_neighbors;
-    DefSFBitset sfbitset_tmp, sfbitset_counterpart;
     const DefInt i_level = ptr_grid_info->GetGridLevel();
     auto& map_nodes = ptr_grid_info->map_grid_node_;
     DefMap<DefInt> map_not_instantiate_nodes;
@@ -1033,9 +1056,9 @@ void  GridManagerInterface::SearchMpiLayersForPeriodicBoundaries(const DefInt di
             search_length_pos.at(i_dims) = 0;
         }
     }
-    auto func_set_outer = [this, i_level, flag_periodic_outer_node, &search_length_neg, &search_length_pos,
-        &sfbitset_aux, &ptr_mpi_inner_layer, &ptr_mpi_outer_layer, &map_nodes, &periodic_min, &periodic_max, &ull_max,
-        &domain_min_n_level, &domain_max_n_level, &ptr_grid_info, &map_not_instantiate_nodes,
+    auto func_set_outer = [i_level, flag_periodic_outer_node, &search_length_neg, &search_length_pos,
+        &sfbitset_aux, &ptr_mpi_outer_layer, &map_nodes, &periodic_min, &periodic_max,
+        &domain_min_n_level, &domain_max_n_level, &map_not_instantiate_nodes,
         code_min_background_level, code_max_background_level](const DefSFBitset& sfbitset_in) {
         std::vector<DefSFBitset> vec_in_region;
         std::vector<std::pair<DefAmrLUint, DefSFBitset>> vec_overlap;
@@ -1052,6 +1075,7 @@ void  GridManagerInterface::SearchMpiLayersForPeriodicBoundaries(const DefInt di
             if (iter_node ==  SFBitsetAuxInterface::kInvalidSFbitset) {
                 continue;
             }
+            code_background_level = sfbitset_aux.SFBitsetToSFCode(sfbitset_aux.SFBitsetToNLowerLevelVir(
             code_background_level = sfbitset_aux.SFBitsetToSFCode(sfbitset_aux.SFBitsetToNLowerLevelVir(
                 i_level, iter_node));
             if ((code_background_level > code_max_background_level
@@ -1071,6 +1095,7 @@ void  GridManagerInterface::SearchMpiLayersForPeriodicBoundaries(const DefInt di
         if (periodic_min.at(i_dims)) {
             for (const auto& iter : ptr_grid_info->domain_boundary_min_.at(i_dims)) {
                 code_background_level = sfbitset_aux.SFBitsetToSFCode(sfbitset_aux.SFBitsetToNLowerLevelVir(
+                code_background_level = sfbitset_aux.SFBitsetToSFCode(sfbitset_aux.SFBitsetToNLowerLevelVir(
                     i_level, iter.first));
                 if (code_background_level <= code_max_background_level
                     &&code_background_level >= code_min_background_level
@@ -1081,6 +1106,7 @@ void  GridManagerInterface::SearchMpiLayersForPeriodicBoundaries(const DefInt di
         }
         if (periodic_max.at(i_dims)) {
             for (const auto& iter : ptr_grid_info->domain_boundary_max_.at(i_dims)) {
+                code_background_level = sfbitset_aux.SFBitsetToSFCode(sfbitset_aux.SFBitsetToNLowerLevelVir(
                 code_background_level = sfbitset_aux.SFBitsetToSFCode(sfbitset_aux.SFBitsetToNLowerLevelVir(
                     i_level, iter.first));
                 if (code_background_level <= code_max_background_level
@@ -1098,11 +1124,12 @@ void  GridManagerInterface::SearchMpiLayersForPeriodicBoundaries(const DefInt di
     }
     std::fill(search_length_neg.begin(), search_length_neg.end(), num_mpi_inner_layer);
     std::fill(search_length_pos.begin(), search_length_pos.end(), num_mpi_inner_layer);
-    auto func_set_inner = [this, i_level, &search_length_neg, &search_length_pos, &sfbitset_aux,
+    auto func_set_inner = [i_level, &search_length_neg, &search_length_pos, &sfbitset_aux,
         &map_nodes, &periodic_min, &periodic_max, &ptr_mpi_inner_layer, &ull_max,
         &domain_min_n_level, &domain_max_n_level,
         code_min_background_level, code_max_background_level](const DefSFBitset& sfbitset_in) {
         DefSFCodeToUint code_background_level =
+        sfbitset_aux.SFBitsetToSFCode(sfbitset_aux.SFBitsetToNLowerLevelVir(i_level, sfbitset_in));
         sfbitset_aux.SFBitsetToSFCode(sfbitset_aux.SFBitsetToNLowerLevelVir(i_level, sfbitset_in));
         if (code_background_level <= code_max_background_level
             &&code_background_level >= code_min_background_level) {
@@ -1188,6 +1215,7 @@ DefInt GridManagerInterface::SearchingMpiInnerNodesForNodeOnDomainBoundary(
         for (auto& iter_node : node_in_region) {
             if (iter_node != SFBitsetAuxInterface::kInvalidSFbitset) {
                 code_background = sfbitset_aux.SFBitsetToSFCode(
+                code_background = sfbitset_aux.SFBitsetToSFCode(
                     sfbitset_aux.SFBitsetToNLowerLevelVir(i_level, iter_node));
                 if (code_background >= code_min_background_level && code_background <= code_max_background_level) {
                     flag_has_inner_node|=GridInfoInterface::kFlagXMaxBoundary_;
@@ -1203,6 +1231,7 @@ DefInt GridManagerInterface::SearchingMpiInnerNodesForNodeOnDomainBoundary(
             periodic_min, periodic_max, domain_min_n_level, domain_max_n_level, &node_in_region);
         for (auto& iter_node : node_in_region) {
             if (iter_node != SFBitsetAuxInterface::kInvalidSFbitset) {
+                code_background = sfbitset_aux.SFBitsetToSFCode(
                 code_background = sfbitset_aux.SFBitsetToSFCode(
                     sfbitset_aux.SFBitsetToNLowerLevelVir(i_level, iter_node));
                 if (code_background >= code_min_background_level && code_background <= code_max_background_level) {
@@ -1221,6 +1250,7 @@ DefInt GridManagerInterface::SearchingMpiInnerNodesForNodeOnDomainBoundary(
         for (auto& iter_node : node_in_region) {
             if (iter_node != SFBitsetAuxInterface::kInvalidSFbitset) {
                 code_background = sfbitset_aux.SFBitsetToSFCode(
+                code_background = sfbitset_aux.SFBitsetToSFCode(
                     sfbitset_aux.SFBitsetToNLowerLevelVir(i_level, iter_node));
                 if (code_background >= code_min_background_level && code_background <= code_max_background_level) {
                     flag_has_inner_node|=GridInfoInterface::kFlagYMaxBoundary_;
@@ -1236,6 +1266,7 @@ DefInt GridManagerInterface::SearchingMpiInnerNodesForNodeOnDomainBoundary(
             periodic_min, periodic_max, domain_min_n_level, domain_max_n_level, &node_in_region);
         for (auto& iter_node : node_in_region) {
             if (iter_node != SFBitsetAuxInterface::kInvalidSFbitset) {
+                code_background = sfbitset_aux.SFBitsetToSFCode(
                 code_background = sfbitset_aux.SFBitsetToSFCode(
                     sfbitset_aux.SFBitsetToNLowerLevelVir(i_level, iter_node));
                 if (code_background >= code_min_background_level && code_background <= code_max_background_level) {
@@ -1254,6 +1285,7 @@ DefInt GridManagerInterface::SearchingMpiInnerNodesForNodeOnDomainBoundary(
         for (auto& iter_node : node_in_region) {
             if (iter_node != SFBitsetAuxInterface::kInvalidSFbitset) {
                 code_background = sfbitset_aux.SFBitsetToSFCode(
+                code_background = sfbitset_aux.SFBitsetToSFCode(
                     sfbitset_aux.SFBitsetToNLowerLevelVir(i_level, iter_node));
                 if (code_background >= code_min_background_level && code_background <= code_max_background_level) {
                     flag_has_inner_node|=GridInfoInterface::kFlagZMinBoundary_;
@@ -1269,6 +1301,7 @@ DefInt GridManagerInterface::SearchingMpiInnerNodesForNodeOnDomainBoundary(
             periodic_min, periodic_max, domain_min_n_level, domain_max_n_level, &node_in_region);
         for (auto& iter_node : node_in_region) {
             if (iter_node != SFBitsetAuxInterface::kInvalidSFbitset) {
+                code_background = sfbitset_aux.SFBitsetToSFCode(
                 code_background = sfbitset_aux.SFBitsetToSFCode(
                     sfbitset_aux.SFBitsetToNLowerLevelVir(i_level, iter_node));
                 if (code_background >= code_min_background_level && code_background <= code_max_background_level) {
@@ -1570,6 +1603,7 @@ void GridManagerInterface::InstantiatePeriodicNodes(const bool bool_min,
     DefMap<std::unique_ptr<GridNode>>& map_grid = ptr_grid_info->map_grid_node_;
     int boundary_flag;
     DefSFCodeToUint code_tmp = sfbitset_aux.SFBitsetToSFCode(
+    DefSFCodeToUint code_tmp = sfbitset_aux.SFBitsetToSFCode(
         sfbitset_aux.SFBitsetToNLowerLevelVir(i_level, sfbitset_tmp));
     if (code_tmp >= code_min_background_level && code_tmp <= code_max_background_level) {
         ptr_inner_layer->insert({sfbitset_tmp, kFlag0_});
@@ -1589,6 +1623,7 @@ void GridManagerInterface::InstantiatePeriodicNodes(const bool bool_min,
             break;
         }
 
+        code_tmp = sfbitset_aux.SFBitsetToSFCode(sfbitset_aux.SFBitsetToNLowerLevelVir(i_level, sfbitset_tmp));
         code_tmp = sfbitset_aux.SFBitsetToSFCode(sfbitset_aux.SFBitsetToNLowerLevelVir(i_level, sfbitset_tmp));
         if (code_tmp < code_min_background_level || code_tmp > code_max_background_level) {
             if (ptr_outer_layer->find(sfbitset_tmp) == ptr_outer_layer->end()) {
@@ -1644,7 +1679,6 @@ void  GridManagerInterface::InstantiateDomainBoundaryForMpi(const DefAmrLUint nu
     const SFBitsetAuxInterface& sfbitset_aux, GridInfoInterface* const ptr_grid_info,
     DefMap<DefInt>* const ptr_inner_layer, DefMap<DefInt>* const ptr_outer_layer) {
     const DefInt i_level = ptr_grid_info->GetGridLevel();
-    DefSFBitset sfbitset_tmp, sfbitset_tmp_pre;
     DefMap<std::unique_ptr<GridNode>>& map_grid = ptr_grid_info->map_grid_node_;
     std::vector<DefSFBitset> nodes_on_surface;
     DefSFCodeToUint code_tmp;
@@ -1665,6 +1699,7 @@ void  GridManagerInterface::InstantiateDomainBoundaryForMpi(const DefAmrLUint nu
             if (map_grid.find(iter_node.first) == map_grid.end()) {
                 InstantiateGridNode(iter_node.first, ptr_grid_info);
             }
+            code_tmp = sfbitset_aux.SFBitsetToSFCode(sfbitset_aux.SFBitsetToNLowerLevelVir(i_level, iter_node.first));
             code_tmp = sfbitset_aux.SFBitsetToSFCode(sfbitset_aux.SFBitsetToNLowerLevelVir(i_level, iter_node.first));
             if (code_tmp < code_min_background_level || code_tmp > code_max_background_level) {
                 ptr_outer_layer->insert({iter_node.first, flag_normal_outer_node});
@@ -1693,6 +1728,7 @@ void  GridManagerInterface::InstantiateDomainBoundaryForMpi(const DefAmrLUint nu
             if (map_grid.find(iter_node.first) == map_grid.end()) {
                 InstantiateGridNode(iter_node.first, ptr_grid_info);
             }
+            code_tmp = sfbitset_aux.SFBitsetToSFCode(sfbitset_aux.SFBitsetToNLowerLevelVir(i_level, iter_node.first));
             code_tmp = sfbitset_aux.SFBitsetToSFCode(sfbitset_aux.SFBitsetToNLowerLevelVir(i_level, iter_node.first));
             if (code_tmp < code_min_background_level || code_tmp > code_max_background_level) {
                 ptr_outer_layer->insert({iter_node.first, kFlag0_});
@@ -1822,6 +1858,7 @@ void GridManagerInterface::SetUpMpiInnerLayerForHigherLevel(int i_rank,
         for (const auto& iter_outer : vec_outer) {
             if (iter_outer != SFBitsetAuxInterface::kInvalidSFbitset) {
                 code_background = sfbitset_aux.SFBitsetToSFCode(
+                code_background = sfbitset_aux.SFBitsetToSFCode(
                     sfbitset_aux.SFBitsetToNLowerLevelVir(i_level, iter_outer));
                 if (code_background < code_min_background_level || code_background > code_max_background_level) {
                     if (mpi_outer_layer.find(iter_outer) == mpi_outer_layer.end()) {
@@ -1834,6 +1871,7 @@ void GridManagerInterface::SetUpMpiInnerLayerForHigherLevel(int i_rank,
                         sfbitset_aux.FindNodesInPeriodicRegionCenter(iter_outer, num_partition_outer_layer,
                             periodic_min, periodic_max, domain_min_n_level, domain_max_n_level, &vec_inner);
                         for (const auto& iter_inner : vec_inner) {
+                            code_background = sfbitset_aux.SFBitsetToSFCode(sfbitset_aux.SFBitsetToNLowerLevelVir(
                             code_background = sfbitset_aux.SFBitsetToSFCode(sfbitset_aux.SFBitsetToNLowerLevelVir(
                                 i_level, iter_inner));
                             if (code_background >= code_min_background_level

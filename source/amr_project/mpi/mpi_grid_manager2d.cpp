@@ -43,7 +43,7 @@ int MpiManager::CheckNodeOnPartitionInterface2D(DefInt i_level,
         || (bitset_in & bitset_level_ones.at(kYIndex)) == 0
         || (bitset_in & bitset_level_ones.at(kXIndex)) == bitset_level_ones.at(kXIndex)
         || (bitset_in & bitset_level_ones.at(kYIndex)) == bitset_level_ones.at(kYIndex)) {
-        DefSFBitset bitset_background = sfbitset_aux.SFBitsetToNLowerLevel(i_level, bitset_in), bitset_tmp;
+        DefSFBitset bitset_background = sfbitset_aux.SFBitsetToNLowerLevel(i_level, bitset_in);
         if (partitioned_interface_background.find(bitset_background) != partitioned_interface_background.end()) {
             std::array<DefSFBitset, 9> array_neighbors;
             sfbitset_aux.SFBitsetFindAllNeighbors(bitset_in, &array_neighbors);

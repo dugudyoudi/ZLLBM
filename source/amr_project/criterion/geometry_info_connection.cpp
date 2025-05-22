@@ -24,7 +24,7 @@ namespace amrproject {
 */
 void GeometryInfoConnection::InitialGeometry(const DefReal dx) {
     this->SetupConnectionParameters(this->geometry_cell_type_);
-    this->InitialGeometry(dx);
+    this->GeometryInfoInterface::InitialGeometry(dx);
 }
 /**
 * @brief function to setup geometry type related parameters.
@@ -529,7 +529,6 @@ void GeometryConnectionInterface::MergeEdgeOnce(const DefInt i_level,
     DefInt level_vertex0, level_vertex1, level_remove;
     DefSizet vertex_remove;
     std::set<DefSizet> surface_process;
-    std::pair<DefInt, DefSizet> vertex_index_tmp;
     std::pair<DefInt, DefSizet> vertex_tmp0, vertex_tmp1, vertex_tmp2;
     // (vertex_processed) include (set_vertex_remove) and vertices linked
     // to edges at levels other than i_input_level
@@ -755,7 +754,6 @@ void GeometryConnectionInterface::MergeEdgeOnce(const DefInt i_level,
     std::vector<DefReal> grid_space;
     DefInt i_grid_level = i_level + i_input_level;
     DefReal grid_scale = DefReal(TwoPowerN(i_grid_level));
-    DefSFBitset sfbitset_tmp;
     std::vector<DefReal> grid_space_background = sfbitset_aux.GetBackgroundGridSpacing();
     for (const auto iter : grid_space_background) {
         grid_space.emplace_back(iter / grid_scale);
@@ -978,7 +976,7 @@ void GeometryConnectionInterface::ReconstructSurfaceBasedOnExistingVertex(
     std::pair<std::pair<DefInt, DefSizet>, std::pair<DefInt, DefSizet>>
         edge_key_tmp;
     DefSizet i_vertex, max_vertex;
-    std::pair<DefInt, DefSizet> vertex_tmp0, vertex_tmp1, vertex_tmp2;
+    std::pair<DefInt, DefSizet> vertex_tmp0, vertex_tmp1;
     for (auto iter_surface = surface_reconstruct.rbegin();
         iter_surface != surface_reconstruct.rend(); ++iter_surface) {
         std::queue<DefSizet> surface_tmp, surface_remain;

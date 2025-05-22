@@ -205,7 +205,6 @@ void GridManager2D::ResetExtendLayerBasedOnDomainSize(
 
     std::array<DefAmrLUint, 2> indices;
     SFBitsetComputeIndices(sfbitset_in, &indices);
-
     // reset extended layer
     if ((indices[kXIndex] - index_xmin) < ptr_vec_extend_neg->at(kXIndex)) {
         ptr_vec_extend_neg->at(kXIndex) = (indices[kXIndex] - index_xmin);
@@ -377,7 +376,7 @@ void GridManager2D::IdentifyInterfaceForACell(
     // bitset_neighbors[0]:(0, 0); bitset_neighbors[1]:(+x, 0);
     // bitset_neighbors[2]:(0, +y); bitset_neighbors[3]:(+x, +y);
     std::array<DefSFBitset, 4> bitset_neighbors;
-    DefSFBitset bitset_mid_higher, bitset_node0_higher, bitset_node1_higher;
+    DefSFBitset bitset_mid_higher;
     std::array<DefMap<DefInt>* const, 3> arr_ptr_layer = {
         ptr_inner_layer, ptr_mid_layer, ptr_outer_layer };
     bool belong_to_cell =  SFBitsetBelongToOneCell<DefInt>(
@@ -427,7 +426,7 @@ void GridManager2D::IdentifyInterfaceForACell(const DefSFBitset bitset_in,
     // bitset_neighbors[0]:(0, 0); bitset_neighbors[1]:(+x, 0);
     // bitset_neighbors[2]:(0, +y); bitset_neighbors[3]:(+x, +y);
     std::array<DefSFBitset, 4> bitset_neighbors;
-    DefSFBitset bitset_mid_higher, bitset_tmp;
+    DefSFBitset bitset_mid_higher;
     std::array<DefMap<DefInt>* const, 3> arr_ptr_layer = {
         ptr_inner_layer, ptr_mid_layer, ptr_outer_layer };
     DefMap<DefInt> discard_layer;
@@ -482,7 +481,7 @@ void GridManager2D::IdentifyInterfaceForACellAcrossTwoLevels(
     DefMap<DefInt>* const ptr_inner_layer, DefMap<DefInt>* const ptr_mid_layer,
     DefMap<DefInt>* const ptr_outer_layer, DefMap<DefInt>* ptr_coarse_outer) {
     std::array<std::pair<DefSFBitset, DefInt>, 4> bitset_neighbors;
-    DefSFBitset bitset_mid_higher, bitset_tmp;
+    DefSFBitset bitset_mid_higher;
     std::array<DefMap<DefInt>* const, 3> arr_ptr_layer = {
         ptr_inner_layer, ptr_mid_layer, ptr_outer_layer };
     DefMap<DefInt> discard_layer;

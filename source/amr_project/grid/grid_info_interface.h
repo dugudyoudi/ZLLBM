@@ -97,6 +97,7 @@ struct OutputNodeVariableInfoInterface {
     DefInt variable_dims_;
     std::string output_name_;
     virtual void WriteNodeVariable(const GridNode& grid_node){}
+    virtual ~OutputNodeVariableInfoInterface() {}
 };
 /**
 * @struct DomainInfo

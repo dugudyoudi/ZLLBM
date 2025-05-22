@@ -29,10 +29,8 @@ void GridManagerInterface::GenerateGridFromHighToLowLevelSerial(
             + " in "+ std::string(__FILE__) + " at line " + std::to_string(__LINE__));
     }
     // generate tracking and ghost nodes based on geometries
-    DefInt i_geo = 0;
     for (auto& iter : vec_geo_info) {
         iter->FindTrackingNodeBasedOnGeo(*ptr_sfbitset_aux, vec_ptr_grid_info_.at(iter->GetLevel()).get());
-        ++i_geo;
     }
 
     std::vector<DefReal> flood_fill_origin(k0GridDims_);
