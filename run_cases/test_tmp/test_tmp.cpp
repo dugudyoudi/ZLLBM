@@ -1,4 +1,4 @@
-//    Copyright (c) 2021 - 2024, Zhengliang Liu
+//    Copyright (c) 2021 - 2025, Zhengliang Liu
 //    All rights reserved
 
 /**
@@ -26,7 +26,7 @@ void SetTestDependentParameters(
     ptr_amr_instance_->ptr_grid_manager_->SetDomainGridSize({dx_});
     // end grid related parameters //
 
-    ptr_amr_instance_->SetupDependentParameters();
+    ptr_amr_instance_->SetupInputDependentParameters();
     // set grid node type and solver at all levels the same
     ptr_amr_instance_->AddSolverToGridManager(solver_creator);
     ptr_amr_instance_->SetSameSolverDependentInfoForAllGrids(
@@ -57,7 +57,7 @@ void SetTestDependentParameters(
     }
 
     ptr_amr_instance_->InitializeAllSolvers();
-    ptr_amr_instance_->InitializeMesh();
+    ptr_amr_instance_->SetupMesh(0);
 }
 void SetDomainBoundaryOtherThanPeriodic(
     lbmproject::ELbmBoundaryConditionScheme boundary_condition_type) {

@@ -1,4 +1,4 @@
-//  Copyright (c) 2021 - 2024, Zhengliang Liu
+//  Copyright (c) 2021 - 2025, Zhengliang Liu
 //  All rights reserved
 
 /**
@@ -14,16 +14,15 @@ namespace rootproject {
 namespace amrproject {
 void MpiManager::DebugMpiForAllGrids(const GridManagerInterface& grid_manager) const {
     for (const auto& iter : grid_manager.vec_ptr_grid_info_) {
-        CheckMpiNodesCorrespondence(*iter.get());
+        CheckMpiNodesCorrespondence(iter->GetGridLevel());
         CheckMpiPeriodicCorrespondence(*iter.get());
     }
 }
 /**
-* @brief      function to check if mpi outer layer only receives information in inner layer from the unique corresponding rank
-* @param[in]  grid_info   reference to grid information.
+* @brief      function to check if mpi outer layer can receive information in inner layer from the unique corresponding rank
+* @param[in]  i_level   refinement level.
 */
-void MpiManager::CheckMpiNodesCorrespondence(const GridInfoInterface& grid_info) const {
-    const DefInt i_level = grid_info.GetGridLevel();
+void MpiManager::CheckMpiNodesCorrespondence(const DefInt i_level) const {
     std::vector<bool> vec_receive_ranks(IdentifyRanksReceivingGridNode(i_level));
     std::vector<BufferSizeInfo> send_buffer_info, receive_buffer_info;
     std::vector<std::vector<MPI_Request>> vec_vec_reqs_send, vec_vec_reqs_receive;
@@ -33,7 +32,8 @@ void MpiManager::CheckMpiNodesCorrespondence(const GridInfoInterface& grid_info)
         SendNReceiveGridNodeBufferSize(node_info_size, i_level, mpi_communication_inner_layers_.at(i_level),
             &send_buffer_info, &receive_buffer_info);
     } else {
-        LogManager::LogError("number of mpi inner layers is less the given grid level on" + std::to_string(rank_id_));
+        LogManager::LogError("number of mpi inner layers is less the given grid level on rank "
+            + std::to_string(rank_id_) + " in " + std::string(__FILE__) + " at line " + std::to_string(__LINE__));
     }
 
     // receive node in mpi outer layer via mpi communication
@@ -151,6 +151,14 @@ void MpiManager::CheckMpiNodesCorrespondence(const GridInfoInterface& grid_info)
         if (map_received.find(iter.first) == map_received.end()) {
             LogManager::LogError("at least one of node in mpi outer layer is not received in on rank "
             + std::to_string(rank_id_) + " at level " + std::to_string(i_level));
+        }
+    }
+    int i_send = 0;
+    for (int i_rank = 0; i_rank < num_of_ranks_; ++i_rank) {
+        if (send_buffer_info.at(i_rank).bool_exist_) {
+            MPI_Waitall(static_cast<int>(vec_vec_reqs_send.at(i_send).size()),
+                vec_vec_reqs_send.at(i_send).data(), MPI_STATUSES_IGNORE);
+            ++i_send;
         }
     }
     MPI_Barrier(MPI_COMM_WORLD);

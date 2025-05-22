@@ -1,11 +1,10 @@
-//  Copyright (c) 2021 - 2024, Zhengliang Liu
+//  Copyright (c) 2021 - 2025, Zhengliang Liu
 //  All rights reserved
 
 /**
 * @file lbm_collision_model_mrt.cpp
 * @author Zhengliang Liu
 * @brief functions used for managing MRT collision models.
-* @date  2025-2-19
 */
 #include "./lbm_interface.h"
 #include "io/log_write.h"

@@ -1,10 +1,9 @@
-//    Copyright (c) 2021 - 2024, Zhengliang Liu
+//    Copyright (c) 2021 - 2025, Zhengliang Liu
 //    All rights reserved
 
 /**
 * @file cylinder2d.cpp
 * @author Zhengliang Liu
-* @date  2025-1-23
 * @brief  flow past a 2D cylinder using IB-LBM.
 */
 #include "./amr_manager.h"
@@ -66,7 +65,7 @@ int main(int argc, char* argv[]) {
         ptr_amr_instance->ptr_grid_manager_->vec_ptr_tracking_info_creator_.at(0).get());
     ptr_amr_instance->ptr_grid_manager_->SetDomainSize(domain_size);
     ptr_amr_instance->ptr_grid_manager_->SetDomainGridSize({grid_size});
-    ptr_amr_instance->SetupDependentParameters();
+    ptr_amr_instance->SetupInputDependentParameters();
     ptr_amr_instance->AddSolverToGridManager(solver_creator);
     ptr_amr_instance->SetSameSolverDependentInfoForAllGrids(
         ptr_amr_instance->ptr_grid_manager_->vec_ptr_solver_.at(0));
@@ -97,7 +96,7 @@ int main(int argc, char* argv[]) {
 
     // initialize grids
     ptr_amr_instance->InitializeAllSolvers();
-    ptr_amr_instance->InitializeMesh();
+    ptr_amr_instance->SetupMesh(0);
 
     // check mesh
     ptr_amr_instance->CheckMeshAfterInitialization();

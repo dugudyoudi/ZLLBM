@@ -1,4 +1,4 @@
-//  Copyright (c) 2021 - 2024, Zhengliang Liu
+//  Copyright (c) 2021 - 2025, Zhengliang Liu
 //  All rights reserved
 
 /**
@@ -50,7 +50,7 @@ std::unique_ptr<char[]> MpiManager::SerializeCoordiOrigin(
 /**
  * @brief function to deserializes data from a buffer into a vector of geometry coordinates.
  * @param[in] buffer unique pointer to a char array holding the serialized data.
- * @param[in] ptr_geo_info pointer to class storing geometry information.
+ * @param[in, out] ptr_geo_info pointer to class storing geometry information.
  * @param[out] vec_points pointer to a vector store vertex information.
  */
 void MpiManager::DeserializeCoordiOrigin(const std::unique_ptr<char[]>& buffer,

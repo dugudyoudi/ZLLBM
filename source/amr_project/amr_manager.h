@@ -1,4 +1,4 @@
-//  Copyright (c) 2021 - 2024, Zhengliang Liu
+//  Copyright (c) 2021 - 2025, Zhengliang Liu
 //  All rights reserved
 
 /**
@@ -34,6 +34,7 @@ class AmrManager {
         static AmrManager amr_instance_;
         return &amr_instance_;
     }
+    bool bool_write_checkpoint_ = false;
 
     // modules
 #ifdef ENABLE_MPI
@@ -48,9 +49,11 @@ class AmrManager {
     void LoadModules(DefInt dims);
 
     void StartupInitialization(DefInt dim);
-    void SetupDependentParameters();
+    void SetupInputDependentParameters();
     void InitializeMesh();
     void InitializeAllSolvers();
+    void RestartFromCheckPointMesh(DefInt time_step);
+    void SetupMesh(DefInt time_step);
     void FinalizeSimulation();
 
     // time stepping related
@@ -65,6 +68,8 @@ class AmrManager {
     void BroadCastInputParse(InputParser* const ptr_input_parser) const;
 
  private:
+    DefAmrLUint current_time_step_ = 0;
+
     // mpi
     MpiManager* GetPointerToMpiManager() const {
         if (ptr_mpi_manager_ != nullptr) {

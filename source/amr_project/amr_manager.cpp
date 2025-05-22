@@ -1,4 +1,4 @@
-//  Copyright (c) 2021 - 2024, Zhengliang Liu
+//  Copyright (c) 2021 - 2025, Zhengliang Liu
 //  All rights reserved
 
 /**
@@ -69,7 +69,7 @@ void AmrManager::StartupInitialization(DefInt dims) {
 /**
 * @brief   function to set parameters dependent on input parameters for all modules
 */
-void AmrManager::SetupDependentParameters() {
+void AmrManager::SetupInputDependentParameters() {
     // setup grid parameters
     ptr_grid_manager_->SetupDependentGridParameters();
 
@@ -87,16 +87,7 @@ void AmrManager::InitializeMesh() {
     const DefInt max_level = ptr_grid_manager_->GetMaxLevel();
     std::vector<DefMap<DefInt>> sfbitset_one_lower_level(max_level + 1);
 
-    // initial geometries
     DefInt i_geo = 0;
-    std::array<DefReal, 3> real_offset{};
-    std::vector<DefReal> domain_dx = ptr_grid_manager_->GetDomainDxArrAsVec();
-    std::vector<DefAmrLUint> domain_min_index = ptr_grid_manager_->GetMinIndexOfBackgroundNodeArrAsVec();
-    for (DefInt i_dims = 0; i_dims < ptr_grid_manager_->k0GridDims_; ++i_dims) {
-        real_offset.at(i_dims) = domain_min_index[i_dims] * domain_dx[i_dims];
-    }
-    ptr_criterion_manager_->InitialAllGeometrySerial(domain_dx.at(kXIndex), real_offset);
-
     for (const auto& iter_geo_info : ptr_criterion_manager_->vec_ptr_geometries_) {
         ptr_grid_manager_->CreateTrackingGridInstanceForAGeo(i_geo, *iter_geo_info);
         ++i_geo;
@@ -115,14 +106,7 @@ void AmrManager::InitializeMesh() {
             &sfbitset_one_lower_level.at(0));
     }
     // mpi partition sending and receiving nodes
-    std::vector<DefInt> vec_cost;
-    for (auto iter_grid : ptr_grid_manager_->vec_ptr_grid_info_) {
-        if (iter_grid->GetGridLevel() == 0) {
-            vec_cost.emplace_back(iter_grid->GetComputationalCost());
-        } else {
-            vec_cost.emplace_back(iter_grid->GetComputationalCost() * 2 * ptr_grid_manager_->k0GridDims_);
-        }
-    }
+    std::vector<DefInt> vec_cost = ptr_grid_manager_->GetNodeCostAtEachLevel();
     std::vector<DefMap<DefInt>> sfbitset_one_lower_level_current_rank(max_level + 1),
        sfbitset_ghost_one_lower_level_current_rank(max_level + 1);
     ptr_mpi_manager_->SetSFBitsetMinCurrentRank(sfbitset_bound_current.at(0));
@@ -240,6 +224,34 @@ void AmrManager::InitializeMesh() {
             *ptr_grid_manager_->vec_ptr_grid_info_.at(iter_geo->GetLevel()));
         iter_geo->SetNeedUpdateShape(bool_tmp);
     }
+}
+/**
+* @brief   function to set up the mesh for the next time step.
+* @param[in]  time_step time step restarting from.
+*/
+void AmrManager::RestartFromCheckPointMesh(DefInt time_step) {
+#ifdef ENABLE_MPI
+    ptr_io_manager_->ReadCheckPointData(time_step, program_name_, ptr_grid_manager_.get(),
+        ptr_criterion_manager_.get(), ptr_mpi_manager_.get());
+#else
+    logger::LogError("Restart from checkpoint is not supported in serial mode");
+#endif
+}
+void AmrManager::SetupMesh(DefInt time_step) {
+    // initial geometries
+    std::array<DefReal, 3> real_offset{};
+    std::vector<DefReal> domain_dx = ptr_grid_manager_->GetDomainDxArrAsVec();
+    std::vector<DefAmrLUint> domain_min_index = ptr_grid_manager_->GetMinIndexOfBackgroundNodeArrAsVec();
+    for (DefInt i_dims = 0; i_dims < ptr_grid_manager_->k0GridDims_; ++i_dims) {
+        real_offset.at(i_dims) = domain_min_index[i_dims] * domain_dx[i_dims];
+    }
+    ptr_criterion_manager_->InitialAllGeometrySerial(domain_dx.at(kXIndex), real_offset);
+
+    if (time_step == 0) {
+        InitializeMesh();
+    } else {
+        RestartFromCheckPointMesh(time_step);
+    }
 
     InstantiateTimeSteppingScheme();
 }
@@ -265,6 +277,7 @@ void AmrManager::InstantiateTimeSteppingScheme() {
 * @param[in]  sfbitset_aux   class manages space filling curves.
 */
 void AmrManager::TimeMarching(const DefAmrLUint time_step_background) {
+    current_time_step_ = time_step_background;
     // record number of time step at i_level
     std::vector<DefInt> time_step_level(ptr_grid_manager_->GetMaxLevel() + 1, 0);
     DefInt i_level;
@@ -316,9 +329,27 @@ void AmrManager::SetSameSolverDependentInfoForAllGrids(const std::shared_ptr<Sol
 }
 /**
 * @brief   function to finalize simulation
+
 */
 void AmrManager::FinalizeSimulation() {
     ptr_io_manager_->OutputMeshData(program_name_, ptr_grid_manager_.get(), ptr_criterion_manager_.get());
+
+    if (bool_write_checkpoint_) {
+        if (ptr_grid_manager_->k0GridDims_ == 2) {
+#ifndef  DEBUG_DISABLE_2D_FUNCTIONS
+            GridManager2D& grid_manager_2d = dynamic_cast<GridManager2D&>(*ptr_grid_manager_.get());
+            ptr_io_manager_->WriteCheckPointData(current_time_step_, program_name_, grid_manager_2d,
+                grid_manager_2d, *ptr_criterion_manager_.get(), *ptr_mpi_manager_.get());
+#endif
+        } else if (ptr_grid_manager_->k0GridDims_ == 3) {
+#ifndef  DEBUG_DISABLE_3D_FUNCTIONS
+            GridManager3D& grid_manager_3d = dynamic_cast<GridManager3D&>(*ptr_grid_manager_.get());
+            ptr_io_manager_->WriteCheckPointData(current_time_step_, program_name_, grid_manager_3d,
+                grid_manager_3d, *ptr_criterion_manager_.get(), *ptr_mpi_manager_.get());
+#endif
+        }
+    }
+
     LogManager::LogEndTime();
 #ifdef ENABLE_MPI
     ptr_mpi_manager_->FinalizeMpi();

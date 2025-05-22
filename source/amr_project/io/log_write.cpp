@@ -1,4 +1,4 @@
-//  Copyright (c) 2021 - 2024, Zhengliang Liu
+//  Copyright (c) 2021 - 2025, Zhengliang Liu
 //  All rights reserved
 
 /**
@@ -173,6 +173,7 @@ void LogManager::LogError(const std::string& msg) {
         | FOREGROUND_GREEN | FOREGROUND_BLUE);
 #endif
 
+    fflush(stdout);
 #ifdef ENABLE_MPI
     MPI_Abort(MPI_COMM_WORLD, 1);
 #else

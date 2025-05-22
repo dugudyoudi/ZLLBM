@@ -1,4 +1,4 @@
-//  Copyright (c) 2021 - 2024, Zhengliang Liu
+//  Copyright (c) 2021 - 2025, Zhengliang Liu
 //  All rights reserved
 
 /**
@@ -24,6 +24,21 @@ DefReal MultiTimeSteppingC2F::GetCurrentTimeStep(const DefInt i_level,
     const DefAmrLUint time_step_background, const DefInt time_step_level) const {
     return time_step_background
         + static_cast<DefReal>(time_step_level) / static_cast<DefReal>(TwoPowerN(i_level));
+}
+/**
+* @brief function to get computational cost of a grid node for all levels.
+* @return   computational cost of a grid node at each level.
+*/
+std::vector<DefInt> GridManagerInterface::GetNodeCostAtEachLevel() const {
+    std::vector<DefInt> vec_cost;
+    for (auto iter_grid : vec_ptr_grid_info_) {
+        if (k0MaxLevel_== 0) {
+            vec_cost.emplace_back(iter_grid->GetComputationalCost());
+        } else {
+            vec_cost.emplace_back(iter_grid->GetComputationalCost() * 2 * k0GridDims_);
+        }
+    }
+    return vec_cost;
 }
 /**
 * @brief      function to read grid related parameters.
@@ -422,7 +437,7 @@ void GridManagerInterface::InstantiateOverlapLayerOfRefinementInterface(
         }
 #endif  // DEBUG_CHECK_GRID
         // find interface node at current level
-         DefInt num_f2c_ghost_layer = grid_info.GetNumFine2CoarseGhostLayer();
+        DefInt num_f2c_ghost_layer = grid_info.GetNumFine2CoarseGhostLayer();
         layer_coarse_outer = 1;
         layer_coarse_innermost = 0;
         layer0 = num_f2c_layer - 1;
@@ -563,12 +578,12 @@ void GridManagerInterface::InstantiateGridNodeAllLevel(const DefSFBitset sfbitse
     DefSFCodeToUint code_min, code_max;
     if (k0GridDims_ == 2) {
         SFBitsetAux2D sfbitset_aux;
-        code_min = sfbitset_aux.SFBitsetoSFCode(sfbitset_min);
-        code_max = sfbitset_aux.SFBitsetoSFCode(sfbitset_max);
+        code_min = sfbitset_aux.SFBitsetToSFCode(sfbitset_min);
+        code_max = sfbitset_aux.SFBitsetToSFCode(sfbitset_max);
     } else {
         SFBitsetAux3D sfbitset_aux;
-        code_min = sfbitset_aux.SFBitsetoSFCode(sfbitset_min);
-        code_max = sfbitset_aux.SFBitsetoSFCode(sfbitset_max);
+        code_min = sfbitset_aux.SFBitsetToSFCode(sfbitset_min);
+        code_max = sfbitset_aux.SFBitsetToSFCode(sfbitset_max);
     }
     for (DefInt i_level = k0MaxLevel_; i_level > 0; --i_level) {
         DefInt i_level_lower = i_level - 1;

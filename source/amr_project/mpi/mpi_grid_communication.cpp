@@ -1,4 +1,4 @@
-//  Copyright (c) 2021 - 2024, Zhengliang Liu
+//  Copyright (c) 2021 - 2025, Zhengliang Liu
 //  All rights reserved
 
 /**
@@ -143,7 +143,7 @@ void MpiManager::SendGridNodeInformation(const int rank_send, const BufferSizeIn
     const std::function<void(const DefMap<DefInt>& , char* const)> func_copy_node_to_buffer,
     GridInfoInterface* const ptr_grid_info, char* const ptr_buffer_send,
     std::vector<MPI_Request>* const ptr_reqs_send) const {
-    if (nodes_to_send.find(rank_send) !=nodes_to_send.end()) {
+    if (nodes_to_send.find(rank_send) != nodes_to_send.end()) {
         if (!send_buffer_info.bool_exist_) {
             LogManager::LogError("sending buffer size information is not initialized properly");
         }
@@ -165,13 +165,13 @@ void MpiManager::SendGridNodeInformation(const int rank_send, const BufferSizeIn
     }
 }
 /**
- * @brief function to receive grid node information from other ranks.
+ * @brief function to receive binary buffer from other ranks.
  * @param[in] rank_receive rank id wil be received from.
  * @param[in] receive_buffer_info  information of buffer will be received.
  * @param[out] ptr_grid_info pointer to class storting grid node information.
  * @param[out] ptr_reqs_receive pointer to status of mpi sending for each splitted pieces of target ranks.
  */
-std::unique_ptr<char[]> MpiManager::ReceiveGridNodeInformation(const int rank_receive, const int node_info_size,
+std::unique_ptr<char[]> MpiManager::ReceiveCharBufferFromOtherRanks(const int rank_receive,
     const BufferSizeInfo& receive_buffer_info, std::vector<MPI_Request>* const ptr_reqs_receive) const {
     if (receive_buffer_info.bool_exist_) {
         const int& num_chunks = receive_buffer_info.num_chunks_;
@@ -217,6 +217,10 @@ void MpiManager::NonBlockingSendNReceiveGridNode(const int node_info_size,
     std::vector<std::unique_ptr<char[]>>* const ptr_vec_ptr_buffer_send,
     std::vector<std::unique_ptr<char[]>>* const ptr_vec_ptr_buffer_receive,
     GridInfoInterface* const ptr_grid_info) const {
+    ptr_vec_vec_reqs_send->clear();
+    ptr_vec_ptr_buffer_send->clear();
+    ptr_vec_vec_reqs_receive->clear();
+    ptr_vec_ptr_buffer_receive->clear();
     // send node information
     std::function<void(const DefMap<DefInt>& , char* const)> func_copy_node_to_buffer =
         [func_write_buffer, &ptr_grid_info](const DefMap<DefInt>& map_send, char* const ptr_buffer) {
@@ -228,8 +232,7 @@ void MpiManager::NonBlockingSendNReceiveGridNode(const int node_info_size,
         int i_rank_receive = (rank_id_ - i + num_of_ranks_)% num_of_ranks_;
         if (receive_buffer_info.at(i_rank_receive).bool_exist_) {
             ptr_vec_vec_reqs_receive->push_back({});
-            ptr_vec_ptr_buffer_receive->emplace_back(ReceiveGridNodeInformation(
-                i_rank_receive, node_info_size,
+            ptr_vec_ptr_buffer_receive->emplace_back(ReceiveCharBufferFromOtherRanks(i_rank_receive,
                 receive_buffer_info.at(i_rank_receive), &ptr_vec_vec_reqs_receive->back()));
         }
     }
@@ -252,7 +255,7 @@ void MpiManager::NonBlockingSendNReceiveGridNode(const int node_info_size,
 }
 
 /**
- * @brief function to send and receive grid node information from other ranks.
+ * @brief function to send and receive grid nodes.
  * @param[out] ptr_send_buffer_info pointer to buffer size information of sending.
  * @param[out] ptr_receive_buffer_info pointer to buffer size information of receiving.
  * @param[out] ptr_vec_vec_reqs_send  pointer to vector storing mpi requests information of sending.
@@ -261,7 +264,7 @@ void MpiManager::NonBlockingSendNReceiveGridNode(const int node_info_size,
  * @param[out] ptr_vec_ptr_buffer_receive pointer to buffer storing received grid node information.
  * @param[out] ptr_grid_info pointer to class storting grid information.
  */
-void MpiManager::SendAndReceiveGridNodesOnAllMpiLayers(
+void MpiManager::SendAndReceiveGridNodesOnMpiLayers(
     std::vector<BufferSizeInfo>* const ptr_send_buffer_info,
     std::vector<BufferSizeInfo>* const ptr_receive_buffer_info,
     std::vector<std::vector<MPI_Request>>* const ptr_vec_vec_reqs_send,
@@ -269,15 +272,7 @@ void MpiManager::SendAndReceiveGridNodesOnAllMpiLayers(
     std::vector<std::unique_ptr<char[]>>* const ptr_vec_ptr_buffer_send,
     std::vector<std::unique_ptr<char[]>>* const ptr_vec_ptr_buffer_receive,
     GridInfoInterface* ptr_grid_info) const {
-    ptr_vec_vec_reqs_send->clear();
-    ptr_vec_ptr_buffer_send->clear();
-    ptr_vec_vec_reqs_receive->clear();
-    ptr_vec_ptr_buffer_receive->clear();
     const DefInt i_level = ptr_grid_info->GetGridLevel();
-    ptr_grid_info->ComputeInfoInMpiLayers(mpi_communication_inner_layers_.at(i_level),
-        mpi_communication_outer_layers_.at(i_level));
-    std::vector<bool> vec_receive_ranks(IdentifyRanksReceivingGridNode(i_level));
-
     if (static_cast<DefInt>(mpi_communication_inner_layers_.size()) > i_level) {
         SendNReceiveGridNodeBufferSize(ptr_grid_info->GetSizeOfGridNodeInfoForMpiCommunication(),
             i_level, mpi_communication_inner_layers_.at(i_level), ptr_send_buffer_info, ptr_receive_buffer_info);
@@ -292,6 +287,30 @@ void MpiManager::SendAndReceiveGridNodesOnAllMpiLayers(
     NonBlockingSendNReceiveGridNode(ptr_grid_info->GetSizeOfGridNodeInfoForMpiCommunication(),
         mpi_communication_inner_layers_.at(i_level),
         *ptr_send_buffer_info, *ptr_receive_buffer_info, func_copy_a_node_to_buffer,
+        ptr_vec_vec_reqs_send, ptr_vec_vec_reqs_receive,
+        ptr_vec_ptr_buffer_send, ptr_vec_ptr_buffer_receive, ptr_grid_info);
+}
+/**
+ * @brief function to process mpi layers information and send and receive grid nodes.
+ * @param[out] ptr_send_buffer_info pointer to buffer size information of sending.
+ * @param[out] ptr_receive_buffer_info pointer to buffer size information of receiving.
+ * @param[out] ptr_vec_vec_reqs_send  pointer to vector storing mpi requests information of sending.
+ * @param[out] ptr_vec_vec_reqs_receive  pointer to vector storing mpi requests information of receiving.
+ * @param[out] ptr_vec_ptr_buffer_send pointer to buffer storing grid node information for sending.
+ * @param[out] ptr_vec_ptr_buffer_receive pointer to buffer storing received grid node information.
+ * @param[out] ptr_grid_info pointer to class storting grid information.
+ */
+void MpiManager::ProcessMpiLayersInfoAndCommunicate(std::vector<BufferSizeInfo>* const ptr_send_buffer_info,
+    std::vector<BufferSizeInfo>* const ptr_receive_buffer_info,
+    std::vector<std::vector<MPI_Request>>* const ptr_vec_vec_reqs_send,
+    std::vector<std::vector<MPI_Request>>* const ptr_vec_vec_reqs_receive,
+    std::vector<std::unique_ptr<char[]>>* const ptr_vec_ptr_buffer_send,
+    std::vector<std::unique_ptr<char[]>>* const ptr_vec_ptr_buffer_receive,
+    GridInfoInterface* ptr_grid_info) const {
+    const DefInt i_level = ptr_grid_info->GetGridLevel();
+    ptr_grid_info->ComputeInfoInMpiLayers(mpi_communication_inner_layers_.at(i_level),
+        mpi_communication_outer_layers_.at(i_level));
+    SendAndReceiveGridNodesOnMpiLayers(ptr_send_buffer_info, ptr_receive_buffer_info,
         ptr_vec_vec_reqs_send, ptr_vec_vec_reqs_receive,
         ptr_vec_ptr_buffer_send, ptr_vec_ptr_buffer_receive, ptr_grid_info);
 }
@@ -386,7 +405,8 @@ void MpiManager::SendNReceiveSFbitsetForInterpolation(const DefInt i_level,
     std::vector<DefMap<DefInt>> requested_nodes(num_of_ranks_);
     int which_rank;
     for (const auto& iter_node : map_nodes_outer_layer) {
-        code_background = sfbitset_aux.SFBitsetoSFCode(sfbitset_aux.SFBitsetToNLowerLevelVir(i_level, iter_node.first));
+        code_background = sfbitset_aux.SFBitsetToSFCode(
+            sfbitset_aux.SFBitsetToNLowerLevelVir(i_level, iter_node.first));
         which_rank = CheckNodeInWhichRank(code_background);
         if (which_rank != rank_id_) {
             if (which_rank >= num_of_ranks_) {
@@ -444,6 +464,10 @@ int MpiManager::SendGhostNodeForInterpolation(const SFBitsetAuxInterface& sfbits
     std::vector<std::unique_ptr<char[]>>* const ptr_vec_ptr_buffer_receive) const {
     ptr_send_buffer_info->resize(num_of_ranks_);
     ptr_receive_buffer_info->resize(num_of_ranks_);
+    ptr_vec_vec_reqs_send->clear();
+    ptr_vec_ptr_buffer_send->clear();
+    ptr_vec_vec_reqs_receive->clear();
+    ptr_vec_ptr_buffer_receive->clear();
     const DefInt i_level = ptr_grid_info->GetGridLevel();
     if (i_level > 0) {
         // send and receive which nodes are needed for interpolation on other ranks
@@ -535,7 +559,7 @@ int MpiManager::SendGhostNodeForInterpolation(const SFBitsetAuxInterface& sfbits
             }
             if (ptr_receive_buffer_info->at(i_rank_receive).bool_exist_) {
                 ptr_vec_vec_reqs_receive->push_back({});
-                ptr_vec_ptr_buffer_receive->emplace_back(ReceiveGridNodeInformation(i_rank_receive, node_size,
+                ptr_vec_ptr_buffer_receive->emplace_back(ReceiveCharBufferFromOtherRanks(i_rank_receive,
                     ptr_receive_buffer_info->at(i_rank_receive), &ptr_vec_vec_reqs_receive->back()));
             }
         }

@@ -1,4 +1,4 @@
-//  Copyright (c) 2021 - 2024, Zhengliang Liu
+//  Copyright (c) 2021 - 2025, Zhengliang Liu
 //  All rights reserved
 
 /**
@@ -284,8 +284,8 @@ void MpiManager::IniSendNReceivePartitionedGrid(const DefInt dims,
                 + std::string(__FILE__) + " at line " + std::to_string(__LINE__));
         }
         for (DefSizet i = 0; i < bitset_max.size(); ++i) {
-            ull_min.at(i) = sfbitset_aux.SFBitsetoSFCode(bitset_min.at(i));
-            ull_max.at(i) = sfbitset_aux.SFBitsetoSFCode(bitset_max.at(i));
+            ull_min.at(i) = sfbitset_aux.SFBitsetToSFCode(bitset_min.at(i));
+            ull_max.at(i) = sfbitset_aux.SFBitsetToSFCode(bitset_max.at(i));
         }
     }
     int max_buffer = (std::numeric_limits<int>::max)() / sizeof(DefSFBitset) - 1;
@@ -336,9 +336,9 @@ void MpiManager::IniSendNReceivePartitionedGrid(const DefInt dims,
 #ifndef  DEBUG_DISABLE_2D_FUNCTIONS
                 const SFBitsetAux2D& sfbitset_aux_2d = dynamic_cast<const SFBitsetAux2D&>(sfbitset_aux);
                 for (auto i = 0; i < num_ranks; ++i) {
-                    code_min_current.at(i) = sfbitset_aux_2d.SFBitsetoSFCode(sfbitset_aux_2d.SFBitsetToNHigherLevel(
+                    code_min_current.at(i) = sfbitset_aux_2d.SFBitsetToSFCode(sfbitset_aux_2d.SFBitsetToNHigherLevel(
                         i_level_lower, ull_min.at(i)));
-                    code_max_current.at(i) = sfbitset_aux_2d.SFBitsetoSFCode(sfbitset_aux_2d.SFBitsetToNHigherLevel(
+                    code_max_current.at(i) = sfbitset_aux_2d.SFBitsetToSFCode(sfbitset_aux_2d.SFBitsetToNHigherLevel(
                         i_level_lower, ull_max.at(i)));
                 }
                 sfbitset_aux_2d.GetNLevelCorrespondingOnes(i_level_lower, &corresponding_ones);
@@ -347,9 +347,9 @@ void MpiManager::IniSendNReceivePartitionedGrid(const DefInt dims,
 #ifndef  DEBUG_DISABLE_3D_FUNCTIONS
                 const SFBitsetAux3D& sfbitset_aux_3d = dynamic_cast<const SFBitsetAux3D&>(sfbitset_aux);
                 for (auto i = 0; i < num_ranks; ++i) {
-                    code_min_current.at(i) = sfbitset_aux_3d.SFBitsetoSFCode(sfbitset_aux_3d.SFBitsetToNHigherLevel(
+                    code_min_current.at(i) = sfbitset_aux_3d.SFBitsetToSFCode(sfbitset_aux_3d.SFBitsetToNHigherLevel(
                         i_level_lower, ull_min.at(i)));
-                    code_max_current.at(i) = sfbitset_aux_3d.SFBitsetoSFCode(sfbitset_aux_3d.SFBitsetToNHigherLevel(
+                    code_max_current.at(i) = sfbitset_aux_3d.SFBitsetToSFCode(sfbitset_aux_3d.SFBitsetToNHigherLevel(
                         i_level_lower, ull_max.at(i)));
                 }
                 sfbitset_aux_3d.GetNLevelCorrespondingOnes(i_level_lower, &corresponding_ones);
@@ -368,7 +368,7 @@ void MpiManager::IniSendNReceivePartitionedGrid(const DefInt dims,
             bool bool_near_fine2coarse;
 
             for (auto& iter_node : vec_sfbitset_rank0.at(i_level)) {
-                background_code = sfbitset_aux.SFBitsetoSFCode(
+                background_code = sfbitset_aux.SFBitsetToSFCode(
                     (sfbitset_aux.SFBitsetToNLowerLevelVir(i_level_lower, iter_node.first)));
                 iter_index = std::lower_bound(ull_max.begin(), ull_max.end(), background_code);
                 i_rank = static_cast<int>(iter_index - ull_max.begin());
@@ -402,8 +402,8 @@ void MpiManager::IniSendNReceivePartitionedGrid(const DefInt dims,
                     ptr_vec_grid_info->at(i_level_lower)->CheckNodesOnCubicPeriodicBoundary(
                         dims, iter_node.first, periodic_min, periodic_max, sfbitset_aux, &vec_periodic);
                     for (const auto& iter_periodic : vec_periodic) {
-                        if ((sfbitset_aux.SFBitsetoSFCode(iter_periodic) > code_max_current.at(i_rank)
-                            ||sfbitset_aux.SFBitsetoSFCode(iter_periodic) < code_min_current.at(i_rank))) {
+                        if ((sfbitset_aux.SFBitsetToSFCode(iter_periodic) > code_max_current.at(i_rank)
+                            ||sfbitset_aux.SFBitsetToSFCode(iter_periodic) < code_min_current.at(i_rank))) {
                             map_ghost_upper_tmp_ranks.at(i_rank).insert({iter_periodic, flag_size0});
                         }
                     }
@@ -418,8 +418,8 @@ void MpiManager::IniSendNReceivePartitionedGrid(const DefInt dims,
                             domain_min_n_level, domain_max_n_level, &nodes_in_region);
                         for (const auto& iter_node_in_region : nodes_in_region) {
                             if (iter_node_in_region != sfbitset_aux.kInvalidSFbitset
-                                &&(sfbitset_aux.SFBitsetoSFCode(iter_node_in_region) < code_min_current.at(i_rank)
-                                ||sfbitset_aux.SFBitsetoSFCode(iter_node_in_region) > code_max_current.at(i_rank))) {
+                                &&(sfbitset_aux.SFBitsetToSFCode(iter_node_in_region) < code_min_current.at(i_rank)
+                                ||sfbitset_aux.SFBitsetToSFCode(iter_node_in_region) > code_max_current.at(i_rank))) {
                                 map_ghost_lower_tmp_ranks.at(i_rank).insert({iter_node_in_region, flag_size0});
                                 if (bool_has_periodic_boundary) {
                                     ptr_vec_grid_info->at(i_level_lower)->CheckNodesOnCubicPeriodicBoundary(dims,
@@ -439,8 +439,8 @@ void MpiManager::IniSendNReceivePartitionedGrid(const DefInt dims,
                         domain_min_n_level, domain_max_n_level, &nodes_in_region);
                     for (const auto& iter_node_in_region : nodes_in_region) {
                         if (iter_node_in_region != sfbitset_aux.kInvalidSFbitset
-                            &&(sfbitset_aux.SFBitsetoSFCode(iter_node_in_region) < code_min_current.at(i_rank)
-                            ||sfbitset_aux.SFBitsetoSFCode(iter_node_in_region) > code_max_current.at(i_rank))) {
+                            &&(sfbitset_aux.SFBitsetToSFCode(iter_node_in_region) < code_min_current.at(i_rank)
+                            ||sfbitset_aux.SFBitsetToSFCode(iter_node_in_region) > code_max_current.at(i_rank))) {
                             map_ghost_upper_tmp_ranks.at(i_rank).insert({iter_node_in_region, flag_size0});
                             if (bool_has_periodic_boundary) {
                                 ptr_vec_grid_info->at(i_level_lower)->CheckNodesOnCubicPeriodicBoundary(
@@ -458,8 +458,8 @@ void MpiManager::IniSendNReceivePartitionedGrid(const DefInt dims,
                             domain_min_n_level, domain_max_n_level, &nodes_in_region);
                         for (const auto& iter_node_in_region : nodes_in_region) {
                             if (iter_node_in_region != sfbitset_aux.kInvalidSFbitset
-                                &&(sfbitset_aux.SFBitsetoSFCode(iter_node_in_region) < code_min_current.at(i_rank)
-                                ||sfbitset_aux.SFBitsetoSFCode(iter_node_in_region) > code_max_current.at(i_rank))) {
+                                &&(sfbitset_aux.SFBitsetToSFCode(iter_node_in_region) < code_min_current.at(i_rank)
+                                ||sfbitset_aux.SFBitsetToSFCode(iter_node_in_region) > code_max_current.at(i_rank))) {
                                 map_ghost_lower_tmp_ranks.at(i_rank).insert({iter_node_in_region, flag_size0});
                                 if (bool_has_periodic_boundary) {
                                     ptr_vec_grid_info->at(i_level_lower)->CheckNodesOnCubicPeriodicBoundary(dims,
@@ -586,7 +586,7 @@ void MpiManager::IniSendNReceivePartitionedGrid(const DefInt dims,
                 }
                 for (const auto& iter_region : nodes_in_region) {
                     if (iter_region != SFBitsetAuxInterface::kInvalidSFbitset) {
-                        code_tmp = sfbitset_aux.SFBitsetoSFCode(iter_region);
+                        code_tmp = sfbitset_aux.SFBitsetToSFCode(iter_region);
                         if ((code_tmp < code_min_current.at(0) || code_tmp > code_max_current.at(0))) {
                             if ((vec_sfbitset_rank0.at(i_level).find(iter_region)
                                 !=vec_sfbitset_rank0.at(i_level).end())
@@ -718,7 +718,7 @@ void MpiManager::IniSendNReceivePartitionedGrid(const DefInt dims,
                     }
                     for (const auto& iter_region : nodes_in_region) {
                         if (iter_region != SFBitsetAuxInterface::kInvalidSFbitset) {
-                            code_tmp = sfbitset_aux.SFBitsetoSFCode(iter_region);
+                            code_tmp = sfbitset_aux.SFBitsetToSFCode(iter_region);
                             if ((code_tmp < code_min_current.at(i_rank) || code_tmp > code_max_current.at(i_rank))) {
                                 if ((vec_sfbitset_rank0.at(i_level).find(iter_region)
                                     !=vec_sfbitset_rank0.at(i_level).end())
@@ -864,7 +864,6 @@ void MpiManager::IniSendNReceiveGridInfoAtAllLevels(const DefInt flag_size0,
             IniTraverseBackgroundForPartitionRank0(bitset_domain_min, bitset_domain_max,
                 vec_cost, ini_sfbitset_one_lower_level_rank0,
                 dynamic_cast<const SFBitsetAux3D&>(sfbitset_aux), &bitset_min, &bitset_max);
-
 #endif  // DEBUG_DISABLE_3D_FUNCTION
         }
     }
@@ -875,10 +874,10 @@ void MpiManager::IniSendNReceiveGridInfoAtAllLevels(const DefInt flag_size0,
     vec_sfcode_min_all_ranks_.resize(bitset_min.size());
     vec_sfcode_max_all_ranks_.resize(bitset_max.size());
     for (DefSizet i = 0; i < bitset_max.size(); ++i) {
-        vec_sfcode_min_all_ranks_.at(i) = sfbitset_aux.SFBitsetoSFCode(bitset_min.at(i));
+        vec_sfcode_min_all_ranks_.at(i) = sfbitset_aux.SFBitsetToSFCode(bitset_min.at(i));
     }
     for (DefSizet i = 0; i < bitset_max.size(); ++i) {
-        vec_sfcode_max_all_ranks_.at(i) = sfbitset_aux.SFBitsetoSFCode(bitset_max.at(i));
+        vec_sfcode_max_all_ranks_.at(i) = sfbitset_aux.SFBitsetToSFCode(bitset_max.at(i));
     }
     sfbitset_min_current_rank_ = bitset_min.at(rank_id_);
     sfbitset_max_current_rank_ = bitset_max.at(rank_id_);

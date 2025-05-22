@@ -1,4 +1,4 @@
-//  Copyright (c) 2021 - 2024, Zhengliang Liu
+//  Copyright (c) 2021 - 2025, Zhengliang Liu
 //  All rights reserved
 
 /**
@@ -80,7 +80,7 @@ void GridInfoInterface::RemoveUnnecessaryF2CNodesOnMpiOuterLayer(const DefSFCode
         for (auto& iter_layer : iter_interface.second->vec_inner_fine2coarse_) {
             std::vector<DefSFBitset> vec_node_to_remove;
             for (const auto& iter_node : iter_layer) {
-                code_current = sfbitset_aux.SFBitsetoSFCode(
+                code_current = sfbitset_aux.SFBitsetToSFCode(
                     sfbitset_aux.SFBitsetToNLowerLevelVir(i_level_, iter_node.first));
                 if (code_current > code_max || code_current < code_min) {
                     bool bool_remove = true;
@@ -94,7 +94,8 @@ void GridInfoInterface::RemoveUnnecessaryF2CNodesOnMpiOuterLayer(const DefSFCode
                         }
                     }
                     for (auto& iter_node_region : nodes_in_region) {
-                        if (map_grid_node_.find(iter_node_region) != map_grid_node_.end()
+                        if ((iter_node_region != SFBitsetAuxInterface::kInvalidSFbitset)
+                            && map_grid_node_.find(iter_node_region) != map_grid_node_.end()
                             && (map_grid_node_.at(iter_node_region)->flag_status_
                             & NodeBitStatus::kNodeStatusMpiPartitionInner_)) {
                             bool_remove = false;
@@ -127,7 +128,7 @@ void GridInfoInterface::RemoveUnnecessaryF2CNodesOnMpiOuterLayer(const DefSFCode
         for (auto& iter_layer : iter_interface.second->vec_outer_fine2coarse_) {
             std::vector<DefSFBitset> vec_node_to_remove;
             for (const auto& iter_node : iter_layer) {
-                code_current = sfbitset_aux.SFBitsetoSFCode(
+                code_current = sfbitset_aux.SFBitsetToSFCode(
                     sfbitset_aux.SFBitsetToNLowerLevelVir(i_level_, iter_node.first));
                 if (code_current > code_max || code_current < code_min) {
                     bool bool_remove = true;
@@ -141,7 +142,8 @@ void GridInfoInterface::RemoveUnnecessaryF2CNodesOnMpiOuterLayer(const DefSFCode
                         }
                     }
                     for (auto& iter_node_region : nodes_in_region) {
-                        if (map_grid_node_.find(iter_node_region) != map_grid_node_.end()
+                        if ((iter_node_region != SFBitsetAuxInterface::kInvalidSFbitset)
+                            &&map_grid_node_.find(iter_node_region) != map_grid_node_.end()
                             && (map_grid_node_.at(iter_node_region)->flag_status_
                             & NodeBitStatus::kNodeStatusMpiPartitionInner_)) {
                             bool_remove = false;

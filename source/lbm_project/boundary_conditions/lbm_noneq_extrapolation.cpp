@@ -1,11 +1,10 @@
-//  Copyright (c) 2021 - 2024, Zhengliang Liu
+//  Copyright (c) 2021 - 2025, Zhengliang Liu
 //  All rights reserved
 
 /**
 * @file lbm_noneq_extrapolation.cpp
 * @author Zhengliang Liu
 * @brief functions used to implement non-equilibrium extrapolation boundary condition.
-* @date  2025-1-22
 */
 #include "boundary_conditions/lbm_boundary_conditions.h"
 #include "./lbm_interface.h"

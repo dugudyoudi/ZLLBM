@@ -1,4 +1,4 @@
-//  Copyright (c) 2021 - 2024, Zhengliang Liu
+//  Copyright (c) 2021 - 2025, Zhengliang Liu
 //  All rights reserved
 
 /**
@@ -123,7 +123,7 @@ void GridInfoLbmInteface::AdvancingAtCurrentTime(const amrproject::ETimeStepping
     if (i_level > 0) {
         ComputeInfoInInterpMpiLayers(interp_nodes_inner_layer_);
     }
-    ptr_mpi_manager->SendAndReceiveGridNodesOnAllMpiLayers(&send_buffer_info, &receive_buffer_info,
+    ptr_mpi_manager->ProcessMpiLayersInfoAndCommunicate(&send_buffer_info, &receive_buffer_info,
         &vec_vec_reqs_send, &vec_vec_reqs_receive, &vec_ptr_buffer_send, &vec_ptr_buffer_receive, this);
 #endif  //  ENABLE_MPI
 

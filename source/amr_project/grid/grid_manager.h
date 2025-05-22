@@ -1,4 +1,4 @@
-//  Copyright (c) 2021 - 2024, Zhengliang Liu
+//  Copyright (c) 2021 - 2025, Zhengliang Liu
 //  All rights reserved
 
 /**
@@ -128,6 +128,7 @@ class GridManagerInterface{
     std::vector<DefReal> GetDomainSize() const { return GetDomainDxArrAsVec(); }
     virtual void SetDomainGridSize(const std::vector<DefReal>& domain_grid_size) = 0;
     std::vector<DefReal> GetDomainGridSize() const { return GetDomainDxArrAsVec(); }
+    std::vector<DefInt> GetNodeCostAtEachLevel() const;
 
     // settings
     void ReadAndSetupGridParameters(InputParser* const ptr_input_parser);

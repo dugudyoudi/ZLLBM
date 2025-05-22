@@ -1,11 +1,10 @@
-//  Copyright (c) 2021 - 2024, Zhengliang Liu
+//  Copyright (c) 2021 - 2025, Zhengliang Liu
 //  All rights reserved
 
 /**
 * @file input_parser.cpp
 * @author Zhengliang Liu
 * @brief functions used to read input parameters.
-* @date  2025-2-1
 */
 #include <string>
 #include <vector>

@@ -1,4 +1,4 @@
-//  Copyright (c) 2021 - 2024, Zhengliang Liu
+//  Copyright (c) 2021 - 2025, Zhengliang Liu
 //  All rights reserved
 
 /**
@@ -68,7 +68,7 @@ struct GridNodeLbm : public amrproject::GridNode {
     int ReadANodeFromBufferForCheckpoint(const char* ptr_node_buffer) override {
         std::memcpy(&flag_status_, ptr_node_buffer, sizeof(DefInt));
         int offset = sizeof(DefInt);
-        std::memcpy(f_.data(), ptr_node_buffer, f_.size() * kSizeReal);
+        std::memcpy(f_.data(), ptr_node_buffer + offset, f_.size() * kSizeReal);
         offset += static_cast<int>(f_.size()) * kSizeReal;
         if (!force_.empty()) {
             std::memcpy(force_.data(), ptr_node_buffer + offset, force_.size() * kSizeReal);

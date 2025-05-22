@@ -1,11 +1,10 @@
-//  Copyright (c) 2021 - 2024, Zhengliang Liu
+//  Copyright (c) 2021 - 2025, Zhengliang Liu
 //  All rights reserved
 
 /**
 * @file lbm_les_models.h
 * @author Zhengliang Liu
 * @brief define classes to manage models for large eddy simulation.
-* @date  2025-2-20
 */
 #ifndef SOURCE_LBM_PROJECT_LES_MODELS_LBM_LES_MODELS_H_
 #define SOURCE_LBM_PROJECT_LES_MODELS_LBM_LES_MODELS_H_

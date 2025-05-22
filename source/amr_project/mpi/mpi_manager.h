@@ -1,4 +1,4 @@
-//  Copyright (c) 2021 - 2024, Zhengliang Liu
+//  Copyright (c) 2021 - 2025, Zhengliang Liu
 //  All rights reserved
 
 /**
@@ -46,9 +46,28 @@ struct BackgroundLoadData {
     explicit BackgroundLoadData(DefInt num_bits) : level_bitset_(num_bits) {}
 
     BitField level_bitset_;
-    int num_of_grid_nodes_ = 0;
-    int num_of_interface_nodes_ = 0;
+    int32_t num_of_grid_nodes_ = 0;
+    int32_t num_of_interface_nodes_ = 0;
     DefInt total_load_ = 0;
+};
+/**
+ * @struct InterfaceIndexForMpi
+ * @brief struct to store the index of grid interfaces for mpi communication
+ */
+struct InterfaceIndexForMpi {
+    rootproject::DefInt i_level;
+    rootproject::amrproject::ECriterionType enum_criterion;
+    rootproject::DefInt criterion_count;
+    int layer_indicator;
+    int layer_count;
+
+    bool operator==(const InterfaceIndexForMpi& other) const {
+        return i_level == other.i_level &&
+               enum_criterion == other.enum_criterion &&
+               criterion_count == other.criterion_count &&
+               layer_indicator == other.layer_indicator &&
+               layer_count == other.layer_count;
+    }
 };
 /**
 * @class MpiManager
@@ -87,7 +106,13 @@ class MpiManager{
     void SetSFBitsetMaxCurrentRank(const DefSFBitset& sfbitset_max) { sfbitset_max_current_rank_ = sfbitset_max; }
     void SetNumPartitionOuterLayers(const DefInt num_outer_layers) { k0NumPartitionOuterLayers_ = num_outer_layers; }
     void SetNumPartitionInnerLayers(const DefInt num_inner_layers) { k0NumPartitionInnerLayers_ = num_inner_layers; }
- 
+    void SetSFCodeMinAllRanks(const std::vector<DefSFCodeToUint>& vec_sfcode_min) {
+        vec_sfcode_min_all_ranks_ = vec_sfcode_min;
+    }
+    void SetSFCodeMaxAllRanks(const std::vector<DefSFCodeToUint>& vec_sfcode_max) {
+        vec_sfcode_max_all_ranks_ = vec_sfcode_max;
+    }
+
     std::vector<std::map<int, DefMap<DefInt>>> mpi_communication_inner_layers_;
     ///< inner layers (for sending) for mpi communication of all refinement levels
     /** nodes not on the partition interface and whose spacing filling code is
@@ -393,7 +418,7 @@ class MpiManager{
         const std::function<void(const DefMap<DefInt>& , char* const)> func_copy_node_to_buffer,
         GridInfoInterface* ptr_grid_info, char* const ptr_buffer_send,
         std::vector<MPI_Request>* const ptr_reqs_send) const;
-    std::unique_ptr<char[]> ReceiveGridNodeInformation(const int rank_receive, const int node_info_size,
+    std::unique_ptr<char[]> ReceiveCharBufferFromOtherRanks(const int rank_receive,
         const BufferSizeInfo& receive_buffer_info, std::vector<MPI_Request>* const ptr_reqs_receive) const;
     void NonBlockingSendNReceiveGridNode(const int node_info_size,
         const std::map<int, DefMap<DefInt>>& map_send_nodes,
@@ -405,7 +430,14 @@ class MpiManager{
         std::vector<std::unique_ptr<char[]>>* const ptr_vec_ptr_buffer_send,
         std::vector<std::unique_ptr<char[]>>* const ptr_vec_ptr_buffer_receive,
         GridInfoInterface* const ptr_grid_info) const;
-    void SendAndReceiveGridNodesOnAllMpiLayers(std::vector<BufferSizeInfo>* const ptr_send_buffer_info,
+    void SendAndReceiveGridNodesOnMpiLayers(std::vector<BufferSizeInfo>* const ptr_send_buffer_info,
+        std::vector<BufferSizeInfo>* const ptr_receive_buffer_info,
+        std::vector<std::vector<MPI_Request>>* const ptr_vec_vec_reqs_send,
+        std::vector<std::vector<MPI_Request>>* const ptr_vec_vec_reqs_receive,
+        std::vector<std::unique_ptr<char[]>>* const ptr_vec_ptr_buffer_send,
+        std::vector<std::unique_ptr<char[]>>* const ptr_vec_ptr_buffer_receive,
+        GridInfoInterface* ptr_grid_info) const;
+    void ProcessMpiLayersInfoAndCommunicate(std::vector<BufferSizeInfo>* const ptr_send_buffer_info,
         std::vector<BufferSizeInfo>* const ptr_receive_buffer_info,
         std::vector<std::vector<MPI_Request>>* const ptr_vec_vec_reqs_send,
         std::vector<std::vector<MPI_Request>>* const ptr_vec_vec_reqs_receive,
@@ -509,41 +541,85 @@ class MpiManager{
 
     // checkpoint related functions
  public:
+    // write
     DefAmrLUint ComputeComputationalLoadOnEachRank(const DefInt max_level, const SFBitsetAuxInterface& sfbitset_aux,
         const std::vector<std::shared_ptr<GridInfoInterface>>& vec_grid_info,
         std::map<DefSFCodeToUint, BackgroundLoadData>* const ptr_node_level,
-        std::vector<DefAmrLUint>* const ptr_num_of_nodes) const;
-    void ComputeMinNMaxSFbitsetForEachRank(const DefAmrLUint load_all, const std::vector<DefInt>& vec_cost,
-        const std::map<DefSFCodeToUint, BackgroundLoadData>& map_node_level,
-        std::vector<DefSFBitset>* const ptr_bitset_min, std::vector<DefSFBitset>* const ptr_bitset_max,
-        std::vector<DefAmrLUint>* const ptr_num_of_grid_nodes, std::vector<DefAmrLUint>* const ptr_interface_of_nodes);
+        std::vector<DefAmrLUint>* const ptr_num_of_nodes,
+        std::vector<DefAmrLUint>* const ptr_num_of_interface_nodes) const;
     void WriteCheckPointNodesAtWhichLevels(const DefInt max_level,
         const DefAmrLUint load_sum, const std::string& file_name,
         const std::map<DefSFCodeToUint, BackgroundLoadData>& map__node_level) const;
-    DefAmrLUint ReadCheckPointNodesAtWhichLevels(const std::string& file_name,
-        std::map<DefSFCodeToUint, BackgroundLoadData>* const ptr_map_node_level) const;
     void WriteCheckPointGridNodes(const std::string& file_name,
         const std::vector<DefAmrLUint>& num_of_nodes,
         const std::map<DefSFCodeToUint, BackgroundLoadData>& map_load_node_level,
         const std::vector<std::shared_ptr<GridInfoInterface>>& vec_grid_info) const;
-    void ReadCheckPointGridNodes(const std::string& file_name,
-        const std::vector<DefAmrLUint>& num_of_nodes,
-        std::vector<std::shared_ptr<GridInfoInterface>>* const ptr_vec_grid_info) const;
     void WriteCheckPointInterfaceNodes(const std::string& file_name,
         const std::vector<DefAmrLUint>& num_of_nodes,
         const std::map<DefSFCodeToUint, BackgroundLoadData>& map_load_node_level,
         const std::vector<std::shared_ptr<GridInfoInterface>>& vec_grid_info) const;
+    // read
+    void ComputeMinNMaxSFbitsetForEachRank(const DefAmrLUint load_all, const std::vector<DefInt>& vec_cost,
+        const std::map<DefSFCodeToUint, BackgroundLoadData>& map_node_level,
+        std::vector<DefAmrLUint>* const ptr_num_of_grid_nodes,
+        std::vector<DefAmrLUint>* const ptr_interface_of_nodes);
+    DefAmrLUint ReadCheckPointNodesAtWhichLevels(const std::string& file_name,
+        std::map<DefSFCodeToUint, BackgroundLoadData>* const ptr_map_node_level) const;
+    void ReadCheckPointGridNodes(const std::string& file_name,
+        const std::vector<DefAmrLUint>& num_of_nodes, const DefMap<DefInt>& mpi_interface_background,
+        const SFBitsetAuxInterface& sfbitset_aux,
+        std::vector<DefMap<DefInt>>* const ptr_mpi_interface_each_level,
+        GridManagerInterface* const ptr_grid_manager) const;
     void ReadCheckPointInterfaceNodes(const std::string& file_name,
         const std::vector<DefAmrLUint>& num_of_nodes,
+        std::vector<InterfaceIndexForMpi>* const ptr_vec_interface_index,
+        std::vector<std::shared_ptr<GridInfoInterface>>* const ptr_vec_grid_info,
+        std::map<int, std::pair<int, DefMap<std::vector<InterfaceIndexForMpi>>>>* const ptr_interface_to_send) const;
+    void SearchForMpiOuterLayerBasedOnInterface(const std::vector<DefMap<DefInt>>& mpi_interface_each_level,
+        const SFBitsetAuxInterface& sfbitset_aux,  const GridManagerInterface& grid_manager,
+        std::vector<std::map<int, DefMap<DefInt>>>* const ptr_outer_mpi_nodes) const;
+    void SendNReceiveCheckPointMpiLayers(const std::vector<std::map<int, DefMap<DefInt>>>& outer_mpi_nodes,
+        GridManagerInterface* const ptr_grid_manager);
+    void ReadNInstantiateCheckPointGridNodesInMpiLayers(const std::vector<BufferSizeInfo>& send_buffer_info,
+        const std::vector<BufferSizeInfo>& receive_buffer_info,
+        const std::vector<std::unique_ptr<char[]>>& vec_ptr_buffer_receive,
+        const std::function<void(const char*,  GridNode* const)>& func_read_a_node_from_buffer,
+        std::vector<std::vector<MPI_Request>>* const ptr_vec_vec_reqs_send,
+        std::vector<std::vector<MPI_Request>>* const ptr_vec_vec_reqs_receive,
+        GridInfoInterface* const ptr_grid_info);
+    void CommunicateCheckPointMpiLayers(GridManagerInterface* const ptr_grid_manager);
+    void SendNReceiveMpiInterfaceIndices(const std::vector<InterfaceIndexForMpi>& vec_interface_index,
+        const std::vector<BufferSizeInfo>& send_buffer_info,
+        const std::vector<BufferSizeInfo>& receive_buffer_info,
+        const std::map<int, std::pair<int, DefMap<std::vector<InterfaceIndexForMpi>>>>& interface_to_send,
+        std::vector<std::vector<MPI_Request>>* const ptr_vec_vec_reqs_send,
+        std::vector<std::vector<MPI_Request>>* const ptr_vec_vec_reqs_receive,
+        std::vector<std::unique_ptr<char[]>>* const ptr_vec_ptr_buffer_send,
+        std::vector<std::unique_ptr<char[]>>* const ptr_vec_ptr_buffer_receive) const;
+    void InstantiateGridInterfaceBaseOnIndex(const DefInt index, const DefSFBitset sfbitset_in,
+        const std::vector<InterfaceIndexForMpi>& vec_interface_index,
         std::vector<std::shared_ptr<GridInfoInterface>>* const ptr_vec_grid_info) const;
+    void WaitAndReadMpiInterfaceIndicesFromBuffer(
+        const std::vector<InterfaceIndexForMpi>& vec_interface_index,
+        const std::vector<BufferSizeInfo>& send_buffer_info,
+        const std::vector<BufferSizeInfo>& receive_buffer_info,
+        const std::vector<std::unique_ptr<char[]>>& vec_ptr_buffer_receive,
+        std::vector<std::vector<MPI_Request>>* const ptr_vec_vec_reqs_send,
+        std::vector<std::vector<MPI_Request>>* const ptr_vec_vec_reqs_receive,
+        std::vector<std::shared_ptr<GridInfoInterface>>* const ptr_vec_grid_info);
+    void CommunicateCheckPointInterfaceLayers(const std::vector<InterfaceIndexForMpi>& vec_interface_index,
+        const std::map<int, std::pair<int, DefMap<std::vector<InterfaceIndexForMpi>>>>& interface_to_send,
+        GridManagerInterface* const ptr_grid_manager);
 
  private:
+    const int kIndictorInnerFine2Coarse_ = 1, kIndictorOuterFine2Coarse_ = 2,
+        kIndictorInnerCoarse2Fine_ = 3, kIndictorOuterCoarse2Fine_ = 4;
     int CreateAndCommitInterfaceIndexType(MPI_Datatype* ptr_mpi_tracking_index_type) const;
 
     // functions for the purpose of debug
  public:
     void DebugMpiForAllGrids(const GridManagerInterface& grid_manager) const;
-    void CheckMpiNodesCorrespondence(const GridInfoInterface& grid_info) const;
+    void CheckMpiNodesCorrespondence(const DefInt i_level) const;
     void CheckMpiPeriodicCorrespondence(const GridInfoInterface& grid_info) const;
 };
 /**
@@ -571,7 +647,8 @@ void MpiManager::CopyNodeInfoToBuffer(const int node_info_size,
             if (position > buffer_size) {
                 LogManager::LogError("Buffer to store node information overflows (buffer size is "
                     + std::to_string(buffer_size) + " ), please check"
-                    " size of node info for mpi communication");
+                    " size of node info for mpi communication in " + std::string(__FILE__) + " at line "
+                        + std::to_string(__LINE__));
             }
         } else {
             LogManager::LogError("node with space filling code " + iter.first.to_string() + " does not exist");
@@ -606,7 +683,8 @@ void MpiManager::ReadNodeInfoFromBuffer(const int node_info_size,
         position += node_info_size;
         if (position > buffer_size) {
             LogManager::LogError("Buffer to store node information overflows, please check"
-                " size of node info for mpi communication");
+                " size of node info for mpi communication in " + std::string(__FILE__) + " at line "
+                + std::to_string(__LINE__));
         }
     }
 }

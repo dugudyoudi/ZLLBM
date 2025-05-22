@@ -1,11 +1,10 @@
-//  Copyright (c) 2021 - 2024, Zhengliang Liu
+//  Copyright (c) 2021 - 2025, Zhengliang Liu
 //  All rights reserved
 
 /**
 * @file input_parser.h
 * @author Zhengliang Liu
 * @brief define the class used to read input parameters.
-* @date  2025-2-1
 */
 #ifndef SOURCE_AMR_PROJECT_IO_INPUT_PARSER_H_
 #define SOURCE_AMR_PROJECT_IO_INPUT_PARSER_H_

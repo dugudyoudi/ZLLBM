@@ -1,4 +1,4 @@
-//  Copyright (c) 2021 - 2024, Zhengliang Liu
+//  Copyright (c) 2021 - 2025, Zhengliang Liu
 //  All rights reserved
 
 /**
@@ -22,7 +22,7 @@ void GeometryInfoOrigin::InitialGeometry(const DefReal dx) {
 /**
 * @brief   function to find tracking nodes based on geometries.
 * @param[in] sfbitset_aux class to manage functions for space filling code computation.
-* @param[in] ptr_grid_info pointer to class store grid information.
+* @param[in, out] ptr_grid_info pointer to class store grid information.
 */
 void GeometryInfoOrigin::FindTrackingNodeBasedOnGeo(
     const SFBitsetAuxInterface& sfbitset_aux, GridInfoInterface* const ptr_grid_info) {

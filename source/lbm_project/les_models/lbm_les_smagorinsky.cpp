@@ -1,11 +1,10 @@
-//  Copyright (c) 2021 - 2024, Zhengliang Liu
+//  Copyright (c) 2021 - 2025, Zhengliang Liu
 //  All rights reserved
 
 /**
 * @file lbm_les_smagorinsky.cpp
 * @author Zhengliang Liu
 * @brief functions used for Smagorinsky LES model.
-* @date  2025-2-20
 */
 #include "./lbm_interface.h"
 #include "les_models/lbm_les_models.h"

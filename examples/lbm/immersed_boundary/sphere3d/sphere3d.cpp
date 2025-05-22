@@ -1,10 +1,9 @@
-//    Copyright (c) 2021 - 2024, Zhengliang Liu
+//    Copyright (c) 2021 - 2025, Zhengliang Liu
 //    All rights reserved
 
 /**
 * @file sphere3d.cpp
 * @author Zhengliang Liu
-* @date  2025-1-29
 * @brief  flow past a 3D shpere using IB-LBM.
 */
 #include "./amr_manager.h"
@@ -34,7 +33,7 @@ int main(int argc, char* argv[]) {
     DefInt max_t;
     lbmproject::GeoIBTypeReader geo_ib_reader;
     amrproject::InputParser input_parser;
-    if(ptr_amr_instance->ptr_mpi_manager_->GetRankId() == 0) {
+    if (ptr_amr_instance->ptr_mpi_manager_->GetRankId() == 0) {
         input_parser.ReadInputFile(input_name);
     }
     ptr_amr_instance->BroadCastInputParse(&input_parser);
@@ -60,7 +59,7 @@ int main(int argc, char* argv[]) {
             ptr_amr_instance->ptr_grid_manager_->vec_ptr_tracking_info_creator_.at(0).get());
     }
 
-    ptr_amr_instance->SetupDependentParameters();
+    ptr_amr_instance->SetupInputDependentParameters();
 
     lbmproject::SolverLbmInterface& solver_ref = *dynamic_cast<lbmproject::SolverLbmInterface*>(
         ptr_amr_instance->ptr_grid_manager_->vec_ptr_solver_.at(0).get());
@@ -91,7 +90,7 @@ int main(int argc, char* argv[]) {
 
     // initialize grids
     ptr_amr_instance->InitializeAllSolvers();
-    ptr_amr_instance->InitializeMesh();
+    ptr_amr_instance->SetupMesh(0);
 
     // check mesh
     ptr_amr_instance->CheckMeshAfterInitialization();

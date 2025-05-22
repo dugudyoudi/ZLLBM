@@ -1,4 +1,4 @@
-//  Copyright (c) 2021 - 2024, Zhengliang Liu
+//  Copyright (c) 2021 - 2025, Zhengliang Liu
 //  All rights reserved
 
 /**
@@ -38,7 +38,7 @@ class SFBitsetAuxInterface {
         return k0SpaceBackground_;
     }
 
-    inline DefSFCodeToUint SFBitsetoSFCode(const DefSFBitset& sfbitset) const { return sfbitset.to_ullong(); }
+    inline DefSFCodeToUint SFBitsetToSFCode(const DefSFBitset& sfbitset) const { return sfbitset.to_ullong(); }
 
     virtual void SFBitsetInitial() = 0;
     virtual DefSFBitset SFBitsetEncodingCoordi(

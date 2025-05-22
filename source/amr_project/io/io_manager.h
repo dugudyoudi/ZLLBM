@@ -1,4 +1,4 @@
-//  Copyright (c) 2021 - 2024, Zhengliang Liu
+//  Copyright (c) 2021 - 2025, Zhengliang Liu
 //  All rights reserved
 
 /**
@@ -35,10 +35,13 @@ class IoManager {
     VtkWriterManager vtk_instance_;
 
     // write checkpoint data
-    void WriteCheckPointData(const std::string& prog_name,
-        const MpiManager& mpi_manager,
+    void WriteCheckPointData(const DefAmrLUint time_step, const std::string& prog_name,
+        const SFBitsetAuxInterface& sfbitset_aux,
+        const GridManagerInterface& grid_manager,
+        const CriterionManager& criterion_manager, const MpiManager& mpi_manager) const;
+    void ReadCheckPointData(const DefAmrLUint time_step, const std::string& prog_name,
         GridManagerInterface* const ptr_grid_manager,
-        CriterionManager* const ptr_criterion_manager);
+        CriterionManager* const ptr_criterion_manager, MpiManager* const mpi_manager) const;
 };
 }  // end namespace amrproject
 }  // end namespace rootproject
