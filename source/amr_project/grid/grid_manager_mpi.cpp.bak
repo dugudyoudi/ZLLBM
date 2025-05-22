@@ -1832,6 +1832,7 @@ void GridManagerInterface::SetUpMpiInnerLayerForHigherLevel(int i_rank,
                             periodic_min, periodic_max, domain_min_n_level, domain_max_n_level, &vec_inner);
                         for (const auto& iter_inner : vec_inner) {
                             code_background = sfbitset_aux.SFBitsetToSFCode(sfbitset_aux.SFBitsetToNLowerLevelVir(
+                            code_background = sfbitset_aux.SFBitsetToSFCode(sfbitset_aux.SFBitsetToNLowerLevelVir(
                                 i_level, iter_inner));
                             if (code_background >= code_min_background_level
                                 && code_background <= code_max_background_level) {
